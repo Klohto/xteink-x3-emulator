@@ -14,13 +14,14 @@ Git.
 | Component | Implemented behavior |
 | --- | --- |
 | CPU and memory | ESP32-C3 RV32 execution, interrupts, ROM, SRAM, RTC RAM, flash mapping and executed stack-bound checks |
-| Firmware storage | Writable 16 MiB SPI flash, original CrossInk OTA partitions, real ROM serial programming and byte readback |
-| SD card | Guest SPI commands, power control, FAT filesystem reads and persistent block writes |
+| Firmware storage | Writable 16 MiB SPI flash, ROM serial programming and stock CrossInk SD OTA with executed partition switch |
+| SD card | Guest SPI commands, power control, nested FAT directories and persistent block writes |
 | Buttons | Two ADC resistor ladders, GPIO3 power button and exact virtual-time press/release deadlines |
 | Display | UC8253/UC8279 detection, controller commands, RAM planes, partial updates, BUSY and 792 × 528 digital output |
 | I2C | C3 command/FIFO/interrupt path with BQ27220 gauge, DS3231 RTC and QMI8658 IMU models |
-| Console | UART ROM output and actual USB Serial/JTAG FIFO output |
+| USB and console | UART ROM output, bidirectional USB Serial/JTAG FIFO and stock CRC-checked file-transfer commands |
 | Sleep and watchdogs | RTC counter, timer/GPIO wake, retained state, digital CPU sleep/restart and distinct watchdog reset domains |
+| Experimental WiFi | C3 MAC/DMA/TSF, digital reset and an open virtual AP; stock initialization and network functions are still under development |
 
 The official CrossInk v1.6.0 application has been programmed through the ROM;
 every byte of the resulting 16 MiB flash matches the prepared image. Stock
@@ -34,13 +35,26 @@ book reopens at its saved page. Strict acceptance remains false because known
 unsupported model uses and an incomplete panel trace are still reported.
 The committed evidence preserves those failures.
 
+Expanded stock workflows verify chapter navigation, bookmarks, clipping export,
+font persistence after a cold CPU, motion-sensor page turns, button remapping,
+nested browsing, book actions and custom grayscale sleep/wake. USB file commands
+and SD firmware update also pass, including exact application bytes and actual
+execution from the new OTA partition. Each receipt identifies its backend
+revision; these results do not establish an all-functions pass. The complete
+source inventory and remaining checks are in
+[`docs/function-coverage.md`](docs/function-coverage.md), with archived proofs
+under [`docs/evidence/functions`](docs/evidence/functions).
+
 Hardware speed calibration is pending. Every run records unsupported accesses
 and sets `speed_selection_allowed: false`. Instruction counting, nominal bus
 rates and configurable display delays support functional experiments. Physical
 CPU/cache costs, SD latency, optical panel behavior, power and analog sensors
 need measured profiles before simulated scores can select faster firmware.
-Wi-Fi/BLE, parts of memory protection and debug monitoring, and the optional
-esptool RAM flasher remain unsupported. The verified flashing path uses the ROM.
+WiFi network functions, BLE, parts of memory protection and debug monitoring,
+and the optional esptool RAM flasher remain unverified. The verified serial
+flashing path uses the ROM. Experimental WiFi implements source-backed digital
+handshakes with explicitly synthetic RF measurements; see
+[`docs/wifi-model.md`](docs/wifi-model.md).
 
 ## Build and run
 
@@ -96,6 +110,9 @@ has a documented failure. See [`docs/flashing.md`](docs/flashing.md).
 python -m unittest discover -s tests -v
 ./scripts/build-qemu.sh --test --jobs 4
 python scripts/smoke-crossink.py --output local/runs/reading
+python scripts/test-crossink-functions.py --output local/runs/functions
+python scripts/test-usb-transfer.py --output local/runs/usb \
+  --ota-image local/firmware/firmware-x3-x4-v1.6.0.bin
 ```
 
 The first command checks Python image parsing, storage and runtime control.

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "receipts": [
+    {
+      "path": "docs/evidence/functions/chapter.json",
+      "sha256": "981c71ffbd2f2b7f59875f2b6734df8c6493372ceea83286248db74845a9e88a",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 12
+    },
+    {
+      "path": "docs/evidence/functions/bookmarks.json",
+      "sha256": "bb4b82ad71788c41c6a1401ebb4689f04c00ae56f27feb9a0f4c20a16cf89853",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 13
+    },
+    {
+      "path": "docs/evidence/functions/clippings.json",
+      "sha256": "2479e80201cd22c0f6c9b97879c4bf4aca636aebd0e9e96d6eb81e07ac92f8f5",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 13
+    },
+    {
+      "path": "docs/evidence/functions/fonts-cold.json",
+      "sha256": "e5d86b98b1c9e9c32e896e9b808be4a58ff6b5ac07a986884ed3c06558ea52d6",
+      "backend_sha256": "1a61f2aaab242120a522428b0eac1b79650a025a7b775a3be10409723c88d5d5",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 21
+    },
+    {
+      "path": "docs/evidence/functions/gyro-cold.json",
+      "sha256": "871746e3a1b31d7a3166b1e18e2b027e14ce18144e717ce9a37d77325ae32e84",
+      "backend_sha256": "6ff30764104f5cefa49e65a4a37bf01752a83b8a126de6af333cf425f51c7e6b",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 32
+    },
+    {
+      "path": "docs/evidence/functions/button-remap.json",
+      "sha256": "9fbab41056496b13cc50e7cadfebbbb9d2575131e6dd0f2e47b23eee6ff5173f",
+      "backend_sha256": "cab200bef3c8be2c8efe2172e2151bdd4d14d37804126119c76b07f99fa2a2d0",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 19
+    },
+    {
+      "path": "docs/evidence/functions/browser.json",
+      "sha256": "978fa87a8be54ee5e5353828840dbd4df4943635f614f94b4aad222dae750b13",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 13
+    },
+    {
+      "path": "docs/evidence/functions/book-actions.json",
+      "sha256": "019712e27be584bda6a82d30ae5cd46acf0d42b1690e369274617ae92ccaea9d",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 19
+    },
+    {
+      "path": "docs/evidence/functions/custom-sleep.json",
+      "sha256": "5e3428ba09108597553d9bfcd845bc5c32420c5ee8da1eae374b34531ebd3ffe",
+      "backend_sha256": "6ff30764104f5cefa49e65a4a37bf01752a83b8a126de6af333cf425f51c7e6b",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 17
+    },
+    {
+      "path": "docs/evidence/functions/wifi-phy-blocked.json",
+      "sha256": "9ef060c2b9bb38f742310ff3cf07fa52ca43bed96b21a5f0746407e2af5b88c2",
+      "backend_sha256": "9d3396daa1a3e246c2041df1bc25f1b6990c16e51602712a8d22bf23935b3b68",
+      "functional_pass": false,
+      "strict_pass": false,
+      "checks": 8
+    },
+    {
+      "path": "docs/evidence/functions/statistics.json",
+      "sha256": "d470d1a2ebf71ae85cf747858c213b6dfb069dbda25af61a1b3691959b278c8c",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 18
+    },
+    {
+      "path": "docs/evidence/functions/lookup.json",
+      "sha256": "e7b92c72cef6966d5ac833931775bb2289c3b159dccf2fa9fe456d2a8903f7a3",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 14
+    },
+    {
+      "path": "docs/evidence/functions/battery.json",
+      "sha256": "c3a5f52ff63bf1985adfd5dbea2292be12b1c99cc7ebfa699986b8cdd2a27212",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks": 18
+    }
+  ],
+  "speed_selection_allowed": false,
+  "all_functions_verified": false
+}

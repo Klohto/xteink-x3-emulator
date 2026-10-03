@@ -15,6 +15,18 @@ SmokeError = smoke["SmokeError"]
 
 
 class SmokeArtifactTests(unittest.TestCase):
+    def test_trace_accounting_rejects_gaps_truncation_and_host_errors(self):
+        data = b'{"seq":1,"event":"command"}\n{"seq":2,"event":"frame-complete"}\n'
+        metrics = {"output-errors": 0, "trace-events-attempted": 2, "trace-events-flushed": 2,
+                   "trace-bytes-flushed": len(data), "dump-frames-written": 1}
+        self.assertTrue(smoke["assess_trace_accounting"](data, metrics, 1)["complete"])
+        for corrupt in (data.replace(b'"seq":2', b'"seq":3'), data[:-4], data.splitlines(keepends=True)[-1]):
+            self.assertFalse(smoke["assess_trace_accounting"](corrupt, metrics, 1)["complete"])
+        for key in ("output-errors", "trace-events-attempted", "trace-events-flushed", "trace-bytes-flushed", "dump-frames-written"):
+            broken = dict(metrics)
+            broken[key] += 1
+            self.assertFalse(smoke["assess_trace_accounting"](data, broken, 1)["complete"])
+
     def test_reading_flow_pass_does_not_relax_full_diagnostics_acceptance(self):
         report = {"checks": dict.fromkeys(smoke["PASS_CONDITIONS"] + smoke["READING_FLOW_CONDITIONS"], True)}
         report["checks"]["model_diagnostics_clean"] = False
@@ -102,6 +114,8 @@ class SmokeArtifactTests(unittest.TestCase):
                     if self.stops == 1:
                         self.now = 2_100_000_000
                         self.events.append({"t_ns": 2_000_000_000, "value": self.crc})
+                elif command == "qom-list":
+                    return []
                 elif command == "cont":
                     self.paused = False
                     self.now = 4_100_000_000

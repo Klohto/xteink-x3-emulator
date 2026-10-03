@@ -117,7 +117,7 @@ class BackendRunTests(unittest.TestCase):
         self.output = self.root / "run"
 
     def install_fake_backend(self, *, diagnostics="", unsupported=0, unsupported_spi=0, missing_spi_counter=False,
-                             counter_overrides=None, omitted_counter=None):
+                             counter_overrides=None, omitted_counter=None, extra_properties=None, epd_stderr=""):
         # A local fake process exercises argv, socket negotiation, orderly stop,
         # writable copies, saved state, diagnostics, and exit status together.
         script = textwrap.dedent('''\
@@ -154,20 +154,24 @@ class BackendRunTests(unittest.TestCase):
                 elif command == "qom-list":
                     properties = {
                         "/machine": ["unsupported-io-reads", "unsupported-io-writes", "unsupported-io-json", "virtual-time-ns", "power-button", "power-button-hold-ns", "epd", "adc", "spi0", "spi1", "rtccntl", "clock", "i2c", "jtag", "assist-debug", "regi2c"],
-                        "/machine/epd": ["unsupported-count", "protocol-errors"],
+                        "/machine/epd": ["unsupported-count", "protocol-errors", "output-errors"],
                         "/machine/adc": ["buttons", "unsupported-uses", "hold-ns"],
                         "/machine/spi0": ["unsupported-reads", "unsupported-writes"],
                         "/machine/spi1": ["unsupported-reads"] if MISSING_SPI_COUNTER else ["unsupported-reads", "unsupported-writes"],
                         "/machine/rtccntl": ["unsupported-count", "sleep-count", "wake-count", "sleeping", "deep-sleep-active", "analog-modelled", "rtc-watchdog-modelled", "rtc-watchdog-timing-calibrated", "sleep-transition-calibrated"],
                         "/machine/clock": ["rtc-crc-count", "rtc-crc-hardware-verified", "rtc-crc-timing-calibrated"],
                         "/machine/i2c": ["unsupported-accesses", "transfer-count", "transferred-bytes", "nack-count", "fuel-gauge", "rtc", "imu"],
-                        "/machine/jtag": ["unsupported-accesses", "transmitted-bytes", "received-bytes"],
+                        "/machine/jtag": ["unsupported-accesses", "transmitted-bytes", "received-bytes", "host-connected", "transmitted-packets", "received-packets", "backend-stalls", "tx-overruns", "timing-calibrated", "physical-effects-modelled", "usb-enumeration-modelled"],
                         "/machine/i2c/fuel-gauge": ["unsupported-accesses"],
                         "/machine/i2c/rtc": ["unsupported-accesses"],
                         "/machine/i2c/imu": ["unsupported-accesses"],
                         "/machine/assist-debug": ["unsupported-uses", "sp-checks", "spill-count", "last-sp", "last-pc"],
                         "/machine/regi2c": ["unsupported-accesses", "transfer-count", "read-count", "write-count", "analog-modelled", "calibration-modelled", "power-control-modelled", "timing-calibrated"],
                     }
+                    for path, names in EXTRA_PROPERTIES.items():
+                        properties.setdefault(path, []).extend(names)
+                        if path.count("/") == 2 and path.rsplit("/", 1)[-1] not in properties["/machine"]:
+                            properties["/machine"].append(path.rsplit("/", 1)[-1])
                     omitted = OMITTED_COUNTER
                     if omitted:
                         properties[omitted[0]].remove(omitted[1])
@@ -185,7 +189,8 @@ class BackendRunTests(unittest.TestCase):
                 if command == "quit": break
             source.close()
             target.close()
-        ''').replace("DIAGNOSTICS", repr(diagnostics)).replace("PANEL_UNSUPPORTED", str(unsupported)).replace("SPI_UNSUPPORTED", str(unsupported_spi)).replace("MISSING_SPI_COUNTER", repr(missing_spi_counter)).replace("COUNTER_OVERRIDES", repr(counter_overrides or {})).replace("OMITTED_COUNTER", repr(omitted_counter))
+            print(EPD_STDERR, file=sys.stderr)
+        ''').replace("DIAGNOSTICS", repr(diagnostics)).replace("PANEL_UNSUPPORTED", str(unsupported)).replace("SPI_UNSUPPORTED", str(unsupported_spi)).replace("MISSING_SPI_COUNTER", repr(missing_spi_counter)).replace("COUNTER_OVERRIDES", repr(counter_overrides or {})).replace("OMITTED_COUNTER", repr(omitted_counter)).replace("EXTRA_PROPERTIES", repr(extra_properties or {})).replace("EPD_STDERR", repr(epd_stderr))
         self.backend.write_text(f"#!{sys.executable}\n" + script)
         self.backend.chmod(0o755)
 
@@ -204,6 +209,67 @@ class BackendRunTests(unittest.TestCase):
         self.assertNotIn("-icount", build_command(self.config(icount=False)))
         unix = build_command(RunConfig(self.flash, self.sd, self.output, self.backend, qmp_transport="unix"))
         self.assertEqual(unix[unix.index("-qmp") + 1], f"unix:{self.output}/qmp-control.sock,server=on,wait=off")
+
+    def test_usb_socket_routes_only_loopback_through_guest_console_and_keeps_log(self):
+        config = self.config(usb_port=43210)
+        self.assertEqual(config.resolved().usb_port, 43210)
+        argv = build_command(config)
+        self.assertEqual([argv[i + 1] for i, value in enumerate(argv) if value == "-serial"],
+                         [f"file:{self.output}/rom.log", "null", "chardev:x3usb"])
+        endpoints = [argv[i + 1] for i, value in enumerate(argv) if value == "-chardev"]
+        usb = next(value for value in endpoints if value.startswith("socket,id=x3usb,"))
+        self.assertIn("host=127.0.0.1,port=43210,server=on,wait=off,nodelay=on", usb)
+        self.assertIn(f"logfile={self.output}/serial.log,logappend=off", usb)
+        self.assertTrue(any(value.startswith("pipe,id=x3qmp,") for value in endpoints))
+
+    def test_usb_port_validation_rejects_invalid_listener_configuration(self):
+        for port in (0, -1, 65536, True, "43210", 1.5):
+            with self.subTest(port=port), self.assertRaisesRegex(BackendError, "USB loopback port"):
+                build_command(self.config(usb_port=port))
+
+    def test_wifi_is_opt_in_and_forwarding_is_explicit_loopback_only(self):
+        self.assertNotIn("-nic", build_command(self.config()))
+        config = self.config(wifi=True, wifi_hostfwd=("tcp:127.0.0.1:8080-:80", "udp:127.0.0.1:5353-:5353"))
+        argv = build_command(config)
+        self.assertEqual(argv[argv.index("-nic") + 1], "user,model=esp32c3.wifi,hostfwd=tcp:127.0.0.1:8080-:80,hostfwd=udp:127.0.0.1:5353-:5353")
+        self.assertIn("driver=esp32c3.wifi,property=air-enabled,value=true", argv)
+        self.assertEqual(config.resolved().wifi_hostfwd, config.wifi_hostfwd)
+        for forwarding in ("tcp::8080-:80", "tcp:0.0.0.0:8080-:80", "tcp:127.0.0.1:0-:80",
+                           "tcp:127.0.0.1:8080-:65536", "tcp:127.0.0.1:8080-:80,restrict=off"):
+            with self.subTest(forwarding=forwarding), self.assertRaisesRegex(BackendError, "forwarding"):
+                build_command(self.config(wifi=True, wifi_hostfwd=(forwarding,)))
+        with self.assertRaisesRegex(BackendError, "requires WiFi"):
+            build_command(self.config(wifi_hostfwd=("tcp:127.0.0.1:8080-:80",)))
+        with self.assertRaisesRegex(BackendError, "unique"):
+            build_command(self.config(wifi=True, wifi_hostfwd=("tcp:127.0.0.1:8080-:80", "tcp:127.0.0.1:8080-:81")))
+
+    def test_requested_wifi_missing_telemetry_cannot_be_marked_clean(self):
+        self.install_fake_backend()
+        result = run(self.config(wifi=True))
+        self.assertTrue(result["wifi"]["enabled"])
+        self.assertFalse(result["validity"]["unsupported_features_checked"])
+        self.assertFalse(result["validity"]["diagnostics_clean"])
+
+    def test_wifi_requires_phy_handshake_observations_and_records_synthetic_limits(self):
+        from x3emu.backend import DEVICE_PROPERTIES
+        extras = {"/machine/wifi": list(DEVICE_PROPERTIES["wifi"])}
+        self.install_fake_backend(extra_properties=extras)
+        result = run(self.config(wifi=True))
+        self.assertFalse(result["validity"]["unsupported_features_checked"])
+        self.assertFalse(result["validity"]["diagnostics_clean"])
+        self.output = self.root / "wifi-with-phy-observations"
+        extras["/machine/regi2c"] = ["phy-handshake-modelled", "synthetic-measurements"]
+        self.install_fake_backend(extra_properties=extras, counter_overrides={
+            "/machine/regi2c:phy-handshake-modelled": True,
+            "/machine/regi2c:synthetic-measurements": 12,
+        })
+        result = run(self.config(wifi=True))
+        self.assertTrue(result["validity"]["diagnostics_clean"])
+        self.assertTrue(result["model_limits"]["regi2c_phy_handshake_modelled"])
+        self.assertFalse(result["model_limits"]["regi2c_calibration_modelled"])
+        self.assertEqual(result["wifi"]["phy_synthetic_measurements"], 12)
+        self.assertEqual(result["wifi"]["phy_measurement_source"], "synthetic ideal-zero digital results")
+        self.assertFalse(result["wifi"]["physical_phy_measurements_modelled"])
 
     def test_power_input_duration_opt_out_and_validation(self):
         argv = build_command(self.config(power_on=False, power_button_hold_ns=120_000_000))
@@ -291,6 +357,13 @@ class BackendRunTests(unittest.TestCase):
                 self.assertEqual(result["validity"]["unsupported_features_checked"], not missing)
                 self.assertFalse(result["validity"]["diagnostics_clean"])
                 self.assertEqual(result["final_state"]["spi0"]["unsupported-reads"], counter)
+
+    def test_epd_final_close_error_invalidates_run_after_zero_counter_snapshot(self):
+        self.install_fake_backend(epd_stderr="qemu-system-riscv32: xteink-x3-epd: cannot close trace output: No space left")
+        result = run(self.config())
+        self.assertEqual(result["final_state"]["panel"]["output-errors"], 0)
+        self.assertEqual(result["epd_output_diagnostics"]["count"], 1)
+        self.assertFalse(result["validity"]["diagnostics_clean"])
 
     def test_i2c_usb_and_nested_sensor_counters_are_required_and_checked(self):
         devices = {"i2c": "/machine/i2c", "usb": "/machine/jtag",

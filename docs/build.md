@@ -43,8 +43,10 @@ python -m pip install -e .
 ```
 
 The ESP32-C3 machine needs libgcrypt for its AES peripheral. The script enables
-that dependency explicitly. QEMU requires Meson 1.5 or later. Ubuntu 24.04's
-Meson package is older, so use the pinned version above. The build uses
+that dependency explicitly. SLIRP provides the host network transport for the
+digital Wi-Fi model and is also required explicitly. QEMU requires Meson 1.5 or
+later. Ubuntu 24.04's Meson package is older, so use the pinned version above.
+The build uses
 `python3`, `ninja` and `pkg-config` from the active environment.
 
 The graphical and Rust backends are disabled. QEMU still exposes its monitor, QMP,
@@ -80,8 +82,9 @@ These paths are excluded from Git. The script uses ordinary compiler output;
 it can run without an account or access token.
 
 The `--test` option builds and runs native suites for GPSPI, ADC, I2C, panel,
-USB, SD, flash, RTC, stack monitoring, REGI2C and unsupported SoC access telemetry
-against the actual QEMU machine. It selects TCP when the host blocks Unix sockets. Set
+USB, SD, flash, RTC, stack monitoring, REGI2C, Wi-Fi DMA and unsupported SoC access
+telemetry against the actual QEMU machine. It selects TCP when the host blocks
+Unix sockets. Set
 `QTEST_QEMU_TRANSPORT=tcp` to request that transport explicitly. A failed test
 stops the build before it copies the backend into the install directory.
 

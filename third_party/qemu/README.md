@@ -20,6 +20,10 @@ the license identifiers in their source headers. Preserve those headers and
 supply the corresponding source when distributing the compiled backend under
 its terms.
 
+The digital Wi-Fi model also retains the esp32sim copyright and MIT notice in
+`esp32sim-MIT.txt`. The same notice is present in the native patch at
+`docs/esp32sim-MIT.txt` and copied into the backend install's license directory.
+
 QEMU's bundled firmware consists of separate programs. The emulator's GPL
 terms alone do not establish the terms for a ROM image. The build copies the
 ESP32-C3 ROM already present in the pinned upstream checkout into its local

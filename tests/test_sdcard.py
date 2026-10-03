@@ -152,8 +152,38 @@ class SdCardTests(unittest.TestCase):
             image.write(b"guest state".ljust(512, b"\0"))
         self.assertEqual(self._read_sector(CARD_SIZE // 512 - 1)[:11], b"guest state")
 
+    def test_exact_thirteen_unit_names_use_minimal_nonempty_lfn_records(self):
+        originals = {"synthetic.idx": b"dictionary index",
+                     "abcdefghijklmnopqrstuv.txt": b"26 units",
+                     "abcdefghij🐈x": b"13 UTF16 units"}
+        self.assertEqual([len(name.encode("utf-16-le")) // 2 for name in originals],
+                         [13, 26, 13])
+        create_fat16_card(self.card, originals)
+        layout = fat16_layout()
+        entries = self._read_sector(layout.root_lba, layout.root_sectors)
+        ordinal_sequences = []
+        pending = []
+        for offset in range(0, len(entries), 32):
+            entry = entries[offset:offset + 32]
+            if not entry[0]:
+                break
+            if entry[11] == 0x0f:
+                pending.append(entry[0])
+                units = struct.unpack("<13H", entry[1:11] + entry[14:26] + entry[28:32])
+                self.assertNotIn(0, units)
+                self.assertNotIn(0xffff, units)
+            elif entry[11] != 8:
+                ordinal_sequences.append(pending)
+                pending = []
+        self.assertCountEqual(ordinal_sequences, [[0x41], [0x42, 1], [0x41]])
+        for name, first, length in self._directory_files():
+            self.assertEqual(self._file_payload(first, length), originals[name])
+
     def test_invalid_names_and_duplicates_fail_before_creating_image(self):
-        cases = ({"books/test.epub": b""}, {"bad?.epub": b""}, {"": b""}, {"book.epub": b"", "BOOK.EPUB": b""}, {"x" * 256: b""})
+        cases = ({"books//test.epub": b""}, {"../test.epub": b""},
+                 {"books/": b""}, {"books": b"", "books/test.epub": b""},
+                 {"bad?.epub": b""}, {"": b""},
+                 {"book.epub": b"", "BOOK.EPUB": b""}, {"x" * 256: b""})
         for files in cases:
             with self.subTest(files=files), self.assertRaises(SdCardFormatError):
                 create_fat16_card(self.card, files)
@@ -163,6 +193,29 @@ class SdCardTests(unittest.TestCase):
         with self.assertRaises(SdCardFormatError):
             create_fat16_card(self.card, {"large.bin": b"\0" * CARD_SIZE})
         self.assertFalse(self.card.exists())
+
+    def test_nested_directories_contain_real_dot_entries_and_file_chains(self):
+        originals = {"books/fiction/čtení.epub": make_test_epub(),
+                     "books/notes.txt": b"original notes\n", "empty.bin": b""}
+        manifest = create_fat16_card(self.card, originals)
+        layout = fat16_layout()
+        directories = {item["name"]: item for item in manifest["directories"]}
+        self.assertEqual(set(directories), {"books", "books/fiction"})
+        for name, parent in (("books", 0),
+                             ("books/fiction", directories["books"]["first_cluster"])):
+            directory = directories[name]
+            data = self._file_payload(directory["first_cluster"],
+                                      directory["clusters"] * layout.sectors_per_cluster * 512)
+            self.assertEqual(data[:11], b".          ")
+            self.assertEqual(data[32:43], b"..         ")
+            self.assertEqual(data[11], 0x10)
+            self.assertEqual(struct.unpack_from("<H", data, 26)[0], directory["first_cluster"])
+            self.assertEqual(struct.unpack_from("<H", data, 58)[0], parent)
+        for item in manifest["files"]:
+            self.assertEqual(self._file_payload(item["first_cluster"], item["size_bytes"]),
+                             originals[item["name"]])
+        self.assertEqual(self._read_sector(layout.fat1_lba, layout.fat_sectors),
+                         self._read_sector(layout.fat2_lba, layout.fat_sectors))
 
     def test_card_size_label_and_payload_type_are_checked(self):
         with self.assertRaises(SdCardFormatError):

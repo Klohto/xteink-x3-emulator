@@ -119,9 +119,8 @@ def make_test_epub() -> bytes:
 
 
 def _name(name: str) -> str:
-    name = name.removeprefix("/")
     if not name or name.endswith((".", " ")) or any(c in name for c in '\\/:*?"<>|\0'):
-        raise SdCardFormatError(f"invalid root filename: {name!r}")
+        raise SdCardFormatError(f"invalid filename component: {name!r}")
     if any(ord(c) < 32 for c in name) or len(name.encode("utf-16-le")) // 2 > 255:
         raise SdCardFormatError("VFAT filename is too long or has control characters")
     return name
@@ -143,8 +142,14 @@ def _lfn_entries(name: str, short_name: bytes) -> list[bytes]:
     for value in short_name:
         checksum = (((checksum & 1) << 7) | (checksum >> 1)) + value
         checksum &= 255
-    units = list(struct.unpack("<" + "H" * (len(name.encode("utf-16-le")) // 2), name.encode("utf-16-le"))) + [0]
-    units += [0xFFFF] * ((-len(units)) % 13)
+    encoded = name.encode("utf-16-le")
+    units = list(struct.unpack("<" + "H" * (len(encoded) // 2), encoded))
+    # VFAT uses the minimum number of 13-unit records. Exact multiples fill
+    # the final record completely and have no NUL terminator (FAT spec §LFN).
+    # SdFat lists an extra empty record but rejects fopen for such names.
+    if len(units) % 13:
+        units.append(0)
+        units += [0xFFFF] * ((-len(units)) % 13)
     count = len(units) // 13
     result = []
     for ordinal in range(count, 0, -1):
@@ -160,7 +165,7 @@ def create_fat16_card(
     size_bytes: int = CARD_SIZE,
     volume_label: str = "X3EMU",
 ) -> dict:
-    """Create a sparse, writable MBR/FAT16 image with files in its root.
+    """Create a sparse, writable MBR/FAT16 image with root or nested files.
 
     All file data is allocated through real FAT chains. Unused blocks read as
     zero. The caller can keep this file for guest cache and settings writes.
@@ -174,48 +179,107 @@ def create_fat16_card(
         raise SdCardFormatError("invalid FAT volume label")
     label = label.ljust(11)
     normalized: dict[str, bytes] = {}
+    directories: dict[str, dict] = {"": {"name": "", "children": {}, "first_cluster": 0}}
     seen: set[str] = set()
     for raw_name, payload in files.items():
-        name = _name(raw_name)
+        name = raw_name.removeprefix("/")
+        parts = name.split("/")
+        if len(parts) > 255:
+            raise SdCardFormatError("directory nesting exceeds 255 components")
+        for part in parts:
+            _name(part)
         if name.casefold() in seen:
             raise SdCardFormatError(f"duplicate filename: {name}")
         if not isinstance(payload, bytes):
             raise SdCardFormatError("file content must be bytes")
         seen.add(name.casefold())
         normalized[name] = payload
+    for name, payload in sorted(normalized.items()):
+        parts = name.split("/")
+        parent = directories[""]
+        prefix = []
+        for index, part in enumerate(parts):
+            prefix.append(part)
+            key = part.casefold()
+            existing = parent["children"].get(key)
+            is_directory = index < len(parts) - 1
+            if existing is not None:
+                if "children" not in existing or not is_directory:
+                    raise SdCardFormatError(f"file and directory path conflict: {name}")
+                parent = existing
+                continue
+            node = {"name": part, "path": "/".join(prefix)}
+            if is_directory:
+                node["children"] = {}
+                directories[node["path"]] = node
+            else:
+                node["payload"] = payload
+            parent["children"][key] = node
+            parent = node
     cluster_bytes = SECTOR_SIZE * layout.sectors_per_cluster
     fat = bytearray(layout.fat_sectors * SECTOR_SIZE)
     struct.pack_into("<HH", fat, 0, 0xFFF8, 0xFFFF)
-    root = bytearray(layout.root_sectors * SECTOR_SIZE)
-    root[:11] = label
-    root[11] = 0x08
-    root_index = 1
     next_cluster = 2
-    allocations = []
-    for index, (name, payload) in enumerate(sorted(normalized.items()), 1):
-        short = _short_name(name, index)
-        entries = _lfn_entries(name, short)
-        if root_index + len(entries) + 1 >= ROOT_ENTRIES:
-            raise SdCardFormatError("files exceed the FAT16 root directory")
-        count = (len(payload) + cluster_bytes - 1) // cluster_bytes
+    allocations: list[dict] = []
+
+    def allocate(node: dict, size: int) -> None:
+        nonlocal next_cluster
+        count = (size + cluster_bytes - 1) // cluster_bytes
         if next_cluster + count > layout.data_clusters + 2:
             raise SdCardFormatError("file data exceeds card capacity")
-        first = next_cluster if count else 0
+        node["first_cluster"] = next_cluster if count else 0
+        node["clusters"] = count
         for cluster in range(next_cluster, next_cluster + count):
             following = cluster + 1 if cluster + 1 < next_cluster + count else 0xFFFF
             struct.pack_into("<H", fat, cluster * 2, following)
-        for entry in entries:
-            root[root_index * 32:(root_index + 1) * 32] = entry
-            root_index += 1
+        allocations.append(node)
+        next_cluster += count
+
+    def prepare(directory: dict, root: bool = False) -> None:
+        children = sorted(directory["children"].values(), key=lambda node: node["name"])
+        directory["entries"] = []
+        entry_count = 1 if root else 2
+        for index, node in enumerate(children, 1):
+            node["short"] = _short_name(node["name"], index)
+            node["lfn"] = _lfn_entries(node["name"], node["short"])
+            entry_count += len(node["lfn"]) + 1
+        if root and entry_count >= ROOT_ENTRIES:
+            raise SdCardFormatError("files exceed the FAT16 root directory")
+        if not root:
+            allocate(directory, (entry_count + 1) * 32)
+        for node in children:
+            if "children" in node:
+                node["parent_cluster"] = directory["first_cluster"]
+                prepare(node)
+            else:
+                allocate(node, len(node["payload"]))
+
+    prepare(directories[""], root=True)
+
+    def entry(short: bytes, first: int, length: int, attribute: int) -> bytes:
         entry = bytearray(32)
         entry[:11] = short
-        entry[11] = 0x20
+        entry[11] = attribute
         struct.pack_into("<HHH", entry, 14, 0, _FAT_DATE, _FAT_DATE)
-        struct.pack_into("<HHHI", entry, 22, 0, _FAT_DATE, first, len(payload))
-        root[root_index * 32:(root_index + 1) * 32] = entry
-        root_index += 1
-        allocations.append({"name": name, "payload": payload, "first_cluster": first, "clusters": count})
-        next_cluster += count
+        struct.pack_into("<HHHI", entry, 22, 0, _FAT_DATE, first, length)
+        return bytes(entry)
+
+    for path_name, directory in directories.items():
+        if not path_name:
+            records = [label + b"\x08" + b"\0" * 20]
+            size = layout.root_sectors * SECTOR_SIZE
+        else:
+            records = [entry(b".          ", directory["first_cluster"], 0, 0x10),
+                       entry(b"..         ", directory["parent_cluster"], 0, 0x10)]
+            size = directory["clusters"] * cluster_bytes
+        for node in sorted(directory["children"].values(), key=lambda node: node["name"]):
+            records.extend(node["lfn"])
+            is_directory = "children" in node
+            records.append(entry(node["short"], node["first_cluster"],
+                                 0 if is_directory else len(node["payload"]),
+                                 0x10 if is_directory else 0x20))
+        directory["payload"] = b"".join(records).ljust(size, b"\0")
+    root = directories[""]["payload"]
 
     mbr = bytearray(SECTOR_SIZE)
     struct.pack_into("<I", mbr, 440, 0x58334641)
@@ -240,7 +304,8 @@ def create_fat16_card(
                 image.write(allocation["payload"])
     return {
         "path": str(target), "format": "MBR/FAT16", "layout": asdict(layout),
-        "files": [{"name": a["name"], "size_bytes": len(a["payload"]), "first_cluster": a["first_cluster"], "clusters": a["clusters"], "sha256": hashlib.sha256(a["payload"]).hexdigest()} for a in allocations],
+        "files": [{"name": a["path"], "size_bytes": len(a["payload"]), "first_cluster": a["first_cluster"], "clusters": a["clusters"], "sha256": hashlib.sha256(a["payload"]).hexdigest()} for a in allocations if "children" not in a],
+        "directories": [{"name": a["path"], "first_cluster": a["first_cluster"], "clusters": a["clusters"]} for a in allocations if "children" in a],
         "persistent": True, "hardware_validation": "pending",
     }
 

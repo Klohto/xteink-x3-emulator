@@ -1,0 +1,28 @@
+TAP version 13
+# random seed: R02S7fadc2d76aeed08ebb0e89eac7e5c163
+1..7
+# Start of riscv32 tests
+# Start of esp32c3-regi2c tests
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:43753 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=41383,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3-regi2c/rom-read-write
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:53083 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=38157,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3-regi2c/masked-calibration-register
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:34293 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=47733,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3-regi2c/power-gate
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:37601 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=38149,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/esp32c3-regi2c/unknown-and-busy
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:52925 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=50561,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 5 /riscv32/esp32c3-regi2c/phy-measurement-handshake
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:51417 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=47183,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 6 /riscv32/esp32c3-regi2c/phy-reset-pending
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:56961 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=46201,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 7 /riscv32/esp32c3-regi2c/dc-comparator-handshake
+# End of esp32c3-regi2c tests
+# End of riscv32 tests

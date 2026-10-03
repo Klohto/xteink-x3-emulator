@@ -1,0 +1,21 @@
+TAP version 13
+# random seed: R02S84ee069ff504903f8519808ef12bb74d
+1..4
+# Start of riscv32 tests
+# Start of esp32c3-assist-debug tests
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:39437 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=43687,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3-assist-debug/register-bounds-irq-and-clear
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:35743 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=42965,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3-assist-debug/unmodelled-monitor-is-reported
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:57891 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=44163,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel tcg -S -device loader,file=/tmp/esp32c3-assist-IKD3W3,addr=0x40380000,cpu-num=0,force-raw=on -accel qtest
+Not initializing SPI Flash
+qemu-system-riscv32: warning: nic esp32c3.wifi.0 has no peer
+ok 3 /riscv32/esp32c3-assist-debug/executed-sp-limits-and-fault-pc
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:35837 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=36589,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel tcg -S -device loader,file=/tmp/esp32c3-assist-U1KNW3,addr=0x40380000,cpu-num=0,force-raw=on -accel qtest
+Not initializing SPI Flash
+qemu-system-riscv32: warning: nic esp32c3.wifi.0 has no peer
+ok 4 /riscv32/esp32c3-assist-debug/executed-native-irq-precedes-next-instruction
+# End of esp32c3-assist-debug tests
+# End of riscv32 tests

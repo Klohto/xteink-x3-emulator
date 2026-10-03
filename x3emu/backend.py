@@ -13,6 +13,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import select
 import shutil
 import socket
@@ -33,11 +34,16 @@ DEVICE_PATHS = {"panel": "/machine/epd", "adc": "/machine/adc",
                 "i2c": "/machine/i2c", "usb": "/machine/jtag",
                 "fuel_gauge": "/machine/i2c/fuel-gauge", "sensor_rtc": "/machine/i2c/rtc",
                 "imu": "/machine/i2c/imu", "assist_debug": "/machine/assist-debug",
-                "regi2c": "/machine/regi2c"}
+                "regi2c": "/machine/regi2c", "wifi": "/machine/wifi"}
 DEVICE_PROPERTIES = {
     "panel": ("unsupported-count", "protocol-errors", "refresh-count", "busy-active", "spi-bytes",
               "command-count", "waveform-crc", "framebuffer-crc", "waveform-supported",
-              "timing-calibrated", "physical-effects-modelled"),
+              "timing-calibrated", "physical-effects-modelled", "output-errors",
+              "trace-events-attempted", "trace-events-flushed", "trace-bytes-flushed",
+              "trace-write-errors", "trace-flush-errors", "trace-close-errors", "dump-frames-written",
+              "dump-open-errors", "dump-write-errors", "dump-flush-errors", "dump-close-errors",
+              "trace-fd-size", "trace-fd-position", "trace-fd-inode", "trace-path-size", "trace-path-inode",
+              "trace-file-linked"),
     "adc": ("buttons", "unsupported-uses", "hold-ns", "currentrelease-deadline-ns"),
     "spi0": ("unsupported-reads", "unsupported-writes"),
     "spi1": ("unsupported-reads", "unsupported-writes"),
@@ -46,24 +52,37 @@ DEVICE_PROPERTIES = {
             "watchdog-stage", "watchdog-feed-count", "watchdog-expiry-count"),
     "clock": ("rtc-crc-count", "rtc-crc-hardware-verified", "rtc-crc-timing-calibrated"),
     "i2c": ("unsupported-accesses", "transfer-count", "transferred-bytes", "nack-count"),
-    "usb": ("unsupported-accesses", "transmitted-bytes", "received-bytes", "host-connected"),
-    "fuel_gauge": ("unsupported-accesses",), "sensor_rtc": ("unsupported-accesses",),
-    "imu": ("unsupported-accesses",),
+    "usb": ("unsupported-accesses", "transmitted-bytes", "received-bytes", "host-connected",
+            "transmitted-packets", "received-packets", "backend-stalls", "tx-overruns",
+            "timing-calibrated", "physical-effects-modelled", "usb-enumeration-modelled"),
+    "fuel_gauge": ("unsupported-accesses", "temperature-mc", "injection-count", "physical-effects-modelled",
+                   "soc-percent", "voltage-mv", "current-ma", "fuel-gauging-modelled"),
+    "sensor_rtc": ("unsupported-accesses", "temperature-mc", "injection-count", "physical-effects-modelled",
+                   "epoch-seconds", "oscillator-stopped", "alarm-modelled", "alarm-irq-wired"),
+    "imu": ("unsupported-accesses", "temperature-mc", "injection-count", "physical-effects-modelled",
+            "accel-x-mg", "accel-y-mg", "accel-z-mg", "gyro-x-mdps", "gyro-y-mdps", "gyro-z-mdps",
+            "motion-hold-ns", "motion-release-deadline-ns", "sampling-timing-modelled"),
     "assist_debug": ("unsupported-uses", "sp-checks", "spill-count", "last-sp", "last-pc"),
     "regi2c": ("unsupported-accesses", "transfer-count", "read-count", "write-count",
-                "analog-modelled", "calibration-modelled", "power-control-modelled", "timing-calibrated"),
+                "analog-modelled", "calibration-modelled", "power-control-modelled", "timing-calibrated",
+                "phy-handshake-modelled", "synthetic-measurements"),
+    "wifi": ("unsupported-accesses", "tx-frames", "rx-frames", "rx-dropped", "bad-dma",
+             "ethernet-tx", "ethernet-rx", "beacons", "auth-requests", "assoc-requests",
+             "radio-modelled", "timing-calibrated", "encryption-modelled", "air-enabled", "ssid", "channel"),
 }
 MACHINE_PROPERTIES = ("unsupported-io-reads", "unsupported-io-writes")
 MACHINE_STATE_PROPERTIES = MACHINE_PROPERTIES + ("virtual-time-ns", "power-button", "power-button-hold-ns", "unsupported-io-json")
 REQUIRED_COUNTERS = {"machine": MACHINE_PROPERTIES,
-                     "panel": ("unsupported-count", "protocol-errors"),
+                     "panel": ("unsupported-count", "protocol-errors", "output-errors"),
                      "adc": ("unsupported-uses",),
                      "spi0": DEVICE_PROPERTIES["spi0"], "spi1": DEVICE_PROPERTIES["spi1"],
-                     "i2c": ("unsupported-accesses",), "usb": ("unsupported-accesses",),
+                     "i2c": ("unsupported-accesses",), "usb": ("unsupported-accesses", "tx-overruns"),
                      "fuel_gauge": ("unsupported-accesses",), "sensor_rtc": ("unsupported-accesses",),
                      "imu": ("unsupported-accesses",), "assist_debug": ("unsupported-uses", "spill-count"),
                      "regi2c": ("unsupported-accesses",)}
-REQUIRED_OBSERVATIONS = {"regi2c": DEVICE_PROPERTIES["regi2c"],
+WIFI_PHY_OBSERVATIONS = ("phy-handshake-modelled", "synthetic-measurements")
+REQUIRED_OBSERVATIONS = {"regi2c": tuple(prop for prop in DEVICE_PROPERTIES["regi2c"]
+                                       if prop not in WIFI_PHY_OBSERVATIONS),
                          "assist_debug": DEVICE_PROPERTIES["assist_debug"]}
 
 
@@ -281,6 +300,9 @@ class RunConfig:
     icount_shift: int = 3
     power_on: bool = True
     power_button_hold_ns: int = 1_000_000_000
+    usb_port: int | None = None
+    wifi: bool = False
+    wifi_hostfwd: tuple[str, ...] = ()
 
     def resolved(self) -> RunConfig:
         return RunConfig(
@@ -289,6 +311,8 @@ class RunConfig:
             self.icount, self.seconds, self.in_place, self.qmp_transport,
             Path(self.rom_dir).expanduser().resolve() if self.rom_dir is not None else None,
             self.icount_shift, self.power_on, self.power_button_hold_ns,
+            self.usb_port,
+            self.wifi, tuple(self.wifi_hostfwd),
         )
 
 
@@ -331,6 +355,22 @@ def build_command(config: RunConfig) -> list[str]:
     if (isinstance(config.power_button_hold_ns, bool) or not isinstance(config.power_button_hold_ns, int)
             or not 0 < config.power_button_hold_ns <= (1 << 63) - 1):
         raise BackendError("power-button hold must be a positive integer number of virtual ns below 2**63")
+    if config.usb_port is not None and (isinstance(config.usb_port, bool)
+            or not isinstance(config.usb_port, int) or not 1 <= config.usb_port <= 65535):
+        raise BackendError("USB loopback port must be an integer from 1 to 65535")
+    if not isinstance(config.wifi, bool):
+        raise BackendError("WiFi enable must be a boolean")
+    if config.wifi_hostfwd and not config.wifi:
+        raise BackendError("WiFi host forwarding requires WiFi to be enabled")
+    listeners = set()
+    for forwarding in config.wifi_hostfwd:
+        match = re.fullmatch(r"(tcp|udp):127\.0\.0\.1:([0-9]+)-:([0-9]+)", forwarding)
+        if match is None or not all(1 <= int(port) <= 65535 for port in match.groups()[1:]):
+            raise BackendError("WiFi forwarding must be tcp:127.0.0.1:HOSTPORT-:GUESTPORT or udp with ports 1..65535")
+        listener = (match[1], int(match[2]))
+        if listener in listeners:
+            raise BackendError("WiFi host-forward listeners must be unique")
+        listeners.add(listener)
     flash = config.flash if config.in_place else config.output / "flash.bin"
     sd = config.sd if config.in_place else config.output / "sd.img"
     transport = _transport(config)
@@ -344,10 +384,17 @@ def build_command(config: RunConfig) -> list[str]:
         "-global", f"xteink-x3-epd.dump-file={config.output / 'panel.pbm'}",
         "-global", f"xteink-x3-epd.trace-file={config.output / 'panel.jsonl'}",
         "-serial", f"file:{config.output / 'rom.log'}", "-serial", "null",
-        "-serial", f"file:{config.output / 'serial.log'}",
         "-monitor", "none", "-display", "none",
         "-d", "unimp,guest_errors", "-D", str(config.output / "diagnostics.log"),
     ]
+    if config.usb_port is None:
+        command += ["-serial", f"file:{config.output / 'serial.log'}"]
+    else:
+        command += ["-chardev", f"socket,id=x3usb,host=127.0.0.1,port={config.usb_port},server=on,wait=off,nodelay=on,logfile={_option_path(config.output / 'serial.log')},logappend=off",
+                    "-serial", "chardev:x3usb"]
+    if config.wifi:
+        command += ["-global", "driver=esp32c3.wifi,property=air-enabled,value=true",
+                    "-nic", "user,model=esp32c3.wifi" + "".join(f",hostfwd={value}" for value in config.wifi_hostfwd)]
     rom_dir = _rom_directory(config)
     if rom_dir is not None:
         command += ["-L", str(rom_dir)]
@@ -409,6 +456,18 @@ def _diagnostics(path: Path) -> dict:
     return counts
 
 
+def _epd_output_diagnostics(path: Path) -> dict:
+    """Catch final fclose failures after the last QMP snapshot."""
+    prefixes = ("xteink-x3-epd: incomplete trace output", "xteink-x3-epd: incomplete framebuffer dump",
+                "xteink-x3-epd: cannot write", "xteink-x3-epd: cannot close trace output")
+    failures = []
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if any(prefix in line for prefix in prefixes):
+                failures.append(line)
+    return {"count": len(failures), "examples": failures[:20]}
+
+
 def _record_capabilities(result: dict, state: dict) -> None:
     properties = {
         "rtc_crc_hardware_verified": ("clock", "rtc-crc-hardware-verified"),
@@ -421,10 +480,13 @@ def _record_capabilities(result: dict, state: dict) -> None:
         "regi2c_calibration_modelled": ("regi2c", "calibration-modelled"),
         "regi2c_power_control_modelled": ("regi2c", "power-control-modelled"),
         "regi2c_timing_calibrated": ("regi2c", "timing-calibrated"),
+        "regi2c_phy_handshake_modelled": ("regi2c", "phy-handshake-modelled"),
     }
     for name, (device, prop) in properties.items():
         if prop in state.get(device, {}):
             result["model_limits"][name] = state[device][prop]
+    if "synthetic-measurements" in state.get("regi2c", {}):
+        result["wifi"]["phy_synthetic_measurements"] = state["regi2c"]["synthetic-measurements"]
 
 
 def run(config: RunConfig) -> dict:
@@ -474,6 +536,16 @@ def run(config: RunConfig) -> dict:
         "qmp_transport": transport,
         "qmp_control_path": str(config.output / "qmp.sock"),
         "qmp_transport_path": str(_qmp_transport_path(config, transport)),
+        "usb_console": {"transport": "loopback_tcp" if config.usb_port is not None else "file",
+                        "host": "127.0.0.1" if config.usb_port is not None else None,
+                        "port": config.usb_port, "guest_device": "/machine/jtag", "serial_index": 2,
+                        "log": "serial.log", "usb_enumeration_modelled": False},
+        "wifi": {"enabled": config.wifi, "hostfwd": list(config.wifi_hostfwd),
+                 "backend": "QEMU user networking" if config.wifi else None,
+                 "guest_model": "esp32c3.wifi" if config.wifi else None,
+                 "rf_modelled": False, "timing_calibrated": False,
+                 "phy_measurement_source": "synthetic ideal-zero digital results",
+                 "physical_phy_measurements_modelled": False},
         "artifacts": {"serial": "serial.log", "rom_serial": "rom.log", "backend": "backend.log", "diagnostics": "diagnostics.log",
                       "panel": "panel.pbm", "panel_trace": "panel.jsonl", "qmp": "qmp.sock"},
         "validity": {"unsupported_features_checked": False, "diagnostics_clean": False,
@@ -553,19 +625,25 @@ def run(config: RunConfig) -> dict:
         result["host_runtime_seconds"] = time.monotonic() - started
         result["status"] = "failed" if result.get("error") or result.get("exit_code", 1) != 0 else "stopped"
         result["diagnostics"] = _diagnostics(config.output / "diagnostics.log")
+        result["epd_output_diagnostics"] = _epd_output_diagnostics(config.output / "backend.log")
         state = result.get("final_state", {})
         _record_capabilities(result, state)
         required = all(prop in state.get(device, {})
                        for device, properties in REQUIRED_COUNTERS.items() for prop in properties)
         required = required and all(prop in state.get(device, {})
                                     for device, properties in REQUIRED_OBSERVATIONS.items() for prop in properties)
+        if config.wifi:
+            required = required and all(prop in state.get("wifi", {}) for prop in DEVICE_PROPERTIES["wifi"])
+            required = required and all(prop in state.get("regi2c", {}) for prop in WIFI_PHY_OBSERVATIONS)
         unsupported = [state.get(device, {}).get(prop, 0)
                        for device, properties in REQUIRED_COUNTERS.items() for prop in properties]
         unsupported.append(state.get("rtc", {}).get("unsupported-count", 0))
+        if config.wifi:
+            unsupported.extend(state.get("wifi", {}).get(prop, 0) for prop in ("unsupported-accesses", "bad-dma", "rx-dropped"))
         result["validity"]["unsupported_features_checked"] = required
         result["validity"]["diagnostics_clean"] = bool(
             required and result["status"] != "failed" and not result["diagnostics"]["nonempty_lines"]
-            and not any(unsupported)
+            and not any(unsupported) and not result["epd_output_diagnostics"]["count"]
         )
         for artifact in ("panel.pbm", "panel.jsonl", "serial.log", "rom.log", "diagnostics.log"):
             path = config.output / artifact

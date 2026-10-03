@@ -1,0 +1,13 @@
+TAP version 13
+# random seed: R02Se2e2806854b4ffda4b670a98242ae7cf
+1..2
+# Start of riscv32 tests
+# Start of xteink-x3-soc tests
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:41863 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=51135,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/xteink-x3-soc/unsupported-counts-and-values
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:48253 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=54243,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/xteink-x3-soc/modelled-accesses-and-read-only-diagnostics
+# End of xteink-x3-soc tests
+# End of riscv32 tests

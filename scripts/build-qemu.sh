@@ -16,7 +16,7 @@ RUN_TESTS=0
 DEVICE_TESTS=(esp32c3-gpspi-test xteink-x3-adc-test esp32c3-i2c-test
               xteink-x3-epd-test esp32c3-usb-test xteink-x3-sd-test
               esp32c3-flash-test esp32c3-rtc-test xteink-x3-soc-test
-              esp32c3-assist-debug-test esp32c3-regi2c-test)
+              esp32c3-assist-debug-test esp32c3-regi2c-test esp32c3-wifi-test)
 
 usage() {
     cat <<'USAGE'
@@ -67,8 +67,8 @@ parts = tuple(int(part) for part in version.split('.')[:2])
 if parts < (1, 5):
     sys.exit(f'build-qemu: Meson >=1.5 is required; installed version is {version}')
 PY
-pkg-config --exists 'glib-2.0 >= 2.66' pixman-1 zlib libgcrypt || \
-    fail 'Missing GLib, Pixman, zlib or libgcrypt development files; see docs/build.md'
+pkg-config --exists 'glib-2.0 >= 2.66' pixman-1 zlib libgcrypt slirp || \
+    fail 'Missing GLib, Pixman, zlib, libgcrypt or SLIRP development files; see docs/build.md'
 
 SOURCE_DIR=$(realpath -m -- "$SOURCE_DIR")
 BUILD_DIR=$(realpath -m -- "$BUILD_DIR")
@@ -131,7 +131,7 @@ DOWNLOAD_OPTION=--disable-download
         --target-list=riscv32-softmmu "$DOWNLOAD_OPTION" \
         --disable-docs --disable-werror --disable-sdl --disable-gtk \
         --disable-vnc --disable-tools --disable-guest-agent --disable-rust \
-        --enable-gcrypt --enable-fdt=internal
+        --enable-gcrypt --enable-fdt=internal --enable-slirp
     python3 "$PROJECT_ROOT/scripts/verify-qemu-subprojects.py" "$SOURCE_DIR" \
         --output "$BUILD_DIR/subprojects.json"
     TARGETS=(qemu-system-riscv32)
@@ -160,8 +160,18 @@ PY_SOCKET
         TEST_STATUS=0
         QTEST_QEMU_TRANSPORT="$TEST_TRANSPORT" \
         QTEST_QEMU_BINARY="$BUILD_DIR/qemu-system-riscv32" \
-            "$BUILD_DIR/tests/qtest/$test" \
-            >"$BUILD_DIR/native-tests/$test.tap" 2>&1 || TEST_STATUS=$?
+            python3 - "$BUILD_DIR/tests/qtest/$test" \
+                "$BUILD_DIR/native-tests/$test.tap" <<'PY_CAPTURE' || TEST_STATUS=$?
+from pathlib import Path
+import subprocess
+import sys
+
+# Write one complete transcript after the test and its children have exited.
+result = subprocess.run([sys.argv[1]], stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT)
+Path(sys.argv[2]).write_bytes(result.stdout)
+sys.exit(result.returncode if result.returncode >= 0 else 128 - result.returncode)
+PY_CAPTURE
         cat "$BUILD_DIR/native-tests/$test.tap"
         [[ $TEST_STATUS == 0 ]] || fail "$test exited with status $TEST_STATUS"
     done
@@ -199,6 +209,8 @@ mkdir -p "$LICENSE_DIR"
 for license in COPYING COPYING.LIB LICENSE; do
     install -m 644 "$SOURCE_DIR/$license" "$LICENSE_DIR/$license"
 done
+install -m 644 "$SOURCE_DIR/docs/esp32sim-MIT.txt" \
+    "$LICENSE_DIR/esp32sim-MIT.txt"
 python3 - "$SOURCE_DIR" "$BUILD_DIR" "$INSTALL_DIR" "$PATCH_PATH" "$UPSTREAM_REVISION" "$RUN_TESTS" "$SOURCE_TREE" <<'PY'
 import hashlib
 import json

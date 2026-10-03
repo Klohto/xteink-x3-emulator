@@ -1,3 +1,87 @@
+diff --git a/docs/esp32sim-MIT.txt b/docs/esp32sim-MIT.txt
+new file mode 100644
+index 0000000..1785f0a
+--- /dev/null
++++ b/docs/esp32sim-MIT.txt
+@@ -0,0 +1,21 @@
++MIT License
++
++Copyright (c) 2026 Joakim Eriksson (@joakimeriksson) and Alice (@aliceisjustplaying)
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
+diff --git a/hw/block/m25p80.c b/hw/block/m25p80.c
+index 46dbe7c..92185c6 100644
+--- a/hw/block/m25p80.c
++++ b/hw/block/m25p80.c
+@@ -61,6 +61,8 @@ typedef struct FlashPartInfo {
+      */
+     uint8_t id[SPI_NOR_MAX_ID_LEN];
+     uint8_t id_len;
++    /* Optional electronic signature for documented 0xab/0x90 commands. */
++    uint8_t legacy_id;
+     /*
+      * there is confusion between manufacturers as to what a sector is. In this
+      * device model, a "sector" is the size that is erased by the ERASE_SECTOR
+@@ -222,7 +224,8 @@ static const FlashPartInfo known_devices[] = {
+     { INFO("is25lp016d",  0x9d6015,      0,  64 << 10,  32, ER_4K) },
+     { INFO("is25lp032",   0x9d6016,      0,  64 << 10,  64, ER_4K) },
+     { INFO("is25lp064",   0x9d6017,      0,  64 << 10, 128, ER_4K) },
+-    { INFO("is25lp128",   0x9d6018,      0,  64 << 10, 256, ER_4K) },
++    { INFO("is25lp128",   0x9d6018,      0,  64 << 10, 256, ER_4K),
++      .legacy_id = 0x17 },
+     { INFO("is25lp256",   0x9d6019,      0,  64 << 10, 512, ER_4K) },
+     { INFO("is25wp032",   0x9d7016,      0,  64 << 10,  64, ER_4K) },
+     { INFO("is25wp064",   0x9d7017,      0,  64 << 10, 128, ER_4K) },
+@@ -721,6 +724,9 @@ static inline int get_addr_length(Flash *s)
+    switch (s->cmd_in_progress) {
+    case RDSFDP:
+        return 3;
++    case RDID_90:
++    case RDID_AB:
++        return s->pi->legacy_id ? 3 : s->four_bytes_address_mode ? 4 : 3;
+    case PP4:
+    case PP4_4:
+    case QPP_4:
+@@ -856,7 +862,22 @@ static void complete_collecting_data(Flash *s)
+         break;
+     case RDID_90:
+     case RDID_AB:
+-        if (get_man(s) == MAN_SST) {
++        if (s->pi->legacy_id) {
++            /* IS25LP128 Rev. L11, sections 8.25 and 8.27, table 8.4. */
++            if (s->cmd_in_progress == RDID_AB) {
++                s->data[0] = s->pi->legacy_id;
++                s->len = 1;
++            } else {
++                bool device_first = s->cur_addr & 1;
++
++                s->data[0] = device_first ? s->pi->legacy_id : s->pi->id[0];
++                s->data[1] = device_first ? s->pi->id[0] : s->pi->legacy_id;
++                s->len = 2;
++            }
++            s->pos = 0;
++            s->data_read_loop = true;
++            s->state = STATE_READING_DATA;
++        } else if (get_man(s) == MAN_SST) {
+             if (s->cur_addr <= 1) {
+                 if (s->cur_addr) {
+                     s->data[0] = s->pi->id[2];
 diff --git a/hw/display/meson.build b/hw/display/meson.build
 index 36a9ace..bc60ce3 100644
 --- a/hw/display/meson.build
@@ -9,10 +93,10 @@ index 36a9ace..bc60ce3 100644
 +system_ss.add(when: 'CONFIG_RISCV_ESP32C3', if_true: files('xteink_x3_epd.c'))
 diff --git a/hw/display/xteink_x3_epd.c b/hw/display/xteink_x3_epd.c
 new file mode 100644
-index 0000000..c1ec78a
+index 0000000..4120d11
 --- /dev/null
 +++ b/hw/display/xteink_x3_epd.c
-@@ -0,0 +1,911 @@
+@@ -0,0 +1,1057 @@
 +/*
 + * Xteink X3 UC8253 / UC8279d e-paper SPI peripheral.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -29,6 +113,7 @@ index 0000000..c1ec78a
 +
 +#include "qemu/osdep.h"
 +#include "qapi/error.h"
++#include "qapi/visitor.h"
 +#include "qemu/error-report.h"
 +#include "qemu/log.h"
 +#include "qemu/module.h"
@@ -37,6 +122,7 @@ index 0000000..c1ec78a
 +#include "hw/qdev-properties.h"
 +#include "hw/display/xteink_x3_epd.h"
 +#include "migration/vmstate.h"
++#include "sysemu/sysemu.h"
 +#include "ui/console.h"
 +
 +#define RAM_WIDTH 800
@@ -111,6 +197,21 @@ index 0000000..c1ec78a
 +    uint64_t refresh_count;
 +    uint64_t unsupported_count;
 +    uint64_t protocol_errors;
++    /* Host output accounting is local to the opened files, not migrated. */
++    uint64_t trace_events_attempted;
++    uint64_t trace_events_flushed;
++    uint64_t trace_bytes_flushed;
++    uint64_t trace_write_errors;
++    uint64_t trace_flush_errors;
++    uint64_t trace_close_errors;
++    uint64_t dump_frames_written;
++    uint64_t dump_open_errors;
++    uint64_t dump_write_errors;
++    uint64_t dump_flush_errors;
++    uint64_t dump_close_errors;
++    uint64_t output_errors;
++    Notifier trace_exit;
++    bool trace_exit_registered;
 +    uint32_t waveform_crc;
 +    uint32_t framebuffer_crc;
 +};
@@ -133,12 +234,88 @@ index 0000000..c1ec78a
 +static void x3_trace(XteinkX3EpdState *s, const char *event, uint32_t value)
 +{
 +    if (s->trace) {
-+        fprintf(s->trace,
-+                "{\"t_ns\":%" PRId64 ",\"device\":\"epd\","
++        int written;
++        bool failed = false;
++        bool previously_failed = s->trace_write_errors || s->trace_flush_errors;
++
++        s->trace_events_attempted++;
++        written = fprintf(s->trace,
++                "{\"seq\":%" PRIu64 ",\"t_ns\":%" PRId64 ",\"device\":\"epd\","
 +                "\"event\":\"%s\",\"value\":%u}\n",
++                s->trace_events_attempted,
 +                qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL), event, value);
-+        fflush(s->trace);
++        if (written < 0) {
++            s->trace_write_errors++;
++            s->output_errors++;
++            failed = true;
++        }
++        if (fflush(s->trace) != 0) {
++            s->trace_flush_errors++;
++            s->output_errors++;
++            failed = true;
++        }
++        if (!failed) {
++            s->trace_events_flushed++;
++            s->trace_bytes_flushed += written;
++        } else if (!previously_failed) {
++            error_report("xteink-x3-epd: incomplete trace output: %s",
++                         s->trace_file);
++        }
 +    }
++}
++
++static void x3_close_trace(XteinkX3EpdState *s)
++{
++    if (s->trace) {
++        if (fclose(s->trace) != 0) {
++            s->trace_close_errors++;
++            s->output_errors++;
++            error_report("xteink-x3-epd: cannot close trace output: %s: %s",
++                         s->trace_file, strerror(errno));
++        }
++        s->trace = NULL;
++    }
++}
++
++static void x3_trace_exit(Notifier *notifier, void *data)
++{
++    XteinkX3EpdState *s = container_of(notifier, XteinkX3EpdState, trace_exit);
++
++    /* QEMU's orderly process exit need not finalize every machine object. */
++    x3_close_trace(s);
++}
++
++static void x3_trace_stat(Object *obj, Visitor *v, const char *name,
++                          void *opaque, Error **errp)
++{
++    XteinkX3EpdState *s = XTEINK_X3_EPD(obj);
++    struct stat st;
++    uint64_t value = 0;
++    bool fd_property = g_str_has_prefix(name, "trace-fd-");
++
++    if (s->trace && fd_property) {
++        if (!strcmp(name, "trace-fd-position")) {
++            off_t position = ftello(s->trace);
++            if (position >= 0) {
++                value = position;
++            }
++        } else if (!fstat(fileno(s->trace), &st)) {
++            value = !strcmp(name, "trace-fd-inode") ? st.st_ino : st.st_size;
++        }
++    } else if (!fd_property && s->trace_file && !stat(s->trace_file, &st)) {
++        value = !strcmp(name, "trace-path-inode") ? st.st_ino : st.st_size;
++    }
++    visit_type_uint64(v, name, &value, errp);
++}
++
++static bool x3_trace_linked(Object *obj, Error **errp)
++{
++    XteinkX3EpdState *s = XTEINK_X3_EPD(obj);
++    struct stat fd, path;
++
++    return s->trace && s->trace_file && !fstat(fileno(s->trace), &fd) &&
++           !stat(s->trace_file, &path) && fd.st_dev == path.st_dev &&
++           fd.st_ino == path.st_ino;
 +}
 +
 +static void x3_protocol_error(XteinkX3EpdState *s, const char *message)
@@ -246,23 +423,45 @@ index 0000000..c1ec78a
 +    }
 +    file = fopen(s->dump_file, "wb");
 +    if (!file) {
++        s->dump_open_errors++;
++        s->output_errors++;
 +        error_report("xteink-x3-epd: cannot write %s: %s",
 +                     s->dump_file, strerror(errno));
 +        return;
 +    }
-+    failed = fprintf(file,
++    failed = false;
++    if (fprintf(file,
 +                     "P5\n# X3 ideal digital target; timing uncalibrated\n"
 +                     "# controller=%u refresh=%" PRIu64
 +                     " waveform_crc=%08x waveform_supported=%u\n"
 +                     "%u %u\n255\n",
 +                     s->controller, s->refresh_count, s->waveform_crc,
 +                     s->waveform_supported, XTEINK_X3_EPD_WIDTH,
-+                     XTEINK_X3_EPD_HEIGHT) < 0;
-+    failed |= fwrite(s->frame, 1, FRAME_SIZE, file) != FRAME_SIZE;
-+    failed |= fclose(file) != 0;
++                     XTEINK_X3_EPD_HEIGHT) < 0) {
++        s->dump_write_errors++;
++        s->output_errors++;
++        failed = true;
++    }
++    if (fwrite(s->frame, 1, FRAME_SIZE, file) != FRAME_SIZE) {
++        s->dump_write_errors++;
++        s->output_errors++;
++        failed = true;
++    }
++    if (fflush(file) != 0) {
++        s->dump_flush_errors++;
++        s->output_errors++;
++        failed = true;
++    }
++    if (fclose(file) != 0) {
++        s->dump_close_errors++;
++        s->output_errors++;
++        failed = true;
++    }
 +    if (failed) {
 +        error_report("xteink-x3-epd: incomplete framebuffer dump: %s",
 +                     s->dump_file);
++    } else {
++        s->dump_frames_written++;
 +    }
 +}
 +
@@ -748,8 +947,9 @@ index 0000000..c1ec78a
 +    x3_controller_reset(s);
 +    s->framebuffer_crc = x3_crc32(s->frame, FRAME_SIZE, 0);
 +    memset(s->unknown_seen, 0, sizeof(s->unknown_seen));
-+    s->spi_bytes = s->command_count = s->refresh_count = 0;
-+    s->unsupported_count = s->protocol_errors = 0;
++    /* QOM counters describe this process's transfers and exported trace.
++     * A CPU/deep-sleep reset must not hide prior diagnostics or rewind the
++     * refresh numbers in a trace that remains open across the reset. */
 +    s->waveform_crc = 0;
 +    s->waveform_supported = false;
 +    s->redraw = true;
@@ -842,6 +1042,9 @@ index 0000000..c1ec78a
 +                             s->trace_file);
 +            return;
 +        }
++        s->trace_exit.notify = x3_trace_exit;
++        qemu_add_exit_notifier(&s->trace_exit);
++        s->trace_exit_registered = true;
 +    }
 +    s->busy_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, x3_busy_done, s);
 +    qdev_init_gpio_in_named(DEVICE(s), x3_dc_gpio, "dc", 1);
@@ -871,6 +1074,32 @@ index 0000000..c1ec78a
 +                                  OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "protocol-errors", &s->protocol_errors,
 +                                  OBJ_PROP_FLAG_READ);
++#define OUTPUT_COUNTER(name, field) \
++    object_property_add_uint64_ptr(obj, name, &s->field, OBJ_PROP_FLAG_READ)
++    OUTPUT_COUNTER("trace-events-attempted", trace_events_attempted);
++    OUTPUT_COUNTER("trace-events-flushed", trace_events_flushed);
++    OUTPUT_COUNTER("trace-bytes-flushed", trace_bytes_flushed);
++    OUTPUT_COUNTER("trace-write-errors", trace_write_errors);
++    OUTPUT_COUNTER("trace-flush-errors", trace_flush_errors);
++    OUTPUT_COUNTER("trace-close-errors", trace_close_errors);
++    OUTPUT_COUNTER("dump-frames-written", dump_frames_written);
++    OUTPUT_COUNTER("dump-open-errors", dump_open_errors);
++    OUTPUT_COUNTER("dump-write-errors", dump_write_errors);
++    OUTPUT_COUNTER("dump-flush-errors", dump_flush_errors);
++    OUTPUT_COUNTER("dump-close-errors", dump_close_errors);
++    OUTPUT_COUNTER("output-errors", output_errors);
++#undef OUTPUT_COUNTER
++    object_property_add(obj, "trace-fd-size", "uint64", x3_trace_stat,
++                        NULL, NULL, NULL);
++    object_property_add(obj, "trace-fd-position", "uint64", x3_trace_stat,
++                        NULL, NULL, NULL);
++    object_property_add(obj, "trace-fd-inode", "uint64", x3_trace_stat,
++                        NULL, NULL, NULL);
++    object_property_add(obj, "trace-path-size", "uint64", x3_trace_stat,
++                        NULL, NULL, NULL);
++    object_property_add(obj, "trace-path-inode", "uint64", x3_trace_stat,
++                        NULL, NULL, NULL);
++    object_property_add_bool(obj, "trace-file-linked", x3_trace_linked, NULL);
 +    object_property_add_uint32_ptr(obj, "waveform-crc", &s->waveform_crc,
 +                                  OBJ_PROP_FLAG_READ);
 +    object_property_add_uint32_ptr(obj, "framebuffer-crc", &s->framebuffer_crc,
@@ -888,9 +1117,10 @@ index 0000000..c1ec78a
 +    if (s->busy_timer) {
 +        timer_free(s->busy_timer);
 +    }
-+    if (s->trace) {
-+        fclose(s->trace);
++    if (s->trace_exit_registered) {
++        qemu_remove_exit_notifier(&s->trace_exit);
 +    }
++    x3_close_trace(s);
 +}
 +
 +static void x3_class_init(ObjectClass *klass, void *data)
@@ -1128,10 +1358,10 @@ index 1e84238..8383ab0 100644
 +type_init(register_types)
 diff --git a/hw/i2c/esp32c3_i2c.c b/hw/i2c/esp32c3_i2c.c
 new file mode 100644
-index 0000000..81e3a7a
+index 0000000..d8e6820
 --- /dev/null
 +++ b/hw/i2c/esp32c3_i2c.c
-@@ -0,0 +1,866 @@
+@@ -0,0 +1,1217 @@
 +/*
 + * ESP32-C3 master I2C and Xteink X3 register-level sensor models.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -1155,6 +1385,7 @@ index 0000000..81e3a7a
 +#include "qemu/log.h"
 +#include "qemu/module.h"
 +#include "qapi/error.h"
++#include "qapi/visitor.h"
 +#include "hw/irq.h"
 +#include "hw/qdev-properties.h"
 +#include "hw/i2c/esp32c3_i2c.h"
@@ -1686,6 +1917,18 @@ index 0000000..81e3a7a
 +    bool pointer_pending;
 +    int64_t rtc_epoch;
 +    int64_t rtc_base_ns;
++    int64_t rtc_weekday_origin;
++    uint8_t rtc_weekday;
++    int64_t battery_soc;
++    int64_t battery_mv;
++    int64_t battery_ma;
++    int64_t temperature_mc;
++    int64_t accel_mg[3];
++    int64_t gyro_mdps[3];
++    uint64_t motion_hold_ns;
++    uint64_t motion_deadline_ns;
++    QEMUTimer *motion_timer;
++    uint64_t injection_count;
 +    uint64_t unsupported_accesses;
 +};
 +
@@ -1693,6 +1936,17 @@ index 0000000..81e3a7a
 +{
 +    s->regs[reg] = word;
 +    s->regs[reg + 1] = word >> 8;
++}
++
++static int64_t x3_rtc_seconds(X3SensorState *s)
++{
++    return s->rtc_epoch + (qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) -
++                          s->rtc_base_ns) / NANOSECONDS_PER_SECOND;
++}
++
++static bool x3_bcd_valid(uint8_t value)
++{
++    return (value & 15) <= 9 && (value >> 4) <= 9;
 +}
 +
 +static void x3_rtc_capture(X3SensorState *s)
@@ -1703,8 +1957,7 @@ index 0000000..81e3a7a
 +     * no-op event that could keep warping an otherwise idle sleeping machine.
 +     * Capture only when the I2C slave's register view becomes observable.
 +     */
-+    time_t secs = s->rtc_epoch + (qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) -
-+                                 s->rtc_base_ns) / 1000000000;
++    time_t secs = x3_rtc_seconds(s);
 +    gmtime_r(&secs, &now);
 +    s->regs[0] = to_bcd(now.tm_sec);
 +    s->regs[1] = to_bcd(now.tm_min);
@@ -1714,7 +1967,9 @@ index 0000000..81e3a7a
 +    } else {
 +        s->regs[2] = to_bcd(now.tm_hour);
 +    }
-+    s->regs[3] = now.tm_wday + 1;
++    /* DS3231 day is a user-defined 1..7 sequence, independent of the date. */
++    s->regs[3] = (s->rtc_weekday - 1 +
++                  (secs / 86400 - s->rtc_weekday_origin) % 7 + 7) % 7 + 1;
 +    s->regs[4] = to_bcd(now.tm_mday);
 +    s->regs[5] = to_bcd(now.tm_mon + 1) | (now.tm_year >= 200 ? BIT(7) : 0);
 +    s->regs[6] = to_bcd(now.tm_year % 100);
@@ -1723,6 +1978,8 @@ index 0000000..81e3a7a
 +static void x3_rtc_commit(X3SensorState *s)
 +{
 +    struct tm tm = { 0 };
++    struct tm normalized;
++    time_t epoch;
 +    int hour;
 +
 +    tm.tm_sec = from_bcd(s->regs[0] & 0x7f);
@@ -1739,15 +1996,84 @@ index 0000000..81e3a7a
 +    tm.tm_mday = from_bcd(s->regs[4] & 0x3f);
 +    tm.tm_mon = from_bcd(s->regs[5] & 0x1f) - 1;
 +    tm.tm_year = from_bcd(s->regs[6]) + 100 + (s->regs[5] & BIT(7) ? 100 : 0);
-+    if (tm.tm_sec > 59 || tm.tm_min > 59 || hour > 23 ||
++    if (!x3_bcd_valid(s->regs[0] & 0x7f) ||
++        !x3_bcd_valid(s->regs[1] & 0x7f) ||
++        !x3_bcd_valid(s->regs[2] & (s->regs[2] & BIT(6) ? 0x1f : 0x3f)) ||
++        !x3_bcd_valid(s->regs[4] & 0x3f) ||
++        !x3_bcd_valid(s->regs[5] & 0x1f) || !x3_bcd_valid(s->regs[6]) ||
++        s->regs[3] < 1 || s->regs[3] > 7 ||
++        ((s->regs[2] & BIT(6)) &&
++         (!from_bcd(s->regs[2] & 0x1f) ||
++          from_bcd(s->regs[2] & 0x1f) > 12)) ||
++        tm.tm_sec > 59 || tm.tm_min > 59 || hour > 23 ||
 +        tm.tm_mday < 1 || tm.tm_mday > 31 || tm.tm_mon < 0 || tm.tm_mon > 11) {
-+        qemu_log_mask(LOG_GUEST_ERROR,
-+                      "xteink.ds3231: invalid BCD time write\n");
-+        s->unsupported_accesses++;
-+        return;
++        goto invalid;
 +    }
-+    s->rtc_epoch = mktimegm(&tm);
++    epoch = mktimegm(&tm);
++    gmtime_r(&epoch, &normalized);
++    if (normalized.tm_year != tm.tm_year || normalized.tm_mon != tm.tm_mon ||
++        normalized.tm_mday != tm.tm_mday) {
++        goto invalid;
++    }
++    s->rtc_epoch = epoch;
 +    s->rtc_base_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++    s->rtc_weekday_origin = epoch / 86400;
++    s->rtc_weekday = s->regs[3];
++    return;
++
++invalid:
++    qemu_log_mask(LOG_GUEST_ERROR,
++                  "xteink.ds3231: invalid BCD time write\n");
++    s->unsupported_accesses++;
++}
++
++static void x3_imu_capture(X3SensorState *s)
++{
++    bool enabled = !(s->regs[2] & BIT(0));
++    unsigned accel_range = (s->regs[3] >> 4) & 3;
++    unsigned gyro_range = (s->regs[4] >> 4) & 7;
++
++    s->regs[0x2e] = enabled ? s->regs[8] & 3 : 0;
++    /*
++     * QMI8658C Rev A 7.1: power-down retains configuration and output data.
++     * Samples are latched per read transaction, without inventing an ODR
++     * clock, MEMS dynamics, filter settling, or a physical interrupt route.
++     * The pinned SDK uses aFS=0/gFS=5: 16384 LSB/g and 64 LSB/dps.
++     */
++    for (unsigned axis = 0; axis < 3; axis++) {
++        if (enabled && (s->regs[8] & 1)) {
++            int64_t raw = s->accel_mg[axis] * (16384 >> accel_range) / 1000;
++            uint16_t word = CLAMP(raw, INT16_MIN, INT16_MAX);
++            if (s->regs[2] & BIT(5)) {
++                word = bswap16(word);
++            }
++            x3_sensor_set_word(s, 0x35 + axis * 2, word);
++        }
++        if (enabled && (s->regs[8] & 2) && gyro_range < 7) {
++            int64_t raw = s->gyro_mdps[axis] * (2048 >> gyro_range) / 1000;
++            uint16_t word = CLAMP(raw, INT16_MIN, INT16_MAX);
++            if (s->regs[2] & BIT(5)) {
++                word = bswap16(word);
++            }
++            x3_sensor_set_word(s, 0x3b + axis * 2, word);
++        }
++    }
++}
++
++static void x3_battery_capture(X3SensorState *s)
++{
++    /* Pinned BatteryMonitor reads these independently, with LE signed current. */
++    x3_sensor_set_word(s, 0x2c, s->battery_soc);
++    x3_sensor_set_word(s, 0x08, s->battery_mv);
++    x3_sensor_set_word(s, 0x0c, (int16_t)s->battery_ma);
++    x3_sensor_set_word(s, 0x06, (s->temperature_mc + 273150) / 100);
++}
++
++static void x3_motion_expired(void *opaque)
++{
++    X3SensorState *s = opaque;
++    memset(s->gyro_mdps, 0, sizeof(s->gyro_mdps));
++    s->motion_deadline_ns = 0;
 +}
 +
 +static bool x3_sensor_readable(X3SensorState *s, uint8_t reg)
@@ -1805,7 +2131,29 @@ index 0000000..81e3a7a
 +        s->unsupported_accesses++;
 +        return 1;
 +    }
-+    s->regs[s->pointer] = value;
++    if (s->kind == SENSOR_DS3231 && s->pointer == 0x0f) {
++        /* DS3231 flags OSF/A2F/A1F can only be cleared by writing zero. */
++        s->regs[0x0f] = (s->regs[0x0f] & value & 0x83) | (value & BIT(3));
++    } else {
++        s->regs[s->pointer] = value;
++    }
++    if (s->kind == SENSOR_DS3231 &&
++        ((s->pointer >= 7 && s->pointer <= 0x0d) ||
++         (s->pointer == 0x0e && value != 4))) {
++        qemu_log_mask(LOG_UNIMP,
++                      "xteink.ds3231: alarm/square-wave/oscillator action is unmodelled\n");
++        s->unsupported_accesses++;
++    } else if (s->kind == SENSOR_QMI8658 &&
++               ((s->pointer == 3 && (value & BIT(7))) ||
++                (s->pointer == 4 && ((value & BIT(7)) ||
++                                    ((value >> 4) & 7) == 7)) ||
++                (s->pointer >= 5 && s->pointer <= 7 && value) ||
++                (s->pointer == 8 && (value & ~3)) ||
++                (s->pointer >= 9 && value))) {
++        qemu_log_mask(LOG_UNIMP,
++                      "xteink.qmi8658: filtering/self-test/motion command is unmodelled\n");
++        s->unsupported_accesses++;
++    }
 +    s->written++;
 +    x3_sensor_increment(s);
 +    return 0;
@@ -1874,18 +2222,197 @@ index 0000000..81e3a7a
 +        if (s->kind == SENSOR_DS3231) {
 +            x3_rtc_capture(s);
 +        } else if (s->kind == SENSOR_QMI8658) {
-+            bool enabled = !(s->regs[2] & BIT(0));
-+            unsigned range = (s->regs[3] >> 4) & 3;
-+            /* Upright and stationary, 1 g on Z at the configured scale. */
-+            uint16_t az = enabled && (s->regs[8] & 1) ? 16384 >> range : 0;
-+            if (s->regs[2] & BIT(5)) {
-+                az = bswap16(az);
-+            }
-+            s->regs[0x2e] = enabled ? s->regs[8] & 3 : 0;
-+            x3_sensor_set_word(s, 0x39, az);
++            x3_imu_capture(s);
++        } else {
++            x3_battery_capture(s);
 +        }
 +    }
 +    return 0;
++}
++
++typedef struct X3SensorValue {
++    const char *name;
++    size_t offset;
++    int64_t minimum;
++    int64_t maximum;
++    bool gyro;
++} X3SensorValue;
++
++#define SENSOR_VALUE(name_, member_, min_, max_, gyro_) \
++    { name_, offsetof(X3SensorState, member_), min_, max_, gyro_ }
++
++static const X3SensorValue battery_values[] = {
++    SENSOR_VALUE("soc-percent", battery_soc, 0, 100, false),
++    SENSOR_VALUE("voltage-mv", battery_mv, 0, UINT16_MAX, false),
++    SENSOR_VALUE("current-ma", battery_ma, INT16_MIN, INT16_MAX, false),
++};
++
++static const X3SensorValue imu_values[] = {
++    SENSOR_VALUE("accel-x-mg", accel_mg[0], -16000, 16000, false),
++    SENSOR_VALUE("accel-y-mg", accel_mg[1], -16000, 16000, false),
++    SENSOR_VALUE("accel-z-mg", accel_mg[2], -16000, 16000, false),
++    SENSOR_VALUE("gyro-x-mdps", gyro_mdps[0], -1024000, 1024000, true),
++    SENSOR_VALUE("gyro-y-mdps", gyro_mdps[1], -1024000, 1024000, true),
++    SENSOR_VALUE("gyro-z-mdps", gyro_mdps[2], -1024000, 1024000, true),
++};
++
++static const X3SensorValue temperature_value =
++    SENSOR_VALUE("temperature-mc", temperature_mc, -40000, 85000, false);
++
++static int64_t *x3_sensor_value_pointer(X3SensorState *s,
++                                      const X3SensorValue *value)
++{
++    return (int64_t *)((uint8_t *)s + value->offset);
++}
++
++static bool x3_motion_deadline(X3SensorState *s, uint64_t hold_ns,
++                               uint64_t *deadline, Error **errp)
++{
++    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++    *deadline = 0;
++    if (!hold_ns) {
++        return true;
++    }
++    if (hold_ns > INT64_MAX - now) {
++        error_setg(errp, "gyro hold duration overflows virtual time");
++        return false;
++    }
++    *deadline = now + hold_ns;
++    return true;
++}
++
++static void x3_motion_rearm(X3SensorState *s, uint64_t deadline)
++{
++    timer_del(s->motion_timer);
++    s->motion_deadline_ns = 0;
++    if (deadline && (s->gyro_mdps[0] || s->gyro_mdps[1] || s->gyro_mdps[2])) {
++        s->motion_deadline_ns = deadline;
++        timer_mod(s->motion_timer, deadline);
++    }
++}
++
++static void x3_sensor_get_value(Object *obj, Visitor *v, const char *name,
++                                void *opaque, Error **errp)
++{
++    const X3SensorValue *value = opaque;
++    visit_type_int64(v, name, x3_sensor_value_pointer(X3_SENSOR(obj), value),
++                     errp);
++}
++
++static void x3_sensor_set_value(Object *obj, Visitor *v, const char *name,
++                                void *opaque, Error **errp)
++{
++    X3SensorState *s = X3_SENSOR(obj);
++    const X3SensorValue *property = opaque;
++    int64_t value;
++    uint64_t deadline = 0;
++
++    if (!visit_type_int64(v, name, &value, errp)) {
++        return;
++    }
++    if (value < property->minimum || value > property->maximum) {
++        error_setg(errp, "%s must be between %" PRId64 " and %" PRId64,
++                   name, property->minimum, property->maximum);
++        return;
++    }
++    if (s->kind == SENSOR_DS3231 && property == &temperature_value &&
++        value % 250) {
++        error_setg(errp, "DS3231 temperature must be a multiple of 250 mC");
++        return;
++    }
++    if (property->gyro &&
++        !x3_motion_deadline(s, s->motion_hold_ns, &deadline, errp)) {
++        return;
++    }
++    *x3_sensor_value_pointer(s, property) = value;
++    s->injection_count++;
++    if (property->gyro) {
++        x3_motion_rearm(s, deadline);
++    } else if (s->kind == SENSOR_DS3231 && property == &temperature_value) {
++        int16_t quarters = value / 250;
++        s->regs[0x11] = quarters >> 2;
++        s->regs[0x12] = (quarters & 3) << 6;
++    } else if (s->kind == SENSOR_QMI8658 && property == &temperature_value) {
++        x3_sensor_set_word(s, 0x33, value * 256 / 1000);
++    }
++}
++
++static void x3_sensor_add_values(Object *obj, const X3SensorValue *values,
++                                  unsigned count)
++{
++    for (unsigned i = 0; i < count; i++) {
++        object_property_add(obj, values[i].name, "int64", x3_sensor_get_value,
++                            x3_sensor_set_value, NULL, (void *)&values[i]);
++    }
++}
++
++static void x3_sensor_get_hold(Object *obj, Visitor *v, const char *name,
++                               void *opaque, Error **errp)
++{
++    visit_type_uint64(v, name, &X3_SENSOR(obj)->motion_hold_ns, errp);
++}
++
++static void x3_sensor_set_hold(Object *obj, Visitor *v, const char *name,
++                               void *opaque, Error **errp)
++{
++    X3SensorState *s = X3_SENSOR(obj);
++    uint64_t value, deadline;
++    if (!visit_type_uint64(v, name, &value, errp) ||
++        !x3_motion_deadline(s, value, &deadline, errp)) {
++        return;
++    }
++    s->motion_hold_ns = value;
++    x3_motion_rearm(s, deadline);
++}
++
++static void x3_rtc_get_epoch(Object *obj, Visitor *v, const char *name,
++                            void *opaque, Error **errp)
++{
++    int64_t epoch = x3_rtc_seconds(X3_SENSOR(obj));
++    visit_type_int64(v, name, &epoch, errp);
++}
++
++static void x3_rtc_set_epoch(Object *obj, Visitor *v, const char *name,
++                            void *opaque, Error **errp)
++{
++    X3SensorState *s = X3_SENSOR(obj);
++    int64_t value;
++    struct tm tm;
++    time_t epoch;
++
++    if (!visit_type_int64(v, name, &value, errp)) {
++        return;
++    }
++    if (value < 946684800 || value > 4102444799) {
++        error_setg(errp, "RTC epoch must be within 2000 through 2099 UTC");
++        return;
++    }
++    epoch = value;
++    gmtime_r(&epoch, &tm);
++    s->rtc_epoch = value;
++    s->rtc_base_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++    s->rtc_weekday_origin = value / 86400;
++    /* The pinned SDK uses 1=Monday ...7=Sunday. Hardware permits any order. */
++    s->rtc_weekday = tm.tm_wday ? tm.tm_wday : 7;
++    s->injection_count++;
++    x3_rtc_capture(s);
++}
++
++static bool x3_rtc_get_osf(Object *obj, Error **errp)
++{
++    return X3_SENSOR(obj)->regs[0x0f] & BIT(7);
++}
++
++static void x3_rtc_set_osf(Object *obj, bool value, Error **errp)
++{
++    X3SensorState *s = X3_SENSOR(obj);
++    s->regs[0x0f] = (s->regs[0x0f] & ~BIT(7)) | (value ? BIT(7) : 0);
++    s->injection_count++;
++}
++
++static bool x3_sensor_unmodelled(Object *obj, Error **errp)
++{
++    return false;
 +}
 +
 +static void x3_sensor_realize(DeviceState *dev, Error **errp)
@@ -1896,7 +2423,18 @@ index 0000000..81e3a7a
 +        error_setg(errp, "unknown X3 I2C sensor kind %u", s->kind);
 +        return;
 +    }
++    s->temperature_mc = 25000;
++    x3_sensor_add_values(OBJECT(s), &temperature_value, 1);
++    object_property_add_bool(OBJECT(s), "physical-effects-modelled",
++                             x3_sensor_unmodelled, NULL);
 +    if (s->kind == SENSOR_BQ27220) {
++        s->battery_soc = 80;
++        s->battery_mv = 3900;
++        s->battery_ma = -40;
++        x3_sensor_add_values(OBJECT(s), battery_values,
++                             ARRAY_SIZE(battery_values));
++        object_property_add_bool(OBJECT(s), "fuel-gauging-modelled",
++                                 x3_sensor_unmodelled, NULL);
 +        x3_sensor_set_word(s, 0x06, 2981); /* 25 C, 0.1 K units. */
 +        x3_sensor_set_word(s, 0x08, 3900); /* mV. */
 +        x3_sensor_set_word(s, 0x0c, (uint16_t)-40); /* Discharging, mA. */
@@ -1907,11 +2445,33 @@ index 0000000..81e3a7a
 +        x3_sensor_set_word(s, 0x3a, 6); /* SEC=sealed, CFGUPDATE=0. */
 +        x3_sensor_set_word(s, 0x3c, 650); /* X3 configured capacity, mAh. */
 +    } else if (s->kind == SENSOR_DS3231) {
++        struct tm tm;
++        time_t epoch = s->rtc_epoch;
++        gmtime_r(&epoch, &tm);
++        s->rtc_weekday_origin = epoch / 86400;
++        s->rtc_weekday = tm.tm_wday ? tm.tm_wday : 7;
 +        s->rtc_base_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++        object_property_add(OBJECT(s), "epoch-seconds", "int64",
++                            x3_rtc_get_epoch, x3_rtc_set_epoch, NULL, NULL);
++        object_property_add_bool(OBJECT(s), "oscillator-stopped", x3_rtc_get_osf,
++                                 x3_rtc_set_osf);
++        object_property_add_bool(OBJECT(s), "alarm-modelled",
++                                 x3_sensor_unmodelled, NULL);
++        object_property_add_bool(OBJECT(s), "alarm-irq-wired",
++                                 x3_sensor_unmodelled, NULL);
 +        s->regs[0x0e] = 4;
 +        s->regs[0x11] = 25; /* Temperature, signed integer C. */
 +        x3_rtc_capture(s);
 +    } else {
++        s->accel_mg[2] = 1000;
++        x3_sensor_add_values(OBJECT(s), imu_values, ARRAY_SIZE(imu_values));
++        object_property_add(OBJECT(s), "motion-hold-ns", "uint64",
++                            x3_sensor_get_hold, x3_sensor_set_hold, NULL, NULL);
++        object_property_add_uint64_ptr(OBJECT(s), "motion-release-deadline-ns",
++                                      &s->motion_deadline_ns,
++                                      OBJ_PROP_FLAG_READ);
++        object_property_add_bool(OBJECT(s), "sampling-timing-modelled",
++                                 x3_sensor_unmodelled, NULL);
 +        s->regs[0] = 5; /* QMI8658 WHO_AM_I used by the SDK. */
 +        s->regs[2] = BIT(6); /* Register address auto-increment. */
 +        s->regs[0x2e] = 0; /* Sensors disabled until CTRL7 enables them. */
@@ -1924,12 +2484,20 @@ index 0000000..81e3a7a
 +    X3SensorState *s = X3_SENSOR(obj);
 +    object_property_add_uint64_ptr(obj, "unsupported-accesses",
 +                                  &s->unsupported_accesses, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "injection-count", &s->injection_count,
++                                  OBJ_PROP_FLAG_READ);
++    s->motion_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, x3_motion_expired, s);
++}
++
++static void x3_sensor_finalize(Object *obj)
++{
++    timer_free(X3_SENSOR(obj)->motion_timer);
 +}
 +
 +static const VMStateDescription vmstate_x3_sensor = {
 +    .name = TYPE_X3_SENSOR,
-+    .version_id = 1,
-+    .minimum_version_id = 1,
++    .version_id = 2,
++    .minimum_version_id = 2,
 +    .fields = (const VMStateField[]) {
 +        VMSTATE_I2C_SLAVE(parent_obj, X3SensorState),
 +        VMSTATE_UINT8_ARRAY(regs, X3SensorState, 256),
@@ -1939,6 +2507,18 @@ index 0000000..81e3a7a
 +        VMSTATE_BOOL(pointer_pending, X3SensorState),
 +        VMSTATE_INT64(rtc_epoch, X3SensorState),
 +        VMSTATE_INT64(rtc_base_ns, X3SensorState),
++        VMSTATE_INT64(rtc_weekday_origin, X3SensorState),
++        VMSTATE_UINT8(rtc_weekday, X3SensorState),
++        VMSTATE_INT64(battery_soc, X3SensorState),
++        VMSTATE_INT64(battery_mv, X3SensorState),
++        VMSTATE_INT64(battery_ma, X3SensorState),
++        VMSTATE_INT64(temperature_mc, X3SensorState),
++        VMSTATE_INT64_ARRAY(accel_mg, X3SensorState, 3),
++        VMSTATE_INT64_ARRAY(gyro_mdps, X3SensorState, 3),
++        VMSTATE_UINT64(motion_hold_ns, X3SensorState),
++        VMSTATE_UINT64(motion_deadline_ns, X3SensorState),
++        VMSTATE_TIMER_PTR(motion_timer, X3SensorState),
++        VMSTATE_UINT64(injection_count, X3SensorState),
 +        VMSTATE_UINT64(unsupported_accesses, X3SensorState),
 +        VMSTATE_END_OF_LIST()
 +    },
@@ -1993,6 +2573,7 @@ index 0000000..81e3a7a
 +        .parent = TYPE_I2C_SLAVE,
 +        .instance_size = sizeof(X3SensorState),
 +        .instance_init = x3_sensor_init,
++        .instance_finalize = x3_sensor_finalize,
 +        .class_init = x3_sensor_class_init,
 +    },
 +};
@@ -2274,18 +2855,21 @@ index 0000000..2b8a06f
 +
 +type_init(assist_debug_register_types)
 diff --git a/hw/misc/esp32c3_jtag.c b/hw/misc/esp32c3_jtag.c
-index 82ee697..fb5a161 100644
+index 82ee697..ca739d9 100644
 --- a/hw/misc/esp32c3_jtag.c
 +++ b/hw/misc/esp32c3_jtag.c
-@@ -7,63 +7,397 @@
+@@ -7,63 +7,490 @@
   * it under the terms of the GNU General Public License version 2 or
   * (at your option) any later version.
   */
 +/*
 + * Digital CDC endpoint model from ESP-IDF v5.5.2 C3 register/LL headers.
 + * Host bytes pass through the configured chardev. A nominal USB full-speed
-+ * host supplies one SOF every millisecond in QEMU virtual time. This does not
-+ * emulate USB enumeration packets, electrical signalling, or the JTAG TAP.
++ * host supplies one SOF every millisecond in QEMU virtual time. Bulk IN
++ * packets complete independently of SOF, using an uncontended nominal12Mbps
++ * host and USB2.0 Table5-9's13-byte overhead, without bit stuffing. Neither
++ * the host's scheduling nor an X3 USB trace has been calibrated. This does
++ * not emulate USB enumeration packets, electrical signalling, or the JTAG TAP.
 + */
  #include "qemu/osdep.h"
  #include "qemu/log.h"
@@ -2293,6 +2877,7 @@ index 82ee697..fb5a161 100644
 -#include "qemu/error-report.h"
 -#include "hw/hw.h"
 -#include "hw/sysbus.h"
++#include "qapi/error.h"
 +#include "hw/irq.h"
 +#include "hw/qdev-properties.h"
 +#include "hw/qdev-properties-system.h"
@@ -2316,6 +2901,7 @@ index 82ee697..fb5a161 100644
 +#define INT_BUS_RESET (1U << 9)
 +#define INT_MASK 0xfff
 +#define SOF_NS 1000000
++#define USB_FULL_SPEED_BPS 12000000ULL
  
 -static uint64_t esp32c3_jtag_read(void *opaque, hwaddr addr, unsigned int size)
 +static bool esp32c3_jtag_host_active(ESP32C3UsbJtagState *s)
@@ -2331,13 +2917,28 @@ index 82ee697..fb5a161 100644
 +{
 +    qemu_set_irq(s->irq, !s->sleeping &&
 +                 !!(REG(s, INT_RAW) & REG(s, INT_ENA)));
- }
- 
--static void esp32c3_jtag_write(void *opaque, hwaddr addr, uint64_t value, unsigned int size)
-+static void esp32c3_jtag_sof(void *opaque)
- {
--    ESP32C3UsbJtagState *s = ESP32C3_JTAG(opaque);
--    (void) s;
++}
++
++static void esp32c3_jtag_schedule_tx(ESP32C3UsbJtagState *s)
++{
++    if (esp32c3_jtag_host_active(s) && s->tx_pending) {
++        if (!timer_pending(s->tx_timer)) {
++            uint64_t count = fifo8_num_used(&s->tx_fifo);
++            uint64_t wire_ns = DIV_ROUND_UP((count + 13) * 8 *
++                                           NANOSECONDS_PER_SECOND,
++                                           USB_FULL_SPEED_BPS);
++            int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++            uint64_t delay = wire_ns + s->host_poll_delay_ns;
++            timer_mod(s->tx_timer, delay > INT64_MAX - now ?
++                      INT64_MAX : now + delay);
++        }
++    } else {
++        timer_del(s->tx_timer);
++    }
++}
++
++static void esp32c3_jtag_tx_complete(void *opaque)
++{
 +    ESP32C3UsbJtagState *s = opaque;
 +    uint8_t packet[ESP32C3_JTAG_PACKET_SIZE];
 +    unsigned count;
@@ -2346,8 +2947,7 @@ index 82ee697..fb5a161 100644
 +    if (!esp32c3_jtag_host_active(s)) {
 +        return;
 +    }
-+    s->frame_index = (s->frame_index + 1) & 0x7ff;
-+    REG(s, INT_RAW) |= INT_SOF | INT_IN_TOKEN;
++    REG(s, INT_RAW) |= INT_IN_TOKEN;
 +    if (s->tx_pending) {
 +        count = fifo8_num_used(&s->tx_fifo);
 +        if (count) {
@@ -2358,13 +2958,29 @@ index 82ee697..fb5a161 100644
 +            fifo8_pop_buf(&s->tx_fifo, NULL, written);
 +            s->tx_read_pos = (s->tx_read_pos + written) & 127;
 +            s->transmitted_bytes += written;
++        } else if (count) {
++            s->backend_stalls++;
 +        }
 +        if (fifo8_is_empty(&s->tx_fifo)) {
 +            /* This includes an explicitly flushed zero-length USB packet. */
 +            s->tx_pending = false;
++            s->transmitted_packets++;
 +            REG(s, INT_RAW) |= INT_TX_EMPTY;
 +        }
 +    }
++    esp32c3_jtag_update_irq(s);
++    esp32c3_jtag_schedule_tx(s);
++}
++
++static void esp32c3_jtag_sof(void *opaque)
++{
++    ESP32C3UsbJtagState *s = opaque;
++
++    if (!esp32c3_jtag_host_active(s)) {
++        return;
++    }
++    s->frame_index = (s->frame_index + 1) & 0x7ff;
++    REG(s, INT_RAW) |= INT_SOF;
 +    esp32c3_jtag_update_irq(s);
 +    timer_mod(s->sof_timer, qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + SOF_NS);
 +}
@@ -2379,6 +2995,7 @@ index 82ee697..fb5a161 100644
 +    } else {
 +        timer_del(s->sof_timer);
 +    }
++    esp32c3_jtag_schedule_tx(s);
 +}
 +
 +void esp32c3_jtag_set_sleep(ESP32C3UsbJtagState *s, bool sleeping)
@@ -2393,8 +3010,11 @@ index 82ee697..fb5a161 100644
 +        s->sleep_start_ns = now;
 +        s->sleep_sof_deadline_ns = timer_pending(s->sof_timer) ?
 +                                  timer_expire_time_ns(s->sof_timer) : -1;
++        s->sleep_tx_deadline_ns = timer_pending(s->tx_timer) ?
++                                 timer_expire_time_ns(s->tx_timer) : -1;
 +        s->sleeping = true;
 +        timer_del(s->sof_timer);
++        timer_del(s->tx_timer);
 +    } else {
 +        s->sleeping = false;
 +        if (esp32c3_jtag_host_active(s) && s->sleep_sof_deadline_ns >= 0) {
@@ -2406,6 +3026,15 @@ index 82ee697..fb5a161 100644
 +            esp32c3_jtag_start_sof(s);
 +        }
 +        s->sleep_sof_deadline_ns = -1;
++        if (esp32c3_jtag_host_active(s) && s->sleep_tx_deadline_ns >= 0) {
++            int64_t remaining = MAX(s->sleep_tx_deadline_ns -
++                                     s->sleep_start_ns, 0);
++            timer_mod(s->tx_timer, remaining > INT64_MAX - now ?
++                      INT64_MAX : now + remaining);
++        } else {
++            esp32c3_jtag_schedule_tx(s);
++        }
++        s->sleep_tx_deadline_ns = -1;
 +        qemu_chr_fe_accept_input(&s->chr);
 +    }
 +    esp32c3_jtag_update_irq(s);
@@ -2414,11 +3043,16 @@ index 82ee697..fb5a161 100644
 +static int esp32c3_jtag_can_receive(void *opaque)
 +{
 +    ESP32C3UsbJtagState *s = opaque;
-+    return esp32c3_jtag_host_active(s) ? fifo8_num_free(&s->rx_fifo) : 0;
-+}
-+
++    /* TRM30.3.2: a new OUT packet is accepted after all prior data is read. */
++    return esp32c3_jtag_host_active(s) && fifo8_is_empty(&s->rx_fifo) ?
++           ESP32C3_JTAG_PACKET_SIZE : 0;
+ }
+ 
+-static void esp32c3_jtag_write(void *opaque, hwaddr addr, uint64_t value, unsigned int size)
 +static void esp32c3_jtag_receive(void *opaque, const uint8_t *buf, int size)
-+{
+ {
+-    ESP32C3UsbJtagState *s = ESP32C3_JTAG(opaque);
+-    (void) s;
 +    ESP32C3UsbJtagState *s = opaque;
 +    unsigned i;
 +
@@ -2431,6 +3065,7 @@ index 82ee697..fb5a161 100644
 +        s->received_bytes++;
 +    }
 +    if (i) {
++        s->received_packets++;
 +        REG(s, INT_RAW) |= INT_RX_PACKET;
 +    }
 +    esp32c3_jtag_update_irq(s);
@@ -2516,6 +3151,7 @@ index 82ee697..fb5a161 100644
 +        if (s->tx_pending || fifo8_is_full(&s->tx_fifo)) {
 +            qemu_log_mask(LOG_GUEST_ERROR,
 +                          "esp32c3.usb_serial_jtag: TX endpoint not writable\n");
++            s->tx_overruns++;
 +            return;
 +        }
 +        fifo8_push(&s->tx_fifo, value);
@@ -2559,6 +3195,7 @@ index 82ee697..fb5a161 100644
 +                      HWADDR_PRIx "\n", addr);
 +        break;
 +    }
++    esp32c3_jtag_schedule_tx(s);
 +    esp32c3_jtag_update_irq(s);
  }
  
@@ -2577,9 +3214,11 @@ index 82ee697..fb5a161 100644
 -    (void) type;
 +    ESP32C3UsbJtagState *s = ESP32C3_JTAG(obj);
 +    timer_del(s->sof_timer);
++    timer_del(s->tx_timer);
 +    s->sleeping = false;
 +    s->sleep_start_ns = 0;
 +    s->sleep_sof_deadline_ns = -1;
++    s->sleep_tx_deadline_ns = -1;
 +    fifo8_reset(&s->rx_fifo);
 +    fifo8_reset(&s->tx_fifo);
 +    memset(s->regs, 0, sizeof(s->regs));
@@ -2601,6 +3240,10 @@ index 82ee697..fb5a161 100644
 -    (void) dev;
 -    (void) errp;
 +    ESP32C3UsbJtagState *s = ESP32C3_JTAG(dev);
++    if (s->host_poll_delay_ns > INT64_MAX - SOF_NS) {
++        error_setg(errp, "USB host poll delay overflows virtual time");
++        return;
++    }
 +    qemu_chr_fe_set_handlers(&s->chr, esp32c3_jtag_can_receive,
 +                             esp32c3_jtag_receive, esp32c3_jtag_event,
 +                             NULL, s, NULL, true);
@@ -2609,6 +3252,11 @@ index 82ee697..fb5a161 100644
 +static bool esp32c3_jtag_get_connected(Object *obj, Error **errp)
 +{
 +    return ESP32C3_JTAG(obj)->connected;
++}
++
++static bool esp32c3_jtag_unmodelled(Object *obj, Error **errp)
++{
++    return false;
  }
  
  static void esp32c3_jtag_init(Object *obj)
@@ -2623,6 +3271,8 @@ index 82ee697..fb5a161 100644
 +    fifo8_create(&s->rx_fifo, ESP32C3_JTAG_PACKET_SIZE);
 +    fifo8_create(&s->tx_fifo, ESP32C3_JTAG_PACKET_SIZE);
 +    s->sof_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, esp32c3_jtag_sof, s);
++    s->tx_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL,
++                              esp32c3_jtag_tx_complete, s);
 +    object_property_add_bool(obj, "host-connected",
 +                             esp32c3_jtag_get_connected, NULL);
 +    object_property_add_uint64_ptr(obj, "unsupported-accesses",
@@ -2631,27 +3281,42 @@ index 82ee697..fb5a161 100644
 +                                  &s->transmitted_bytes, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "received-bytes", &s->received_bytes,
 +                                  OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "transmitted-packets",
++                                  &s->transmitted_packets, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "received-packets", &s->received_packets,
++                                  OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "backend-stalls", &s->backend_stalls,
++                                  OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "tx-overruns", &s->tx_overruns,
++                                  OBJ_PROP_FLAG_READ);
++    object_property_add_bool(obj, "timing-calibrated",
++                             esp32c3_jtag_unmodelled, NULL);
++    object_property_add_bool(obj, "physical-effects-modelled",
++                             esp32c3_jtag_unmodelled, NULL);
++    object_property_add_bool(obj, "usb-enumeration-modelled",
++                             esp32c3_jtag_unmodelled, NULL);
 +}
 +
 +static void esp32c3_jtag_finalize(Object *obj)
 +{
 +    ESP32C3UsbJtagState *s = ESP32C3_JTAG(obj);
 +    timer_free(s->sof_timer);
++    timer_free(s->tx_timer);
 +    fifo8_destroy(&s->rx_fifo);
 +    fifo8_destroy(&s->tx_fifo);
 +    qemu_chr_fe_deinit(&s->chr, true);
-+}
-+
+ }
+ 
 +static int esp32c3_jtag_post_load(void *opaque, int version_id)
 +{
 +    esp32c3_jtag_update_irq(opaque);
 +    return 0;
- }
- 
++}
++
 +static const VMStateDescription vmstate_esp32c3_jtag = {
 +    .name = TYPE_ESP32C3_JTAG,
-+    .version_id = 1,
-+    .minimum_version_id = 1,
++    .version_id = 2,
++    .minimum_version_id = 2,
 +    .post_load = esp32c3_jtag_post_load,
 +    .fields = (const VMStateField[]) {
 +        VMSTATE_UINT32_ARRAY(regs, ESP32C3UsbJtagState,
@@ -2659,6 +3324,7 @@ index 82ee697..fb5a161 100644
 +        VMSTATE_FIFO8(rx_fifo, ESP32C3UsbJtagState),
 +        VMSTATE_FIFO8(tx_fifo, ESP32C3UsbJtagState),
 +        VMSTATE_TIMER_PTR(sof_timer, ESP32C3UsbJtagState),
++        VMSTATE_TIMER_PTR(tx_timer, ESP32C3UsbJtagState),
 +        VMSTATE_UINT16(frame_index, ESP32C3UsbJtagState),
 +        VMSTATE_UINT8(tx_write_pos, ESP32C3UsbJtagState),
 +        VMSTATE_UINT8(tx_read_pos, ESP32C3UsbJtagState),
@@ -2669,8 +3335,14 @@ index 82ee697..fb5a161 100644
 +        VMSTATE_BOOL(sleeping, ESP32C3UsbJtagState),
 +        VMSTATE_INT64(sleep_start_ns, ESP32C3UsbJtagState),
 +        VMSTATE_INT64(sleep_sof_deadline_ns, ESP32C3UsbJtagState),
++        VMSTATE_INT64(sleep_tx_deadline_ns, ESP32C3UsbJtagState),
++        VMSTATE_UINT64(host_poll_delay_ns, ESP32C3UsbJtagState),
 +        VMSTATE_UINT64(transmitted_bytes, ESP32C3UsbJtagState),
 +        VMSTATE_UINT64(received_bytes, ESP32C3UsbJtagState),
++        VMSTATE_UINT64(transmitted_packets, ESP32C3UsbJtagState),
++        VMSTATE_UINT64(received_packets, ESP32C3UsbJtagState),
++        VMSTATE_UINT64(backend_stalls, ESP32C3UsbJtagState),
++        VMSTATE_UINT64(tx_overruns, ESP32C3UsbJtagState),
 +        VMSTATE_UINT64(unsupported_accesses, ESP32C3UsbJtagState),
 +        VMSTATE_END_OF_LIST()
 +    },
@@ -2678,6 +3350,8 @@ index 82ee697..fb5a161 100644
 +
 +static const Property esp32c3_jtag_properties[] = {
 +    DEFINE_PROP_CHR("chardev", ESP32C3UsbJtagState, chr),
++    DEFINE_PROP_UINT64("host-poll-delay-ns", ESP32C3UsbJtagState,
++                       host_poll_delay_ns, 0),
 +    DEFINE_PROP_END_OF_LIST(),
 +};
 +
@@ -2694,7 +3368,7 @@ index 82ee697..fb5a161 100644
  }
  
  static const TypeInfo esp32c3_jtag_info = {
-@@ -71,7 +405,8 @@ static const TypeInfo esp32c3_jtag_info = {
+@@ -71,7 +498,8 @@ static const TypeInfo esp32c3_jtag_info = {
      .parent = TYPE_SYS_BUS_DEVICE,
      .instance_size = sizeof(ESP32C3UsbJtagState),
      .instance_init = esp32c3_jtag_init,
@@ -2706,10 +3380,10 @@ index 82ee697..fb5a161 100644
  static void esp32c3_jtag_types(void)
 diff --git a/hw/misc/esp32c3_regi2c.c b/hw/misc/esp32c3_regi2c.c
 new file mode 100644
-index 0000000..0070fe2
+index 0000000..0608679
 --- /dev/null
 +++ b/hw/misc/esp32c3_regi2c.c
-@@ -0,0 +1,264 @@
+@@ -0,0 +1,388 @@
 +/*
 + * ESP32-C3 packed internal analog-register I2C transport.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -2719,11 +3393,23 @@ index 0000000..0070fe2
 + * write helper 4003919c..400391cc, and ESP-IDF5.5.2 C3 regi2c_saradc.h,
 + * regi2c_defs.h and regi2c_ctrl_ll.h. This is not the public RTC-I2C engine.
 + *
-+ * Only SARADC 0x69/host0 configuration registers are modelled. Values are
++ * SARADC 0x69/host0 configuration registers are modelled. Values are
 + * programmed digital latches; they do not calibrate the injected ADC samples.
 + * Reset latch values and transaction latency are provisional model parameters.
 + * Unknown blocks/powered-down accesses explicitly count as unsupported and
 + * return 0xff read data. No ACK/NACK status is documented by the ROM protocol.
++ *
++ * PHY measurement request/completion protocol at 0x50/0x5c is established by
++ * the unmodified CrossInk X3 v1.6.0 image, SHA256 4d1f2493079c71f7c466080fc13b
++ * 11f16fa95c9cc6ccbaf158ac2ab0e761d644, function 4228cd94..4228ce04:
++ * control bits21+19 start, status bits26:24 complete, status bit1 retriggers.
++ * The emulator supplies a deterministic ideal-zero comparator result after a
++ * virtual delay. This permits digital firmware execution; it is NOT an RF
++ * calibration model. Every completion is counted as a synthetic measurement,
++ * and calibration-modelled/timing-calibrated remain false.
++ * DC comparator protocol at0x4c is established by the same image's function
++ * 4228fdca..4228ffb6: bit1 starts, bit24 completes, bits31:30 give the two
++ * comparator signs. It likewise measures a synthetic ideal-zero RF circuit.
 + */
 +#include "qemu/osdep.h"
 +#include "qapi/error.h"
@@ -2742,6 +3428,39 @@ index 0000000..0070fe2
 +#define ANA_BBPLL_MASK BIT(17)
 +#define ANA_RESET_MASK (0x3ffu << 8)
 +#define BBPLL_STOP_LOW BIT(3)
++#define PHY_GATE (BIT(21) | BIT(19))
++#define PHY_DONE (7u << 24)
++#define PHY_COMPARATOR (3u << 30)
++#define DC_DONE BIT(24)
++
++static void regi2c_dc_complete(void *opaque)
++{
++    ESP32C3Regi2CState *s = opaque;
++    if (s->dc_pending) {
++        s->dc_control |= DC_DONE;
++        s->dc_pending = false;
++        s->synthetic_measurements++;
++    }
++}
++
++static void regi2c_phy_complete(void *opaque)
++{
++    ESP32C3Regi2CState *s = opaque;
++
++    if (s->phy_pending) {
++        s->phy_status |= PHY_DONE;
++        s->phy_pending = false;
++        s->synthetic_measurements++;
++    }
++}
++
++static void regi2c_phy_start(ESP32C3Regi2CState *s)
++{
++    s->phy_status &= ~(PHY_DONE | PHY_COMPARATOR);
++    s->phy_pending = true;
++    timer_mod(s->phy_timer, qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) +
++              MAX(s->phy_measurement_ns, 1));
++}
 +
 +static void regi2c_unsupported(ESP32C3Regi2CState *s, const char *reason,
 +                               uint32_t value)
@@ -2812,6 +3531,15 @@ index 0000000..0070fe2
 +    if (addr >= 0x40 && addr <= 0x48) {
 +        return s->control[(addr - 0x40) / 4];
 +    }
++    if (addr == 0x50) {
++        return s->phy_status;
++    }
++    if (addr == 0x4c) {
++        return s->dc_control;
++    }
++    if (addr == 0x5c) {
++        return s->phy_control;
++    }
 +    regi2c_unsupported(s, "unmodelled MMIO read", addr);
 +    return 0;
 +}
@@ -2859,6 +3587,45 @@ index 0000000..0070fe2
 +        }
 +        return;
 +    }
++    if (addr == 0x4c) {
++        uint32_t old = s->dc_control;
++        s->dc_control = (v & ~(DC_DONE | PHY_COMPARATOR)) |
++                        (old & (DC_DONE | PHY_COMPARATOR));
++        if (!(v & BIT(1))) {
++            timer_del(s->dc_timer);
++            s->dc_pending = false;
++            s->dc_control &= ~DC_DONE;
++        } else if (!(old & BIT(1))) {
++            s->dc_control &= ~(DC_DONE | PHY_COMPARATOR);
++            s->dc_pending = true;
++            timer_mod(s->dc_timer, qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) +
++                      MAX(s->phy_measurement_ns, 1));
++        }
++        return;
++    }
++    if (addr == 0x50) {
++        uint32_t old = s->phy_status;
++        /* Completion/comparator fields belong to the measurement engine. */
++        s->phy_status = (v & ~(PHY_DONE | PHY_COMPARATOR)) |
++                        (old & (PHY_DONE | PHY_COMPARATOR));
++        if (!(old & BIT(1)) && (v & BIT(1)) &&
++            (s->phy_control & PHY_GATE) == PHY_GATE) {
++            regi2c_phy_start(s);
++        }
++        return;
++    }
++    if (addr == 0x5c) {
++        uint32_t old = s->phy_control;
++        s->phy_control = v;
++        if ((v & PHY_GATE) != PHY_GATE) {
++            timer_del(s->phy_timer);
++            s->phy_pending = false;
++            s->phy_status &= ~PHY_DONE;
++        } else if ((old & PHY_GATE) != PHY_GATE) {
++            regi2c_phy_start(s);
++        }
++        return;
++    }
 +    regi2c_unsupported(s, "unmodelled MMIO write", addr);
 +}
 +
@@ -2875,6 +3642,8 @@ index 0000000..0070fe2
 +    ESP32C3Regi2CState *s = ESP32C3_REGI2C(dev);
 +
 +    timer_del(s->timer);
++    timer_del(s->phy_timer);
++    timer_del(s->dc_timer);
 +    memset(s->command, 0, sizeof(s->command));
 +    memset(s->control, 0, sizeof(s->control));
 +    memset(s->saradc, 0, sizeof(s->saradc));
@@ -2882,11 +3651,21 @@ index 0000000..0070fe2
 +    s->control[1] = ANA_RESET_MASK | SAR_FORCE_PD | ANA_BBPLL_MASK;
 +    s->active_host = 0;
 +    s->pending = false;
++    s->phy_status = 0;
++    s->phy_control = 0;
++    s->phy_pending = false;
++    s->dc_control = 0;
++    s->dc_pending = false;
 +}
 +
 +static bool regi2c_unmodelled(Object *obj, Error **errp)
 +{
 +    return false;
++}
++
++static bool regi2c_phy_handshake_modelled(Object *obj, Error **errp)
++{
++    return true;
 +}
 +
 +static int regi2c_post_load(void *opaque, int version_id)
@@ -2897,8 +3676,8 @@ index 0000000..0070fe2
 +
 +static const VMStateDescription vmstate_regi2c = {
 +    .name = TYPE_ESP32C3_REGI2C,
-+    .version_id = 1,
-+    .minimum_version_id = 1,
++    .version_id = 2,
++    .minimum_version_id = 2,
 +    .post_load = regi2c_post_load,
 +    .fields = (VMStateField[]) {
 +        VMSTATE_UINT32_ARRAY(command, ESP32C3Regi2CState, 2),
@@ -2907,6 +3686,14 @@ index 0000000..0070fe2
 +        VMSTATE_UINT8(active_host, ESP32C3Regi2CState),
 +        VMSTATE_BOOL(pending, ESP32C3Regi2CState),
 +        VMSTATE_TIMER_PTR(timer, ESP32C3Regi2CState),
++        VMSTATE_UINT32(phy_status, ESP32C3Regi2CState),
++        VMSTATE_UINT32(phy_control, ESP32C3Regi2CState),
++        VMSTATE_BOOL(phy_pending, ESP32C3Regi2CState),
++        VMSTATE_TIMER_PTR(phy_timer, ESP32C3Regi2CState),
++        VMSTATE_UINT32(dc_control, ESP32C3Regi2CState),
++        VMSTATE_BOOL(dc_pending, ESP32C3Regi2CState),
++        VMSTATE_TIMER_PTR(dc_timer, ESP32C3Regi2CState),
++        VMSTATE_UINT64(synthetic_measurements, ESP32C3Regi2CState),
 +        VMSTATE_UINT64(unsupported_count, ESP32C3Regi2CState),
 +        VMSTATE_UINT64(transfer_count, ESP32C3Regi2CState),
 +        VMSTATE_UINT64(read_count, ESP32C3Regi2CState),
@@ -2919,6 +3706,8 @@ index 0000000..0070fe2
 +    /* This is an uncalibrated functional delay, not a hardware estimate. */
 +    DEFINE_PROP_UINT32("transaction-ns", ESP32C3Regi2CState,
 +                       transaction_ns, 1000),
++    DEFINE_PROP_UINT32("phy-measurement-ns", ESP32C3Regi2CState,
++                       phy_measurement_ns, 1000),
 +};
 +
 +static void regi2c_init(Object *obj)
@@ -2927,9 +3716,11 @@ index 0000000..0070fe2
 +    SysBusDevice *dev = SYS_BUS_DEVICE(obj);
 +
 +    memory_region_init_io(&s->iomem, obj, &regi2c_ops, s,
-+                          TYPE_ESP32C3_REGI2C, 0x4c);
++                          TYPE_ESP32C3_REGI2C, 0x60);
 +    sysbus_init_mmio(dev, &s->iomem);
 +    s->timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, regi2c_complete, s);
++    s->phy_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, regi2c_phy_complete, s);
++    s->dc_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, regi2c_dc_complete, s);
 +    object_property_add_uint64_ptr(obj, "unsupported-accesses",
 +                                  &s->unsupported_count, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "transfer-count", &s->transfer_count,
@@ -2938,6 +3729,11 @@ index 0000000..0070fe2
 +                                  OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "write-count", &s->write_count,
 +                                  OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "synthetic-measurements",
++                                  &s->synthetic_measurements,
++                                  OBJ_PROP_FLAG_READ);
++    object_property_add_bool(obj, "phy-handshake-modelled",
++                             regi2c_phy_handshake_modelled, NULL);
 +    object_property_add_bool(obj, "analog-modelled", regi2c_unmodelled, NULL);
 +    object_property_add_bool(obj, "power-control-modelled", regi2c_unmodelled,
 +                             NULL);
@@ -2950,6 +3746,8 @@ index 0000000..0070fe2
 +{
 +    ESP32C3Regi2CState *s = ESP32C3_REGI2C(obj);
 +    timer_free(s->timer);
++    timer_free(s->phy_timer);
++    timer_free(s->dc_timer);
 +}
 +
 +static void regi2c_class_init(ObjectClass *klass, void *data)
@@ -4465,6 +5263,537 @@ index 0000000..6626e7d
 +}
 +
 +type_init(xteink_x3_adc_register_types)
+diff --git a/hw/net/esp32c3_wifi.c b/hw/net/esp32c3_wifi.c
+new file mode 100644
+index 0000000..8997dde
+--- /dev/null
++++ b/hw/net/esp32c3_wifi.c
+@@ -0,0 +1,516 @@
++/*
++ * ESP32-C3 Wi-Fi MAC and an open virtual 802.11 access point.
++ * SPDX-License-Identifier: GPL-2.0-or-later
++ *
++ * C3 register evidence: ESP32C3-Open-MAC/esp32c3-open-mac, esp32c3 branch
++ * 00f81c9197021e7a02365df7a4c8b41241a185a1, main/hardware.h and
++ * components/80211_mac_rust/include/80211_mac_interface.h. MAC address
++ * filters, RX descriptor chains, TX queues and event/clear offsets are C3.
++ *
++ * RX/TSF digital implementation is adapted from Joakim Eriksson and Alice's
++ * MIT-licensed esp32sim, esp32s3/src/periph.rs and bus.rs. Their silicon
++ * source revision ed34b220cd0e261d369a5eee92ca8f1f33cbb0ad.
++ * observations provide provisional filter/last-descriptor flags; those
++ * observations are S3, so C3 physical fidelity is not claimed. Original
++ * copyright and MIT license are retained in docs/esp32sim-MIT.txt.
++ *
++ * Frames pass through guest DMA and the real firmware Wi-Fi/lwIP stacks.
++ * No ESP-IDF or application function is intercepted. RF/PHY calibration,
++ * encrypted air traffic, modem power transitions and airtime are unmodelled.
++ */
++#include "qemu/osdep.h"
++#include "qemu/log.h"
++#include "qemu/bswap.h"
++#include "qapi/error.h"
++#include "hw/irq.h"
++#include "hw/qdev-properties.h"
++#include "hw/net/esp32c3_wifi.h"
++#include "exec/address-spaces.h"
++#include "zlib.h"
++
++#define DMA_HIGH 0x3fc00000u
++#define MAC_EVENTS 0xc3c
++#define MAC_CLEAR 0xc40
++#define TX_DONE BIT(7)
++#define RX_DONE (BIT(14) | BIT(24))
++#define AIR_POLL_NS 1000000
++#define BEACON_NS 102400000
++
++static void wifi_irq(ESP32C3WifiState *s)
++{
++    qemu_set_irq(s->irq, s->events != 0);
++    qemu_set_irq(s->power_irq, s->power_events != 0);
++}
++
++static void wifi_unsupported(ESP32C3WifiState *s, hwaddr addr, bool write,
++                             uint32_t value)
++{
++    unsigned idx = addr / 4, flag = write ? 2 : 1;
++    s->unsupported++;
++    if (!(s->seen[idx] & flag)) {
++        s->seen[idx] |= flag;
++        qemu_log_mask(LOG_UNIMP, "esp32c3-wifi: unmodelled %s 0x%08x value=0x%08x\n",
++                      write ? "write" : "read", (unsigned)(0x60033000 + addr), value);
++    }
++}
++
++static bool wifi_dma(uint32_t addr, void *data, size_t len, bool write)
++{
++    /* Wi-Fi descriptors must not turn a corrupt guest pointer into MMIO. */
++    if (addr < 0x3fc80000 || addr >= 0x3fce0000 ||
++        len > 0x3fce0000 - addr) {
++        return false;
++    }
++    return (write ? address_space_write(&address_space_memory, addr,
++                MEMTXATTRS_UNSPECIFIED, data, len) :
++            address_space_read(&address_space_memory, addr,
++                MEMTXATTRS_UNSPECIFIED, data, len)) == MEMTX_OK;
++}
++
++static void wifi_queue(ESP32C3WifiState *s, const uint8_t *data, size_t len)
++{
++    ESP32C3AirFrame *f;
++    if (len > sizeof(f->data) || s->queued >= 128) {
++        s->rx_dropped++;
++        return;
++    }
++    f = g_new0(ESP32C3AirFrame, 1);
++    f->deadline = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + AIR_POLL_NS;
++    f->length = len;
++    memcpy(f->data, data, len);
++    QTAILQ_INSERT_TAIL(&s->frames, f, link);
++    s->queued++;
++    timer_mod(s->air_timer, f->deadline);
++}
++
++static size_t wifi_management(ESP32C3WifiState *s, uint8_t *f, uint8_t subtype,
++                              const uint8_t *destination)
++{
++    memset(f, 0, 24);
++    f[0] = subtype << 4;
++    memcpy(f + 4, destination, 6);
++    memcpy(f + 10, s->bssid, 6);
++    memcpy(f + 16, s->bssid, 6);
++    stw_le_p(f + 22, (s->sequence++ & 4095) << 4);
++    return 24;
++}
++
++static void wifi_beacon(ESP32C3WifiState *s, const uint8_t *destination,
++                        bool probe)
++{
++    uint8_t f[160];
++    static const uint8_t rates[] = {1, 8, 0x82, 0x84, 0x8b, 0x96,
++                                    0x0c, 0x12, 0x18, 0x24};
++    size_t n = wifi_management(s, f, probe ? 5 : 8, destination);
++    size_t len = MIN(strlen(s->ssid), 32);
++    stq_le_p(f + n, qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) / 1000);
++    stw_le_p(f + n + 8, 100);
++    stw_le_p(f + n + 10, 1); /* ESS, open authentication. */
++    n += 12;
++    f[n++] = 0; f[n++] = len;
++    memcpy(f + n, s->ssid, len); n += len;
++    memcpy(f + n, rates, sizeof(rates)); n += sizeof(rates);
++    f[n++] = 3; f[n++] = 1; f[n++] = s->channel;
++    if (!probe) {
++        /* TIM: DTIM count=0, period=1, no buffered multicast traffic. */
++        memcpy(f + n, (uint8_t[]){5, 4, 0, 1, 0, 0}, 6); n += 6;
++        s->beacons++;
++    }
++    wifi_queue(s, f, n);
++}
++
++static void wifi_station_frame(ESP32C3WifiState *s, const uint8_t *f, size_t len)
++{
++    uint16_t fc;
++    unsigned type, subtype;
++    uint8_t reply[160], ethernet[2304];
++    size_t n, off;
++    if (len < 24) {
++        s->unsupported++;
++        return;
++    }
++    fc = lduw_le_p(f);
++    type = (fc >> 2) & 3;
++    subtype = (fc >> 4) & 15;
++    if (type == 0) {
++        switch (subtype) {
++        case 4:
++            wifi_beacon(s, f + 10, true);
++            return;
++        case 11:
++            if (len < 30 || lduw_le_p(f + 24) != 0 ||
++                lduw_le_p(f + 26) != 1) {
++                s->unsupported++; /* SAE/shared-key are not open auth. */
++                return;
++            }
++            s->auth_requests++;
++            memcpy(s->station, f + 10, 6);
++            n = wifi_management(s, reply, 11, s->station);
++            stw_le_p(reply + n, 0); stw_le_p(reply + n + 2, 2);
++            stw_le_p(reply + n + 4, 0);
++            wifi_queue(s, reply, n + 6);
++            return;
++        case 0:
++        case 2:
++            s->assoc_requests++;
++            memcpy(s->station, f + 10, 6);
++            n = wifi_management(s, reply, subtype == 2 ? 3 : 1, s->station);
++            memcpy(reply + n, (uint8_t[]){1, 0, 0, 0, 1, 0xc0,
++                                         1, 4, 0x82, 0x84, 0x8b, 0x96}, 12);
++            wifi_queue(s, reply, n + 12);
++            s->associated = true;
++            return;
++        case 10:
++        case 12:
++            s->associated = false;
++            return;
++        default:
++            s->unsupported++;
++            return;
++        }
++    }
++    if (type != 2) {
++        s->unsupported++;
++        return;
++    }
++    if (subtype == 4 || subtype == 12) {
++        return; /* Null/QoS null keepalive has no LLC payload. */
++    }
++    off = (subtype & 8) ? 26 : 24;
++    if (fc & BIT(15)) {
++        off += 4; /* Order/HT control. */
++    }
++    if ((fc & (BIT(8) | BIT(9))) != BIT(8) || (fc & BIT(14)) ||
++        len < off + 8 || memcmp(f + off, "\xaa\xaa\x03\0\0\0", 6)) {
++        s->unsupported++;
++        return;
++    }
++    n = len - off - 8;
++    if (n + 14 > sizeof(ethernet)) {
++        s->unsupported++;
++        return;
++    }
++    memcpy(ethernet, f + 16, 6); /* addr3 = destination */
++    memcpy(ethernet + 6, f + 10, 6); /* addr2 = station */
++    memcpy(ethernet + 12, f + off + 6, 2);
++    memcpy(ethernet + 14, f + off + 8, n);
++    if (s->nic) {
++        qemu_send_packet(qemu_get_queue(s->nic), ethernet, n + 14);
++        s->eth_tx++;
++    }
++}
++
++static void wifi_transmit(ESP32C3WifiState *s, unsigned queue, uint32_t value)
++{
++    uint8_t descriptor[12], frame[2304];
++    uint32_t desc = DMA_HIGH | (value & 0xfffff), packet, d0;
++    size_t len;
++    if (!wifi_dma(desc, descriptor, sizeof(descriptor), false)) {
++        s->bad_dma++;
++        s->tx_errors |= BIT(queue);
++        goto done;
++    }
++    d0 = ldl_le_p(descriptor);
++    packet = ldl_le_p(descriptor + 4);
++    len = (d0 >> 12) & 0xfff;
++    if (!(d0 & BIT(31)) || !len || len > sizeof(frame) ||
++        !wifi_dma(packet, frame, len, false)) {
++        s->bad_dma++;
++        s->tx_errors |= BIT(queue);
++        goto done;
++    }
++    s->tx_frames++;
++    qemu_log_mask(LOG_UNIMP, "esp32c3-wifi: TX queue=%u desc=0x%08x len=%zu fc=0x%04x\n",
++                  queue, desc, len, lduw_le_p(frame));
++    if (s->air_enabled) {
++        wifi_station_frame(s, frame, len);
++    }
++    s->tx_complete |= BIT(queue);
++done:
++    s->regs[(0xd08 - queue * 8) / 4] &= ~(3u << 30);
++    s->regs[(0x1320 - queue * 76) / 4] &= ~(0xfu << 12);
++    s->events |= TX_DONE;
++    wifi_irq(s);
++}
++
++static bool wifi_receive_frame(ESP32C3WifiState *s, ESP32C3AirFrame *f)
++{
++    uint8_t descriptor[12], data[48 + 2304 + 4];
++    uint32_t desc, d0, buf, next, total = 48 + f->length + 4;
++    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++    if (!s->rx_next || now < s->last_rx_ns + AIR_POLL_NS) {
++        return false;
++    }
++    if (s->last_rx_desc && now < s->last_rx_ns + 50000000 &&
++        wifi_dma(s->last_rx_desc, descriptor, 4, false) &&
++        (ldl_le_p(descriptor) & BIT(30))) {
++        return false; /* Wait for the guest to recycle its previous RX buffer. */
++    }
++    desc = DMA_HIGH | (s->rx_next & 0xfffff);
++    if (!wifi_dma(desc, descriptor, 12, false)) {
++        s->bad_dma++;
++        return true;
++    }
++    d0 = ldl_le_p(descriptor); buf = ldl_le_p(descriptor + 4);
++    next = ldl_le_p(descriptor + 8);
++    if (!(d0 & BIT(31)) || (d0 & BIT(30)) || (d0 & 0xfff) < total) {
++        return false;
++    }
++    memset(data, 0, 48);
++    stl_le_p(data, BIT(28) | ((f->data[4] & 1) ? 0 : BIT(29)) | 0xd8);
++    stl_le_p(data + 8, s->channel << 16);
++    stl_le_p(data + 12, now / 1000);
++    stl_le_p(data + 20, 0xa6);
++    stl_le_p(data + 44, f->length + 4);
++    memcpy(data + 48, f->data, f->length);
++    stl_le_p(data + 48 + f->length, crc32(0, f->data, f->length));
++    if (!wifi_dma(buf, data, total, true)) {
++        s->bad_dma++;
++        return true;
++    }
++    stl_le_p(descriptor, (d0 & ~(0xfffu << 12)) | (total << 12) |
++                          BIT(30) | BIT(31));
++    if (!wifi_dma(desc, descriptor, 4, true)) {
++        s->bad_dma++;
++        return true;
++    }
++    s->rx_last = (desc & 0xfffff) | BIT(24);
++    s->rx_next = next & 0xfffff;
++    s->last_rx_desc = desc;
++    s->last_rx_ns = now;
++    s->rx_frames++;
++    s->events |= RX_DONE;
++    wifi_irq(s);
++    return true;
++}
++
++static void wifi_air_tick(void *opaque)
++{
++    ESP32C3WifiState *s = opaque;
++    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++    ESP32C3AirFrame *f = QTAILQ_FIRST(&s->frames);
++    if (s->reset_held) {
++        return;
++    }
++    if (s->air_enabled && now >= s->next_beacon) {
++        if (!s->associated) {
++            wifi_beacon(s, (uint8_t[]){255, 255, 255, 255, 255, 255}, false);
++        }
++        s->next_beacon = now + BEACON_NS;
++    }
++    if (f && f->deadline <= now && wifi_receive_frame(s, f)) {
++        QTAILQ_REMOVE(&s->frames, f, link); g_free(f); s->queued--;
++    }
++    if (s->air_enabled || s->queued) {
++        timer_mod(s->air_timer, now + AIR_POLL_NS);
++    }
++}
++
++static uint64_t wifi_read(void *opaque, hwaddr addr, unsigned size)
++{
++    ESP32C3WifiState *s = opaque;
++    if (s->reset_held) {
++        return 0;
++    }
++    switch (addr) {
++    case 0xd14: return s->regs[addr / 4] | BIT(0); /* MAC initialization ready */
++    case MAC_EVENTS: return s->events;
++    case 0x088: return s->rx_base;
++    case 0x08c: return s->rx_next;
++    case 0x090: return s->rx_last;
++    case 0xca8: return s->tx_errors;
++    case 0xcb0: return s->tx_complete;
++    case 0x2118: return s->power_events;
++    case 0x2018: return s->tsf_latched;
++    case 0x201c: return s->tsf_latched >> 32;
++    default:
++        wifi_unsupported(s, addr, false, s->regs[addr / 4]);
++        return s->regs[addr / 4];
++    }
++}
++
++static void wifi_write(void *opaque, hwaddr addr, uint64_t value, unsigned size)
++{
++    ESP32C3WifiState *s = opaque;
++    uint32_t v = value;
++    if (s->reset_held) {
++        return;
++    }
++    s->regs[addr / 4] = v;
++    switch (addr) {
++    case MAC_CLEAR: s->events &= ~v; break;
++    case 0xca4: s->tx_errors &= ~v; break;
++    case 0xcac: s->tx_complete &= ~v; break;
++    case 0x088:
++        s->rx_base = v & 0xfffff;
++        if (!s->rx_next) { s->rx_next = s->rx_base; }
++        break;
++    case 0x084:
++        if ((v & 1) && !s->rx_next) { s->rx_next = s->rx_base; }
++        s->regs[addr / 4] &= ~1u;
++        break;
++    case 0x211c: s->power_events &= ~v; break;
++    case 0x200c:
++        if (v & 3) {
++            s->tsf_latched = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) / 1000 +
++                              s->tsf_offset;
++        }
++        if (v & BIT(4)) {
++            s->tsf_offset = ((uint64_t)s->regs[0x2014 / 4] << 32 |
++                             s->regs[0x2010 / 4]) -
++                             qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) / 1000;
++        }
++        break;
++    default:
++        if (addr <= 0xd08 && addr >= 0xce8 && !((0xd08 - addr) % 8)) {
++            if (v & BIT(31)) { wifi_transmit(s, (0xd08 - addr) / 8, v); }
++        } else {
++            wifi_unsupported(s, addr, true, v);
++        }
++    }
++    wifi_irq(s);
++}
++
++static const MemoryRegionOps wifi_ops = {
++    .read = wifi_read, .write = wifi_write, .endianness = DEVICE_LITTLE_ENDIAN,
++    .valid = {.min_access_size = 4, .max_access_size = 4},
++    .impl = {.min_access_size = 4, .max_access_size = 4},
++};
++
++static bool wifi_can_receive(NetClientState *nc)
++{
++    ESP32C3WifiState *s = qemu_get_nic_opaque(nc);
++    return !s->reset_held && s->associated && s->queued < 128;
++}
++
++static ssize_t wifi_net_receive(NetClientState *nc, const uint8_t *eth, size_t len)
++{
++    ESP32C3WifiState *s = qemu_get_nic_opaque(nc);
++    uint8_t f[2304];
++    size_t n;
++    if (s->reset_held || !s->associated || len < 14 || len + 18 > sizeof(f)) { return len; }
++    n = wifi_management(s, f, 0, eth); /* Reuse address/sequence construction. */
++    f[0] = 8; f[1] = 2; /* Data, from DS */
++    memcpy(f + 16, eth + 6, 6);
++    memcpy(f + n, "\xaa\xaa\x03\0\0\0", 6); n += 6;
++    memcpy(f + n, eth + 12, len - 12); n += len - 12;
++    wifi_queue(s, f, n);
++    s->eth_rx++;
++    return len;
++}
++
++static NetClientInfo wifi_net_info = {
++    .type = NET_CLIENT_DRIVER_NIC, .size = sizeof(NICState),
++    .can_receive = wifi_can_receive, .receive = wifi_net_receive,
++};
++
++static void wifi_reset(DeviceState *dev)
++{
++    ESP32C3WifiState *s = ESP32C3_WIFI(dev);
++    ESP32C3AirFrame *f;
++    while ((f = QTAILQ_FIRST(&s->frames))) {
++        QTAILQ_REMOVE(&s->frames, f, link); g_free(f);
++    }
++    memset(s->regs, 0, sizeof(s->regs));
++    s->queued = s->events = s->power_events = s->tx_complete = s->tx_errors = 0;
++    s->rx_base = s->rx_next = s->rx_last = s->last_rx_desc = 0;
++    s->associated = false; s->sequence = 0; s->tsf_offset = s->tsf_latched = 0;
++    s->last_rx_ns = 0;
++    s->reset_held = false;
++    s->next_beacon = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + BEACON_NS;
++    timer_del(s->air_timer);
++    if (s->air_enabled) { timer_mod(s->air_timer, s->next_beacon); }
++    wifi_irq(s);
++}
++
++static void wifi_reset_input(void *opaque, int n, int level)
++{
++    ESP32C3WifiState *s = opaque;
++    if (level && !s->reset_held) {
++        wifi_reset(DEVICE(s));
++        s->reset_count++;
++        timer_del(s->air_timer);
++    }
++    s->reset_held = !!level;
++    if (!level && s->air_enabled) {
++        timer_mod(s->air_timer, s->next_beacon);
++    }
++}
++
++static bool wifi_false(Object *obj, Error **errp) { return false; }
++
++static void wifi_init(Object *obj)
++{
++    ESP32C3WifiState *s = ESP32C3_WIFI(obj);
++    SysBusDevice *dev = SYS_BUS_DEVICE(obj);
++    QTAILQ_INIT(&s->frames);
++    memory_region_init_io(&s->iomem, obj, &wifi_ops, s, TYPE_ESP32C3_WIFI, 0x3000);
++    sysbus_init_mmio(dev, &s->iomem);
++    sysbus_init_irq(dev, &s->irq); sysbus_init_irq(dev, &s->power_irq);
++    qdev_init_gpio_in_named(DEVICE(obj), wifi_reset_input, "reset", 1);
++    s->air_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, wifi_air_tick, s);
++    memcpy(s->bssid, (uint8_t[]){2, 0x58, 0x33, 0x45, 0x4d, 1}, 6);
++    object_property_add_uint64_ptr(obj, "unsupported-accesses", &s->unsupported, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "tx-frames", &s->tx_frames, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "rx-frames", &s->rx_frames, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "rx-dropped", &s->rx_dropped, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "bad-dma", &s->bad_dma, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "ethernet-tx", &s->eth_tx, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "ethernet-rx", &s->eth_rx, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "beacons", &s->beacons, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "auth-requests", &s->auth_requests, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "assoc-requests", &s->assoc_requests, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "mac-resets", &s->reset_count, OBJ_PROP_FLAG_READ);
++    object_property_add_bool(obj, "radio-modelled", wifi_false, NULL);
++    object_property_add_bool(obj, "timing-calibrated", wifi_false, NULL);
++    object_property_add_bool(obj, "encryption-modelled", wifi_false, NULL);
++}
++
++static void wifi_realize(DeviceState *dev, Error **errp)
++{
++    ESP32C3WifiState *s = ESP32C3_WIFI(dev);
++    if (!s->ssid || !*s->ssid || strlen(s->ssid) > 32 ||
++        s->channel < 1 || s->channel > 14) {
++        error_setg(errp, "Wi-Fi SSID must be 1..32 bytes and channel 1..14");
++        return;
++    }
++    s->nic = qemu_new_nic(&wifi_net_info, &s->conf,
++                          object_get_typename(OBJECT(dev)), dev->id,
++                          &dev->mem_reentrancy_guard, s);
++    qemu_format_nic_info_str(qemu_get_queue(s->nic), s->conf.macaddr.a);
++}
++
++static void wifi_finalize(Object *obj)
++{
++    ESP32C3WifiState *s = ESP32C3_WIFI(obj);
++    ESP32C3AirFrame *f;
++    timer_free(s->air_timer);
++    while ((f = QTAILQ_FIRST(&s->frames))) {
++        QTAILQ_REMOVE(&s->frames, f, link); g_free(f);
++    }
++}
++
++static const Property wifi_properties[] = {
++    DEFINE_NIC_PROPERTIES(ESP32C3WifiState, conf),
++    DEFINE_PROP_STRING("ssid", ESP32C3WifiState, ssid),
++    DEFINE_PROP_UINT32("channel", ESP32C3WifiState, channel, 6),
++    DEFINE_PROP_BOOL("air-enabled", ESP32C3WifiState, air_enabled, false),
++};
++
++static void wifi_class_init(ObjectClass *klass, void *data)
++{
++    DeviceClass *dc = DEVICE_CLASS(klass);
++    dc->realize = wifi_realize;
++    device_class_set_legacy_reset(dc, wifi_reset);
++    device_class_set_props(dc, wifi_properties);
++    dc->desc = "ESP32-C3 Wi-Fi MAC, open virtual AP, provisional PHY";
++    set_bit(DEVICE_CATEGORY_NETWORK, dc->categories);
++}
++
++static const TypeInfo wifi_info = {
++    .name = TYPE_ESP32C3_WIFI, .parent = TYPE_SYS_BUS_DEVICE,
++    .instance_size = sizeof(ESP32C3WifiState), .instance_init = wifi_init,
++    .instance_finalize = wifi_finalize, .class_init = wifi_class_init,
++};
++static void wifi_register_types(void) { type_register_static(&wifi_info); }
++type_init(wifi_register_types)
+diff --git a/hw/net/meson.build b/hw/net/meson.build
+index 00a9e9d..e306416 100644
+--- a/hw/net/meson.build
++++ b/hw/net/meson.build
+@@ -70,3 +70,4 @@ system_ss.add(when: 'CONFIG_ROCKER', if_true: files(
+ system_ss.add(files('rocker/rocker-hmp-cmds.c'))
+ 
+ subdir('can')
++system_ss.add(when: 'CONFIG_RISCV_ESP32C3', if_true: files('esp32c3_wifi.c'))
 diff --git a/hw/riscv/Kconfig b/hw/riscv/Kconfig
 index 4177705..6c812df 100644
 --- a/hw/riscv/Kconfig
@@ -4479,7 +5808,7 @@ index 4177705..6c812df 100644
  config RISCV_ESP32C6
      bool
 diff --git a/hw/riscv/esp32c3.c b/hw/riscv/esp32c3.c
-index ed698fb..14dbacc 100644
+index ed698fb..95b0946 100644
 --- a/hw/riscv/esp32c3.c
 +++ b/hw/riscv/esp32c3.c
 @@ -14,6 +14,7 @@
@@ -4490,7 +5819,7 @@ index ed698fb..14dbacc 100644
  #include "hw/hw.h"
  #include "hw/boards.h"
  #include "hw/loader.h"
-@@ -50,6 +51,14 @@
+@@ -50,6 +51,15 @@
  #include "hw/dma/esp32c3_gdma.h"
  #include "hw/display/esp_rgb.h"
  #include "hw/net/can/esp32c3_twai.h"
@@ -4499,13 +5828,14 @@ index ed698fb..14dbacc 100644
 +#include "hw/misc/xteink_x3_adc.h"
 +#include "hw/misc/esp32c3_assist_debug.h"
 +#include "hw/misc/esp32c3_regi2c.h"
++#include "hw/net/esp32c3_wifi.h"
 +#include "hw/display/xteink_x3_epd.h"
 +#include "hw/sd/sd.h"
 +#include "hw/irq.h"
  
  #define ESP32C3_IO_WARNING          0
  
-@@ -57,6 +66,16 @@
+@@ -57,6 +67,16 @@
  #define ESP32C3_RESET_GPIO_NAME     "esp32c3.machine.reset_gpio"
  #define MB (1024*1024)
  
@@ -4522,7 +5852,7 @@ index ed698fb..14dbacc 100644
  
  /* Define a new "class" which derivates from "MachineState" */
  struct Esp32C3MachineState {
-@@ -66,6 +85,7 @@ struct Esp32C3MachineState {
+@@ -66,6 +86,7 @@ struct Esp32C3MachineState {
      EspRISCVCPU soc;
      BusState periph_bus;
      MemoryRegion iomem;
@@ -4530,7 +5860,7 @@ index ed698fb..14dbacc 100644
  
      qemu_irq cpu_reset;
  
-@@ -86,10 +106,36 @@ struct Esp32C3MachineState {
+@@ -86,10 +107,37 @@ struct Esp32C3MachineState {
      ESP32C3TimgState timg[2];
      ESP32C3SysTimerState systimer;
      ESP32C3SpiState spi1;
@@ -4547,6 +5877,7 @@ index ed698fb..14dbacc 100644
 +    XteinkX3ADCState adc;
 +    ESP32C3AssistDebugState assist_debug;
 +    ESP32C3Regi2CState regi2c;
++    ESP32C3WifiState wifi;
 +    bool xteink_x3;
 +    uint64_t unsupported_io_reads;
 +    uint64_t unsupported_io_writes;
@@ -4567,7 +5898,7 @@ index ed698fb..14dbacc 100644
  };
  
  /* Fake register used by ESP-IDF application to determine whether the code is running on real hardware or on QEMU */
-@@ -143,14 +189,105 @@ static bool addr_in_range(hwaddr addr, hwaddr start, hwaddr end)
+@@ -143,14 +191,105 @@ static bool addr_in_range(hwaddr addr, hwaddr start, hwaddr end)
      return addr >= start && addr < end;
  }
  
@@ -4673,7 +6004,7 @@ index ed698fb..14dbacc 100644
          /* Return a random 32-bit value */
          static bool init = false;
          if (!init) {
-@@ -161,6 +298,16 @@ static uint64_t esp32c3_io_read(void *opaque, hwaddr addr, unsigned int size)
+@@ -161,6 +300,16 @@ static uint64_t esp32c3_io_read(void *opaque, hwaddr addr, unsigned int size)
      } else if (addr + ESP32C3_IO_START_ADDR == DR_REG_ASSIST_DEBUG_BASE + A_ASSIST_DEBUG_CORE_0_DEBUG_MODE_REG) {
          return 0;
      } else {
@@ -4690,7 +6021,7 @@ index ed698fb..14dbacc 100644
  #if ESP32C3_IO_WARNING
          warn_report("[ESP32-C3] Unsupported read to $%08lx\n", ESP32C3_IO_START_ADDR + addr);
  #endif
-@@ -170,6 +317,23 @@ static uint64_t esp32c3_io_read(void *opaque, hwaddr addr, unsigned int size)
+@@ -170,6 +319,23 @@ static uint64_t esp32c3_io_read(void *opaque, hwaddr addr, unsigned int size)
  
  static void esp32c3_io_write(void *opaque, hwaddr addr, uint64_t value, unsigned int size)
  {
@@ -4714,7 +6045,7 @@ index ed698fb..14dbacc 100644
  #if ESP32C3_IO_WARNING
          warn_report("[ESP32-C3] Unsupported write $%08lx = %08lx\n", ESP32C3_IO_START_ADDR + addr, value);
  #endif
-@@ -195,6 +359,137 @@ static void esp32c3_reset_request(void* opaque, int n, int level)
+@@ -195,6 +361,137 @@ static void esp32c3_reset_request(void* opaque, int n, int level)
      }
  }
  
@@ -4852,7 +6183,7 @@ index ed698fb..14dbacc 100644
  
  static void esp32c3_init_spi_flash(Esp32C3MachineState *ms, BlockBackend* blk)
  {
-@@ -228,8 +523,14 @@ static void esp32c3_init_spi_flash(Esp32C3MachineState *ms, BlockBackend* blk)
+@@ -228,8 +525,14 @@ static void esp32c3_init_spi_flash(Esp32C3MachineState *ms, BlockBackend* blk)
  
      /* Realize the SPI flash, its "drive" (blk) property must already be set! */
      qdev_realize(flash_dev, spi_bus, &error_fatal);
@@ -4868,7 +6199,7 @@ index ed698fb..14dbacc 100644
  }
  
  
-@@ -374,6 +675,7 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -374,6 +677,7 @@ static void esp32c3_machine_init(MachineState *machine)
  
      /* Initialize RTC Fast Memory as regular RAM */
      MemoryRegion *rtcram = g_new(MemoryRegion, 1);
@@ -4876,7 +6207,7 @@ index ed698fb..14dbacc 100644
      memory_region_init_ram(rtcram, NULL, "esp32c3.rtcram", memmap[ESP32C3_MEMREGION_RTCFAST].size, &error_fatal);
      memory_region_add_subregion(sys_mem, memmap[ESP32C3_MEMREGION_RTCFAST].base, rtcram);
  
-@@ -382,7 +684,7 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -382,7 +686,7 @@ static void esp32c3_machine_init(MachineState *machine)
      qdev_realize(DEVICE(&ms->soc), NULL, &error_fatal);
  
      memory_region_init_io(&ms->iomem, OBJECT(&ms->soc), &esp32c3_io_ops,
@@ -4885,11 +6216,16 @@ index ed698fb..14dbacc 100644
      memory_region_add_subregion(sys_mem, ESP32C3_IO_START_ADDR, &ms->iomem);
  
  
-@@ -405,7 +707,21 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -405,7 +709,26 @@ static void esp32c3_machine_init(MachineState *machine)
      }
  
      object_initialize_child(OBJECT(machine), "intmatrix", &ms->intmatrix, TYPE_ESP32C3_INTMATRIX);
 +    if (ms->xteink_x3) {
++        object_initialize_child(OBJECT(machine), "wifi", &ms->wifi,
++                                TYPE_ESP32C3_WIFI);
++        if (!ms->wifi.ssid) {
++            qdev_prop_set_string(DEVICE(&ms->wifi), "ssid", "X3EMU");
++        }
 +        object_initialize_child(OBJECT(machine), "regi2c", &ms->regi2c,
 +                                TYPE_ESP32C3_REGI2C);
 +        object_initialize_child(OBJECT(machine), "assist-debug",
@@ -4907,7 +6243,7 @@ index ed698fb..14dbacc 100644
      object_initialize_child(OBJECT(machine), "extmem", &ms->cache, TYPE_ESP32C3_CACHE);
      object_initialize_child(OBJECT(machine), "efuse", &ms->efuse, TYPE_ESP32C3_EFUSE);
      object_initialize_child(OBJECT(machine), "clock", &ms->clock, TYPE_ESP32C3_CLOCK);
-@@ -420,10 +736,18 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -420,10 +743,18 @@ static void esp32c3_machine_init(MachineState *machine)
      object_initialize_child(OBJECT(machine), "timg1", &ms->timg[1], TYPE_ESP32C3_TIMG);
      object_initialize_child(OBJECT(machine), "systimer", &ms->systimer, TYPE_ESP32C3_SYSTIMER);
      object_initialize_child(OBJECT(machine), "spi1", &ms->spi1, TYPE_ESP32C3_SPI);
@@ -4926,7 +6262,24 @@ index ed698fb..14dbacc 100644
  
      /* Realize all the I/O peripherals we depend on */
  
-@@ -451,10 +775,25 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -446,15 +777,41 @@ static void esp32c3_machine_init(MachineState *machine)
+     }
+ 
+     /* Initialize OpenCores Ethernet controller now sicne it requires the interrupt matrix */
+-    esp32c3_init_openeth(ms);
++    if (ms->xteink_x3) {
++        qemu_configure_nic_device(DEVICE(&ms->wifi), true, NULL);
++        sysbus_realize(SYS_BUS_DEVICE(&ms->wifi), &error_fatal);
++        memory_region_add_subregion_overlap(sys_mem, 0x60033000,
++            sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->wifi), 0), 0);
++        sysbus_connect_irq(SYS_BUS_DEVICE(&ms->wifi), 0,
++                           qdev_get_gpio_in(intmatrix_dev, ETS_WIFI_MAC_INTR_SOURCE));
++        sysbus_connect_irq(SYS_BUS_DEVICE(&ms->wifi), 1,
++                           qdev_get_gpio_in(intmatrix_dev, ETS_WIFI_PWR_INTR_SOURCE));
++    } else {
++        esp32c3_init_openeth(ms);
++    }
+ 
      /* USB Serial JTAG realization */
      {
          sysbus_realize(SYS_BUS_DEVICE(&ms->jtag), &error_fatal);
@@ -4952,7 +6305,7 @@ index ed698fb..14dbacc 100644
      /* RTC CNTL realization */
      {
          sysbus_realize(SYS_BUS_DEVICE(&ms->rtccntl), &error_fatal);
-@@ -463,6 +802,25 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -463,6 +820,25 @@ static void esp32c3_machine_init(MachineState *machine)
          /* Connect CNTL's reset-request GPIO to the SoC's reset GPIO */
          qdev_connect_gpio_out_named(DEVICE(&ms->rtccntl), ESP32C3_RTC_CPU_RESET_GPIO, 0,
                                      qdev_get_gpio_in_named(DEVICE(&ms->soc), ESP32C3_RESET_GPIO_NAME, 0));
@@ -4978,7 +6331,7 @@ index ed698fb..14dbacc 100644
      }
  
      /* SPI1 controller (SPI Flash) */
-@@ -471,6 +829,14 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -471,6 +847,14 @@ static void esp32c3_machine_init(MachineState *machine)
          sysbus_realize(SYS_BUS_DEVICE(&ms->spi1), &error_fatal);
          MemoryRegion *mr = sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->spi1), 0);
          memory_region_add_subregion_overlap(sys_mem, DR_REG_SPI1_BASE, mr, 0);
@@ -4993,7 +6346,7 @@ index ed698fb..14dbacc 100644
          if (blk) {
              esp32c3_init_spi_flash(ms, blk);
          }
-@@ -488,8 +854,75 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -488,8 +872,75 @@ static void esp32c3_machine_init(MachineState *machine)
      /* GPIO realization */
      {
          sysbus_realize(SYS_BUS_DEVICE(&ms->gpio), &error_fatal);
@@ -5069,7 +6422,20 @@ index ed698fb..14dbacc 100644
      }
  
      /* (Extmem) Cache realization */
-@@ -660,6 +1093,62 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -520,6 +971,12 @@ static void esp32c3_machine_init(MachineState *machine)
+         sysbus_realize(SYS_BUS_DEVICE(&ms->clock), &error_fatal);
+         MemoryRegion *mr = sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->clock), 0);
+         memory_region_add_subregion_overlap(sys_mem, DR_REG_SYSTEM_BASE, mr, 0);
++        if (ms->xteink_x3) {
++            memory_region_add_subregion_overlap(sys_mem, DR_REG_SYSCON_BASE + 0x14,
++                sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->clock), 1), 0);
++            qdev_connect_gpio_out_named(DEVICE(&ms->clock), "wifi-mac-reset", 0,
++                qdev_get_gpio_in_named(DEVICE(&ms->wifi), "reset", 0));
++        }
+         /* Connect the IRQ lines to the interrupt matrix */
+         for (int i = 0; i < ESP32C3_SYSTEM_CPU_INTR_COUNT; i++) {
+             sysbus_connect_irq(SYS_BUS_DEVICE(&ms->clock), i,
+@@ -660,6 +1117,62 @@ static void esp32c3_machine_init(MachineState *machine)
  
  
  /* Initialize machine type */
@@ -5132,7 +6498,7 @@ index ed698fb..14dbacc 100644
  static void esp32c3_machine_class_init(ObjectClass *oc, void *data)
  {
      MachineClass *mc = MACHINE_CLASS(oc);
-@@ -670,6 +1159,12 @@ static void esp32c3_machine_class_init(ObjectClass *oc, void *data)
+@@ -670,6 +1183,12 @@ static void esp32c3_machine_class_init(ObjectClass *oc, void *data)
      mc->default_cpus = 1;
      // 0x4f600
      mc->default_ram_size = 400 * 1024;
@@ -5145,7 +6511,7 @@ index ed698fb..14dbacc 100644
  }
  
  /* Create a new type of machine ("child class") */
-@@ -679,6 +1174,8 @@ static const TypeInfo esp32c3_info = {
+@@ -679,6 +1198,8 @@ static const TypeInfo esp32c3_info = {
      .parent = TYPE_MACHINE,
      /* Real size in bytes of our machine instance */
      .instance_size = sizeof(Esp32C3MachineState),
@@ -5155,7 +6521,7 @@ index ed698fb..14dbacc 100644
      .class_init = esp32c3_machine_class_init,
  };
 diff --git a/hw/riscv/esp32c3_clk.c b/hw/riscv/esp32c3_clk.c
-index 10aa7f4..059f223 100644
+index 10aa7f4..b67eca7 100644
 --- a/hw/riscv/esp32c3_clk.c
 +++ b/hw/riscv/esp32c3_clk.c
 @@ -16,6 +16,8 @@
@@ -5248,17 +6614,55 @@ index 10aa7f4..059f223 100644
          default:
  #if CLOCK_WARNING
              warn_report("[CLOCK] Unsupported write to %08lx (%08lx)\n", addr, value);
-@@ -118,6 +180,9 @@ static void esp32c3_clock_reset_hold(Object *obj, ResetType type)
+@@ -106,6 +168,34 @@ static const MemoryRegionOps esp32c3_clock_ops = {
+     .endianness = DEVICE_LITTLE_ENDIAN,
+ };
+ 
++/* ESP-IDF v5.5.2 soc/esp32c3/include/soc/syscon_reg.h: SYSCON +14/+18.
++ * These digital latches do not imply an oscillator/PHY power model. */
++static uint64_t esp32c3_modem_read(void *opaque, hwaddr addr, unsigned size)
++{
++    ESP32C3ClockState *s = opaque;
++    return addr == 0 ? s->modem_clock : s->modem_reset;
++}
++
++static void esp32c3_modem_write(void *opaque, hwaddr addr, uint64_t value,
++                              unsigned size)
++{
++    ESP32C3ClockState *s = opaque;
++    if (addr == 0) {
++        s->modem_clock = value;
++    } else {
++        s->modem_reset = value;
++        qemu_set_irq(s->wifi_mac_reset, !!(value & BIT(2)));
++    }
++}
++
++static const MemoryRegionOps esp32c3_modem_ops = {
++    .read = esp32c3_modem_read,
++    .write = esp32c3_modem_write,
++    .endianness = DEVICE_LITTLE_ENDIAN,
++    .valid = {.min_access_size = 4, .max_access_size = 4},
++    .impl = {.min_access_size = 4, .max_access_size = 4},
++};
++
+ static void esp32c3_clock_reset_hold(Object *obj, ResetType type)
+ {
+     ESP32C3ClockState *s = ESP32C3_CLOCK(obj);
+@@ -118,6 +208,12 @@ static void esp32c3_clock_reset_hold(Object *obj, ResetType type)
      /* Divider for PLL clock and APB  frequency */
      s->cpuperconf = (ESP32C3_PERIOD_SEL_80 << R_SYSTEM_CPU_PER_CONF_CPUPERIOD_SEL_SHIFT) |
                      (ESP32C3_FREQ_SEL_PLL_480 << R_SYSTEM_CPU_PER_CONF_PLL_FREQ_SEL_SHIFT);
 +    s->rtc_fastmem_config = 0x7ff <<
 +                           R_SYSTEM_RTC_FASTMEM_CONFIG_RTC_MEM_CRC_LEN_SHIFT;
 +    s->rtc_fastmem_crc = 0;
++    s->modem_clock = 0xfffce030;
++    s->modem_reset = 0;
++    qemu_irq_lower(s->wifi_mac_reset);
  
      /* Initialize the IRQs */
      s->levels = 0;
-@@ -132,6 +197,32 @@ static void esp32c3_clock_realize(DeviceState *dev, Error **errp)
+@@ -132,6 +228,35 @@ static void esp32c3_clock_realize(DeviceState *dev, Error **errp)
      esp32c3_clock_reset_hold(OBJECT(dev), RESET_TYPE_COLD);
  }
  
@@ -5268,13 +6672,14 @@ index 10aa7f4..059f223 100644
 +    for (unsigned i = 0; i < ESP32C3_SYSTEM_CPU_INTR_COUNT; i++) {
 +        qemu_set_irq(s->irqs[i], (s->levels >> i) & 1);
 +    }
++    qemu_set_irq(s->wifi_mac_reset, !!(s->modem_reset & BIT(2)));
 +    return 0;
 +}
 +
 +static const VMStateDescription vmstate_esp32c3_clock = {
 +    .name = TYPE_ESP32C3_CLOCK,
-+    .version_id = 1,
-+    .minimum_version_id = 1,
++    .version_id = 2,
++    .minimum_version_id = 2,
 +    .post_load = esp32c3_clock_post_load,
 +    .fields = (const VMStateField[]) {
 +        VMSTATE_UINT32(cpuperconf, ESP32C3ClockState),
@@ -5284,6 +6689,8 @@ index 10aa7f4..059f223 100644
 +        VMSTATE_UINT32(rtc_fastmem_config, ESP32C3ClockState),
 +        VMSTATE_UINT32(rtc_fastmem_crc, ESP32C3ClockState),
 +        VMSTATE_UINT64(rtc_crc_count, ESP32C3ClockState),
++        VMSTATE_UINT32(modem_clock, ESP32C3ClockState),
++        VMSTATE_UINT32(modem_reset, ESP32C3ClockState),
 +        VMSTATE_END_OF_LIST()
 +    }
 +};
@@ -5291,21 +6698,26 @@ index 10aa7f4..059f223 100644
  static void esp32c3_clock_init(Object *obj)
  {
      ESP32C3ClockState *s = ESP32C3_CLOCK(obj);
-@@ -141,6 +232,13 @@ static void esp32c3_clock_init(Object *obj)
+@@ -140,6 +265,18 @@ static void esp32c3_clock_init(Object *obj)
+     memory_region_init_io(&s->iomem, obj, &esp32c3_clock_ops, s,
                            TYPE_ESP32C3_CLOCK, A_SYSTEM_COMB_PVT_ERR_HVT_SITE3 + sizeof(uint32_t));
      sysbus_init_mmio(sbd, &s->iomem);
- 
++    memory_region_init_io(&s->modem_iomem, obj, &esp32c3_modem_ops, s,
++                          TYPE_ESP32C3_CLOCK ".modem", 8);
++    sysbus_init_mmio(sbd, &s->modem_iomem);
++    qdev_init_gpio_out_named(DEVICE(obj), &s->wifi_mac_reset,
++                             "wifi-mac-reset", 1);
++
 +    object_property_add_uint64_ptr(obj, "rtc-crc-count", &s->rtc_crc_count,
 +                                   OBJ_PROP_FLAG_READ);
 +    object_property_add_bool(obj, "rtc-crc-hardware-verified",
 +                             esp32c3_crc_unverified, NULL);
 +    object_property_add_bool(obj, "rtc-crc-timing-calibrated",
 +                             esp32c3_crc_unverified, NULL);
-+
+ 
      /* Initialize the output IRQ lines used to manually trigger interrupts */
      for (uint64_t i = 0; i < ESP32C3_SYSTEM_CPU_INTR_COUNT; i++) {
-         sysbus_init_irq(sbd, &s->irqs[i]);
-@@ -155,6 +253,7 @@ static void esp32c3_clock_class_init(ObjectClass *klass, void *data)
+@@ -155,6 +292,7 @@ static void esp32c3_clock_class_init(ObjectClass *klass, void *data)
  
      rc->phases.hold = esp32c3_clock_reset_hold;
      dc->realize = esp32c3_clock_realize;
@@ -6349,10 +7761,10 @@ index 0000000..49a73d7
 +
 +#endif
 diff --git a/include/hw/misc/esp32c3_jtag.h b/include/hw/misc/esp32c3_jtag.h
-index 8ac6ebb..a613177 100644
+index 8ac6ebb..199977c 100644
 --- a/include/hw/misc/esp32c3_jtag.h
 +++ b/include/hw/misc/esp32c3_jtag.h
-@@ -12,15 +12,41 @@
+@@ -12,15 +12,48 @@
  #include "hw/hw.h"
  #include "hw/sysbus.h"
  #include "hw/registerfields.h"
@@ -6378,6 +7790,7 @@ index 8ac6ebb..a613177 100644
 +    Fifo8 rx_fifo;
 +    Fifo8 tx_fifo;
 +    QEMUTimer *sof_timer;
++    QEMUTimer *tx_timer;
 +    uint32_t regs[ESP32C3_JTAG_REGS_SIZE / 4];
 +    uint16_t frame_index;
 +    uint8_t tx_write_pos;
@@ -6389,18 +7802,24 @@ index 8ac6ebb..a613177 100644
 +    bool sleeping;
 +    int64_t sleep_start_ns;
 +    int64_t sleep_sof_deadline_ns;
++    int64_t sleep_tx_deadline_ns;
++    uint64_t host_poll_delay_ns;
 +    uint64_t transmitted_bytes;
 +    uint64_t received_bytes;
++    uint64_t transmitted_packets;
++    uint64_t received_packets;
++    uint64_t backend_stalls;
++    uint64_t tx_overruns;
 +    uint64_t unsupported_accesses;
  } ESP32C3UsbJtagState;
  
 +void esp32c3_jtag_set_sleep(ESP32C3UsbJtagState *s, bool sleeping);
 diff --git a/include/hw/misc/esp32c3_regi2c.h b/include/hw/misc/esp32c3_regi2c.h
 new file mode 100644
-index 0000000..d253f6c
+index 0000000..f226026
 --- /dev/null
 +++ b/include/hw/misc/esp32c3_regi2c.h
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,36 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#ifndef HW_ESP32C3_REGI2C_H
 +#define HW_ESP32C3_REGI2C_H
@@ -6415,16 +7834,25 @@ index 0000000..d253f6c
 +    SysBusDevice parent_obj;
 +    MemoryRegion iomem;
 +    QEMUTimer *timer;
++    QEMUTimer *phy_timer;
++    QEMUTimer *dc_timer;
 +    uint32_t command[2];
 +    uint32_t control[3];
 +    uint8_t saradc[8];
 +    uint8_t active_host;
 +    bool pending;
++    uint32_t phy_status;
++    uint32_t phy_control;
++    bool phy_pending;
++    uint32_t dc_control;
++    bool dc_pending;
 +    uint32_t transaction_ns;
++    uint32_t phy_measurement_ns;
 +    uint64_t unsupported_count;
 +    uint64_t transfer_count;
 +    uint64_t read_count;
 +    uint64_t write_count;
++    uint64_t synthetic_measurements;
 +};
 +
 +#endif
@@ -6550,11 +7978,71 @@ index 0000000..949ed54
 +                             Error **errp);
 +
 +#endif
+diff --git a/include/hw/net/esp32c3_wifi.h b/include/hw/net/esp32c3_wifi.h
+new file mode 100644
+index 0000000..42efbbc
+--- /dev/null
++++ b/include/hw/net/esp32c3_wifi.h
+@@ -0,0 +1,43 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++#ifndef HW_ESP32C3_WIFI_H
++#define HW_ESP32C3_WIFI_H
++#include "hw/sysbus.h"
++#include "net/net.h"
++#include "qemu/timer.h"
++
++#define TYPE_ESP32C3_WIFI "esp32c3.wifi"
++OBJECT_DECLARE_SIMPLE_TYPE(ESP32C3WifiState, ESP32C3_WIFI)
++
++typedef struct ESP32C3AirFrame {
++    QTAILQ_ENTRY(ESP32C3AirFrame) link;
++    int64_t deadline;
++    size_t length;
++    uint8_t data[2304];
++} ESP32C3AirFrame;
++
++struct ESP32C3WifiState {
++    SysBusDevice parent_obj;
++    MemoryRegion iomem;
++    qemu_irq irq, power_irq;
++    uint32_t regs[0x3000 / 4];
++    uint8_t seen[0x3000 / 4];
++    uint32_t events, power_events, tx_complete, tx_errors;
++    uint32_t rx_base, rx_next, rx_last, last_rx_desc;
++    uint64_t last_rx_ns, tsf_latched;
++    int64_t tsf_offset;
++    QEMUTimer *air_timer;
++    int64_t next_beacon;
++    QTAILQ_HEAD(, ESP32C3AirFrame) frames;
++    uint32_t queued;
++    NICConf conf;
++    NICState *nic;
++    char *ssid;
++    uint8_t bssid[6], station[6];
++    uint16_t sequence;
++    uint32_t channel;
++    bool air_enabled, associated, reset_held;
++    uint64_t reset_count;
++    uint64_t tx_frames, rx_frames, rx_dropped, eth_tx, eth_rx;
++    uint64_t unsupported, bad_dma, beacons, auth_requests, assoc_requests;
++};
++#endif
 diff --git a/include/hw/riscv/esp32c3_clk.h b/include/hw/riscv/esp32c3_clk.h
-index 5701606..4ce9bad 100644
+index 5701606..3a633f2 100644
 --- a/include/hw/riscv/esp32c3_clk.h
 +++ b/include/hw/riscv/esp32c3_clk.h
-@@ -57,6 +57,9 @@ typedef struct ESP32C3ClockState {
+@@ -44,6 +44,10 @@
+ typedef struct ESP32C3ClockState {
+     SysBusDevice parent_obj;
+     MemoryRegion iomem;
++    MemoryRegion modem_iomem;
++    uint32_t modem_clock;
++    uint32_t modem_reset;
++    qemu_irq wifi_mac_reset;
+ 
+     /* Registers for clocks configuration and frequency dividers */
+     uint32_t cpuperconf;
+@@ -57,6 +61,9 @@ typedef struct ESP32C3ClockState {
      uint32_t levels;
  
      uint32_t sys_ext_dev_enc_dec_ctrl;
@@ -6564,7 +8052,7 @@ index 5701606..4ce9bad 100644
  } ESP32C3ClockState;
  
  typedef struct ESP32C3ClockClass {
-@@ -64,4 +67,3 @@ typedef struct ESP32C3ClockClass {
+@@ -64,4 +71,3 @@ typedef struct ESP32C3ClockClass {
      /* Virtual methods */
      uint32_t (*get_ext_dev_enc_dec_ctrl)(ESP32C3ClockState *s);
  } ESP32C3ClockClass;
@@ -7183,10 +8671,10 @@ index 0000000..2e771b1
 +}
 diff --git a/tests/qtest/esp32c3-flash-test.c b/tests/qtest/esp32c3-flash-test.c
 new file mode 100644
-index 0000000..3707505
+index 0000000..08f6b7e
 --- /dev/null
 +++ b/tests/qtest/esp32c3-flash-test.c
-@@ -0,0 +1,281 @@
+@@ -0,0 +1,339 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
 +#include "libqtest.h"
@@ -7307,6 +8795,60 @@ index 0000000..3707505
 +    qtest_writel(q, base + A_SPI_MEM_W0, 0xa50000ff);
 +    qtest_writel(q, base + A_SPI_MEM_CMD, R_SPI_MEM_CMD_USR_MASK);
 +    g_assert_cmphex(qtest_readl(q, base + A_SPI_MEM_W0), ==, 0xa518609d);
++    finish(q, image);
++}
++
++static uint32_t legacy_id(QTestState *q, hwaddr base, uint8_t opcode,
++                          uint32_t address)
++{
++    qtest_writel(q, base + A_SPI_MEM_USER,
++                 R_SPI_MEM_USER_USR_COMMAND_MASK |
++                 R_SPI_MEM_USER_USR_ADDR_MASK | R_SPI_MEM_USER_USR_MISO_MASK);
++    qtest_writel(q, base + A_SPI_MEM_USER1, 23u << 26);
++    qtest_writel(q, base + A_SPI_MEM_USER2, (7u << 28) | opcode);
++    qtest_writel(q, base + A_SPI_MEM_ADDR, address);
++    qtest_writel(q, base + A_SPI_MEM_MISO_DLEN, 31);
++    qtest_writel(q, base + A_SPI_MEM_CMD, R_SPI_MEM_CMD_USR_MASK);
++    return qtest_readl(q, base + A_SPI_MEM_W0);
++}
++
++static void enable_four_byte_addresses(QTestState *q, hwaddr base)
++{
++    qtest_writel(q, base + A_SPI_MEM_USER,
++                 R_SPI_MEM_USER_USR_COMMAND_MASK);
++    qtest_writel(q, base + A_SPI_MEM_USER2, (7u << 28) | 0xb7);
++    qtest_writel(q, base + A_SPI_MEM_CMD, R_SPI_MEM_CMD_USR_MASK);
++}
++
++static void test_legacy_manufacturer_id(void)
++{
++    char *image;
++    QTestState *q = start(&image);
++
++    /* A0 controls the repeating 0x90 manufacturer/device order. */
++    g_assert_cmphex(legacy_id(q, DR_REG_SPI0_BASE, 0x90, 0), ==, 0x179d179d);
++    g_assert_cmphex(legacy_id(q, DR_REG_SPI1_BASE, 0x90, 1), ==, 0x9d179d17);
++    g_assert_cmphex(legacy_id(q, DR_REG_SPI0_BASE, 0x90, 0xa5fffe), ==,
++                    0x179d179d);
++    enable_four_byte_addresses(q, DR_REG_SPI1_BASE);
++    /* The prefix remains three bytes in four-byte address mode. */
++    g_assert_cmphex(legacy_id(q, DR_REG_SPI1_BASE, 0x90, 0x5affff), ==,
++                    0x9d179d17);
++    finish(q, image);
++}
++
++static void test_legacy_electronic_signature(void)
++{
++    char *image;
++    QTestState *q = start(&image);
++
++    /* 0xab consumes three dummy bytes and repeats only the electronic ID. */
++    g_assert_cmphex(legacy_id(q, DR_REG_SPI0_BASE, 0xab, 0), ==, 0x17171717);
++    g_assert_cmphex(legacy_id(q, DR_REG_SPI1_BASE, 0xab, 0xa5ffff), ==,
++                    0x17171717);
++    enable_four_byte_addresses(q, DR_REG_SPI0_BASE);
++    g_assert_cmphex(legacy_id(q, DR_REG_SPI0_BASE, 0xab, 0xffffff), ==,
++                    0x17171717);
 +    finish(q, image);
 +}
 +
@@ -7457,6 +8999,10 @@ index 0000000..3707505
 +    qtest_add_func("/esp32c3-flash/shared-storage", test_shared_storage);
 +    qtest_add_func("/esp32c3-flash/asymmetric-user-transfer",
 +                   test_asymmetric_user_transfer);
++    qtest_add_func("/esp32c3-flash/legacy-manufacturer-id",
++                   test_legacy_manufacturer_id);
++    qtest_add_func("/esp32c3-flash/legacy-electronic-signature",
++                   test_legacy_electronic_signature);
 +    qtest_add_func("/esp32c3-flash/control-registers", test_control_registers);
 +    qtest_add_func("/esp32c3-flash/chip-select-disable",
 +                   test_chip_select_disable);
@@ -7578,12 +9124,13 @@ index 0000000..d0e3e78
 +}
 diff --git a/tests/qtest/esp32c3-i2c-test.c b/tests/qtest/esp32c3-i2c-test.c
 new file mode 100644
-index 0000000..58ddf63
+index 0000000..29461a0
 --- /dev/null
 +++ b/tests/qtest/esp32c3-i2c-test.c
-@@ -0,0 +1,292 @@
+@@ -0,0 +1,503 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
++#include "qapi/qmp/qdict.h"
 +#include "libqtest.h"
 +
 +#define I2C_BASE UINT64_C(0x60013000)
@@ -7705,6 +9252,67 @@ index 0000000..58ddf63
 +    }
 +    g_assert_cmpuint((qtest_readl(qts, I2C_BASE + SR) >> 8) & 63, ==, 0);
 +    return true;
++}
++
++static void write_register(QTestState *qts, uint8_t address, uint8_t reg,
++                            const uint8_t *data, unsigned length)
++{
++    g_assert_cmpuint(length, >=, 1);
++    g_assert_cmpuint(length, <=, 30);
++    clear_transfer(qts);
++    qtest_writel(qts, I2C_BASE + FIFO_DATA, address << 1);
++    qtest_writel(qts, I2C_BASE + FIFO_DATA, reg);
++    for (unsigned i = 0; i < length; i++) {
++        qtest_writel(qts, I2C_BASE + FIFO_DATA, data[i]);
++    }
++    write_command(qts, 0, RESTART);
++    write_command(qts, 1, WRITE(length + 2));
++    write_command(qts, 2, STOP);
++    qtest_writel(qts, I2C_BASE + CTR, MS_MODE | TRANS_START);
++    qtest_clock_step(qts, 1000000);
++    g_assert_cmphex(qtest_readl(qts, I2C_BASE + INT_RAW) &
++                    (INTR_COMPLETE | INTR_NACK), ==, INTR_COMPLETE);
++}
++
++static void write_byte(QTestState *qts, uint8_t address, uint8_t reg,
++                       uint8_t value)
++{
++    write_register(qts, address, reg, &value, 1);
++}
++
++static int64_t get_value(QTestState *qts, const char *sensor,
++                          const char *property)
++{
++    g_autofree char *path = g_strdup_printf("/machine/i2c/%s", sensor);
++    QDict *reply = qtest_qmp(qts,
++        "{ 'execute': 'qom-get', 'arguments': "
++        "{ 'path': %s, 'property': %s } }", path, property);
++    int64_t value;
++
++    g_assert_false(qdict_haskey(reply, "error"));
++    value = qdict_get_int(reply, "return");
++    qobject_unref(reply);
++    return value;
++}
++
++static bool set_value(QTestState *qts, const char *sensor,
++                      const char *property, int64_t value)
++{
++    g_autofree char *path = g_strdup_printf("/machine/i2c/%s", sensor);
++    QDict *reply = qtest_qmp(qts,
++        "{ 'execute': 'qom-set', 'arguments': "
++        "{ 'path': %s, 'property': %s, 'value': %" PRId64 " } }",
++        path, property, value);
++    bool success = !qdict_haskey(reply, "error");
++    qobject_unref(reply);
++    return success;
++}
++
++static uint16_t read_word(QTestState *qts, uint8_t address, uint8_t reg)
++{
++    uint8_t bytes[2];
++    g_assert_true(read_register(qts, address, reg, bytes, sizeof(bytes)));
++    return bytes[0] | ((uint16_t)bytes[1] << 8);
 +}
 +
 +static void test_x3_detection(void)
@@ -7861,6 +9469,150 @@ index 0000000..58ddf63
 +    qtest_quit(qts);
 +}
 +
++static void test_battery_injection(void)
++{
++    QTestState *qts = start(true);
++
++    configure(qts);
++    g_assert_true(set_value(qts, "fuel-gauge", "soc-percent", 17));
++    g_assert_true(set_value(qts, "fuel-gauge", "voltage-mv", 3625));
++    g_assert_true(set_value(qts, "fuel-gauge", "current-ma", 200));
++    g_assert_cmpuint(read_word(qts, 0x55, 0x2c), ==, 17);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x08), ==, 3625);
++    /* The SDK derives charging/USB power from the sign of this wire value. */
++    g_assert_cmpint((int16_t)read_word(qts, 0x55, 0x0c), ==, 200);
++    g_assert_true(set_value(qts, "fuel-gauge", "current-ma", -123));
++    g_assert_cmpint((int16_t)read_word(qts, 0x55, 0x0c), ==, -123);
++    g_assert_false(set_value(qts, "fuel-gauge", "soc-percent", 101));
++    g_assert_false(set_value(qts, "fuel-gauge", "current-ma", -32769));
++    g_assert_cmpuint(read_word(qts, 0x55, 0x2c), ==, 17);
++    g_assert_cmpint(get_value(qts, "fuel-gauge", "current-ma"), ==, -123);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "injection-count"), ==, 4);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "unsupported-accesses"),
++                     ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_rtc_calendar_and_flags(void)
++{
++    QTestState *qts = start(true);
++    uint8_t bytes[7];
++    /* A user-defined weekday sequence is legal even when unrelated to date. */
++    const uint8_t custom[] = { 0x59, 0x59, 0x71, 2, 0x29, 2, 0x24 };
++    const uint8_t invalid[] = { 0, 0, 0, 2, 0x30, 2, 0x24 };
++
++    disable_boot_watchdog(qts);
++    configure(qts);
++    /* Thursday29Feb2024 -> Friday1Mar2024; Sunday is the SDK's day7. */
++    g_assert_true(set_value(qts, "rtc", "epoch-seconds", 1709251199));
++    g_assert_true(read_register(qts, 0x68, 0, bytes, sizeof(bytes)));
++    g_assert_cmphex(bytes[3], ==, 4);
++    g_assert_cmphex(bytes[4], ==, 0x29);
++    qtest_clock_step(qts, 1000000000);
++    g_assert_true(read_register(qts, 0x68, 0, bytes, sizeof(bytes)));
++    g_assert_cmphex(bytes[3], ==, 5);
++    g_assert_cmphex(bytes[4], ==, 1);
++    g_assert_cmphex(bytes[5], ==, 3);
++    g_assert_true(set_value(qts, "rtc", "epoch-seconds", 1709424000));
++    g_assert_true(read_register(qts, 0x68, 0, bytes, sizeof(bytes)));
++    g_assert_cmphex(bytes[3], ==, 7);
++    write_register(qts, 0x68, 0, custom, sizeof(custom));
++    g_assert_true(read_register(qts, 0x68, 0, bytes, sizeof(bytes)));
++    g_assert_cmphex(bytes[2], ==, 0x71); /* 11PM in12-hour format. */
++    g_assert_cmphex(bytes[3], ==, 2);
++    qtest_clock_step(qts, 1000000000);
++    g_assert_true(read_register(qts, 0x68, 0, bytes, sizeof(bytes)));
++    g_assert_cmphex(bytes[2], ==, 0x52); /* 12AM retains12-hour mode. */
++    g_assert_cmphex(bytes[3], ==, 3);
++    write_register(qts, 0x68, 0, invalid, sizeof(invalid));
++    g_assert_true(read_register(qts, 0x68, 0, bytes, sizeof(bytes)));
++    g_assert_cmphex(bytes[4], ==, 1); /* InvalidFeb30 did not normalize toMar1. */
++    g_assert_cmpuint(get_value(qts, "rtc", "unsupported-accesses"), ==, 1);
++    g_assert_false(set_value(qts, "rtc", "epoch-seconds", 946684799));
++    qtest_qmp_assert_success(qts,
++        "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/i2c/rtc',"
++        " 'property': 'oscillator-stopped', 'value': true } }");
++    write_byte(qts, 0x68, 0x0f, 0x88);
++    g_assert_true(read_register(qts, 0x68, 0x0f, bytes, 1));
++    g_assert_cmphex(bytes[0], ==, 0x88); /* Writing one retainsOSF. */
++    write_byte(qts, 0x68, 0x0f, 8);
++    g_assert_true(read_register(qts, 0x68, 0x0f, bytes, 1));
++    g_assert_cmphex(bytes[0], ==, 8);
++    g_assert_true(set_value(qts, "rtc", "temperature-mc", -1250));
++    g_assert_cmphex(read_word(qts, 0x68, 0x11), ==, 0xc0fe);
++    g_assert_false(set_value(qts, "rtc", "temperature-mc", 25100));
++    qtest_quit(qts);
++}
++
++static void configure_imu(QTestState *qts)
++{
++    /* Exact pinnedSDK begin():2g accel,512dps gyro, auto-increment. */
++    write_byte(qts, 0x6b, 8, 0);
++    write_byte(qts, 0x6b, 2, 0x40);
++    write_byte(qts, 0x6b, 3, 0x06);
++    write_byte(qts, 0x6b, 4, 0x56);
++    write_byte(qts, 0x6b, 8, 3);
++}
++
++static void test_imu_pose_and_power(void)
++{
++    QTestState *qts = start(true);
++    uint8_t status;
++
++    configure(qts);
++    configure_imu(qts);
++    g_assert_true(set_value(qts, "imu", "gyro-x-mdps", 300000));
++    g_assert_true(set_value(qts, "imu", "gyro-y-mdps", -280000));
++    g_assert_true(set_value(qts, "imu", "accel-x-mg", 500));
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x3b), ==, 19200);
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x3d), ==, -17920);
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x35), ==, 8192);
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x39), ==, 16384);
++    write_byte(qts, 0x6b, 3, 0x26); /* 8g range,4096LSB/g. */
++    write_byte(qts, 0x6b, 4, 0x66); /* 1024dps range,32LSB/dps. */
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x35), ==, 2048);
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x3b), ==, 9600);
++    write_byte(qts, 0x6b, 2, 0x60); /* Big-endian output bytes. */
++    g_assert_cmphex(read_word(qts, 0x6b, 0x3b), ==, 0x8025);
++    write_byte(qts, 0x6b, 2, 0x61); /* Powerdown retains the sampled data. */
++    g_assert_true(set_value(qts, "imu", "gyro-x-mdps", -300000));
++    g_assert_cmphex(read_word(qts, 0x6b, 0x3b), ==, 0x8025);
++    g_assert_true(read_register(qts, 0x6b, 0x2e, &status, 1));
++    g_assert_cmphex(status, ==, 0);
++    write_byte(qts, 0x6b, 2, 0x40);
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x3b), ==, -9600);
++    g_assert_false(set_value(qts, "imu", "gyro-x-mdps", 1024001));
++    g_assert_cmpuint(get_value(qts, "imu", "unsupported-accesses"), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_imu_motion_release(void)
++{
++    QTestState *qts = start(true);
++    int64_t release;
++
++    configure(qts);
++    configure_imu(qts);
++    g_assert_true(set_value(qts, "imu", "motion-hold-ns", 500000000));
++    g_assert_true(set_value(qts, "imu", "gyro-x-mdps", 300000));
++    release = get_value(qts, "imu", "motion-release-deadline-ns");
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x3b), ==, 19200);
++    qtest_clock_set(qts, release - 1000000);
++    /* Reading completes before release; firmware sees physicalgyro values. */
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x3b), ==, 19200);
++    qtest_clock_set(qts, release);
++    g_assert_cmpint((int16_t)read_word(qts, 0x6b, 0x3b), ==, 0);
++    g_assert_cmpuint(get_value(qts, "imu", "motion-release-deadline-ns"),
++                     ==, 0);
++    g_assert_true(set_value(qts, "imu", "motion-hold-ns", 0));
++    g_assert_true(set_value(qts, "imu", "gyro-y-mdps", -300000));
++    g_assert_false(set_value(qts, "imu", "motion-hold-ns", INT64_MAX));
++    g_assert_cmpint(get_value(qts, "imu", "gyro-y-mdps"), ==, -300000);
++    g_assert_cmpuint(get_value(qts, "imu", "motion-release-deadline-ns"),
++                     ==, 0);
++    qtest_quit(qts);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -7872,14 +9624,19 @@ index 0000000..58ddf63
 +    qtest_add_func("/esp32c3-i2c/fifo-reset", test_fifo_reset);
 +    qtest_add_func("/esp32c3-i2c/rtc-virtual-time", test_rtc_virtual_time);
 +    qtest_add_func("/esp32c3-i2c/idle-virtual-clock", test_idle_virtual_clock);
++    qtest_add_func("/esp32c3-i2c/battery-injection", test_battery_injection);
++    qtest_add_func("/esp32c3-i2c/rtc-calendar-and-flags",
++                   test_rtc_calendar_and_flags);
++    qtest_add_func("/esp32c3-i2c/imu-pose-and-power", test_imu_pose_and_power);
++    qtest_add_func("/esp32c3-i2c/imu-motion-release", test_imu_motion_release);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/esp32c3-regi2c-test.c b/tests/qtest/esp32c3-regi2c-test.c
 new file mode 100644
-index 0000000..d898087
+index 0000000..3419823
 --- /dev/null
 +++ b/tests/qtest/esp32c3-regi2c-test.c
-@@ -0,0 +1,178 @@
+@@ -0,0 +1,253 @@
 +/*
 + * Packed analog-register I2C transport through the C3 guest MMIO interface.
 + * Protocol constants follow the pinned mask-ROM helpers, not RTC-I2C headers.
@@ -8048,6 +9805,77 @@ index 0000000..d898087
 +    qtest_quit(qts);
 +}
 +
++static void test_phy_measurement_handshake(void)
++{
++    QTestState *qts = start();
++    const uint32_t gates = (1u << 21) | (1u << 19);
++    const uint32_t done = 7u << 24;
++
++    /* No completion before the stock firmware's two-gate start sequence. */
++    qtest_writel(qts, BASE + 0x5c, 1u << 21);
++    qtest_clock_step(qts, 2000);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50) & done, ==, 0);
++    qtest_writel(qts, BASE + 0x5c, gates);
++    qtest_clock_step(qts, 999);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50) & done, ==, 0);
++    qtest_clock_step(qts, 1);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50) & done, ==, done);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 1);
++
++    /* Software cannot forge comparator/done fields. Bit1 requests new data. */
++    qtest_writel(qts, BASE + 0x50, 0xc0000002);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, 2);
++    qtest_clock_step(qts, 1000);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, done | 2);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 2);
++    qtest_writel(qts, BASE + 0x50, 0);
++    qtest_writel(qts, BASE + 0x50, 2);
++    qtest_writel(qts, BASE + 0x5c, 0); /* Cancel an unfinished request. */
++    qtest_clock_step(qts, 1000);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50) & done, ==, 0);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 2);
++    g_assert_cmpuint(counter(qts, "unsupported-accesses"), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_phy_reset_pending(void)
++{
++    QTestState *qts = start();
++    QDict *reply;
++
++    qtest_writel(qts, BASE + 0x5c, (1u << 21) | (1u << 19));
++    reply = qtest_qmp(qts, "{ 'execute': 'system_reset' }");
++    g_assert_false(qdict_haskey(reply, "error"));
++    qobject_unref(reply);
++    qtest_clock_step(qts, 2000);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x5c), ==, 0);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_dc_comparator_handshake(void)
++{
++    QTestState *qts = start();
++    qtest_writel(qts, BASE + 0x4c, 0x00113cf1);
++    qtest_clock_step(qts, 2000);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x4c), ==, 0x00113cf1);
++    qtest_writel(qts, BASE + 0x4c, 0x00113cf3);
++    qtest_clock_step(qts, 999);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x4c), ==, 0x00113cf3);
++    qtest_clock_step(qts, 1);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x4c), ==, 0x01113cf3);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 1);
++    qtest_writel(qts, BASE + 0x4c, 0xc1113cf1); /* No forged comparator signs. */
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x4c), ==, 0x00113cf1);
++    qtest_writel(qts, BASE + 0x4c, 0x00113cf3);
++    qtest_writel(qts, BASE + 0x4c, 0x00113cf0); /* Cancel without completion. */
++    qtest_clock_step(qts, 2000);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 1);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x4c), ==, 0x00113cf0);
++    qtest_quit(qts);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -8056,6 +9884,10 @@ index 0000000..d898087
 +                   test_masked_calibration_register);
 +    qtest_add_func("/esp32c3-regi2c/power-gate", test_power_gate);
 +    qtest_add_func("/esp32c3-regi2c/unknown-and-busy", test_unknown_and_busy);
++    qtest_add_func("/esp32c3-regi2c/phy-measurement-handshake",
++                   test_phy_measurement_handshake);
++    qtest_add_func("/esp32c3-regi2c/phy-reset-pending", test_phy_reset_pending);
++    qtest_add_func("/esp32c3-regi2c/dc-comparator-handshake", test_dc_comparator_handshake);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/esp32c3-rtc-test.c b/tests/qtest/esp32c3-rtc-test.c
@@ -8602,10 +10434,10 @@ index 0000000..d77c1c2
 +}
 diff --git a/tests/qtest/esp32c3-usb-test.c b/tests/qtest/esp32c3-usb-test.c
 new file mode 100644
-index 0000000..e270a9c
+index 0000000..475b32f
 --- /dev/null
 +++ b/tests/qtest/esp32c3-usb-test.c
-@@ -0,0 +1,235 @@
+@@ -0,0 +1,329 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
 +#include "qemu/sockets.h"
@@ -8623,6 +10455,7 @@ index 0000000..e270a9c
 +#define INT_SOF (1U << 1)
 +#define INT_RX (1U << 2)
 +#define INT_TX (1U << 3)
++#define INT_IN_TOKEN (1U << 8)
 +
 +typedef struct USBTest {
 +    QTestState *qts;
@@ -8708,6 +10541,18 @@ index 0000000..e270a9c
 +    }
 +}
 +
++static uint64_t counter(QTestState *qts, const char *property)
++{
++    QDict *reply = qtest_qmp(qts,
++        "{ 'execute': 'qom-get', 'arguments': "
++        "{ 'path': '/machine/jtag', 'property': %s } }", property);
++    uint64_t value;
++    g_assert_false(qdict_haskey(reply, "error"));
++    value = qdict_get_int(reply, "return");
++    qobject_unref(reply);
++    return value;
++}
++
 +static void test_sof_and_flush(void)
 +{
 +    USBTest test = start(false);
@@ -8789,6 +10634,79 @@ index 0000000..e270a9c
 +    finish(&test);
 +}
 +
++static void test_bulk_tx_before_next_sof(void)
++{
++    USBTest test = start(false);
++    QTestState *qts = test.qts;
++    uint8_t input[256], received[256];
++    uint32_t frame;
++
++    qtest_clock_step(qts, 1000000);
++    frame = qtest_readl(qts, USB_BASE + FRAME_NUM);
++    qtest_irq_intercept_out_named(qts, "/machine/jtag", "sysbus-irq");
++    qtest_writel(qts, USB_BASE + INT_ENA, INT_TX);
++    for (unsigned packet = 0; packet < 4; packet++) {
++        qtest_writel(qts, USB_BASE + INT_CLR, INT_TX | INT_IN_TOKEN);
++        g_assert_false(qtest_get_irq(qts, 0));
++        for (unsigned i = 0; i < 64; i++) {
++            unsigned offset = packet * 64 + i;
++            input[offset] = offset;
++            qtest_writel(qts, USB_BASE + EP1, input[offset]);
++        }
++        /* USB2.0 Table5-9:77byte transaction at12Mbps =51,334ns rounded. */
++        qtest_clock_step(qts, 51333);
++        g_assert_cmphex(qtest_readl(qts, USB_BASE + EP1_CONF) & 2, ==, 0);
++        g_assert_cmphex(qtest_readl(qts, USB_BASE + INT_RAW) & INT_IN_TOKEN,
++                        ==, 0);
++        qtest_clock_step(qts, 1);
++        g_assert_cmphex(qtest_readl(qts, USB_BASE + EP1_CONF) & 2, ==, 2);
++        g_assert_true(qtest_get_irq(qts, 0));
++        g_assert_cmpuint(qtest_readl(qts, USB_BASE + FRAME_NUM), ==, frame);
++    }
++    receive_host(test.host_fd, received, sizeof(received));
++    g_assert_cmpmem(received, sizeof(received), input, sizeof(input));
++    g_assert_cmpuint(counter(qts, "transmitted-bytes"), ==, 256);
++    g_assert_cmpuint(counter(qts, "transmitted-packets"), ==, 4);
++    g_assert_cmpuint(counter(qts, "tx-overruns"), ==, 0);
++    finish(&test);
++}
++
++static void test_host_rx_packet_backpressure(void)
++{
++    USBTest test = start(false);
++    QTestState *qts = test.qts;
++    uint8_t input[256];
++
++    qtest_irq_intercept_out_named(qts, "/machine/jtag", "sysbus-irq");
++    qtest_writel(qts, USB_BASE + INT_CLR, 0xfff);
++    qtest_writel(qts, USB_BASE + INT_ENA, INT_RX);
++    for (unsigned i = 0; i < sizeof(input); i++) {
++        input[i] = i ^ 0xa5;
++    }
++    g_assert_cmpint(send(test.host_fd, input, sizeof(input), 0),
++                    ==, sizeof(input));
++    for (unsigned packet = 0; packet < 4; packet++) {
++        wait_receive(qts);
++        g_assert_true(qtest_get_irq(qts, 0));
++        qtest_writel(qts, USB_BASE + INT_CLR, INT_RX);
++        g_assert_false(qtest_get_irq(qts, 0));
++        for (unsigned i = 0; i < 63; i++) {
++            g_assert_cmpuint(qtest_readl(qts, USB_BASE + EP1),
++                             ==, input[packet * 64 + i]);
++        }
++        /* A partially consumed OUT packet cannot be filled with another. */
++        qtest_qmp_assert_success(qts, "{ 'execute': 'query-status' }");
++        g_assert_cmpuint(counter(qts, "received-bytes"),
++                         ==, (packet + 1) * 64);
++        g_assert_false(qtest_get_irq(qts, 0));
++        g_assert_cmpuint(qtest_readl(qts, USB_BASE + EP1),
++                         ==, input[packet * 64 + 63]);
++    }
++    g_assert_cmphex(qtest_readl(qts, USB_BASE + EP1_CONF) & 4, ==, 0);
++    g_assert_cmpuint(counter(qts, "received-packets"), ==, 4);
++    finish(&test);
++}
++
 +static void test_light_sleep_gates_usb(void)
 +{
 +    USBTest test = start(true);
@@ -8821,10 +10739,14 @@ index 0000000..e270a9c
 +    qtest_clock_step(qts, 1000000);
 +    /* The SOF deadline resumes its remaining one millisecond after wake. */
 +    g_assert_cmpuint(qtest_readl(qts, USB_BASE + FRAME_NUM), ==, frame);
-+    qtest_clock_step(qts, 1000000);
-+    g_assert_cmpuint(qtest_readl(qts, USB_BASE + FRAME_NUM), ==, frame + 1);
++    g_assert_cmphex(qtest_readl(qts, USB_BASE + EP1_CONF) & 2, ==, 0);
++    /* The pending one-byte bulk packet resumes independently of that SOF. */
++    qtest_clock_step(qts, 20000);
++    g_assert_cmpuint(qtest_readl(qts, USB_BASE + FRAME_NUM), ==, frame);
 +    receive_host(test.host_fd, &transmitted, 1);
 +    g_assert_cmpuint(transmitted, ==, 'X');
++    qtest_clock_step(qts, 980000);
++    g_assert_cmpuint(qtest_readl(qts, USB_BASE + FRAME_NUM), ==, frame + 1);
 +    wait_receive(qts);
 +    g_assert_cmpuint(qtest_readl(qts, USB_BASE + EP1), ==, 'Q');
 +    finish(&test);
@@ -8839,6 +10761,175 @@ index 0000000..e270a9c
 +    qtest_add_func("/esp32c3-usb/host-rx-and-irq", test_host_rx_and_irq);
 +    qtest_add_func("/esp32c3-usb/light-sleep-gates-usb",
 +                   test_light_sleep_gates_usb);
++    qtest_add_func("/esp32c3-usb/bulk-tx-before-next-sof",
++                   test_bulk_tx_before_next_sof);
++    qtest_add_func("/esp32c3-usb/host-rx-packet-backpressure",
++                   test_host_rx_packet_backpressure);
++    return g_test_run();
++}
+diff --git a/tests/qtest/esp32c3-wifi-test.c b/tests/qtest/esp32c3-wifi-test.c
+new file mode 100644
+index 0000000..cda7d32
+--- /dev/null
++++ b/tests/qtest/esp32c3-wifi-test.c
+@@ -0,0 +1,159 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++#include "qemu/osdep.h"
++#include "qemu/bswap.h"
++#include "libqtest.h"
++#include "qapi/qmp/qdict.h"
++#include "qapi/qmp/qnum.h"
++
++#define MAC 0x60033000
++#define RX_DESC 0x3fc90000
++#define RX_BUFFER 0x3fc91000
++#define TX_DESC 0x3fc92000
++#define TX_BUFFER 0x3fc93000
++
++static QTestState *start(bool air)
++{
++    return qtest_init(air ? "-machine esp32c3,xteink-x3=true -nodefaults -nic none "
++                     "-global driver=esp32c3.wifi,property=air-enabled,value=true" :
++                     "-machine esp32c3,xteink-x3=true -nodefaults -nic none");
++}
++
++static uint64_t count(QTestState *qts, const char *property)
++{
++    QDict *response = qtest_qmp(qts,
++        "{ 'execute': 'qom-get', 'arguments': { 'path': '/machine/wifi',"
++        " 'property': %s } }", property);
++    uint64_t value;
++    g_assert_true(qdict_haskey(response, "return"));
++    value = qnum_get_uint(qobject_to(QNum, qdict_get(response, "return")));
++    qobject_unref(response);
++    return value;
++}
++
++static void arm_rx(QTestState *qts, uint32_t buffer, unsigned size)
++{
++    qtest_writel(qts, RX_DESC, (1u << 31) | size);
++    qtest_writel(qts, RX_DESC + 4, buffer);
++    qtest_writel(qts, RX_DESC + 8, 0);
++    qtest_writel(qts, MAC + 0x088, RX_DESC);
++}
++
++static void send_auth(QTestState *qts, unsigned queue)
++{
++    uint8_t auth[30] = {0xb0};
++    memcpy(auth + 4, (uint8_t[]){2, 0x58, 0x33, 0x45, 0x4d, 1}, 6);
++    memcpy(auth + 10, (uint8_t[]){2, 0x12, 0x34, 0x56, 0x78, 9}, 6);
++    memcpy(auth + 16, auth + 4, 6);
++    stw_le_p(auth + 26, 1);
++    qtest_memwrite(qts, TX_BUFFER, auth, sizeof(auth));
++    qtest_writel(qts, TX_DESC, (1u << 31) | sizeof(auth) << 12 | sizeof(auth));
++    qtest_writel(qts, TX_DESC + 4, TX_BUFFER);
++    qtest_writel(qts, TX_DESC + 8, 0);
++    qtest_writel(qts, MAC + 0xd08 - queue * 8, (TX_DESC & 0xfffff) | 0xc0600000);
++}
++
++static void test_tx_rx_real_dma_and_event_clear(void)
++{
++    QTestState *qts = start(true);
++    uint8_t received[82];
++    arm_rx(qts, RX_BUFFER, 2048);
++    send_auth(qts, 4); /* The fifth queue exercises the full C3 slot range. */
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xcb0), ==, 1u << 4);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 1u << 7);
++    g_assert_cmpuint(count(qts, "tx-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "auth-requests"), ==, 1);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 1);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x08c), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x090), ==, (RX_DESC & 0xfffff) | 1u << 24);
++    g_assert_cmphex(qtest_readl(qts, RX_DESC) & 0xc0000000, ==, 0xc0000000);
++    g_assert_cmpuint((qtest_readl(qts, RX_DESC) >> 12) & 4095, ==, 82);
++    qtest_memread(qts, RX_BUFFER, received, sizeof(received));
++    g_assert_cmpuint(ldl_le_p(received + 44), ==, 34); /* MPDU plus FCS. */
++    g_assert_cmphex(received[48], ==, 0xb0);
++    g_assert_cmpuint(lduw_le_p(received + 74), ==, 2); /* Auth sequence response. */
++    g_assert_cmpuint(lduw_le_p(received + 76), ==, 0); /* Success. */
++    qtest_writel(qts, MAC + 0xc40, 0xffffffff);
++    qtest_writel(qts, MAC + 0xcac, 1u << 4);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xcb0), ==, 0);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_dma_validation_and_short_buffer(void)
++{
++    QTestState *qts = start(true);
++    /* Invalid descriptor cannot recurse into MMIO or scribble there. */
++    qtest_writel(qts, MAC + 0xd08, 0xc0600000);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 1);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xca8), ==, 1);
++    qtest_writel(qts, MAC + 0xca4, 1);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xca8), ==, 0);
++    arm_rx(qts, RX_BUFFER, 32);
++    send_auth(qts, 0);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, RX_DESC) & 1u << 30, ==, 0);
++    /* Re-arm the same descriptor; real DMA now delivers the queued frame. */
++    qtest_writel(qts, RX_DESC, 1u << 31 | 2048);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 1);
++    qtest_quit(qts);
++}
++
++static void test_tsf_latch_load_and_reset(void)
++{
++    QTestState *qts = start(false);
++    qtest_clock_step(qts, 12345000);
++    qtest_writel(qts, MAC + 0x200c, 1);
++    g_assert_cmpuint(qtest_readl(qts, MAC + 0x2018), ==, 12345);
++    qtest_clock_step(qts, 1000000);
++    g_assert_cmpuint(qtest_readl(qts, MAC + 0x2018), ==, 12345); /* Latched. */
++    qtest_writel(qts, MAC + 0x2010, 0xffff0000);
++    qtest_writel(qts, MAC + 0x2014, 1);
++    qtest_writel(qts, MAC + 0x200c, 1u << 4);
++    qtest_writel(qts, MAC + 0x200c, 1);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x2018), ==, 0xffff0000);
++    g_assert_cmpuint(qtest_readl(qts, MAC + 0x201c), ==, 1);
++    arm_rx(qts, RX_BUFFER, 2048);
++    qtest_qmp_assert_success(qts, "{ 'execute': 'system_reset' }");
++    qtest_qmp_eventwait(qts, "RESET");
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x088), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x2018), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_syscon_mac_reset_domain(void)
++{
++    QTestState *qts = start(false);
++    arm_rx(qts, RX_BUFFER, 2048);
++    qtest_writel(qts, 0x60026014, 0x78078f);
++    qtest_writel(qts, 0x60026018, 1u << 2); /* Documented WIFIMAC_RST. */
++    g_assert_cmpuint(count(qts, "mac-resets"), ==, 1);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x088), ==, 0);
++    arm_rx(qts, RX_BUFFER, 2048); /* Writes cannot arm a held-reset MAC. */
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x088), ==, 0);
++    qtest_writel(qts, 0x60026018, 0);
++    arm_rx(qts, RX_BUFFER, 2048);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x088), ==, RX_DESC & 0xfffff);
++    /* MAC reset does not alter the independent modem clock latch. */
++    g_assert_cmphex(qtest_readl(qts, 0x60026014), ==, 0x78078f);
++    qtest_qmp_assert_success(qts, "{ 'execute': 'system_reset' }");
++    qtest_qmp_eventwait(qts, "RESET");
++    g_assert_cmphex(qtest_readl(qts, 0x60026014), ==, 0xfffce030);
++    g_assert_cmphex(qtest_readl(qts, 0x60026018), ==, 0);
++    g_assert_cmpuint(count(qts, "mac-resets"), ==, 1);
++    qtest_quit(qts);
++}
++
++int main(int argc, char **argv)
++{
++    g_test_init(&argc, &argv, NULL);
++    qtest_add_func("/esp32c3/wifi/tx-rx-dma-events", test_tx_rx_real_dma_and_event_clear);
++    qtest_add_func("/esp32c3/wifi/dma-bounds-and-short-buffer", test_dma_validation_and_short_buffer);
++    qtest_add_func("/esp32c3/wifi/tsf-and-reset", test_tsf_latch_load_and_reset);
++    qtest_add_func("/esp32c3/wifi/syscon-mac-reset-domain", test_syscon_mac_reset_domain);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/libqtest.c b/tests/qtest/libqtest.c
@@ -9019,7 +11110,7 @@ index beb96b1..a1ad873 100644
   */
  QTestState *qtest_init(const char *extra_args);
 diff --git a/tests/qtest/meson.build b/tests/qtest/meson.build
-index bd41c9d..896840b 100644
+index bd41c9d..6ca2c54 100644
 --- a/tests/qtest/meson.build
 +++ b/tests/qtest/meson.build
 @@ -270,7 +270,12 @@ qtests_s390x = \
@@ -9031,7 +11122,7 @@ index bd41c9d..896840b 100644
 +  (config_all_devices.has_key('CONFIG_RISCV_ESP32C3') ?
 +    ['esp32c3-gpspi-test', 'xteink-x3-adc-test', 'esp32c3-i2c-test',
 +     'xteink-x3-epd-test', 'esp32c3-usb-test', 'xteink-x3-sd-test',
-+     'esp32c3-flash-test', 'esp32c3-rtc-test', 'xteink-x3-soc-test',
++     'esp32c3-flash-test', 'esp32c3-rtc-test', 'xteink-x3-soc-test', 'esp32c3-wifi-test',
 +     'esp32c3-assist-debug-test', 'esp32c3-regi2c-test'] : [])
  
  qtests_riscv64 = \
@@ -9381,10 +11472,10 @@ index 0000000..ec1d206
 +}
 diff --git a/tests/qtest/xteink-x3-epd-test.c b/tests/qtest/xteink-x3-epd-test.c
 new file mode 100644
-index 0000000..257eae4
+index 0000000..ec0f1e6
 --- /dev/null
 +++ b/tests/qtest/xteink-x3-epd-test.c
-@@ -0,0 +1,689 @@
+@@ -0,0 +1,850 @@
 +/*
 + * Xteink X3 panel protocol tests through the actual GPIO and SPI2 controllers.
 + * Test LUTs are byte-exact arrays from Free-Ink/freeink-sdk commit
@@ -9444,16 +11535,25 @@ index 0000000..257eae4
 +#define PANEL_HEIGHT 528
 +#define FRAME_SIZE (PANEL_WIDTH * PANEL_HEIGHT)
 +
-+static QTestState *start(uint32_t controller, const char *dump_file)
++static QTestState *start_outputs(uint32_t controller, const char *dump_file,
++                                const char *trace_file)
 +{
 +    const char *machine = g_getenv("X3_QTEST_MACHINE");
 +    g_autofree char *dump = dump_file ? g_shell_quote(dump_file) : NULL;
++    g_autofree char *trace = trace_file ? g_shell_quote(trace_file) : NULL;
 +
 +    return qtest_initf("-machine %s,xteink-x3=true -nodefaults "
-+                      "-global xteink-x3-epd.controller=%u %s%s",
++                      "-global xteink-x3-epd.controller=%u %s%s %s%s",
 +                      machine ? machine : "esp32c3", controller,
 +                      dump ? "-global xteink-x3-epd.dump-file=" : "",
-+                      dump ? dump : "");
++                      dump ? dump : "",
++                      trace ? "-global xteink-x3-epd.trace-file=" : "",
++                      trace ? trace : "");
++}
++
++static QTestState *start(uint32_t controller, const char *dump_file)
++{
++    return start_outputs(controller, dump_file, NULL);
 +}
 +
 +static uint64_t panel_counter(QTestState *qts, const char *property)
@@ -10063,6 +12163,153 @@ index 0000000..257eae4
 +    g_rmdir(dir);
 +}
 +
++static void render_one(QTestState *qts)
++{
++    configure_spi(qts);
++    load_bank(qts, full_bank);
++    command(qts, 0x04);
++    wait_power(qts);
++    refresh(qts);
++}
++
++static void test_output_accounting(void)
++{
++    g_autofree char *dir = g_dir_make_tmp("x3-output-XXXXXX", NULL);
++    g_autofree char *dump = g_build_filename(dir, "frame.pgm", NULL);
++    g_autofree char *trace = g_build_filename(dir, "trace.jsonl", NULL);
++    g_autofree char *contents = NULL;
++    g_auto(GStrv) lines = NULL;
++    gsize length;
++    QTestState *qts = start_outputs(8253, dump, trace);
++    uint64_t attempted, flushed;
++
++    render_one(qts);
++    g_assert_cmpuint(panel_counter(qts, "refresh-count"), ==, 1);
++    g_assert_cmpuint(panel_counter(qts, "dump-frames-written"), ==, 1);
++    g_assert_cmpuint(panel_counter(qts, "output-errors"), ==, 0);
++    attempted = panel_counter(qts, "trace-events-attempted");
++    flushed = panel_counter(qts, "trace-events-flushed");
++    g_assert_cmpuint(attempted, >, 0);
++    g_assert_cmpuint(flushed, ==, attempted);
++    g_assert_true(g_file_get_contents(trace, &contents, &length, NULL));
++    g_assert_cmpuint(panel_counter(qts, "trace-bytes-flushed"), ==, length);
++    g_assert_cmpuint(panel_counter(qts, "trace-fd-size"), ==, length);
++    g_assert_cmpuint(panel_counter(qts, "trace-fd-position"), ==, length);
++    g_assert_cmpuint(panel_counter(qts, "trace-path-size"), ==, length);
++    g_assert_cmpuint(panel_counter(qts, "trace-fd-inode"), ==,
++                    panel_counter(qts, "trace-path-inode"));
++    g_assert_true(panel_bool(qts, "trace-file-linked"));
++    lines = g_strsplit(contents, "\n", -1);
++    g_assert_cmpuint(g_strv_length(lines), ==, attempted + 1);
++    for (unsigned i = 0; i < attempted; i++) {
++        g_autofree char *prefix = g_strdup_printf("{\"seq\":%u,", i + 1);
++        g_assert_true(g_str_has_prefix(lines[i], prefix));
++    }
++    g_assert_cmpstr(lines[attempted], ==, "");
++    qtest_quit(qts);
++    g_unlink(dump);
++    g_unlink(trace);
++    g_rmdir(dir);
++}
++
++static void test_output_full(void)
++{
++    QTestState *qts;
++
++    /* Real OS ENOSPC, rather than an injected model failure. */
++    g_assert_true(g_file_test("/dev/full", G_FILE_TEST_EXISTS));
++    qts = start_outputs(8253, "/dev/full", "/dev/full");
++    render_one(qts);
++    g_assert_cmpuint(panel_counter(qts, "refresh-count"), ==, 1);
++    g_assert_cmpuint(panel_counter(qts, "dump-frames-written"), ==, 0);
++    g_assert_cmpuint(panel_counter(qts, "dump-write-errors"), >, 0);
++    g_assert_cmpuint(panel_counter(qts, "trace-flush-errors"), >, 0);
++    g_assert_cmpuint(panel_counter(qts, "trace-events-attempted"), >, 0);
++    g_assert_cmpuint(panel_counter(qts, "trace-events-flushed"), ==, 0);
++    g_assert_cmpuint(panel_counter(qts, "trace-bytes-flushed"), ==, 0);
++    g_assert_cmpuint(panel_counter(qts, "output-errors"), >, 0);
++    qtest_quit(qts);
++}
++
++static void test_dump_open_failure(void)
++{
++    g_autofree char *dir = g_dir_make_tmp("x3-output-open-XXXXXX", NULL);
++    QTestState *qts = start_outputs(8253, dir, NULL);
++
++    render_one(qts);
++    g_assert_cmpuint(panel_counter(qts, "refresh-count"), ==, 1);
++    g_assert_cmpuint(panel_counter(qts, "dump-frames-written"), ==, 0);
++    g_assert_cmpuint(panel_counter(qts, "dump-open-errors"), ==, 1);
++    g_assert_cmpuint(panel_counter(qts, "output-errors"), ==, 1);
++    qtest_quit(qts);
++    g_rmdir(dir);
++}
++
++static void test_reset_output_retention(void)
++{
++    g_autofree char *dir = g_dir_make_tmp("x3-output-reset-XXXXXX", NULL);
++    g_autofree char *dump = g_build_filename(dir, "frame.pgm", NULL);
++    g_autofree char *trace = g_build_filename(dir, "trace.jsonl", NULL);
++    QTestState *qts = start_outputs(8253, dump, trace);
++    uint64_t transfers, commands, events, crc;
++    QDict *reply;
++
++    render_one(qts);
++    command(qts, 0xfe);
++    transfers = panel_counter(qts, "spi-bytes");
++    commands = panel_counter(qts, "command-count");
++    events = panel_counter(qts, "trace-events-flushed");
++    crc = panel_counter(qts, "framebuffer-crc");
++    g_assert_cmpuint(panel_counter(qts, "unsupported-count"), ==, 1);
++    reply = qtest_qmp(qts, "{ 'execute': 'system_reset' }");
++    g_assert_false(qdict_haskey(reply, "error"));
++    qobject_unref(reply);
++    qtest_qmp_eventwait(qts, "RESET");
++    g_assert_cmpuint(panel_counter(qts, "refresh-count"), ==, 1);
++    g_assert_cmpuint(panel_counter(qts, "spi-bytes"), ==, transfers);
++    g_assert_cmpuint(panel_counter(qts, "command-count"), ==, commands);
++    g_assert_cmpuint(panel_counter(qts, "unsupported-count"), ==, 1);
++    g_assert_cmpuint(panel_counter(qts, "framebuffer-crc"), ==, crc);
++    g_assert_cmpuint(panel_counter(qts, "trace-events-flushed"), >, events);
++    g_assert_cmpuint(panel_counter(qts, "dump-frames-written"), ==, 1);
++    render_one(qts);
++    g_assert_cmpuint(panel_counter(qts, "refresh-count"), ==, 2);
++    g_assert_cmpuint(panel_counter(qts, "dump-frames-written"), ==, 2);
++    g_assert_cmpuint(panel_counter(qts, "output-errors"), ==, 0);
++    qtest_quit(qts);
++    g_unlink(dump);
++    g_unlink(trace);
++    g_rmdir(dir);
++}
++
++static void test_trace_path_replacement(void)
++{
++    g_autofree char *dir = g_dir_make_tmp("x3-output-replace-XXXXXX", NULL);
++    g_autofree char *trace = g_build_filename(dir, "trace.jsonl", NULL);
++    g_autofree char *renamed = g_build_filename(dir, "trace-original.jsonl", NULL);
++    QTestState *qts = start_outputs(8253, NULL, trace);
++    uint64_t original_inode;
++
++    configure_spi(qts);
++    original_inode = panel_counter(qts, "trace-fd-inode");
++    g_assert_cmpint(g_rename(trace, renamed), ==, 0);
++    g_assert_true(g_file_set_contents(trace, "", 0, NULL));
++    command(qts, 0x00);
++    g_assert_false(panel_bool(qts, "trace-file-linked"));
++    g_assert_cmpuint(panel_counter(qts, "trace-fd-inode"), ==, original_inode);
++    g_assert_cmpuint(panel_counter(qts, "trace-path-inode"), !=, original_inode);
++    g_assert_cmpuint(panel_counter(qts, "trace-path-size"), ==, 0);
++    g_assert_cmpuint(panel_counter(qts, "trace-fd-size"), ==,
++                    panel_counter(qts, "trace-bytes-flushed"));
++    g_assert_cmpuint(panel_counter(qts, "trace-fd-position"), ==,
++                    panel_counter(qts, "trace-bytes-flushed"));
++    g_assert_cmpuint(panel_counter(qts, "output-errors"), ==, 0);
++    qtest_quit(qts);
++    g_unlink(trace);
++    g_unlink(renamed);
++    g_rmdir(dir);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -10072,6 +12319,11 @@ index 0000000..257eae4
 +    qtest_add_func("/xteink-x3-epd/uc8253-gray-base-reinforcement",
 +                   test_uc8253_gray_base_reinforcement);
 +    qtest_add_func("/xteink-x3-epd/uc8279-stride", test_uc8279_stride);
++    qtest_add_func("/xteink-x3-epd/output-accounting", test_output_accounting);
++    qtest_add_func("/xteink-x3-epd/output-full", test_output_full);
++    qtest_add_func("/xteink-x3-epd/dump-open-failure", test_dump_open_failure);
++    qtest_add_func("/xteink-x3-epd/reset-output-retention", test_reset_output_retention);
++    qtest_add_func("/xteink-x3-epd/trace-path-replacement", test_trace_path_replacement);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/xteink-x3-sd-test.c b/tests/qtest/xteink-x3-sd-test.c
@@ -10452,10 +12704,10 @@ index 0000000..683c14a
 +}
 diff --git a/tests/qtest/xteink-x3-soc-test.c b/tests/qtest/xteink-x3-soc-test.c
 new file mode 100644
-index 0000000..900ae87
+index 0000000..0bde8ec
 --- /dev/null
 +++ b/tests/qtest/xteink-x3-soc-test.c
-@@ -0,0 +1,117 @@
+@@ -0,0 +1,123 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
 +#include "libqtest.h"
@@ -10513,11 +12765,11 @@ index 0000000..900ae87
 +    g_assert_cmpuint(get_count(qts, "unsupported-io-writes"), ==, 0);
 +    /* These fallback accesses remain unsupported and read as zero. */
 +    g_assert_cmphex(qtest_readl(qts, 0x600c1090), ==, 0);
-+    g_assert_cmphex(qtest_readl(qts, 0x60026014), ==, 0);
-+    g_assert_cmphex(qtest_readl(qts, 0x60026014), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, 0x6002609c), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, 0x6002609c), ==, 0);
 +    qtest_writel(qts, 0x600c1090, 1);
-+    qtest_writel(qts, 0x60026014, 0x1234);
-+    qtest_writel(qts, 0x60026014, 0x5678);
++    qtest_writel(qts, 0x6002609c, 0x1234);
++    qtest_writel(qts, 0x6002609c, 0x5678);
 +    g_assert_cmpuint(get_count(qts, "unsupported-io-reads"), ==, 3);
 +    g_assert_cmpuint(get_count(qts, "unsupported-io-writes"), ==, 3);
 +
@@ -10528,7 +12780,7 @@ index 0000000..900ae87
 +    item = qlist_next(item);
 +    second = qobject_to(QDict, qlist_entry_obj(item));
 +    /* Address order is stable even when the higher address was accessed first. */
-+    g_assert_cmpstr(qdict_get_str(first, "address"), ==, "0x60026014");
++    g_assert_cmpstr(qdict_get_str(first, "address"), ==, "0x6002609c");
 +    g_assert_cmpint(qdict_get_int(first, "reads"), ==, 2);
 +    g_assert_cmpint(qdict_get_int(first, "writes"), ==, 2);
 +    g_assert_cmpstr(qdict_get_str(first, "last_write_value"), ==, "0x00005678");
@@ -10551,6 +12803,12 @@ index 0000000..900ae87
 +    qtest_writel(qts, 0x60009004, 0x2468); /* X3 IOMUX functional state. */
 +    g_assert_cmphex(qtest_readl(qts, 0x60009004), ==, 0x2468);
 +    qtest_readl(qts, 0x600260b0); /* Deterministic functional RNG path. */
++    /* Documented digital modem clock/reset latches survive read/modify/write. */
++    g_assert_cmphex(qtest_readl(qts, 0x60026014), ==, 0xfffce030);
++    qtest_writel(qts, 0x60026014, 0x78078f);
++    g_assert_cmphex(qtest_readl(qts, 0x60026014), ==, 0x78078f);
++    qtest_writel(qts, 0x60026018, 0x14);
++    g_assert_cmphex(qtest_readl(qts, 0x60026018), ==, 0x14);
 +    g_assert_cmpuint(get_count(qts, "unsupported-io-reads"), ==, 0);
 +    g_assert_cmpuint(get_count(qts, "unsupported-io-writes"), ==, 0);
 +    diagnostics = get_diagnostics(qts);

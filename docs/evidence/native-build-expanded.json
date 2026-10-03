@@ -1,0 +1,16 @@
+{
+  "metadata_sha256": "39b1d62896e66f50c3ee87ef40ec247b14632675d6bad5d0d21ae33c04a80a77",
+  "binary_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "patch_sha256": "4e324b5cb99098b394c48707fcca52629c9c33e793df23188cc148b34693b1ac",
+  "source_tree": "153072bffa10c01aecdae7649ed679bb5f9641dc",
+  "native_suites": 12,
+  "native_cases": 92,
+  "native_skips": 0,
+  "binary_mode": "0755",
+  "build_log_sha256": "419833e5118aabdea959bbe044ddeda442a772c0fb583ec129c31c9ad56ce65d",
+  "build_script_sha256": "071871d3e02f6e1990739da96248c3effdc3066479bb7f91639e97023a6669ec",
+  "immutable_inputs_verified": true,
+  "fresh_apply_verified": true,
+  "archive_original_sha256": "eac43e5799da479ec9f66199e9fdcd478e5583e0f8da1936ce5fc31a15cb268e"
+}

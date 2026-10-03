@@ -301,6 +301,26 @@ def _write_json(path: Path, value: dict) -> None:
     partial.replace(path)
 
 
+def assess_trace_accounting(data: bytes, metrics: dict, refresh_count: int) -> dict:
+    """Check host output independently from the frozen framebuffer proof."""
+    result = dict(metrics)
+    records = []
+    try:
+        records = [json.loads(line) for line in data.splitlines()]
+        sequence_ok = all(isinstance(record, dict) and record.get("seq") == index
+                          for index, record in enumerate(records, 1))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        sequence_ok = False
+        result["parse_error"] = str(error)
+    result.update({"file_bytes": len(data), "file_records": len(records), "sequence_complete": sequence_ok})
+    result["complete"] = bool(sequence_ok and metrics.get("output-errors") == 0
+        and metrics.get("trace-events-attempted") == len(records)
+        and metrics.get("trace-events-flushed") == len(records)
+        and metrics.get("trace-bytes-flushed") == len(data)
+        and metrics.get("dump-frames-written") == refresh_count)
+    return result
+
+
 class Experiment:
     def __init__(self, output: Path, process: subprocess.Popen, step_timeout: float, *, button_hold_ms: int = 400):
         self.output, self.run_dir = output, output / "run"
@@ -426,13 +446,31 @@ class Experiment:
                     return False
                 events = self.frame_events()
                 trace_complete = len(events) == count and events[-1].get("value") == crc
+                properties = {item["name"] for item in qmp.execute("qom-list", {"path": "/machine/epd"})}
+                output_accounting = {}
+                if "output-errors" in properties:
+                    for name in ("output-errors", "trace-events-attempted", "trace-events-flushed", "trace-bytes-flushed",
+                                 "trace-write-errors", "trace-flush-errors", "trace-close-errors", "dump-frames-written",
+                                 "dump-open-errors", "dump-write-errors", "dump-flush-errors", "dump-close-errors",
+                                 "trace-fd-size", "trace-fd-position", "trace-fd-inode", "trace-path-size", "trace-path-inode",
+                                 "trace-file-linked"):
+                        if name in properties:
+                            output_accounting[name] = qmp.execute("qom-get", {"path": "/machine/epd", "property": name})
+                    try:
+                        trace_bytes = (self.run_dir / "panel.jsonl").read_bytes()
+                    except FileNotFoundError:
+                        trace_bytes = b""
+                    output_accounting = assess_trace_accounting(trace_bytes, output_accounting, count)
+                    trace_complete = bool(trace_complete and output_accounting["complete"])
                 info.update({"path": f"frames/{label}.pgm", "t_ns": now,
                              "frame_count": count, "minimum_quiet_interval_ns": FRAME_QUIET_NS,
                              "quiet_interval_start_t_ns": quiet_started,
                              "observed_quiet_interval_ns": now - quiet_started,
                              "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
                              "pixel_crc32": crc, "dump_refresh_count": int(dump_count[1]),
-                             "trace_frame_count": len(events), "trace_complete": trace_complete})
+                             "trace_frame_count": len(events), "trace_complete": trace_complete,
+                             "output_accounting_supported": bool(output_accounting),
+                             "output_accounting": output_accounting})
                 if trace_complete:
                     info["last_frame_complete_t_ns"] = events[-1]["t_ns"]
                 self.last_settled_frame_ns = now

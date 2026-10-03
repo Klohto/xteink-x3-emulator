@@ -10,6 +10,7 @@ import sys
 
 from .backend import BackendError, DEFAULT_BACKEND, QMPClient, RunConfig, button_mask, run
 from .flash import FLASH_SIZE, FlashFormatError, assemble_flash, create_app_flash, inspect_esp_image, inspect_flash
+from .usb_transfer import USBSerialClient, USBTransferError
 
 
 def _integer(value: str) -> int:
@@ -56,6 +57,9 @@ def parser() -> argparse.ArgumentParser:
     execute.add_argument("--rom-dir", type=Path, help="directory containing esp32c3-rom.bin; discovered beside an installed backend")
     execute.add_argument("--in-place", action="store_true", help="allow QEMU to write the original flash and SD; default uses copies")
     execute.add_argument("--qmp-transport", choices=("auto", "unix", "pipe"), default="auto", help="auto uses named pipes if Unix sockets are blocked")
+    execute.add_argument("--usb-port", type=_integer, help="serve bidirectional USB Serial/JTAG bytes on this localhost TCP port; default logs output only")
+    execute.add_argument("--wifi", action="store_true", help="enable the provisional native WiFi MAC/AP model with QEMU user networking")
+    execute.add_argument("--wifi-hostfwd", action="append", default=[], metavar="tcp:127.0.0.1:HOSTPORT-:GUESTPORT", help="explicit loopback host forwarding; requires --wifi; may be repeated")
     buttons = commands.add_parser("buttons", help="set held buttons through a running backend's QMP socket")
     buttons.add_argument("--qmp", type=Path, required=True)
     masks = buttons.add_mutually_exclusive_group(required=True)
@@ -64,6 +68,25 @@ def parser() -> argparse.ArgumentParser:
     masks.add_argument("--release", action="store_true")
     monitor = commands.add_parser("monitor", help="read CPU run state and X3 peripheral counters and fidelity flags")
     monitor.add_argument("--qmp", type=Path, required=True)
+    usb = commands.add_parser("usb", help="send stock CrossInk USB file commands through a running loopback USB console")
+    usb.add_argument("--port", type=_integer, required=True)
+    usb.add_argument("--timeout", type=float, default=30)
+    operations = usb.add_subparsers(dest="usb_command", required=True)
+    operations.add_parser("status")
+    listing = operations.add_parser("list")
+    listing.add_argument("path", nargs="?", default="/")
+    for name in ("mkdir", "remove"):
+        operation = operations.add_parser(name)
+        operation.add_argument("path")
+    rename = operations.add_parser("rename")
+    rename.add_argument("source")
+    rename.add_argument("destination")
+    upload = operations.add_parser("upload")
+    upload.add_argument("input", type=Path)
+    upload.add_argument("path")
+    download = operations.add_parser("download")
+    download.add_argument("path")
+    download.add_argument("output", type=Path)
     return root
 
 
@@ -81,14 +104,35 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "flash":
             result = assemble_flash(args.part, args.output)
         elif args.command == "run":
-            result = run(RunConfig(args.flash, args.sd, args.output, args.backend, args.icount, args.seconds, args.in_place, args.qmp_transport, args.rom_dir, args.icount_shift, args.power_on, args.power_button_hold_ns))
+            result = run(RunConfig(args.flash, args.sd, args.output, args.backend, args.icount, args.seconds, args.in_place, args.qmp_transport, args.rom_dir, args.icount_shift, args.power_on, args.power_button_hold_ns, args.usb_port, args.wifi, tuple(args.wifi_hostfwd)))
+        elif args.command == "usb":
+            with USBSerialClient(args.port, timeout=args.timeout) as client:
+                if args.usb_command == "status":
+                    result = client.status()
+                elif args.usb_command == "list":
+                    result = client.list(args.path)
+                elif args.usb_command == "upload":
+                    result = client.upload(args.path, args.input.read_bytes())
+                elif args.usb_command == "download":
+                    if args.output.exists():
+                        raise ValueError("USB download output already exists")
+                    data = client.download(args.path)
+                    with args.output.open("xb") as output:
+                        output.write(data)
+                    result = client.operations[-1] | {"output": str(args.output)}
+                elif args.usb_command == "rename":
+                    client.rename(args.source, args.destination)
+                    result = client.operations[-1]
+                else:
+                    getattr(client, args.usb_command)(args.path)
+                    result = client.operations[-1]
         else:
             with QMPClient(args.qmp) as qmp:
                 if args.command == "buttons":
                     mask = args.mask if args.mask is not None else button_mask(args.press or [])
                     qmp.set_buttons(mask)
                 result = qmp.state()
-    except (BackendError, FlashFormatError, OSError, subprocess.SubprocessError, ValueError) as error:
+    except (BackendError, FlashFormatError, USBTransferError, OSError, subprocess.SubprocessError, ValueError) as error:
         print(f"x3emu: {error}", file=sys.stderr)
         return 1
     print(json.dumps(result, indent=2))

@@ -1,0 +1,21 @@
+TAP version 13
+# random seed: R02Seb121583444bd38c64f7e2370c065e83
+1..4
+# Start of riscv32 tests
+# Start of esp32c3 tests
+# Start of wifi tests
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:44997 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=46859,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=air-enabled,value=true -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3/wifi/tx-rx-dma-events
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:38149 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=48783,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=air-enabled,value=true -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3/wifi/dma-bounds-and-short-buffer
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:51289 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=50811,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3/wifi/tsf-and-reset
+# starting QEMU: exec /tmp/x3-native-checkpoint-4e324b5c/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:42329 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=60775,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/esp32c3/wifi/syscon-mac-reset-domain
+# End of wifi tests
+# End of esp32c3 tests
+# End of riscv32 tests
