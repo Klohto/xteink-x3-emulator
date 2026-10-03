@@ -1,0 +1,24 @@
+schema_version = 1
+id = "xteink-x3"
+status = "provisional"
+chip = "esp32c3"
+
+[display]
+width_px = 792
+height_px = 528
+coordinate_space = "physical_landscape"
+
+[evidence]
+chip = "https://github.com/uxjulia/CrossInk/blob/main/platformio.ini"
+display = "https://github.com/uxjulia/crossink-simulator/blob/main/src/EInkDisplay.h"
+
+[pending]
+fields = [
+    "chip_revision",
+    "memory_map",
+    "gpio_wiring",
+    "panel_controller",
+    "cpu_clock_policy",
+    "sd_spi_clock_hz",
+    "panel_spi_clock_hz",
+]

@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
+.pytest_cache/
+.DS_Store
+
+# Local inputs and generated results
+local/
+artifacts/
+captures/
+*.epub
+*.elf
+*.bin
+*.img
+*.raw
+
+# Credentials
+.env
+.env.*
+!.env.example
