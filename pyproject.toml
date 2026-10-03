@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xteink-x3-emulator"
-version = "0.1.0"
-description = "Foundations for Xteink X3 emulation and CrossInk performance search"
+version = "0.2.0"
+description = "ESP32-C3 firmware execution with an Xteink X3 board model"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []

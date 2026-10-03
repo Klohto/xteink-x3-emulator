@@ -1,0 +1,1681 @@
+{
+  "schema_version": 1,
+  "experiment": "stock CrossInk idle power, deep sleep and GPIO3 wake",
+  "passed": true,
+  "timing_calibrated": false,
+  "speed_selection_allowed": false,
+  "input_delivery": "host scheduled QMP; GPIO3 pulse release uses QEMU virtual time",
+  "launcher_argv": [
+    "<workspace>/qemu-deps/venv/bin/python",
+    "-m",
+    "x3emu",
+    "run",
+    "--backend",
+    "<project>/local/qemu/install/bin/qemu-system-riscv32",
+    "--flash",
+    "<project>/local/firmware/crossink-v1.6.0-x3-full-flash.bin",
+    "--sd",
+    "<project>/local/firmware/sdcard.img",
+    "--output",
+    "<project>/local/runs/sleep-uart-gate-verified-icount/run",
+    "--seconds",
+    "210.0",
+    "--no-power-on",
+    "--icount",
+    "--rom-dir",
+    "<project>/local/qemu/install/share/qemu"
+  ],
+  "checks": {
+    "stock_flash": true,
+    "deep_sleep_observed": true,
+    "crc_handshake_before_sleep": true,
+    "power_input_initially_released": true,
+    "hardware_reset_cause5": true,
+    "firmware_deepsleep_gpio_cause": true,
+    "real_gpio_wake": true,
+    "crc_rom_recheck": true,
+    "normal_x3_boot": true,
+    "sd_detected": true,
+    "display_rendered": true,
+    "rtc_watchdog_functional": true,
+    "rtc_watchdog_timing_uncalibrated": true,
+    "no_rtc_watchdog_expiry": true,
+    "no_unsupported_rtc_requests": true,
+    "no_panic": true,
+    "backend_stopped_cleanly": true
+  },
+  "steps": [
+    {
+      "action": "firmware deep sleep",
+      "virtual_time_ns": 419007856
+    },
+    {
+      "action": "GPIO3 power button press",
+      "hold_ns": 1000000000
+    },
+    {
+      "action": "normal X3 wake and render",
+      "virtual_time_ns": 1036634280
+    }
+  ],
+  "sleep_state": {
+    "status": {
+      "status": "paused",
+      "running": false
+    },
+    "machine": {
+      "unsupported-io-reads": 51,
+      "unsupported-io-writes": 58,
+      "virtual-time-ns": 419007856,
+      "power-button": false,
+      "power-button-hold-ns": 1000000000,
+      "unsupported-io-json": [
+        {
+          "address": "0x600050f0",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x40384d5c",
+          "last_read_pc": "0x40384d5c",
+          "first_write_pc": "0x40384d64",
+          "last_write_pc": "0x40384d64",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x60006090",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x40384d44",
+          "last_read_pc": "0x40384d44",
+          "first_write_pc": "0x40384d52",
+          "last_write_pc": "0x40384d52",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001ccd4",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x40384d12",
+          "last_read_pc": "0x40384d34",
+          "first_write_pc": "0x40384d24",
+          "last_write_pc": "0x40384d3a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001d054",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384cee",
+          "last_read_pc": "0x40384d00",
+          "first_write_pc": "0x40384cfe",
+          "last_write_pc": "0x40384d08",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x60026014",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x421d04b0",
+          "last_read_pc": "0x422a6410",
+          "first_write_pc": "0x421d04bc",
+          "last_write_pc": "0x422a6420",
+          "last_write_value": "0x00008000"
+        },
+        {
+          "address": "0x60026018",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x422a642a",
+          "last_read_pc": "0x422a642a",
+          "first_write_pc": "0x422a6444",
+          "last_write_pc": "0x422a6444",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6002609c",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x40384cc4",
+          "last_read_pc": "0x40384ce2",
+          "first_write_pc": "0x40384cd4",
+          "last_write_pc": "0x40384ce8",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600260ac",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384d6e",
+          "last_read_pc": "0x40384da0",
+          "first_write_pc": "0x40384d80",
+          "last_write_pc": "0x40384d96",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c101c",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x4005165a",
+          "last_read_pc": "0x4005165a",
+          "first_write_pc": "0x4005165e",
+          "last_write_pc": "0x4005165e",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c1090",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d18",
+          "last_read_pc": "0x421d3d1c",
+          "first_write_pc": "0x421d41ce",
+          "last_write_pc": "0x421d41e4",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1094",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c1098",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c109c",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a0",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a4",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a8",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d24",
+          "last_read_pc": "0x421d3d24",
+          "first_write_pc": "0x421d41d2",
+          "last_write_pc": "0x421d41d2",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b0",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d40fe",
+          "last_read_pc": "0x421d4126",
+          "first_write_pc": "0x421d410c",
+          "last_write_pc": "0x421d412a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c10b4",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d2e",
+          "last_read_pc": "0x421d3d2e",
+          "first_write_pc": "0x421d41d6",
+          "last_write_pc": "0x421d41d6",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b8",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3f8e",
+          "last_read_pc": "0x421d4172",
+          "first_write_pc": "0x421d3f92",
+          "last_write_pc": "0x421d4178",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10c0",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d28",
+          "last_read_pc": "0x421d3d28",
+          "first_write_pc": "0x421d41e8",
+          "last_write_pc": "0x421d41e8",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10c4",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d4138",
+          "last_read_pc": "0x421d414e",
+          "first_write_pc": "0x421d413c",
+          "last_write_pc": "0x421d4154",
+          "last_write_value": "0x000000c0"
+        },
+        {
+          "address": "0x600c10c8",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d34",
+          "last_read_pc": "0x421d3d34",
+          "first_write_pc": "0x421d41ec",
+          "last_write_pc": "0x421d41ec",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10cc",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3fa0",
+          "last_read_pc": "0x421d4194",
+          "first_write_pc": "0x421d3fa4",
+          "last_write_pc": "0x421d419a",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10d8",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d41fe",
+          "last_write_pc": "0x421d4200",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10fc",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3afa",
+          "last_read_pc": "0x421d3b08",
+          "first_write_pc": "0x421d3b06",
+          "last_write_pc": "0x421d3b0c",
+          "last_write_value": "0x00000005"
+        },
+        {
+          "address": "0x600c1100",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3cb8",
+          "last_read_pc": "0x421d3bd6",
+          "first_write_pc": "0x421d3cbc",
+          "last_write_pc": "0x421d3c82",
+          "last_write_value": "0x00000018"
+        },
+        {
+          "address": "0x600c1130",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d42",
+          "last_read_pc": "0x421d3d42",
+          "first_write_pc": "0x421d4206",
+          "last_write_pc": "0x421d4206",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1134",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3fb0",
+          "last_read_pc": "0x421d41b4",
+          "first_write_pc": "0x421d3fb4",
+          "last_write_pc": "0x421d41ba",
+          "last_write_value": "0x00000002"
+        }
+      ]
+    },
+    "panel": {
+      "unsupported-count": 0,
+      "protocol-errors": 0,
+      "refresh-count": 0,
+      "busy-active": false,
+      "spi-bytes": 1,
+      "command-count": 1,
+      "waveform-crc": 0,
+      "framebuffer-crc": 308685216,
+      "waveform-supported": false,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false
+    },
+    "adc": {
+      "buttons": 0,
+      "unsupported-uses": 2,
+      "hold-ns": 0,
+      "currentrelease-deadline-ns": 0
+    },
+    "spi0": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "spi1": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "rtc": {
+      "sleeping": true,
+      "deep-sleep-active": true,
+      "sleep-count": 1,
+      "wake-count": 0,
+      "unsupported-count": 0,
+      "analog-modelled": false,
+      "rtc-watchdog-modelled": true,
+      "rtc-watchdog-timing-calibrated": false,
+      "sleep-transition-calibrated": false,
+      "watchdog-stage": 0,
+      "watchdog-feed-count": 3,
+      "watchdog-expiry-count": 0
+    },
+    "clock": {
+      "rtc-crc-count": 1,
+      "rtc-crc-hardware-verified": false,
+      "rtc-crc-timing-calibrated": false
+    },
+    "i2c": {
+      "unsupported-accesses": 0,
+      "transfer-count": 9,
+      "transferred-bytes": 41,
+      "nack-count": 0
+    },
+    "usb": {
+      "unsupported-accesses": 0,
+      "transmitted-bytes": 565,
+      "received-bytes": 0,
+      "host-connected": true
+    },
+    "fuel_gauge": {
+      "unsupported-accesses": 0
+    },
+    "sensor_rtc": {
+      "unsupported-accesses": 0
+    },
+    "imu": {
+      "unsupported-accesses": 0
+    },
+    "assist_debug": {
+      "unsupported-uses": 2,
+      "sp-checks": 238105,
+      "spill-count": 0,
+      "last-sp": 1070239648,
+      "last-pc": 1077418170
+    },
+    "regi2c": {
+      "unsupported-accesses": 22,
+      "transfer-count": 174,
+      "read-count": 76,
+      "write-count": 76,
+      "analog-modelled": false,
+      "calibration-modelled": false,
+      "power-control-modelled": false,
+      "timing-calibrated": false
+    }
+  },
+  "watchdog_before": {
+    "rtc-watchdog-modelled": true,
+    "rtc-watchdog-timing-calibrated": false,
+    "watchdog-feed-count": 3,
+    "watchdog-expiry-count": 0,
+    "watchdog-stage": 0
+  },
+  "wake_state": {
+    "status": {
+      "status": "paused",
+      "running": false
+    },
+    "machine": {
+      "unsupported-io-reads": 102,
+      "unsupported-io-writes": 116,
+      "virtual-time-ns": 1036634280,
+      "power-button": true,
+      "power-button-hold-ns": 1000000000,
+      "unsupported-io-json": [
+        {
+          "address": "0x600050f0",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384d5c",
+          "last_read_pc": "0x40384d5c",
+          "first_write_pc": "0x40384d64",
+          "last_write_pc": "0x40384d64",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x60006090",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384d44",
+          "last_read_pc": "0x40384d44",
+          "first_write_pc": "0x40384d52",
+          "last_write_pc": "0x40384d52",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001ccd4",
+          "reads": 6,
+          "writes": 6,
+          "first_read_pc": "0x40384d12",
+          "last_read_pc": "0x40384d34",
+          "first_write_pc": "0x40384d24",
+          "last_write_pc": "0x40384d3a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001d054",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x40384cee",
+          "last_read_pc": "0x40384d00",
+          "first_write_pc": "0x40384cfe",
+          "last_write_pc": "0x40384d08",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x60026014",
+          "reads": 6,
+          "writes": 6,
+          "first_read_pc": "0x421d04b0",
+          "last_read_pc": "0x422a6410",
+          "first_write_pc": "0x421d04bc",
+          "last_write_pc": "0x422a6420",
+          "last_write_value": "0x00008000"
+        },
+        {
+          "address": "0x60026018",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x422a642a",
+          "last_read_pc": "0x422a642a",
+          "first_write_pc": "0x422a6444",
+          "last_write_pc": "0x422a6444",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6002609c",
+          "reads": 6,
+          "writes": 6,
+          "first_read_pc": "0x40384cc4",
+          "last_read_pc": "0x40384ce2",
+          "first_write_pc": "0x40384cd4",
+          "last_write_pc": "0x40384ce8",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600260ac",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x40384d6e",
+          "last_read_pc": "0x40384da0",
+          "first_write_pc": "0x40384d80",
+          "last_write_pc": "0x40384d96",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c101c",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x4005165a",
+          "last_read_pc": "0x4005165a",
+          "first_write_pc": "0x4005165e",
+          "last_write_pc": "0x4005165e",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c1090",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3d18",
+          "last_read_pc": "0x421d3d1c",
+          "first_write_pc": "0x421d41ce",
+          "last_write_pc": "0x421d41e4",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1094",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c1098",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c109c",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a0",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a4",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a8",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d24",
+          "last_read_pc": "0x421d3d24",
+          "first_write_pc": "0x421d41d2",
+          "last_write_pc": "0x421d41d2",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b0",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d40fe",
+          "last_read_pc": "0x421d4126",
+          "first_write_pc": "0x421d410c",
+          "last_write_pc": "0x421d412a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c10b4",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d2e",
+          "last_read_pc": "0x421d3d2e",
+          "first_write_pc": "0x421d41d6",
+          "last_write_pc": "0x421d41d6",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b8",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d3f8e",
+          "last_read_pc": "0x421d4172",
+          "first_write_pc": "0x421d3f92",
+          "last_write_pc": "0x421d4178",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10c0",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d28",
+          "last_read_pc": "0x421d3d28",
+          "first_write_pc": "0x421d41e8",
+          "last_write_pc": "0x421d41e8",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10c4",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d4138",
+          "last_read_pc": "0x421d414e",
+          "first_write_pc": "0x421d413c",
+          "last_write_pc": "0x421d4154",
+          "last_write_value": "0x000000c0"
+        },
+        {
+          "address": "0x600c10c8",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d34",
+          "last_read_pc": "0x421d3d34",
+          "first_write_pc": "0x421d41ec",
+          "last_write_pc": "0x421d41ec",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10cc",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d3fa0",
+          "last_read_pc": "0x421d4194",
+          "first_write_pc": "0x421d3fa4",
+          "last_write_pc": "0x421d419a",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10d8",
+          "reads": 0,
+          "writes": 4,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d41fe",
+          "last_write_pc": "0x421d4200",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10fc",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3afa",
+          "last_read_pc": "0x421d3b08",
+          "first_write_pc": "0x421d3b06",
+          "last_write_pc": "0x421d3b0c",
+          "last_write_value": "0x00000005"
+        },
+        {
+          "address": "0x600c1100",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d3cb8",
+          "last_read_pc": "0x421d3bd6",
+          "first_write_pc": "0x421d3cbc",
+          "last_write_pc": "0x421d3c82",
+          "last_write_value": "0x00000018"
+        },
+        {
+          "address": "0x600c1130",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d42",
+          "last_read_pc": "0x421d3d42",
+          "first_write_pc": "0x421d4206",
+          "last_write_pc": "0x421d4206",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1134",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d3fb0",
+          "last_read_pc": "0x421d41b4",
+          "first_write_pc": "0x421d3fb4",
+          "last_write_pc": "0x421d41ba",
+          "last_write_value": "0x00000002"
+        }
+      ]
+    },
+    "panel": {
+      "unsupported-count": 0,
+      "protocol-errors": 0,
+      "refresh-count": 1,
+      "busy-active": false,
+      "spi-bytes": 230831,
+      "command-count": 25,
+      "waveform-crc": 3838551310,
+      "framebuffer-crc": 411063607,
+      "waveform-supported": true,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false
+    },
+    "adc": {
+      "buttons": 0,
+      "unsupported-uses": 4,
+      "hold-ns": 0,
+      "currentrelease-deadline-ns": 0
+    },
+    "spi0": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "spi1": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "rtc": {
+      "sleeping": false,
+      "deep-sleep-active": false,
+      "sleep-count": 1,
+      "wake-count": 1,
+      "unsupported-count": 0,
+      "analog-modelled": false,
+      "rtc-watchdog-modelled": true,
+      "rtc-watchdog-timing-calibrated": false,
+      "sleep-transition-calibrated": false,
+      "watchdog-stage": 0,
+      "watchdog-feed-count": 6,
+      "watchdog-expiry-count": 0
+    },
+    "clock": {
+      "rtc-crc-count": 2,
+      "rtc-crc-hardware-verified": false,
+      "rtc-crc-timing-calibrated": false
+    },
+    "i2c": {
+      "unsupported-accesses": 0,
+      "transfer-count": 22,
+      "transferred-bytes": 88,
+      "nack-count": 0
+    },
+    "usb": {
+      "unsupported-accesses": 0,
+      "transmitted-bytes": 1532,
+      "received-bytes": 0,
+      "host-connected": true
+    },
+    "fuel_gauge": {
+      "unsupported-accesses": 0
+    },
+    "sensor_rtc": {
+      "unsupported-accesses": 0
+    },
+    "imu": {
+      "unsupported-accesses": 0
+    },
+    "assist_debug": {
+      "unsupported-uses": 4,
+      "sp-checks": 325904,
+      "spill-count": 0,
+      "last-sp": 1070239728,
+      "last-pc": 1109166370
+    },
+    "regi2c": {
+      "unsupported-accesses": 34,
+      "transfer-count": 350,
+      "read-count": 158,
+      "write-count": 158,
+      "analog-modelled": false,
+      "calibration-modelled": false,
+      "power-control-modelled": false,
+      "timing-calibrated": false
+    }
+  },
+  "watchdog_after": {
+    "rtc-watchdog-modelled": true,
+    "rtc-watchdog-timing-calibrated": false,
+    "watchdog-feed-count": 6,
+    "watchdog-expiry-count": 0,
+    "watchdog-stage": 0
+  },
+  "rtc_reset_register": "0000000060008038: 0x00003005\r\n",
+  "sd_mount_evidence": [
+    "SD card detected",
+    "Installed RTC-backed SD timestamp callback"
+  ],
+  "final_manifest": {
+    "schema_version": 1,
+    "status": "stopped",
+    "boot_verified": false,
+    "backend": {
+      "name": "espressif-qemu-x3",
+      "path": "<project>/local/qemu/install/bin/qemu-system-riscv32",
+      "version": "QEMU emulator version 9.2.2\nCopyright (c) 2003-2024 Fabrice Bellard and the QEMU Project developers",
+      "sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312"
+    },
+    "firmware": {
+      "path": "<project>/local/firmware/crossink-v1.6.0-x3-full-flash.bin",
+      "size_bytes": 16777216,
+      "sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "partitions": [
+        {
+          "name": "nvs",
+          "type": 1,
+          "subtype": 2,
+          "offset": 36864,
+          "size": 20480,
+          "flags": 0
+        },
+        {
+          "name": "otadata",
+          "type": 1,
+          "subtype": 0,
+          "offset": 57344,
+          "size": 8192,
+          "flags": 0
+        },
+        {
+          "name": "app0",
+          "type": 0,
+          "subtype": 16,
+          "offset": 65536,
+          "size": 6553600,
+          "flags": 0
+        },
+        {
+          "name": "app1",
+          "type": 0,
+          "subtype": 17,
+          "offset": 6619136,
+          "size": 6553600,
+          "flags": 0
+        },
+        {
+          "name": "spiffs",
+          "type": 1,
+          "subtype": 130,
+          "offset": 13172736,
+          "size": 3538944,
+          "flags": 0
+        },
+        {
+          "name": "coredump",
+          "type": 1,
+          "subtype": 3,
+          "offset": 16711680,
+          "size": 65536,
+          "flags": 0
+        }
+      ],
+      "applications": [
+        {
+          "partition": "app0",
+          "offset": 65536,
+          "image": {
+            "chip_id": 5,
+            "entrypoint": 1077414336,
+            "flash_mode": 2,
+            "flash_size_bytes": 16777216,
+            "flash_frequency_code": 15,
+            "min_revision": 0,
+            "max_revision": 65535,
+            "segments": [
+              {
+                "address": 1009451040,
+                "length": 3235248,
+                "file_offset": 32,
+                "memory_region": "DROM"
+              },
+              {
+                "address": 1070136320,
+                "length": 20152,
+                "file_offset": 3235288,
+                "memory_region": "DRAM"
+              },
+              {
+                "address": 1077411840,
+                "length": 21376,
+                "file_offset": 3255448,
+                "memory_region": "IRAM"
+              },
+              {
+                "address": 1107296288,
+                "length": 2785768,
+                "file_offset": 3276832,
+                "memory_region": "IROM"
+              },
+              {
+                "address": 1077433216,
+                "length": 42816,
+                "file_offset": 6062608,
+                "memory_region": "IRAM"
+              },
+              {
+                "address": 1342177280,
+                "length": 20,
+                "file_offset": 6105432,
+                "memory_region": "RTC"
+              },
+              {
+                "address": 1342183008,
+                "length": 32,
+                "file_offset": 6105460,
+                "memory_region": "RTC"
+              }
+            ],
+            "image_length": 6105536,
+            "checksum": 136,
+            "appended_sha256": "55060f430dd7c272beccf43121eec11b230cc1b7e62daaa95e2f12f4e92ba68c",
+            "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+            "application": {
+              "secure_version": 0,
+              "version": "31ce770",
+              "project_name": "CrossInk",
+              "compile_time": "19:14:40",
+              "compile_date": "Sep 21 2026",
+              "esp_idf_version": "5.5.2.260206",
+              "elf_sha256": "79d7a853483e1a681201adf482522f18db0d638e32774d58eab56c45df6af836"
+            }
+          }
+        }
+      ],
+      "bootloader": {
+        "chip_id": 5,
+        "entrypoint": 1077722896,
+        "flash_mode": 2,
+        "flash_size_bytes": 16777216,
+        "flash_frequency_code": 15,
+        "min_revision": 0,
+        "max_revision": 65535,
+        "segments": [
+          {
+            "address": 1070422048,
+            "length": 4112,
+            "file_offset": 32,
+            "memory_region": "DRAM"
+          },
+          {
+            "address": 1077722896,
+            "length": 2548,
+            "file_offset": 4152,
+            "memory_region": "IRAM"
+          },
+          {
+            "address": 1077733136,
+            "length": 11924,
+            "file_offset": 6708,
+            "memory_region": "IRAM"
+          }
+        ],
+        "image_length": 18672,
+        "checksum": 156,
+        "appended_sha256": "eb5f0a824ed644261ef7a83ac5c9b3e707fcf25974bdf89054906856eae230c7",
+        "sha256": "6e6b0d386095f0783e9f0513ea29ea2ce413790e7f7153a06a2b04e2b5f59fb6",
+        "application": null
+      },
+      "missing_components": [],
+      "cold_boot_components_present": true,
+      "boot_verified": false
+    },
+    "input": {
+      "sd_path": "<project>/local/firmware/sdcard.img",
+      "sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+      "sd_size_bytes": 67108864,
+      "power_on": {
+        "enabled": false,
+        "gpio": 3,
+        "active_level": 0,
+        "hold_ns": null,
+        "release_clock": "QEMU_CLOCK_VIRTUAL"
+      }
+    },
+    "timing": {
+      "clock": "QEMU_CLOCK_VIRTUAL",
+      "instruction_counting": true,
+      "instruction_time_ns": 8,
+      "calibration_status": "uncalibrated",
+      "speed_selection_allowed": false
+    },
+    "storage": {
+      "in_place": false,
+      "initial_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "initial_sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+      "final_flash_sha256": "27c4d327ce02fb35140e5c777ad5b91f5469ebe5038eabe83f795c9e79839388",
+      "final_sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427"
+    },
+    "argv": [
+      "<project>/local/qemu/install/bin/qemu-system-riscv32",
+      "-machine",
+      "esp32c3,xteink-x3=true,power-button-hold-ns=1000000000,power-button=false",
+      "-drive",
+      "file=<project>/local/runs/sleep-uart-gate-verified-icount/run/flash.bin,if=mtd,format=raw",
+      "-drive",
+      "file=<project>/local/runs/sleep-uart-gate-verified-icount/run/sd.img,if=sd,format=raw",
+      "-global",
+      "xteink-x3-epd.dump-file=<project>/local/runs/sleep-uart-gate-verified-icount/run/panel.pbm",
+      "-global",
+      "xteink-x3-epd.trace-file=<project>/local/runs/sleep-uart-gate-verified-icount/run/panel.jsonl",
+      "-serial",
+      "file:<project>/local/runs/sleep-uart-gate-verified-icount/run/rom.log",
+      "-serial",
+      "null",
+      "-serial",
+      "file:<project>/local/runs/sleep-uart-gate-verified-icount/run/serial.log",
+      "-monitor",
+      "none",
+      "-display",
+      "none",
+      "-d",
+      "unimp,guest_errors",
+      "-D",
+      "<project>/local/runs/sleep-uart-gate-verified-icount/run/diagnostics.log",
+      "-L",
+      "<project>/local/qemu/install/share/qemu",
+      "-chardev",
+      "pipe,id=x3qmp,path=<project>/local/runs/sleep-uart-gate-verified-icount/run/qmp-control",
+      "-qmp",
+      "chardev:x3qmp",
+      "-icount",
+      "shift=3,align=off,sleep=off"
+    ],
+    "output_directory": "<project>/local/runs/sleep-uart-gate-verified-icount/run",
+    "qmp_transport": "pipe",
+    "qmp_control_path": "<project>/local/runs/sleep-uart-gate-verified-icount/run/qmp.sock",
+    "qmp_transport_path": "<project>/local/runs/sleep-uart-gate-verified-icount/run/qmp-control",
+    "artifacts": {
+      "serial": "serial.log",
+      "rom_serial": "rom.log",
+      "backend": "backend.log",
+      "diagnostics": "diagnostics.log",
+      "panel": "panel.pbm",
+      "panel_trace": "panel.jsonl",
+      "qmp": "qmp.sock"
+    },
+    "validity": {
+      "unsupported_features_checked": true,
+      "diagnostics_clean": false,
+      "functional_output_checked": false
+    },
+    "model_limits": {
+      "cpu_cache_timing_calibrated": false,
+      "electrical_behaviour_modelled": false,
+      "rtc_crc_hardware_verified": false,
+      "rtc_crc_timing_calibrated": false,
+      "rtc_analog_modelled": false,
+      "rtc_watchdog_modelled": true,
+      "rtc_watchdog_timing_calibrated": false,
+      "sleep_transition_calibrated": false,
+      "regi2c_analog_modelled": false,
+      "regi2c_calibration_modelled": false,
+      "regi2c_power_control_modelled": false,
+      "regi2c_timing_calibrated": false
+    },
+    "rom": {
+      "path": "<project>/local/qemu/install/share/qemu/esp32c3-rom.bin",
+      "sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99"
+    },
+    "board_profile": {
+      "path": "<project>/boards/xteink-x3.toml",
+      "sha256": "2eec5b9440fbcb452e8c98987e61bd354b59c962708241231a7e5e82739606d6"
+    },
+    "pid": 8,
+    "qmp_version": {
+      "qemu": {
+        "micro": 2,
+        "minor": 2,
+        "major": 9
+      },
+      "package": ""
+    },
+    "initial_state": {
+      "status": {
+        "status": "running",
+        "running": true
+      },
+      "machine": {
+        "unsupported-io-reads": 0,
+        "unsupported-io-writes": 0,
+        "virtual-time-ns": 0,
+        "power-button": false,
+        "power-button-hold-ns": 1000000000,
+        "unsupported-io-json": []
+      },
+      "panel": {
+        "unsupported-count": 0,
+        "protocol-errors": 0,
+        "refresh-count": 0,
+        "busy-active": false,
+        "spi-bytes": 0,
+        "command-count": 0,
+        "waveform-crc": 0,
+        "framebuffer-crc": 308685216,
+        "waveform-supported": false,
+        "timing-calibrated": false,
+        "physical-effects-modelled": false
+      },
+      "adc": {
+        "buttons": 0,
+        "unsupported-uses": 0,
+        "hold-ns": 0,
+        "currentrelease-deadline-ns": 0
+      },
+      "spi0": {
+        "unsupported-reads": 0,
+        "unsupported-writes": 0
+      },
+      "spi1": {
+        "unsupported-reads": 0,
+        "unsupported-writes": 0
+      },
+      "rtc": {
+        "sleeping": false,
+        "deep-sleep-active": false,
+        "sleep-count": 0,
+        "wake-count": 0,
+        "unsupported-count": 0,
+        "analog-modelled": false,
+        "rtc-watchdog-modelled": true,
+        "rtc-watchdog-timing-calibrated": false,
+        "sleep-transition-calibrated": false,
+        "watchdog-stage": 0,
+        "watchdog-feed-count": 0,
+        "watchdog-expiry-count": 0
+      },
+      "clock": {
+        "rtc-crc-count": 0,
+        "rtc-crc-hardware-verified": false,
+        "rtc-crc-timing-calibrated": false
+      },
+      "i2c": {
+        "unsupported-accesses": 0,
+        "transfer-count": 0,
+        "transferred-bytes": 0,
+        "nack-count": 0
+      },
+      "usb": {
+        "unsupported-accesses": 0,
+        "transmitted-bytes": 135,
+        "received-bytes": 0,
+        "host-connected": true
+      },
+      "fuel_gauge": {
+        "unsupported-accesses": 0
+      },
+      "sensor_rtc": {
+        "unsupported-accesses": 0
+      },
+      "imu": {
+        "unsupported-accesses": 0
+      },
+      "assist_debug": {
+        "unsupported-uses": 1,
+        "sp-checks": 1519,
+        "spill-count": 0,
+        "last-sp": 1070457936,
+        "last-pc": 1074055454
+      },
+      "regi2c": {
+        "unsupported-accesses": 0,
+        "transfer-count": 0,
+        "read-count": 0,
+        "write-count": 0,
+        "analog-modelled": false,
+        "calibration-modelled": false,
+        "power-control-modelled": false,
+        "timing-calibrated": false
+      }
+    },
+    "stop_reason": "keyboard_interrupt",
+    "final_state": {
+      "status": {
+        "status": "paused",
+        "running": false
+      },
+      "machine": {
+        "unsupported-io-reads": 102,
+        "unsupported-io-writes": 116,
+        "virtual-time-ns": 1036634280,
+        "power-button": true,
+        "power-button-hold-ns": 1000000000,
+        "unsupported-io-json": [
+          {
+            "address": "0x600050f0",
+            "reads": 2,
+            "writes": 2,
+            "first_read_pc": "0x40384d5c",
+            "last_read_pc": "0x40384d5c",
+            "first_write_pc": "0x40384d64",
+            "last_write_pc": "0x40384d64",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x60006090",
+            "reads": 2,
+            "writes": 2,
+            "first_read_pc": "0x40384d44",
+            "last_read_pc": "0x40384d44",
+            "first_write_pc": "0x40384d52",
+            "last_write_pc": "0x40384d52",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x6001ccd4",
+            "reads": 6,
+            "writes": 6,
+            "first_read_pc": "0x40384d12",
+            "last_read_pc": "0x40384d34",
+            "first_write_pc": "0x40384d24",
+            "last_write_pc": "0x40384d3a",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x6001d054",
+            "reads": 4,
+            "writes": 4,
+            "first_read_pc": "0x40384cee",
+            "last_read_pc": "0x40384d00",
+            "first_write_pc": "0x40384cfe",
+            "last_write_pc": "0x40384d08",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x60026014",
+            "reads": 6,
+            "writes": 6,
+            "first_read_pc": "0x421d04b0",
+            "last_read_pc": "0x422a6410",
+            "first_write_pc": "0x421d04bc",
+            "last_write_pc": "0x422a6420",
+            "last_write_value": "0x00008000"
+          },
+          {
+            "address": "0x60026018",
+            "reads": 2,
+            "writes": 2,
+            "first_read_pc": "0x422a642a",
+            "last_read_pc": "0x422a642a",
+            "first_write_pc": "0x422a6444",
+            "last_write_pc": "0x422a6444",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x6002609c",
+            "reads": 6,
+            "writes": 6,
+            "first_read_pc": "0x40384cc4",
+            "last_read_pc": "0x40384ce2",
+            "first_write_pc": "0x40384cd4",
+            "last_write_pc": "0x40384ce8",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x600260ac",
+            "reads": 4,
+            "writes": 4,
+            "first_read_pc": "0x40384d6e",
+            "last_read_pc": "0x40384da0",
+            "first_write_pc": "0x40384d80",
+            "last_write_pc": "0x40384d96",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x600c101c",
+            "reads": 4,
+            "writes": 4,
+            "first_read_pc": "0x4005165a",
+            "last_read_pc": "0x4005165a",
+            "first_write_pc": "0x4005165e",
+            "last_write_pc": "0x4005165e",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x600c1090",
+            "reads": 4,
+            "writes": 4,
+            "first_read_pc": "0x421d3d18",
+            "last_read_pc": "0x421d3d1c",
+            "first_write_pc": "0x421d41ce",
+            "last_write_pc": "0x421d41e4",
+            "last_write_value": "0x00000001"
+          },
+          {
+            "address": "0x600c1094",
+            "reads": 0,
+            "writes": 2,
+            "first_read_pc": "0x00000000",
+            "last_read_pc": "0x00000000",
+            "first_write_pc": "0x421d39ec",
+            "last_write_pc": "0x421d39ec",
+            "last_write_value": "0x001f803e"
+          },
+          {
+            "address": "0x600c1098",
+            "reads": 0,
+            "writes": 2,
+            "first_read_pc": "0x00000000",
+            "last_read_pc": "0x00000000",
+            "first_write_pc": "0x421d39ec",
+            "last_write_pc": "0x421d39ec",
+            "last_write_value": "0x001f803e"
+          },
+          {
+            "address": "0x600c109c",
+            "reads": 0,
+            "writes": 2,
+            "first_read_pc": "0x00000000",
+            "last_read_pc": "0x00000000",
+            "first_write_pc": "0x421d39ec",
+            "last_write_pc": "0x421d39ec",
+            "last_write_value": "0x001f803e"
+          },
+          {
+            "address": "0x600c10a0",
+            "reads": 0,
+            "writes": 2,
+            "first_read_pc": "0x00000000",
+            "last_read_pc": "0x00000000",
+            "first_write_pc": "0x421d3a46",
+            "last_write_pc": "0x421d3a46",
+            "last_write_value": "0x001f803e"
+          },
+          {
+            "address": "0x600c10a4",
+            "reads": 0,
+            "writes": 2,
+            "first_read_pc": "0x00000000",
+            "last_read_pc": "0x00000000",
+            "first_write_pc": "0x421d3a46",
+            "last_write_pc": "0x421d3a46",
+            "last_write_value": "0x001f803e"
+          },
+          {
+            "address": "0x600c10a8",
+            "reads": 2,
+            "writes": 2,
+            "first_read_pc": "0x421d3d24",
+            "last_read_pc": "0x421d3d24",
+            "first_write_pc": "0x421d41d2",
+            "last_write_pc": "0x421d41d2",
+            "last_write_value": "0x00000001"
+          },
+          {
+            "address": "0x600c10b0",
+            "reads": 8,
+            "writes": 8,
+            "first_read_pc": "0x421d40fe",
+            "last_read_pc": "0x421d4126",
+            "first_write_pc": "0x421d410c",
+            "last_write_pc": "0x421d412a",
+            "last_write_value": "0x00000000"
+          },
+          {
+            "address": "0x600c10b4",
+            "reads": 2,
+            "writes": 2,
+            "first_read_pc": "0x421d3d2e",
+            "last_read_pc": "0x421d3d2e",
+            "first_write_pc": "0x421d41d6",
+            "last_write_pc": "0x421d41d6",
+            "last_write_value": "0x00000001"
+          },
+          {
+            "address": "0x600c10b8",
+            "reads": 8,
+            "writes": 8,
+            "first_read_pc": "0x421d3f8e",
+            "last_read_pc": "0x421d4172",
+            "first_write_pc": "0x421d3f92",
+            "last_write_pc": "0x421d4178",
+            "last_write_value": "0x00000002"
+          },
+          {
+            "address": "0x600c10c0",
+            "reads": 2,
+            "writes": 2,
+            "first_read_pc": "0x421d3d28",
+            "last_read_pc": "0x421d3d28",
+            "first_write_pc": "0x421d41e8",
+            "last_write_pc": "0x421d41e8",
+            "last_write_value": "0x00000001"
+          },
+          {
+            "address": "0x600c10c4",
+            "reads": 8,
+            "writes": 8,
+            "first_read_pc": "0x421d4138",
+            "last_read_pc": "0x421d414e",
+            "first_write_pc": "0x421d413c",
+            "last_write_pc": "0x421d4154",
+            "last_write_value": "0x000000c0"
+          },
+          {
+            "address": "0x600c10c8",
+            "reads": 2,
+            "writes": 2,
+            "first_read_pc": "0x421d3d34",
+            "last_read_pc": "0x421d3d34",
+            "first_write_pc": "0x421d41ec",
+            "last_write_pc": "0x421d41ec",
+            "last_write_value": "0x00000001"
+          },
+          {
+            "address": "0x600c10cc",
+            "reads": 8,
+            "writes": 8,
+            "first_read_pc": "0x421d3fa0",
+            "last_read_pc": "0x421d4194",
+            "first_write_pc": "0x421d3fa4",
+            "last_write_pc": "0x421d419a",
+            "last_write_value": "0x00000002"
+          },
+          {
+            "address": "0x600c10d8",
+            "reads": 0,
+            "writes": 4,
+            "first_read_pc": "0x00000000",
+            "last_read_pc": "0x00000000",
+            "first_write_pc": "0x421d41fe",
+            "last_write_pc": "0x421d4200",
+            "last_write_value": "0x00000001"
+          },
+          {
+            "address": "0x600c10fc",
+            "reads": 4,
+            "writes": 4,
+            "first_read_pc": "0x421d3afa",
+            "last_read_pc": "0x421d3b08",
+            "first_write_pc": "0x421d3b06",
+            "last_write_pc": "0x421d3b0c",
+            "last_write_value": "0x00000005"
+          },
+          {
+            "address": "0x600c1100",
+            "reads": 8,
+            "writes": 8,
+            "first_read_pc": "0x421d3cb8",
+            "last_read_pc": "0x421d3bd6",
+            "first_write_pc": "0x421d3cbc",
+            "last_write_pc": "0x421d3c82",
+            "last_write_value": "0x00000018"
+          },
+          {
+            "address": "0x600c1130",
+            "reads": 2,
+            "writes": 2,
+            "first_read_pc": "0x421d3d42",
+            "last_read_pc": "0x421d3d42",
+            "first_write_pc": "0x421d4206",
+            "last_write_pc": "0x421d4206",
+            "last_write_value": "0x00000001"
+          },
+          {
+            "address": "0x600c1134",
+            "reads": 8,
+            "writes": 8,
+            "first_read_pc": "0x421d3fb0",
+            "last_read_pc": "0x421d41b4",
+            "first_write_pc": "0x421d3fb4",
+            "last_write_pc": "0x421d41ba",
+            "last_write_value": "0x00000002"
+          }
+        ]
+      },
+      "panel": {
+        "unsupported-count": 0,
+        "protocol-errors": 0,
+        "refresh-count": 1,
+        "busy-active": false,
+        "spi-bytes": 230831,
+        "command-count": 25,
+        "waveform-crc": 3838551310,
+        "framebuffer-crc": 411063607,
+        "waveform-supported": true,
+        "timing-calibrated": false,
+        "physical-effects-modelled": false
+      },
+      "adc": {
+        "buttons": 0,
+        "unsupported-uses": 4,
+        "hold-ns": 0,
+        "currentrelease-deadline-ns": 0
+      },
+      "spi0": {
+        "unsupported-reads": 0,
+        "unsupported-writes": 0
+      },
+      "spi1": {
+        "unsupported-reads": 0,
+        "unsupported-writes": 0
+      },
+      "rtc": {
+        "sleeping": false,
+        "deep-sleep-active": false,
+        "sleep-count": 1,
+        "wake-count": 1,
+        "unsupported-count": 0,
+        "analog-modelled": false,
+        "rtc-watchdog-modelled": true,
+        "rtc-watchdog-timing-calibrated": false,
+        "sleep-transition-calibrated": false,
+        "watchdog-stage": 0,
+        "watchdog-feed-count": 6,
+        "watchdog-expiry-count": 0
+      },
+      "clock": {
+        "rtc-crc-count": 2,
+        "rtc-crc-hardware-verified": false,
+        "rtc-crc-timing-calibrated": false
+      },
+      "i2c": {
+        "unsupported-accesses": 0,
+        "transfer-count": 22,
+        "transferred-bytes": 88,
+        "nack-count": 0
+      },
+      "usb": {
+        "unsupported-accesses": 0,
+        "transmitted-bytes": 1532,
+        "received-bytes": 0,
+        "host-connected": true
+      },
+      "fuel_gauge": {
+        "unsupported-accesses": 0
+      },
+      "sensor_rtc": {
+        "unsupported-accesses": 0
+      },
+      "imu": {
+        "unsupported-accesses": 0
+      },
+      "assist_debug": {
+        "unsupported-uses": 4,
+        "sp-checks": 325904,
+        "spill-count": 0,
+        "last-sp": 1070239728,
+        "last-pc": 1109166370
+      },
+      "regi2c": {
+        "unsupported-accesses": 34,
+        "transfer-count": 350,
+        "read-count": 158,
+        "write-count": 158,
+        "analog-modelled": false,
+        "calibration-modelled": false,
+        "power-control-modelled": false,
+        "timing-calibrated": false
+      }
+    },
+    "qmp_events": [
+      {
+        "timestamp": {
+          "seconds": 1791055817,
+          "microseconds": 197565
+        },
+        "event": "STOP"
+      },
+      {
+        "timestamp": {
+          "seconds": 1791055821,
+          "microseconds": 590486
+        },
+        "event": "RESET",
+        "data": {
+          "guest": true,
+          "reason": "guest-reset"
+        }
+      },
+      {
+        "timestamp": {
+          "seconds": 1791055821,
+          "microseconds": 641223
+        },
+        "event": "RESUME"
+      },
+      {
+        "timestamp": {
+          "seconds": 1791055824,
+          "microseconds": 19626
+        },
+        "event": "STOP"
+      },
+      {
+        "timestamp": {
+          "seconds": 1791055828,
+          "microseconds": 374037
+        },
+        "event": "SHUTDOWN",
+        "data": {
+          "guest": false,
+          "reason": "host-qmp-quit"
+        }
+      }
+    ],
+    "exit_code": 0,
+    "host_runtime_seconds": 12.152225849000388,
+    "diagnostics": {
+      "nonempty_lines": 281,
+      "examples": [
+        "Adding SPI flash device",
+        "esp32c3-assist-debug: unmodelled instruction PC/SP recording enable",
+        "xteink-x3: unmodelled SoC read 0x600c101c",
+        "xteink-x3: unmodelled SoC write 0x600c101c",
+        "M25P80: Read id (command 0x90/0xAB) is not supported by device",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked",
+        "ignoring pmpcfg write - locked"
+      ]
+    },
+    "artifact_sha256": {
+      "panel.pbm": "1c067d85089329cd160252f8f0dc0566e103ecff0fb6f6245ecc8bae4e9b8685",
+      "panel.jsonl": "a279d12d8b426e1e04064c0203f2e94ad0ff21a7d30f0e7460de260c48a521c2",
+      "serial.log": "e9411773f2c306b1bf014cb47310e8991d56ddc870ff3ec838803ad216fdadb8",
+      "rom.log": "b6eebfb966a297819891036c65126ce834e56b647d0afbbca627e7b2cc1aece9",
+      "diagnostics.log": "cb3140a57558449556da58258750806246e7433a60bf60a975ddf105f3a3d026"
+    }
+  },
+  "rtc_diagnostics": []
+}

@@ -1,35 +1,46 @@
-# Build plan
+# Remaining work
 
-## 0. Time foundation
+## Firmware execution and board model
 
-Status: implemented in this scaffold.
+Implemented: pinned Espressif QEMU execution, original ROM and bootloader,
+writable flash, GPIO/SPI wiring, ADC buttons, SD block operations, digital
+panel output, I2C discovery devices, USB console and RTC sleep/wake. The real
+ROM downloader programs CrossInk with verified byte readback. Native tests
+exercise the actual MMIO, interrupt and wire protocols.
 
-Provide deterministic event scheduling, cancellation and monotonic virtual time. Check tied events, nested scheduling and events beyond an advance target.
+Stock firmware integration evidence and remaining functional gaps are recorded
+in `validation.md`. Unsupported registers and capabilities stay visible in run
+manifests. Support for a new command requires its real semantics and observable
+checks; register readback alone does not establish hardware behavior.
 
-## 1. Firmware boot
+## Complete more functional coverage
 
-Status: pending.
+- Resolve the optional esptool RAM flasher failure; retain the verified ROM path.
+- Test other CrossInk releases, app-generated OTA writes and rollback behavior.
+- Exercise Wi-Fi, BLE, USB host enumeration, sensor alarms and motion features
+  only as their native device models become available.
+- Validate both physical panel variants against captured command/RAM traces.
+- Expand reset, low-power, memory-protection and invalid-access coverage.
 
-Select a CPU backend after a boot and trace experiment. Pin the CrossInk revision and its build flags. Complete the board memory map and GPIO evidence. Boot through the firmware's serial startup path with explicit diagnostics for unsupported accesses.
+## Measure physical timing
 
-## 2. Board and reading flow
+Capture an X3's CPU/cache phases, SD reads/writes and panel BUSY transitions for
+the same workloads. Record the firmware, book, card, temperature, supply and
+panel variant. Add measured profiles with uncertainty and a defined operating
+range. Check cold and cached paths separately.
 
-Status: pending.
+Validate those profiles on held-out books and firmware changes. A repeatable
+instruction count is useful evidence but cannot represent all instruction
+latencies or cache/bus stalls. The default eight nanoseconds per instruction,
+nominal bus clocks and display delays remain uncalibrated.
 
-Add an SD image with a write overlay, button replay and the panel command parser. Open a test book, turn pages and compare the output with expected content. Check sleep and wake state as a separate flow.
+## Search for faster firmware
 
-## 3. Measured timing
+Build candidate firmware and replay fixed inputs with immutable starting
+storage. Compare frames, saved state, diagnostics, memory limits and guest
+failures. Store the candidate build configuration and every input/backend hash.
 
-Status: pending.
-
-Capture phase timings on an X3. Build profiles for CPU costs, SD transfers and screen updates. Check cold and cached paths. Save conditions and measured error with the profiles.
-
-## 4. Search for faster code
-
-Status: pending.
-
-Add a runner that builds candidate firmware, replays fixed workloads and records results. Validate rankings on books and code changes held out from calibration. Allow the agent to keep improvements once the score passes that check and the output and memory constraints pass.
-
-## Later work
-
-Add more card profiles, panel temperature response and measured power use. Extend waveform and ghosting checks when the search begins changing refresh behaviour.
+Permit selection by simulated speed only after held-out hardware workloads
+preserve the candidates' rankings within the declared error. Until then,
+`speed_selection_allowed` remains false. Host throughput measures emulator
+performance and is independent of the firmware's X3 speed.

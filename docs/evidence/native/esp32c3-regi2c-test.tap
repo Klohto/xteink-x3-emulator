@@ -1,0 +1,19 @@
+TAP version 13
+# random seed: R02Sc3b206ed773871251c836aa3d13a5d7a
+1..4
+# Start of riscv32 tests
+# Start of esp32c3-regi2c tests
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:48649 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=44643,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3-regi2c/rom-read-write
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:53789 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=54687,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3-regi2c/masked-calibration-register
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:57641 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=59261,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3-regi2c/power-gate
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:53275 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=38697,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/esp32c3-regi2c/unknown-and-busy
+# End of esp32c3-regi2c tests
+# End of riscv32 tests

@@ -1,24 +1,82 @@
 schema_version = 1
 id = "xteink-x3"
-status = "provisional"
+status = "functional_model_uncalibrated"
 chip = "esp32c3"
+
+[backend]
+name = "espressif-qemu"
+revision = "febae182e132e4055529be423a818225ebddaa3a"
+machine = "esp32c3,xteink-x3=true"
+cpu_timing_calibrated = false
+cache_stalls_modelled = false
+
+[memory]
+flash_bytes = 16777216
+dram_start = 0x3fc80000
+dram_bytes = 393216
+iram_start = 0x4037c000
+iram_alias_bytes = 409600
+rtc_start = 0x50000000
+rtc_bytes = 8192
+
+[spi]
+sclk_gpio = 8
+mosi_gpio = 10
+miso_gpio = 7
+
+[sd]
+cs_gpio = 12
+power_gpio = 13
+power_active_high = true
+spi_hz = 40000000
+card_latency_calibrated = false
 
 [display]
 width_px = 792
 height_px = 528
 coordinate_space = "physical_landscape"
+controller = "UC8253"
+alternate_controller = "UC8279"
+cs_gpio = 21
+dc_gpio = 4
+reset_gpio = 5
+busy_gpio = 6
+busy_active_low = true
+spi_hz = 10000000
+refresh_ms = 100
+power_on_ms = 1
+power_off_ms = 1
+timing_calibrated = false
+physical_effects_modelled = false
+
+[i2c]
+sda_gpio = 20
+scl_gpio = 0
+clock_hz = 400000
+fuel_gauge_address = 0x55
+rtc_address = 0x68
+imu_address = 0x6b
+
+[buttons]
+adc_gpio = [1, 2]
+power_gpio = 3
+power_active_low = true
+released_raw = 4095
+conversion_ns = 0
+analog_calibrated = false
 
 [evidence]
-chip = "https://github.com/uxjulia/CrossInk/blob/main/platformio.ini"
-display = "https://github.com/uxjulia/crossink-simulator/blob/main/src/EInkDisplay.h"
+firmware_revision = "31ce770487bfa9cb70447a374cdd8aae89d8bfe4"
+sdk_revision = "b784446302c076b4b5a622627867f0c80905cc50"
+hardware = "docs/hardware-evidence.md"
+firmware = "docs/firmware-evidence.md"
 
 [pending]
 fields = [
     "chip_revision",
-    "memory_map",
-    "gpio_wiring",
-    "panel_controller",
-    "cpu_clock_policy",
-    "sd_spi_clock_hz",
-    "panel_spi_clock_hz",
+    "physical_chip_revision",
+    "cpu_and_cache_costs",
+    "sd_card_latency_distribution",
+    "panel_waveform_timing_and_ghosting",
+    "adc_and_battery_calibration",
 ]

@@ -1,0 +1,41 @@
+esptool v5.1.0
+Serial port socket://127.0.0.1:45313:
+Note: Pre-connection option "no-reset" was selected. Connection may fail if the chip is not in bootloader or flasher stub mode.
+Note: It's not possible to reset the chip over a TCP socket. Automatic resetting to bootloader has been disabled, reset the chip manually.
+Connecting...
+Device PID identification is only supported on COM and /dev/ serial ports.
+
+Connected to ESP32-C3 on socket://127.0.0.1:45313:
+Chip type:          ESP32-C3 (QFN32) (revision v0.3)
+Features:           Wi-Fi, BT 5 (LE), Single Core, 160MHz
+Crystal frequency:  40MHz
+MAC:                00:00:00:00:00:00
+
+Changing baud rate to 921600...
+Changed.
+
+Enabling default SPI flash mode...
+Configuring flash size...
+Flash will be erased from 0x00000000 to 0x00004fff...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Flash will be erased from 0x0000e000 to 0x0000ffff...
+Flash will be erased from 0x00010000 to 0x005e2fff...
+Erasing flash...
+SHA digest in image updated.
+Took 0.00s to erase flash block.
+Wrote 19456 bytes at 0x00000000 in 0.3 seconds (567.2 kbit/s).
+Hash of data verified.
+Erasing flash...
+Took 0.00s to erase flash block.
+Wrote 3072 bytes at 0x00008000 in 0.0 seconds (577.7 kbit/s).
+Hash of data verified.
+Erasing flash...
+Took 0.00s to erase flash block.
+Wrote 8192 bytes at 0x0000e000 in 0.1 seconds (546.7 kbit/s).
+Hash of data verified.
+Erasing flash...
+Took 0.01s to erase flash block.
+Wrote 6106112 bytes at 0x00010000 in 87.3 seconds (559.5 kbit/s).
+Hash of data verified.
+
+Staying in bootloader.

@@ -1,0 +1,413 @@
+import contextlib
+import io
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+import textwrap
+import threading
+import time
+import unittest
+from unittest.mock import patch
+
+from x3emu.__main__ import main
+from x3emu.backend import BackendError, MIN_SD_SIZE, QMPClient, QMPError, RunConfig, build_command, button_mask, run
+from x3emu.flash import APP_OFFSET, PARTITION_OFFSET, assemble_flash, create_app_flash, make_partition_table
+from test_flash import image_bytes
+
+
+class QMPTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.path = Path(self.directory.name) / "qmp.sock"
+        os.mkfifo(str(self.path) + ".in", 0o600)
+        os.mkfifo(str(self.path) + ".out", 0o600)
+        self.failures = []
+
+    def serve(self, callback):
+        def worker():
+            try:
+                with open(str(self.path) + ".in", "r+b", buffering=0) as reader, open(str(self.path) + ".out", "r+b", buffering=0) as writer:
+                    class Connection:
+                        def sendall(self, data):
+                            writer.write(data)
+
+                        def makefile(self, mode):
+                            return reader
+                    callback(Connection())
+            except BaseException as error:
+                self.failures.append(error)
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+        self.addCleanup(thread.join, 2)
+        return thread
+
+    @staticmethod
+    def send(connection, value):
+        connection.sendall(json.dumps(value).encode() + b"\r\n")
+
+    def test_handshake_handles_split_json_and_async_event_before_result(self):
+        def worker(connection):
+            connection.sendall(b'{"QMP":{"version":')
+            connection.sendall(b'{"qemu":{"major":9}},"capabilities":[]}}\r\n')
+            source = connection.makefile("rb")
+            request = json.loads(source.readline())
+            self.assertEqual(request["execute"], "qmp_capabilities")
+            self.send(connection, {"event": "RESET", "data": {}})
+            self.send(connection, {"return": {}, "id": request["id"]})
+            request = json.loads(source.readline())
+            self.assertEqual(request["execute"], "query-status")
+            self.send(connection, {"return": {"running": True, "status": "running"}, "id": request["id"]})
+        thread = self.serve(worker)
+        with QMPClient(self.path, transport="pipe") as qmp:
+            self.assertEqual(qmp.execute("query-status")["status"], "running")
+            self.assertEqual(qmp.events[0]["event"], "RESET")
+        thread.join(2)
+        self.assertFalse(self.failures)
+
+    def test_qmp_error_is_not_treated_as_empty_success(self):
+        def worker(connection):
+            self.send(connection, {"QMP": {}})
+            source = connection.makefile("rb")
+            request = json.loads(source.readline())
+            self.send(connection, {"return": {}, "id": request["id"]})
+            request = json.loads(source.readline())
+            self.send(connection, {"error": {"class": "GenericError", "desc": "missing property"}, "id": request["id"]})
+        thread = self.serve(worker)
+        with QMPClient(self.path, transport="pipe") as qmp, self.assertRaisesRegex(QMPError, "missing property"):
+            qmp.set_buttons(1)
+        thread.join(2)
+        self.assertFalse(self.failures)
+
+    def test_unresponsive_pipe_server_fails_promptly(self):
+        thread = self.serve(lambda connection: None)
+        with self.assertRaisesRegex(BackendError, "timed out"):
+            QMPClient(self.path, timeout=0.1, transport="pipe")
+        thread.join(2)
+
+    def test_buttons_validate_before_any_command(self):
+        qmp = object.__new__(QMPClient)
+        for value in (-1, 64, True, "1"):
+            with self.subTest(mask=value), self.assertRaisesRegex(BackendError, "mask"):
+                qmp.set_buttons(value)
+        self.assertEqual(button_mask(["confirm", "down", "confirm"]), 34)
+        with self.assertRaisesRegex(BackendError, "unknown button"):
+            button_mask(["power"])
+
+
+class BackendRunTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        self.app = self.root / "app.bin"
+        self.app.write_bytes(image_bytes())
+        boot = self.root / "boot.bin"
+        boot.write_bytes(image_bytes(segments=[(0x40380000, b"\x13\0\0\0")]))
+        table = self.root / "partitions.bin"
+        table.write_bytes(make_partition_table())
+        self.flash = self.root / "full.bin"
+        assemble_flash([(0, boot), (PARTITION_OFFSET, table), (APP_OFFSET, self.app)], self.flash)
+        self.sd = self.root / "card.img"
+        with self.sd.open("wb") as target:
+            target.truncate(MIN_SD_SIZE)
+        self.backend = self.root / "qemu-fake"
+        self.output = self.root / "run"
+
+    def install_fake_backend(self, *, diagnostics="", unsupported=0, unsupported_spi=0, missing_spi_counter=False,
+                             counter_overrides=None, omitted_counter=None):
+        # A local fake process exercises argv, socket negotiation, orderly stop,
+        # writable copies, saved state, diagnostics, and exit status together.
+        script = textwrap.dedent('''\
+            import json, pathlib, sys
+            if "--version" in sys.argv:
+                print("QEMU emulator version test")
+                raise SystemExit(0)
+            args = sys.argv[1:]
+            def option(name): return args[args.index(name) + 1]
+            qmp_path = option("-chardev").split("path=", 1)[1]
+            diagnostics_path = pathlib.Path(option("-D"))
+            diagnostics_path.write_text(DIAGNOSTICS)
+            for i, value in enumerate(args):
+                if value == "-serial" and args[i + 1].startswith("file:"):
+                    pathlib.Path(args[i + 1].removeprefix("file:")).write_text("guest serial output\\n")
+            drives = [args[i + 1] for i, value in enumerate(args) if value == "-drive"]
+            flash_path = pathlib.Path(drives[0].split(",if=")[0].removeprefix("file="))
+            with flash_path.open("r+b") as target:
+                target.seek(0x9000)
+                target.write(b"changed")
+            source = open(qmp_path + ".in", "r+b", buffering=0)
+            target = open(qmp_path + ".out", "r+b", buffering=0)
+            def send(value): target.write(json.dumps(value).encode() + b"\\n")
+            send({"QMP": {"version": {"qemu": {"major": 9}}, "capabilities": []}})
+            running = True
+            buttons = 0
+            for line in source:
+                message = json.loads(line)
+                command = message["execute"]
+                arguments = message.get("arguments", {})
+                value = {}
+                if command == "query-status":
+                    value = {"running": running, "status": "running" if running else "paused"}
+                elif command == "qom-list":
+                    properties = {
+                        "/machine": ["unsupported-io-reads", "unsupported-io-writes", "unsupported-io-json", "virtual-time-ns", "power-button", "power-button-hold-ns", "epd", "adc", "spi0", "spi1", "rtccntl", "clock", "i2c", "jtag", "assist-debug", "regi2c"],
+                        "/machine/epd": ["unsupported-count", "protocol-errors"],
+                        "/machine/adc": ["buttons", "unsupported-uses", "hold-ns"],
+                        "/machine/spi0": ["unsupported-reads", "unsupported-writes"],
+                        "/machine/spi1": ["unsupported-reads"] if MISSING_SPI_COUNTER else ["unsupported-reads", "unsupported-writes"],
+                        "/machine/rtccntl": ["unsupported-count", "sleep-count", "wake-count", "sleeping", "deep-sleep-active", "analog-modelled", "rtc-watchdog-modelled", "rtc-watchdog-timing-calibrated", "sleep-transition-calibrated"],
+                        "/machine/clock": ["rtc-crc-count", "rtc-crc-hardware-verified", "rtc-crc-timing-calibrated"],
+                        "/machine/i2c": ["unsupported-accesses", "transfer-count", "transferred-bytes", "nack-count", "fuel-gauge", "rtc", "imu"],
+                        "/machine/jtag": ["unsupported-accesses", "transmitted-bytes", "received-bytes"],
+                        "/machine/i2c/fuel-gauge": ["unsupported-accesses"],
+                        "/machine/i2c/rtc": ["unsupported-accesses"],
+                        "/machine/i2c/imu": ["unsupported-accesses"],
+                        "/machine/assist-debug": ["unsupported-uses", "sp-checks", "spill-count", "last-sp", "last-pc"],
+                        "/machine/regi2c": ["unsupported-accesses", "transfer-count", "read-count", "write-count", "analog-modelled", "calibration-modelled", "power-control-modelled", "timing-calibrated"],
+                    }
+                    omitted = OMITTED_COUNTER
+                    if omitted:
+                        properties[omitted[0]].remove(omitted[1])
+                    names = properties[arguments["path"]]
+                    value = [{"name": name, "type": "uint64"} for name in names]
+                elif command == "qom-get":
+                    prop = arguments["property"]
+                    value = buttons if prop == "buttons" else PANEL_UNSUPPORTED if prop == "unsupported-count" and arguments["path"].endswith("epd") else SPI_UNSUPPORTED if prop == "unsupported-reads" else 1000000000 if prop == "power-button-hold-ns" else False if prop in ("power-button", "sleeping", "deep-sleep-active", "analog-modelled", "rtc-watchdog-modelled", "rtc-watchdog-timing-calibrated", "sleep-transition-calibrated", "rtc-crc-hardware-verified", "rtc-crc-timing-calibrated") else 0
+                    if prop == "unsupported-io-json": value = '[]'
+                    if prop.endswith(("-modelled", "-calibrated")): value = False
+                    value = COUNTER_OVERRIDES.get(arguments["path"] + ":" + prop, value)
+                elif command == "qom-set": buttons = arguments["value"]
+                elif command == "stop": running = False
+                send({"return": value, "id": message["id"]})
+                if command == "quit": break
+            source.close()
+            target.close()
+        ''').replace("DIAGNOSTICS", repr(diagnostics)).replace("PANEL_UNSUPPORTED", str(unsupported)).replace("SPI_UNSUPPORTED", str(unsupported_spi)).replace("MISSING_SPI_COUNTER", repr(missing_spi_counter)).replace("COUNTER_OVERRIDES", repr(counter_overrides or {})).replace("OMITTED_COUNTER", repr(omitted_counter))
+        self.backend.write_text(f"#!{sys.executable}\n" + script)
+        self.backend.chmod(0o755)
+
+    def config(self, **kwargs):
+        return RunConfig(self.flash, self.sd, self.output, self.backend, seconds=kwargs.pop("seconds", 0.15), qmp_transport="pipe", **kwargs)
+
+    def test_command_uses_board_peripherals_logs_and_optional_instruction_time(self):
+        argv = build_command(self.config(icount=True, icount_shift=0))
+        self.assertEqual(argv[argv.index("-machine") + 1], "esp32c3,xteink-x3=true,power-button-hold-ns=1000000000,power-button=true")
+        self.assertIn(f"file={self.output}/flash.bin,if=mtd,format=raw", argv)
+        self.assertIn(f"file={self.output}/sd.img,if=sd,format=raw", argv)
+        self.assertIn("shift=0,align=off,sleep=off", argv)
+        self.assertIn("unimp,guest_errors", argv)
+        self.assertEqual([argv[i + 1] for i, value in enumerate(argv) if value == "-serial"], [f"file:{self.output}/rom.log", "null", f"file:{self.output}/serial.log"])
+        self.assertIn("shift=3,align=off,sleep=off", build_command(self.config()))
+        self.assertNotIn("-icount", build_command(self.config(icount=False)))
+        unix = build_command(RunConfig(self.flash, self.sd, self.output, self.backend, qmp_transport="unix"))
+        self.assertEqual(unix[unix.index("-qmp") + 1], f"unix:{self.output}/qmp-control.sock,server=on,wait=off")
+
+    def test_power_input_duration_opt_out_and_validation(self):
+        argv = build_command(self.config(power_on=False, power_button_hold_ns=120_000_000))
+        self.assertIn("esp32c3,xteink-x3=true,power-button-hold-ns=120000000,power-button=false", argv)
+        for duration in (0, -1, True, 1.5, 1 << 63):
+            with self.subTest(duration=duration), self.assertRaisesRegex(BackendError, "power-button hold"):
+                build_command(self.config(power_button_hold_ns=duration))
+
+    def test_explicit_rom_and_instruction_shift_are_passed_and_hashed(self):
+        rom_dir = self.root / "roms"
+        rom_dir.mkdir()
+        (rom_dir / "esp32c3-rom.bin").write_bytes(b"test ROM fixture")
+        argv = build_command(self.config(icount=True, icount_shift=3, rom_dir=rom_dir))
+        self.assertEqual(argv[argv.index("-L") + 1], str(rom_dir))
+        self.assertIn("shift=3,align=off,sleep=off", argv)
+        self.install_fake_backend()
+        result = run(self.config(icount=True, icount_shift=3, rom_dir=rom_dir))
+        self.assertEqual(result["timing"]["instruction_time_ns"], 8)
+        self.assertEqual(result["rom"]["path"], str(rom_dir / "esp32c3-rom.bin"))
+        self.assertEqual(len(result["rom"]["sha256"]), 64)
+
+    def test_run_preserves_source_images_and_records_real_process_outputs(self):
+        self.install_fake_backend()
+        original = self.flash.read_bytes()
+        result = run(self.config(icount=True, icount_shift=0))
+        self.assertEqual(result["status"], "stopped")
+        self.assertEqual(result["stop_reason"], "host_time_limit")
+        self.assertEqual(result["exit_code"], 0)
+        self.assertEqual(self.flash.read_bytes(), original)
+        self.assertNotEqual((self.output / "flash.bin").read_bytes(), original)
+        self.assertTrue(result["validity"]["unsupported_features_checked"])
+        self.assertTrue(result["validity"]["diagnostics_clean"])
+        self.assertFalse(result["validity"]["functional_output_checked"])
+        self.assertFalse(result["boot_verified"])
+        self.assertFalse(result["timing"]["speed_selection_allowed"])
+        self.assertEqual(result["timing"]["instruction_time_ns"], 1)
+        self.assertEqual(result["input"]["power_on"], {"enabled": True, "gpio": 3, "active_level": 0,
+                                                     "hold_ns": 1_000_000_000, "release_clock": "QEMU_CLOCK_VIRTUAL"})
+        self.assertEqual(result["final_state"]["spi0"]["unsupported-reads"], 0)
+        self.assertIs(result["final_state"]["rtc"]["analog-modelled"], False)
+        self.assertIs(result["final_state"]["clock"]["rtc-crc-hardware-verified"], False)
+        self.assertEqual(result["final_state"]["machine"]["unsupported-io-json"], [])
+        self.assertTrue(all(value is False for value in result["model_limits"].values()))
+        self.assertIn("serial.log", result["artifact_sha256"])
+        self.assertEqual(json.loads((self.output / "run.json").read_text()), json.loads(json.dumps(result)))
+
+    def test_external_pipe_control_is_brokered_without_competing_for_qmp_stream(self):
+        self.install_fake_backend()
+        results = []
+        # Expanded monitor state requires several broker round trips. Keep the
+        # process alive until that read completes instead of racing a 1s limit.
+        thread = threading.Thread(target=lambda: results.append(run(self.config(seconds=5))))
+        thread.start()
+        self.addCleanup(thread.join, 10)
+        deadline = time.monotonic() + 5
+        while True:
+            manifest = self.output / "run.json"
+            if manifest.exists() and json.loads(manifest.read_text())["status"] == "running":
+                break
+            if time.monotonic() >= deadline:
+                self.fail("fake run did not reach its control loop")
+            time.sleep(0.02)
+        with QMPClient(self.output / "qmp.sock") as qmp:
+            qmp.set_buttons(button_mask(["confirm", "down"]))
+            self.assertEqual(qmp.state()["adc"]["buttons"], 34)
+        thread.join(10)
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(results[0]["final_state"]["adc"]["buttons"], 34)
+
+    def test_any_unimplemented_diagnostic_or_counter_is_reported_as_invalid(self):
+        for diagnostic, counter in (("spi unsupported\\n", 0), ("", 1)):
+            with self.subTest(diagnostic=diagnostic, counter=counter):
+                self.output = self.root / f"run-{counter}"
+                self.install_fake_backend(diagnostics=diagnostic, unsupported=counter)
+                result = run(self.config())
+                self.assertFalse(result["validity"]["diagnostics_clean"])
+                self.assertEqual(result["final_state"]["panel"]["unsupported-count"], counter)
+
+    def test_spi_diagnostics_are_required_and_nonzero_counts_are_invalid(self):
+        for counter, missing in ((1, False), (0, True)):
+            with self.subTest(counter=counter, missing=missing):
+                self.output = self.root / f"spi-run-{counter}"
+                self.install_fake_backend(unsupported_spi=counter, missing_spi_counter=missing)
+                result = run(self.config())
+                self.assertEqual(result["validity"]["unsupported_features_checked"], not missing)
+                self.assertFalse(result["validity"]["diagnostics_clean"])
+                self.assertEqual(result["final_state"]["spi0"]["unsupported-reads"], counter)
+
+    def test_i2c_usb_and_nested_sensor_counters_are_required_and_checked(self):
+        devices = {"i2c": "/machine/i2c", "usb": "/machine/jtag",
+                   "fuel_gauge": "/machine/i2c/fuel-gauge", "sensor_rtc": "/machine/i2c/rtc", "imu": "/machine/i2c/imu"}
+        for device, path in devices.items():
+            with self.subTest(device=device):
+                self.output = self.root / device
+                self.install_fake_backend(counter_overrides={path + ":unsupported-accesses": 1})
+                result = run(self.config())
+                self.assertTrue(result["validity"]["unsupported_features_checked"])
+                self.assertFalse(result["validity"]["diagnostics_clean"])
+                self.assertEqual(result["final_state"][device]["unsupported-accesses"], 1)
+        self.output = self.root / "missing-imu-counter"
+        self.install_fake_backend(omitted_counter=("/machine/i2c/imu", "unsupported-accesses"))
+        result = run(self.config())
+        self.assertFalse(result["validity"]["unsupported_features_checked"])
+        self.assertFalse(result["validity"]["diagnostics_clean"])
+
+    def test_executed_stack_monitor_spills_and_missing_telemetry_are_invalid(self):
+        for label, overrides, omitted in (("spill", {"/machine/assist-debug:spill-count": 1}, None),
+                                          ("missing", {}, ("/machine/assist-debug", "sp-checks"))):
+            with self.subTest(label=label):
+                self.output = self.root / label
+                self.install_fake_backend(counter_overrides=overrides, omitted_counter=omitted)
+                result = run(self.config())
+                self.assertFalse(result["validity"]["diagnostics_clean"])
+                self.assertEqual(result["validity"]["unsupported_features_checked"], omitted is None)
+
+    def test_mmio_telemetry_is_parsed_without_replacing_required_aggregate_counters(self):
+        entries = [{"address": "0x6000e044", "reads": 1, "writes": 0}]
+        self.install_fake_backend(counter_overrides={"/machine:unsupported-io-reads": 1,
+                                                     "/machine:unsupported-io-json": json.dumps(entries)})
+        result = run(self.config())
+        self.assertEqual(result["final_state"]["machine"]["unsupported-io-json"], entries)
+        self.assertEqual(result["final_state"]["machine"]["unsupported-io-reads"], 1)
+        self.assertFalse(result["validity"]["diagnostics_clean"])
+
+    def test_rtc_digital_watchdog_capability_does_not_imply_calibrated_timing(self):
+        self.install_fake_backend(counter_overrides={"/machine/rtccntl:rtc-watchdog-modelled": True})
+        result = run(self.config())
+        self.assertIs(result["model_limits"]["rtc_watchdog_modelled"], True)
+        self.assertIs(result["model_limits"]["rtc_watchdog_timing_calibrated"], False)
+        self.assertEqual(result["timing"]["calibration_status"], "uncalibrated")
+        self.assertFalse(result["timing"]["speed_selection_allowed"])
+
+    def test_regi2c_positive_transfer_counts_are_observations_not_errors(self):
+        self.install_fake_backend(counter_overrides={"/machine/regi2c:transfer-count": 4,
+                                                     "/machine/regi2c:read-count": 1,
+                                                     "/machine/regi2c:write-count": 3})
+        result = run(self.config())
+        self.assertTrue(result["validity"]["diagnostics_clean"])
+        self.assertEqual(result["final_state"]["regi2c"]["transfer-count"], 4)
+        self.assertIs(result["model_limits"]["regi2c_analog_modelled"], False)
+        self.assertIs(result["model_limits"]["regi2c_power_control_modelled"], False)
+        self.output = self.root / "missing-regi2c-observation"
+        self.install_fake_backend(omitted_counter=("/machine/regi2c", "read-count"))
+        result = run(self.config())
+        self.assertFalse(result["validity"]["unsupported_features_checked"])
+        self.assertFalse(result["validity"]["diagnostics_clean"])
+
+    def test_native_sd_capacity_constraints_fail_before_backend_launch(self):
+        self.install_fake_backend()
+        for size in (0, 512, MIN_SD_SIZE // 2, 48 * 1024 * 1024):
+            with self.subTest(size=size):
+                with self.sd.open("wb") as target:
+                    target.truncate(size)
+                with self.assertRaisesRegex(BackendError, "power of two.*256 KiB"):
+                    run(self.config())
+                self.assertFalse(self.output.exists())
+
+    def test_missing_backend_app_only_flash_bad_sd_or_nonempty_output_fail_before_launch(self):
+        with self.assertRaisesRegex(BackendError, "build it first"):
+            run(self.config())
+        self.install_fake_backend()
+        create_app_flash(self.app, self.flash)
+        with self.assertRaisesRegex(BackendError, "bootloader"):
+            run(self.config())
+        self.setUp()
+        self.install_fake_backend()
+        self.sd.write_bytes(b"bad")
+        with self.assertRaisesRegex(BackendError, "power of two"):
+            run(self.config())
+        with self.sd.open("wb") as target:
+            target.truncate(MIN_SD_SIZE)
+        self.output.mkdir()
+        (self.output / "existing").write_text("keep")
+        with self.assertRaisesRegex(BackendError, "empty directory"):
+            run(self.config())
+        self.assertEqual((self.output / "existing").read_text(), "keep")
+
+    def test_backend_early_exit_still_saves_failed_manifest(self):
+        self.backend.write_text(f"#!{sys.executable}\nimport sys\nprint('test version')\nraise SystemExit(0 if '--version' in sys.argv else 2)\n")
+        self.backend.chmod(0o755)
+        result = run(self.config())
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["exit_code"], 2)
+        self.assertTrue("exited before QMP" in result["error"] or "timed out" in result["error"])
+        self.assertFalse(result["validity"]["unsupported_features_checked"])
+        self.assertTrue((self.output / "run.json").is_file())
+
+    def test_cli_inspects_flash_and_reports_failed_run_exit_code(self):
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(main(["inspect", str(self.flash)]), 0)
+        self.assertTrue(json.loads(output.getvalue())["cold_boot_components_present"])
+        with patch("x3emu.__main__.run", return_value={"status": "failed"}), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(["run", "--flash", str(self.flash), "--sd", str(self.sd), "--output", str(self.output)]), 1)
+
+    def test_cli_defaults_and_explicit_clock_and_power_opt_out(self):
+        arguments = ["run", "--flash", str(self.flash), "--sd", str(self.sd), "--output", str(self.output)]
+        for extra, enabled in (([], True), (["--no-icount", "--no-power-on"], False)):
+            with self.subTest(enabled=enabled), patch("x3emu.__main__.run", return_value={"status": "stopped"}) as launch, contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(arguments + extra), 0)
+                self.assertEqual(launch.call_args.args[0].icount, enabled)
+                self.assertEqual(launch.call_args.args[0].power_on, enabled)
+                self.assertEqual(launch.call_args.args[0].icount_shift, 3)
+                self.assertEqual(launch.call_args.args[0].power_button_hold_ns, 1_000_000_000)
+
+
+if __name__ == "__main__":
+    unittest.main()

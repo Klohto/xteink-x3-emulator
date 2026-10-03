@@ -1,0 +1,19 @@
+TAP version 13
+# random seed: R02S78df1e0fde639fc1cd748eccfccd9f4e
+1..4
+# Start of riscv32 tests
+# Start of esp32c3-usb tests
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:57073 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=36033,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=51767,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3-usb/sof-and-flush
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:52731 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=56723,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=45827,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3-usb/full-packet-auto-flush
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:59599 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=35793,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=42851,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3-usb/host-rx-and-irq
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:51073 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=46117,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=57015,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/esp32c3-usb/light-sleep-gates-usb
+# End of esp32c3-usb tests
+# End of riscv32 tests

@@ -1,0 +1,19 @@
+test_corrupted_cluster_cycle_is_rejected (test_smoke.Fat16EvidenceTests.test_corrupted_cluster_cycle_is_rejected) ... ok
+test_invalid_mbr_and_truncated_card_are_rejected (test_smoke.Fat16EvidenceTests.test_invalid_mbr_and_truncated_card_are_rejected) ... ok
+test_reads_firmware_style_nested_state_directory (test_smoke.Fat16EvidenceTests.test_reads_firmware_style_nested_state_directory) ... ok
+test_reads_generated_epub_and_long_unicode_name_exactly (test_smoke.Fat16EvidenceTests.test_reads_generated_epub_and_long_unicode_name_exactly) ... ok
+test_book_cache_requires_actual_magic_version_title_and_bounds (test_smoke.SmokeArtifactTests.test_book_cache_requires_actual_magic_version_title_and_bounds) ... ok
+test_boot_requires_both_real_x3_markers_and_rejects_panic_or_sd_error (test_smoke.SmokeArtifactTests.test_boot_requires_both_real_x3_markers_and_rejects_panic_or_sd_error) ... ok
+test_capture_rechecks_a_refresh_completed_during_qmp_round_trips (test_smoke.SmokeArtifactTests.test_capture_rechecks_a_refresh_completed_during_qmp_round_trips) ... ok
+test_frame_comparison_uses_pixels_and_rejects_dimension_changes (test_smoke.SmokeArtifactTests.test_frame_comparison_uses_pixels_and_rejects_dimension_changes) ... ok
+test_pgm_parser_preserves_whitespace_valued_first_pixel (test_smoke.SmokeArtifactTests.test_pgm_parser_preserves_whitespace_valued_first_pixel) ... ok
+test_pgm_rejects_truncation_and_wrong_format (test_smoke.SmokeArtifactTests.test_pgm_rejects_truncation_and_wrong_format) ... ok
+test_progress_formats_match_the_real_crossink_serializer (test_smoke.SmokeArtifactTests.test_progress_formats_match_the_real_crossink_serializer) ... ok
+test_reading_flow_pass_does_not_relax_full_diagnostics_acceptance (test_smoke.SmokeArtifactTests.test_reading_flow_pass_does_not_relax_full_diagnostics_acceptance) ... ok
+test_repeated_buttons_have_a_virtual_neutral_gap_and_exact_pulse (test_smoke.SmokeArtifactTests.test_repeated_buttons_have_a_virtual_neutral_gap_and_exact_pulse) ... ok
+test_section_readiness_requires_completed_cache_and_valid_page_table (test_smoke.SmokeArtifactTests.test_section_readiness_requires_completed_cache_and_valid_page_table) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.009s
+
+OK

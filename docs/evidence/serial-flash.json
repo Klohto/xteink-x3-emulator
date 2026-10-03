@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "backend": "<project>/local/qemu/install/bin/qemu-system-riscv32",
+  "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "esptool_version": "5.1.0",
+  "transport": "ROM UART0 over loopback TCP",
+  "flasher": "ESP32-C3 mask ROM",
+  "requested_baud": 921600,
+  "compression": "esptool default",
+  "initial_flash": "all 0xff",
+  "qemu_command": [
+    "<project>/local/qemu/install/bin/qemu-system-riscv32",
+    "-L",
+    "<project>/local/qemu/install/share/qemu",
+    "-machine",
+    "esp32c3,xteink-x3=true",
+    "-drive",
+    "file=<project>/local/runs/serial-flash-final-uart-fix/flash.bin,if=mtd,format=raw",
+    "-global",
+    "driver=esp32c3.gpio,property=strap_mode,value=2",
+    "-chardev",
+    "socket,id=uart0,host=127.0.0.1,port=45313,server=on,wait=off,nodelay=on",
+    "-serial",
+    "chardev:uart0",
+    "-qmp",
+    "tcp:127.0.0.1:44291,server=on,wait=off",
+    "-monitor",
+    "none",
+    "-display",
+    "none",
+    "-d",
+    "unimp,guest_errors",
+    "-D",
+    "<project>/local/runs/serial-flash-final-uart-fix/diagnostics.log"
+  ],
+  "esptool_write_command": [
+    "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "-m",
+    "esptool",
+    "--chip",
+    "esp32c3",
+    "--port",
+    "socket://127.0.0.1:45313",
+    "--before",
+    "no-reset",
+    "--after",
+    "no-reset",
+    "--baud",
+    "921600",
+    "--no-stub",
+    "write-flash",
+    "--flash-size",
+    "16MB",
+    "--no-progress",
+    "0x0",
+    "<project>/local/firmware/bootloader.bin",
+    "0x8000",
+    "<project>/local/firmware/partitions.bin",
+    "0xe000",
+    "<project>/local/firmware/boot_app0.bin",
+    "0x10000",
+    "<project>/local/firmware/firmware-x3-x4-v1.6.0.bin"
+  ],
+  "serial_flash_verified": true,
+  "boot_verified": false,
+  "rtc": {
+    "flash-boot-mode": false,
+    "watchdog-expiry-count": 0,
+    "watchdog-feed-count": 0,
+    "reset_state_register": 12289,
+    "reset_reason": 1,
+    "reset_state_monitor_output": "0000000060008038: 0x00003001\r\n",
+    "qmp_reset_events": []
+  },
+  "readback": [
+    {
+      "offset": 0,
+      "source": "<project>/local/firmware/bootloader.bin",
+      "size_bytes": 18672,
+      "sha256": "6e6b0d386095f0783e9f0513ea29ea2ce413790e7f7153a06a2b04e2b5f59fb6",
+      "byte_equal": true
+    },
+    {
+      "offset": 32768,
+      "source": "<project>/local/firmware/partitions.bin",
+      "size_bytes": 3072,
+      "sha256": "bd0f7954aca2ef7d925ee21aaa1f3dc8822d1d6ce5cbbd26a135e5886bfff6ce",
+      "byte_equal": true
+    },
+    {
+      "offset": 57344,
+      "source": "<project>/local/firmware/boot_app0.bin",
+      "size_bytes": 8192,
+      "sha256": "f94c5d786a7a8fab06ac5d10e33bf37711a6697636dc037559ea19cc410a17f0",
+      "byte_equal": true
+    },
+    {
+      "offset": 65536,
+      "source": "<project>/local/firmware/firmware-x3-x4-v1.6.0.bin",
+      "size_bytes": 6105536,
+      "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+      "byte_equal": true
+    }
+  ],
+  "full_flash_readback": {
+    "size_bytes": 16777216,
+    "byte_equal": true,
+    "unused_byte": "0xff",
+    "expected_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "actual_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095"
+  },
+  "flash": {
+    "path": "<project>/local/runs/serial-flash-final-uart-fix/flash.bin",
+    "size_bytes": 16777216,
+    "sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "partitions": [
+      {
+        "name": "nvs",
+        "type": 1,
+        "subtype": 2,
+        "offset": 36864,
+        "size": 20480,
+        "flags": 0
+      },
+      {
+        "name": "otadata",
+        "type": 1,
+        "subtype": 0,
+        "offset": 57344,
+        "size": 8192,
+        "flags": 0
+      },
+      {
+        "name": "app0",
+        "type": 0,
+        "subtype": 16,
+        "offset": 65536,
+        "size": 6553600,
+        "flags": 0
+      },
+      {
+        "name": "app1",
+        "type": 0,
+        "subtype": 17,
+        "offset": 6619136,
+        "size": 6553600,
+        "flags": 0
+      },
+      {
+        "name": "spiffs",
+        "type": 1,
+        "subtype": 130,
+        "offset": 13172736,
+        "size": 3538944,
+        "flags": 0
+      },
+      {
+        "name": "coredump",
+        "type": 1,
+        "subtype": 3,
+        "offset": 16711680,
+        "size": 65536,
+        "flags": 0
+      }
+    ],
+    "applications": [
+      {
+        "partition": "app0",
+        "offset": 65536,
+        "image": {
+          "chip_id": 5,
+          "entrypoint": 1077414336,
+          "flash_mode": 2,
+          "flash_size_bytes": 16777216,
+          "flash_frequency_code": 15,
+          "min_revision": 0,
+          "max_revision": 65535,
+          "segments": [
+            {
+              "address": 1009451040,
+              "length": 3235248,
+              "file_offset": 32,
+              "memory_region": "DROM"
+            },
+            {
+              "address": 1070136320,
+              "length": 20152,
+              "file_offset": 3235288,
+              "memory_region": "DRAM"
+            },
+            {
+              "address": 1077411840,
+              "length": 21376,
+              "file_offset": 3255448,
+              "memory_region": "IRAM"
+            },
+            {
+              "address": 1107296288,
+              "length": 2785768,
+              "file_offset": 3276832,
+              "memory_region": "IROM"
+            },
+            {
+              "address": 1077433216,
+              "length": 42816,
+              "file_offset": 6062608,
+              "memory_region": "IRAM"
+            },
+            {
+              "address": 1342177280,
+              "length": 20,
+              "file_offset": 6105432,
+              "memory_region": "RTC"
+            },
+            {
+              "address": 1342183008,
+              "length": 32,
+              "file_offset": 6105460,
+              "memory_region": "RTC"
+            }
+          ],
+          "image_length": 6105536,
+          "checksum": 136,
+          "appended_sha256": "55060f430dd7c272beccf43121eec11b230cc1b7e62daaa95e2f12f4e92ba68c",
+          "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+          "application": {
+            "secure_version": 0,
+            "version": "31ce770",
+            "project_name": "CrossInk",
+            "compile_time": "19:14:40",
+            "compile_date": "Sep 21 2026",
+            "esp_idf_version": "5.5.2.260206",
+            "elf_sha256": "79d7a853483e1a681201adf482522f18db0d638e32774d58eab56c45df6af836"
+          }
+        }
+      }
+    ],
+    "bootloader": {
+      "chip_id": 5,
+      "entrypoint": 1077722896,
+      "flash_mode": 2,
+      "flash_size_bytes": 16777216,
+      "flash_frequency_code": 15,
+      "min_revision": 0,
+      "max_revision": 65535,
+      "segments": [
+        {
+          "address": 1070422048,
+          "length": 4112,
+          "file_offset": 32,
+          "memory_region": "DRAM"
+        },
+        {
+          "address": 1077722896,
+          "length": 2548,
+          "file_offset": 4152,
+          "memory_region": "IRAM"
+        },
+        {
+          "address": 1077733136,
+          "length": 11924,
+          "file_offset": 6708,
+          "memory_region": "IRAM"
+        }
+      ],
+      "image_length": 18672,
+      "checksum": 156,
+      "appended_sha256": "eb5f0a824ed644261ef7a83ac5c9b3e707fcf25974bdf89054906856eae230c7",
+      "sha256": "6e6b0d386095f0783e9f0513ea29ea2ce413790e7f7153a06a2b04e2b5f59fb6",
+      "application": null
+    },
+    "missing_components": [],
+    "cold_boot_components_present": true,
+    "boot_verified": false
+  }
+}

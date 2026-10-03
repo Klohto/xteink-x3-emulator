@@ -1,0 +1,25 @@
+TAP version 13
+# random seed: R02Se1822c02dd273d0436cf6e844563d2b3
+1..6
+# Start of riscv32 tests
+# Start of xteink-x3-sd tests
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:50977 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=57427,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -drive if=sd,format=raw,file=/tmp/xteink-x3-sd-1FYZW3 -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/xteink-x3-sd/initialization-and-reinitialize
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:39485 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=35723,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -drive if=sd,format=raw,file=/tmp/xteink-x3-sd-XEG6W3 -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/xteink-x3-sd/mbr-read
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:44603 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=58223,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -drive if=sd,format=raw,file=/tmp/xteink-x3-sd-RWBNW3 -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/xteink-x3-sd/csd-capacity-and-cid
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:51731 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=49789,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -drive if=sd,format=raw,file=/tmp/xteink-x3-sd-TK4NW3 -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/xteink-x3-sd/write-read-and-power-cycle
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:47795 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=55603,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -drive if=sd,format=raw,file=/tmp/xteink-x3-sd-ADMRW3 -accel qtest
+Not initializing SPI Flash
+ok 5 /riscv32/xteink-x3-sd/multiblock-cache-writes
+# starting QEMU: exec /workspace/scratch/0c5ba1033bc8/qemu-esp32/build/qemu-system-riscv32 -qtest tcp:127.0.0.1:59135 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=51633,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -drive if=sd,format=raw,file=/tmp/xteink-x3-sd-FSLXW3 -accel qtest
+Not initializing SPI Flash
+ok 6 /riscv32/xteink-x3-sd/status-after-write
+# End of xteink-x3-sd tests
+# End of riscv32 tests

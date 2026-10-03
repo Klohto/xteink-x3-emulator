@@ -8,7 +8,7 @@ Run CrossInk's ESP32-C3 firmware in an Xteink X3 model. Use validated simulated 
 
 - Read the current design in `docs/architecture.md` before choosing a backend.
 - Keep CPU execution behind an adapter. Record its name, version and firmware hash.
-- Route elapsed device time through `VirtualClock`. Keep model costs in a versioned profile with evidence.
+- Use QEMU's `QEMU_CLOCK_VIRTUAL` for CPU and native peripheral deadlines. The Python `VirtualClock` is a separate scheduling utility and does not drive the QEMU machine. Keep model costs in a versioned profile with evidence.
 - Make ordering deterministic. Preserve replay seeds when a profile includes latency variation.
 - Track unsupported registers, commands and capabilities. Include their use in the run result.
 - Add measurements as configuration. Label inferred board values and record their source.
