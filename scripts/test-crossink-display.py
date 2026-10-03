@@ -26,14 +26,18 @@ PROJECT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT))
 from x3emu.backend import BackendError, DEFAULT_BACKEND, QMPClient, file_sha256
 from x3emu.firmware import FULL_FLASH_SHA256
-from x3emu.fixtures import (alpha_sample_points, fixture_hashes, make_fixed_book_fixture_files,
-                            make_media_fixture_files, pattern_sample_points)
+from x3emu.fixtures import (alpha_sample_points, fixture_hashes, make_bmp, make_fixed_book_fixture_files,
+                            make_media_fixture_files, pattern_level, pattern_sample_points)
 from x3emu.sdcard import create_fat16_card, make_test_epub
 
 SMOKE = runpy.run_path(str(PROJECT / "scripts/smoke-crossink.py"))
 Experiment, Fat16Card, SmokeError = (SMOKE[name] for name in ("Experiment", "Fat16Card", "SmokeError"))
 write_json, cache_path = SMOKE["_write_json"], SMOKE["cache_path"]
 SOURCE_COMMIT = SMOKE["SOURCE_COMMIT"]
+HARNESS_SOURCE = Path(__file__).read_bytes()
+SHARED_HELPER_SOURCE = (PROJECT / "scripts/smoke-crossink.py").read_bytes()
+HARNESS_SHA256 = hashlib.sha256(HARNESS_SOURCE).hexdigest()
+SHARED_HELPER_SHA256 = hashlib.sha256(SHARED_HELPER_SOURCE).hexdigest()
 SETTINGS_PATH = "/.crosspoint/crossink-settings.json"
 STATE_PATH = "/.crosspoint/state.json"
 
@@ -82,6 +86,29 @@ class DisplayReplay:
     def json_file(self, path):
         return json.loads(self.read_file(path))
 
+    def file_inventory(self, prefix):
+        self.qmp.execute("stop")
+        try:
+            card = Fat16Card(self.exp.run_dir / "sd.img")
+            paths = []
+
+            def walk(cluster, parent):
+                for entry in card.directory(cluster):
+                    path = parent + "/" + entry["name"]
+                    if entry["directory"]:
+                        walk(entry["cluster"], path)
+                    elif path.startswith(prefix):
+                        paths.append(path)
+
+            walk(0, "")
+            return sorted(paths)
+        finally:
+            self.qmp.execute("cont")
+
+    def wait_virtual(self, delta_ns, purpose):
+        deadline = self.exp.clock(self.qmp) + delta_ns
+        self.exp.wait(purpose, lambda: self.exp.clock(self.qmp) >= deadline)
+
     def open_folder(self):
         self.capture("home", 0)
         self.tap("confirm", "root-browser", "Home: open Browse Files")
@@ -96,7 +123,7 @@ class DisplayReplay:
         adjusted = max(0, min(255, luminance + (bayer[logical_y & 3][logical_x & 3] - 8) * 5))
         return 255 if adjusted >= 192 else 0
 
-    def check_pattern(self, label, *, mono=False, page=0, small=False, alpha=False, png=False):
+    def check_pattern(self, label, *, mono=False, page=0, small=False, alpha=False, png=False, overlay=False):
         width, height, pixels = SMOKE["read_pgm"](self.exp.frames[label])
         source_width, source_height = (264, 396) if small else (528, 792)
         offset_x, offset_y = (132, 198) if small else (0, 0)
@@ -121,6 +148,33 @@ class DisplayReplay:
                    and all(row["exact_source_dither_match"] if png else
                            abs(row["observed_mean"] - row["expected_luminance"]) <= 12 for row in observations),
                    observations)
+        # Loading/Done popups can leave every sampled point unchanged while
+        # the decoder still works. Compare the entire image interior as a
+        # completion predicate, excluding the viewer's bottom button hints.
+        mismatches = checked = 0
+        last_y = source_height - (56 if not small else 8)
+        for source_y in range(8, last_y):
+            for source_x in range(8, source_width - 8):
+                in_alpha_patch = (source_height // 32 <= source_y < source_height * 3 // 32
+                                  and source_width // 2 <= source_x < source_width * 7 // 8)
+                if overlay and in_alpha_patch:
+                    continue  # Background transparency is checked separately.
+                level = pattern_level(source_x, source_y, source_width, source_height, page)
+                expected = (0, 85, 170, 255)[level]
+                if mono:
+                    expected = 255 if level >= 2 else 0
+                if alpha and in_alpha_patch:
+                    band = min(2, (source_x - source_width // 2) * 3 // (source_width * 7 // 8 - source_width // 2))
+                    expected = (0, 191, 255)[band]
+                logical_x, logical_y = source_x + offset_x, source_y + offset_y
+                if png:
+                    expected = self.png_bw_pixel(expected, logical_x, logical_y)
+                actual = pixels[(527 - logical_x) * width + logical_y]
+                mismatches += actual != expected
+                checked += 1
+        self.check(f"{label}_complete_source_image_interior", mismatches == 0,
+                   {"checked_pixels": checked, "pixel_differences": mismatches,
+                    "excluded": "8 pixel image border and viewer bottom hints; overlay alpha patch checked separately"})
         if png:
             self.receipt.setdefault("stock_output_limits", {})["png_viewer"] = (
                 "One BW pass after four-level Bayer quantization; native four-tone PNG display is not exercised")
@@ -164,6 +218,36 @@ class DisplayReplay:
                 # Require actual additional display work. No fixed simulated
                 # duration or guessed render latency manufactures completion.
                 self.capture(label, self.receipt["frames"][label]["frame_count"])
+
+    def complete_original_text_reader(self, label):
+        # The original EPUB contains plain paragraphs and headings, with no
+        # rules or images. Quick Actions and Indexing modal borders create
+        # solid horizontal runs that this fixture's glyphs do not contain.
+        # A parsed cache can still be the previous cache during reindexing;
+        # require the actual later modal-free paint, not a guessed delay.
+        pending = []
+        while True:
+            width, _, pixels = SMOKE["read_pgm"](self.exp.frames[label])
+            maximum = 0
+            for logical_y in range(100, 730):
+                length = 0
+                for logical_x in range(28, 500):
+                    length = length + 1 if pixels[(527 - logical_x) * width + logical_y] < 192 else 0
+                    maximum = max(maximum, length)
+            if maximum < 100:
+                self.receipt.setdefault("reader_completion_observations", {})[label] = {
+                    "maximum_body_ink_run": maximum, "pending_modal_frames": pending,
+                    "scope": "original plain-text fixture in portrait light mode"}
+                self.save()
+                return label
+            info = dict(self.receipt["frames"][label])
+            name = label + f"-pending-modal-{info['frame_count']}"
+            (self.exp.output / "frames" / f"{name}.pgm").write_bytes(self.exp.frames[label])
+            info.update({"path": f"frames/{name}.pgm", "maximum_body_ink_run": maximum})
+            pending.append(info)
+            self.receipt.setdefault("reader_completion_observations", {})[label] = {"pending_modal_frames": pending}
+            self.save()
+            self.capture(label, info["frame_count"], reader=True)
 
     def power(self, hold_ms, purpose):
         self.qmp.execute("stop")
@@ -343,8 +427,254 @@ def lock_workflow(replay):
         replay.exp.frames[unlocked], replay.exp.frames[changed]) > 1000)
 
 
+def quick_actions_workflow(replay):
+    replay.capture("home", 0)
+    replay.tap("up", "home-settings", "Home: wrap Browse Files to Settings")
+    replay.tap("confirm", "settings-display", "Open the stock Settings editor")
+    for category in (1, 2):
+        replay.tap("confirm", f"settings-category-{category}", "Settings category row: advance to Controls")
+    for row in range(1, 5):
+        replay.tap("down", f"controls-row-{row}", "Controls: select the fourth Quick Actions row")
+    replay.tap("confirm", "quick-actions-editor", "Open actual five-slot Quick Actions editor")
+    replay.tap("confirm", "quick-actions-trigger-picker", "Edit the opening shortcut")
+    # X3 available order: None, Short Power, Long Power, Power+Up,
+    # Long Back, Long Menu. Wrapping backwards reaches Long Menu.
+    replay.tap("up", "quick-actions-long-menu", "Select Long Menu from source-defined X3 trigger order")
+    replay.tap("confirm", "quick-actions-trigger-draft", "Return to draft overview with Long Menu selected")
+    replay.tap("up", "quick-actions-save-footer", "Overview first row: focus Save footer")
+    replay.tap("confirm", "quick-actions-saved", "Commit the draft through the actual Save button")
+    settings = replay.json_file(SETTINGS_PATH)
+    replay.check("quick_actions_ui_saved_single_owner", settings.get("quickActionsTrigger") == 4
+                 and settings.get("longPressMenuAction") == 22 and settings.get("shortPwrBtn") == 1,
+                 {key: settings.get(key) for key in ("quickActionsTrigger", "longPressMenuAction", "shortPwrBtn")})
+    replay.check("five_quick_action_slots_preserved", settings.get("quickActionSlots") == [3, 15, 6, 5, 11],
+                 settings.get("quickActionSlots"))
+    replay.tap("back", "settings-tabs-after-quick-actions", "Settings Back: return selected Controls row to tab band")
+    replay.tap("back", "home-after-quick-actions-editor", "Settings Back from tab band: exit to Home")
+    # Returning from Settings keeps its Home row selected; Down wraps it to
+    # Browse Files, then the unchanged guest opens the original EPUB.
+    replay.tap("down", "home-browse-after-editor", "Home: wrap Settings to Browse Files")
+    replay.tap("confirm", "quick-actions-book-browser", "Browse the original EPUB")
+    before = replay.exp.refresh_count(replay.qmp)
+    replay.exp.press(replay.qmp, "confirm", purpose="Open original EPUB after UI shortcut save")
+    replay.exp.wait("original EPUB open", replay.exp.book_is_open)
+    original = replay.capture("quick-actions-reader-original", before, reader=True)
+
+    def invoke(slot, label):
+        replay.tap("confirm", label + "-menu", "Long Menu: open the saved five-slot popup", hold_ms=900)
+        for index in range(slot):
+            replay.tap("down", label + f"-select-{index + 1}", "Quick Actions: select the configured slot")
+        result = replay.tap("confirm", label, "Execute the selected stock Quick Action", reader=True)
+        if replay.json_file(SETTINGS_PATH).get("screenInverted", 0) == 0:
+            replay.complete_original_text_reader(result)
+        return result
+
+    refreshed = invoke(0, "manual-refresh")
+    replay.check("manual_refresh_preserves_reader_ink", SMOKE["changed_content_pixels"](
+        replay.exp.frames[original], replay.exp.frames[refreshed]) == 0)
+    dark = invoke(1, "dark-mode")
+    replay.check("dark_mode_global_setting_saved", replay.json_file(SETTINGS_PATH).get("screenInverted") == 1)
+    _, _, normal_pixels = SMOKE["read_pgm"](replay.exp.frames[refreshed])
+    _, _, dark_pixels = SMOKE["read_pgm"](replay.exp.frames[dark])
+    complement_error = sum(a + b != 255 for a, b in zip(normal_pixels, dark_pixels))
+    replay.check("dark_mode_inverts_reader_pixels", complement_error <= 500,
+                 {"pixels_not_exact_complements": complement_error, "total_pixels": len(normal_pixels)})
+    normal = invoke(1, "dark-mode-off")
+    replay.check("dark_mode_roundtrip", replay.json_file(SETTINGS_PATH).get("screenInverted") == 0
+                 and SMOKE["changed_content_pixels"](replay.exp.frames[refreshed], replay.exp.frames[normal]) == 0)
+    focus = invoke(2, "focus-reading")
+    focus_settings = replay.read_file(cache_path() + "/reader_settings.bin")
+    replay.check("focus_reading_saved_book_override", len(focus_settings) >= 22 and focus_settings[0] == 9
+                 and focus_settings[1] & 1 and focus_settings[20] == 1,
+                 {"reader_settings_sha256": hashlib.sha256(focus_settings).hexdigest(), "focus_offset": 20})
+    replay.check("focus_reading_changes_text", SMOKE["changed_content_pixels"](
+        replay.exp.frames[normal], replay.exp.frames[focus]) > 100)
+    guide = invoke(3, "guide-reading")
+    guide_settings = replay.read_file(cache_path() + "/reader_settings.bin")
+    replay.check("guide_reading_saved_book_override", len(guide_settings) >= 22 and guide_settings[20] == 1
+                 and guide_settings[21] == 1,
+                 {"reader_settings_sha256": hashlib.sha256(guide_settings).hexdigest(), "guide_offset": 21})
+    replay.check("guide_reading_changes_text", SMOKE["changed_content_pixels"](
+        replay.exp.frames[focus], replay.exp.frames[guide]) > 10)
+    screenshots_before = set(replay.file_inventory("/screenshots/"))
+    screenshot = invoke(4, "screenshot")
+    replay.exp.wait("guest screenshot BMP", lambda: bool(set(replay.file_inventory("/screenshots/")) - screenshots_before))
+    new_paths = sorted(set(replay.file_inventory("/screenshots/")) - screenshots_before)
+    replay.check("quick_action_created_one_screenshot", len(new_paths) == 1, new_paths)
+    data = replay.read_file(new_paths[0])
+    replay.check("screenshot_original_book_filename", "CrossInk-Emulator-Test-Book" in new_paths[0]
+                 and "_ch1_p1_" in new_paths[0],
+                 {"path": new_paths[0], "sha256": hashlib.sha256(data).hexdigest()})
+    if len(data) < 62 or data[:2] != b"BM":
+        raise SmokeError("guest screenshot BMP header is invalid")
+    offset = struct.unpack_from("<I", data, 10)[0]
+    width, height, planes, bpp, compression = struct.unpack_from("<iiHHI", data, 18)
+    replay.check("screenshot_portrait_one_bit_bmp", (width, height, planes, bpp, compression) == (528, 792, 1, 1, 0)
+                 and len(data) >= offset + ((width + 31) // 32 * 4) * height,
+                 {"width": width, "height": height, "bpp": bpp, "pixel_offset": offset})
+    _, _, expected_panel = SMOKE["read_pgm"](replay.exp.frames[guide])
+    stride = (width + 31) // 32 * 4
+    differences = 0
+    for y in range(height):
+        row = offset + (height - 1 - y) * stride
+        for x in range(width):
+            value = 255 if data[row + x // 8] & (1 << (7 - x % 8)) else 0
+            differences += value != expected_panel[(527 - x) * 792 + y]
+    replay.check("screenshot_captures_reader_not_popup", differences <= 500,
+                 {"logical_to_native_mapping": "panel(y, 527-x)", "pixel_differences": differences})
+    # The visible feedback border is restored after a source-defined 1s delay.
+    # Require the actual completed restoring refresh when the first capture
+    # happens to show that transient border.
+    if SMOKE["changed_content_pixels"](replay.exp.frames[guide], replay.exp.frames[screenshot]):
+        screenshot = replay.capture("screenshot-feedback-restored", replay.receipt["frames"][screenshot]["frame_count"],
+                                    reader=True)
+    replay.check("screenshot_feedback_restores_reader", SMOKE["changed_content_pixels"](
+        replay.exp.frames[guide], replay.exp.frames[screenshot]) == 0)
+    replay.tap("back", "home-after-quick-actions", "Exit reader to persist custom reading options")
+    reopened = replay.tap("confirm", "quick-actions-reader-reopened", "Reopen reader with focus and guide overrides",
+                          reader=True)
+    replay.check("quick_actions_book_options_survive_reopen", SMOKE["changed_content_pixels"](
+        replay.exp.frames[guide], replay.exp.frames[reopened]) == 0)
+
+
+def favorite_workflow(replay):
+    replay.open_folder()
+    replay.tap("confirm", "favorite-image-browser-menu", "Browser long Confirm: open BMP actions", hold_ms=1100)
+    replay.tap("up", "favorite-boot-row", "BMP action menu: wrap Rename to Set as Boot Screen")
+    replay.tap("confirm", "favorite-boot-pinned", "Set boot favorite through the real browser action")
+    replay.check("boot_favorite_ui_saved", replay.json_file(STATE_PATH).get("favoriteBootImagePath") == "/Media/a-mono.bmp")
+    image = replay.tap("confirm", "favorite-image-viewer", "Open the same original BMP")
+    replay.complete_pattern(image, mono=True)
+    pinned = replay.tap("confirm", "favorite-sleep-pinned", "X3 image Confirm: set favorite sleep wallpaper", hold_ms=1600)
+    replay.complete_pattern(pinned, mono=True)
+    replay.check("sleep_favorite_ui_saved", replay.json_file(STATE_PATH).get("favoriteSleepImagePath") == "/Media/a-mono.bmp")
+    replay.tap("back", "favorite-browser", "Return to Browser after sleep-favorite confirmation")
+    before = replay.exp.refresh_count(replay.qmp)
+    replay.power(200, "Sleep: pinned BMP must take precedence over the different root fallback")
+    label = replay.sleeping_frame("pinned-favorite-sleep", before)
+    replay.check_pattern(label, mono=True)
+    replay.check("sleep_favorite_precedence", "Loading custom sleep image: /Media/a-mono.bmp" in
+                 replay.exp.log_text("serial.log"))
+    sleep = replay.receipt["sleep_state"]
+    replay.power(1000, "Wake through physical GPIO3 and load the saved favorite boot image")
+    replay.capture("favorite-home-after-wake", sleep["panel"]["refresh-count"])
+    boot_enabled = replay.receipt["input_settings"].get("customBootscreenEnabled", 1) == 1
+    boot_loaded = "Loading pinned boot image: /Media/a-mono.bmp" in replay.exp.log_text("serial.log")
+    replay.check("boot_favorite_guest_load_policy", boot_loaded == boot_enabled,
+                 {"customBootscreenEnabled": boot_enabled, "pinned_boot_load_logged": boot_loaded})
+    # The boot image is brief and the live PGM has already advanced to Home.
+    # Check its completed native target against the exact original BMP bytes.
+    # This relies on complete trace accounting rather than an early screenshot.
+    data = replay.read_file("/Media/a-mono.bmp")
+    offset = struct.unpack_from("<I", data, 10)[0]
+    width, height, planes, bpp, compression = struct.unpack_from("<iiHHI", data, 18)
+    replay.check("boot_favorite_original_mono_bmp", (width, height, planes, bpp, compression) == (528, 792, 1, 1, 0)
+                 and hashlib.sha256(data).hexdigest() == replay.receipt["input_file_sha256"]["/Media/a-mono.bmp"])
+    stride = (width + 31) // 32 * 4
+    expected_native = bytearray(792 * 528)
+    for y in range(height):
+        row = offset + (height - 1 - y) * stride
+        for x in range(width):
+            expected_native[(527 - x) * 792 + y] = 255 if data[row + x // 8] & (1 << (7 - x % 8)) else 0
+    expected_crc = zlib.crc32(expected_native)
+    wake_frames = replay.exp.frame_events()[sleep["panel"]["refresh-count"]:]
+    replay.check("boot_favorite_native_completed_target_policy",
+                 any(event.get("value") == expected_crc for event in wake_frames) == boot_enabled,
+                 {"expected_full_bitmap_native_crc32": expected_crc, "wake_frame_events": wake_frames})
+    replay.check("both_favorites_retained_after_deep_reset", all(replay.json_file(STATE_PATH).get(key) == "/Media/a-mono.bmp"
+                 for key in ("favoriteSleepImagePath", "favoriteBootImagePath")))
+    replay.receipt.setdefault("stock_output_limits", {})["boot_favorite"] = (
+        "Transient boot target is verified by its completed native CRC against the original BMP; no separate boot PGM is retained")
+
+
+def overlay_workflow(replay):
+    replay.open_folder()
+    image = replay.tap("confirm", "overlay-png-viewer", "Open original RGBA image in the stock PNG viewer")
+    replay.complete_pattern(image, png=True, alpha=True)
+    pinned = replay.tap("confirm", "overlay-png-pinned", "X3 image Confirm: pin PNG wallpaper and select Page Overlay",
+                        hold_ms=1600)
+    replay.complete_pattern(pinned, png=True, alpha=True)
+    replay.check("png_favorite_ui_saved", replay.json_file(STATE_PATH).get("favoriteSleepImagePath") == "/Media/d-alpha.png")
+    replay.check("png_favorite_auto_selects_overlay", replay.json_file(SETTINGS_PATH).get("sleepScreen") == 6)
+    replay.tap("back", "overlay-image-browser", "Return from pinned PNG viewer")
+    replay.tap("back", "overlay-root-browser", "Browser: return to root")
+    replay.tap("down", "overlay-epub-selected", "Root browser: select the only EPUB after the Media folder")
+    before = replay.exp.refresh_count(replay.qmp)
+    replay.exp.press(replay.qmp, "confirm", purpose="Open original reader background for Page Overlay")
+    replay.exp.wait("original EPUB open", replay.exp.book_is_open)
+    original = replay.capture("overlay-reader-background", before, reader=True)
+    before = replay.exp.refresh_count(replay.qmp)
+    replay.power(200, "Sleep with pinned PNG overlay over the current actual reader page")
+    overlay = replay.sleeping_frame("page-overlay-sleep", before)
+    replay.check_pattern(overlay, overlay=True)
+    replay.check("guest_selected_pinned_png_overlay", "Selected overlay image: /Media/d-alpha.png" in
+                 replay.exp.log_text("serial.log") and "Drawing PNG overlay: /Media/d-alpha.png" in
+                 replay.exp.log_text("serial.log"))
+    _, _, original_pixels = SMOKE["read_pgm"](replay.exp.frames[original])
+    _, _, overlay_pixels = SMOKE["read_pgm"](replay.exp.frames[overlay])
+    observations = []
+    for point in alpha_sample_points():
+        native_x, native_y = point["y"], 527 - point["x"]
+        positions = [y * 792 + x for y in range(native_y - 6, native_y + 7)
+                     for x in range(native_x - 6, native_x + 7)]
+        # Page Overlay has threshold transparency, unlike the PNG viewer's
+        # alpha compositing against white. The pinned source skips alpha<128.
+        expected = [0] * len(positions) if point["alpha"] >= 128 else [original_pixels[index] for index in positions]
+        actual = [overlay_pixels[index] for index in positions]
+        observations.append({"source": point, "native_x": native_x, "native_y": native_y,
+                             "preserves_reader_background": point["alpha"] < 128,
+                             "pixel_differences": sum(a != b for a, b in zip(actual, expected)),
+                             "native_values": dict(Counter(actual))})
+    replay.check("overlay_alpha_threshold_preserves_reader", all(point["pixel_differences"] == 0 for point in observations),
+                 observations)
+    sleep = replay.receipt["sleep_state"]
+    replay.power(1000, "GPIO3 wake from the completed PNG Page Overlay sleep")
+    replay.capture("home-after-page-overlay", sleep["panel"]["refresh-count"])
+    replay.check("overlay_real_gpio_wake", replay.qmp.state()["rtc"]["wake-count"] > sleep["rtc"]["wake-count"])
+    replay.check("overlay_favorite_retained_after_reset", replay.json_file(STATE_PATH).get("favoriteSleepImagePath") ==
+                 "/Media/d-alpha.png" and replay.json_file(SETTINGS_PATH).get("sleepScreen") == 6)
+
+
+def sleep_folder_workflow(replay):
+    replay.capture("home", 0)
+    replay.tap("confirm", "sleep-folder-root-browser", "Home: browse original Media folder and different root fallback")
+    replay.tap("confirm", "sleep-folder-actions", "Long Confirm on directory: open its actual action menu", hold_ms=1100)
+    replay.tap("confirm", "sleep-folder-saved", "Directory action row0: Set as Sleep Folder")
+    state = replay.json_file(STATE_PATH)
+    replay.check("preferred_sleep_folder_ui_saved", state.get("preferredSleepFolderPath") == "/Media"
+                 and not state.get("favoriteSleepImagePath"), state.get("preferredSleepFolderPath"))
+    before = replay.exp.refresh_count(replay.qmp)
+    replay.power(200, "Custom sleep: choose original BMP from preferred folder before root fallback")
+    folder_sleep = replay.sleeping_frame("preferred-folder-sleep", before)
+    replay.check_pattern(folder_sleep, mono=True)
+    replay.check("preferred_folder_source_selected", "Loading custom sleep image: /Media/a-mono.bmp" in
+                 replay.exp.log_text("serial.log"))
+    sleep = replay.receipt["sleep_state"]
+    replay.power(1000, "Actual GPIO3 deep wake after preferred-folder selection")
+    replay.capture("home-after-preferred-folder", sleep["panel"]["refresh-count"])
+    replay.tap("confirm", "sleep-folder-browser-after-wake", "Home: return to root browser")
+    replay.tap("confirm", "sleep-folder-clear-actions", "Long Confirm on preferred folder: open Clear action", hold_ms=1100)
+    replay.tap("confirm", "sleep-folder-cleared", "Directory row0: Use Default Sleep Folders")
+    state = replay.json_file(STATE_PATH)
+    replay.check("preferred_sleep_folder_ui_cleared", not state.get("preferredSleepFolderPath"),
+                 state.get("preferredSleepFolderPath"))
+    before = replay.exp.refresh_count(replay.qmp)
+    replay.power(200, "Custom sleep after clearing folder: use original root fallback")
+    root_sleep = replay.sleeping_frame("root-fallback-after-clear", before)
+    replay.check_pattern(root_sleep)
+    replay.check("clearing_preferred_folder_changes_sleep_target", SMOKE["changed_pixels"](
+        replay.exp.frames[folder_sleep], replay.exp.frames[root_sleep]) > 1000)
+    sleep = replay.receipt["sleep_state"]
+    replay.power(1000, "GPIO3 wake after original root-fallback sleep")
+    replay.capture("home-after-default-folder", sleep["panel"]["refresh-count"])
+    replay.check("sleep_folder_both_real_wake_cycles", replay.qmp.state()["rtc"]["wake-count"] == 2
+                 and replay.qmp.state()["rtc"]["watchdog-expiry-count"] == 0)
+
+
 WORKFLOWS = {"media": media_workflow, "fixed": fixed_workflow, "rotation": rotation_workflow,
-             "sleep": sleep_workflow, "lock": lock_workflow}
+             "sleep": sleep_workflow, "lock": lock_workflow, "quick-actions": quick_actions_workflow,
+             "favorites": favorite_workflow, "favorites-boot-disabled": favorite_workflow, "overlay": overlay_workflow,
+             "sleep-folder": sleep_folder_workflow}
 
 
 def input_files(name):
@@ -352,8 +682,19 @@ def input_files(name):
                 "sleepScreenCoverFilter": 0, "sideButtonLongPress": 3}
     if name == "lock":
         settings["shortPwrBtn"] = 30
-    if name in ("rotation", "lock"):
+    if name == "quick-actions":
+        settings.update({"quickActionsTrigger": 0, "longPressMenuAction": 0,
+                         "quickActionSlots": [3, 15, 6, 5, 11], "textAntiAliasing": 0})
+    if name == "overlay":
+        settings["textAntiAliasing"] = 0
+    if name == "favorites-boot-disabled":
+        settings["customBootscreenEnabled"] = 0
+    if name in ("rotation", "lock", "quick-actions"):
         files = {"/test.epub": make_test_epub()}
+    elif name in ("favorites", "favorites-boot-disabled", "sleep-folder"):
+        files = {"/Media/a-mono.bmp": make_bmp(monochrome=True), "/sleep.bmp": make_bmp()}
+    elif name == "overlay":
+        files = {"/Media/d-alpha.png": make_media_fixture_files()["/Media/d-alpha.png"], "/test.epub": make_test_epub()}
     elif name == "fixed":
         files = make_fixed_book_fixture_files()
     elif name == "media":
@@ -367,10 +708,13 @@ def input_files(name):
 def run_workflow(name, args, directory):
     directory.mkdir(parents=True)
     (directory / "frames").mkdir()
+    (directory / "harness.py").write_bytes(HARNESS_SOURCE)
+    (directory / "shared-smoke.py").write_bytes(SHARED_HELPER_SOURCE)
     receipt = {"schema_version": 1, "workflow": name, "firmware_source_commit": SOURCE_COMMIT,
                "firmware_release_source_commit": "b25beb13761d5851f98e7eada09aa5e7d430df48",
                "backend_kind": "real ESP32-C3 QEMU guest", "functional_pass": False, "strict_pass": False,
                "completed": False, "speed_selection_allowed": False, "timing_calibrated": False,
+               "harness_script_sha256": HARNESS_SHA256, "shared_helper_sha256": SHARED_HELPER_SHA256,
                "physical_output_validated": False, "checks": {}, "frames": {}, "actions": [],
                "limitations": ["Ideal digital targets only; no physical grayscale or ghosting comparison",
                                "QMP input delivery depends on host scheduling; releases use virtual timers",

@@ -20,6 +20,16 @@ def header(version, count):
 
 
 class FunctionReceiptTests(unittest.TestCase):
+    def test_file_transfer_boot_requires_source_controlled_software_reset(self):
+        rom = "ESP-ROM:esp32c3 SPI_FAST_FLASH_BOOT"
+        serial = ("Reset diagnostic: reset=1(POWERON)\nHardware detect: X3\n"
+                  "Reset diagnostic: reset=3(SW)\nPost-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=6\n"
+                  "Minimal network boot ready: target=6")
+        self.assertTrue(all(functions["file_transfer_boot_checks"](rom, serial).values()))
+        for corrupt in (serial.replace("silentTarget=6", "silentTarget=7"), serial.replace("(SW)", "(INT_WDT)"),
+                        serial + "\nReset diagnostic: reset=3(SW)", serial + "\nGuru Meditation Error"):
+            self.assertFalse(all(functions["file_transfer_boot_checks"](rom, corrupt).values()))
+
     def test_bookmark_identity_and_ranges_reject_corruption(self):
         record = struct.pack("<HfI", 1, .25, 42) + b"chapter".ljust(48, b"\0") + struct.pack("<H", 7) + b"snippet".ljust(64, b"\0")
         data = header(5, 1) + record
@@ -76,6 +86,85 @@ class FunctionReceiptTests(unittest.TestCase):
             self.assertEqual(saved["actions"][0]["after_frame_count"], 7)
             self.assertEqual(saved["input_events"][0]["scheduled_hold_ns"], 400_000_000)
             self.assertEqual(saved["action_sha256"], functions["canonical_hash"](saved["actions"]))
+
+    def test_book_statistics_version_length_and_flags_are_required(self):
+        data = bytearray(73)
+        data[0], data[11] = 5, 1
+        struct.pack_into("<HII", data, 1, 2, 71, 4)
+        result = functions["decode_book_stats"](bytes(data))
+        self.assertEqual((result["sessions"], result["reading_seconds"], result["forward_pages"]), (2, 71, 4))
+        self.assertTrue(result["completed"])
+        for corrupt in (bytes(data[:-1]), b"\x04" + bytes(data[1:]), bytes(data[:11]) + b"\x02" + bytes(data[12:])):
+            with self.assertRaises(SmokeError):
+                functions["decode_book_stats"](corrupt)
+
+    def test_section_profile_requires_committed_table_and_valid_parameters(self):
+        data = bytearray(61)
+        struct.pack_into("<IBif", data, 0, 0x535843FF, 77, 3, 1.0)
+        data[13:16] = bytes((1, 0, 0))
+        struct.pack_into("<HH", data, 16, 518, 746)
+        data[20:27] = bytes((0, 1, 2, 0, 0, 1, 1))
+        struct.pack_into("<H", data, 27, 2)
+        struct.pack_into("<I", data, 33, 53)
+        result = functions["decode_section_render_spec"](bytes(data))
+        self.assertEqual((result["embedded_style"], result["image_rendering"], result["render_mode"]), (1, 2, 1))
+        bad_boolean, bad_float = bytearray(data), bytearray(data)
+        bad_boolean[21] = 2
+        struct.pack_into("<f", bad_float, 9, float("nan"))
+        for corrupt in (data[:60], bytes(bad_boolean), bytes(bad_float), data[:4] + b"\xf3" + data[5:]):
+            with self.assertRaises(SmokeError):
+                functions["decode_section_render_spec"](bytes(corrupt))
+
+    def test_guest_pixel_cache_checks_packing_and_payload(self):
+        data = struct.pack("<HH", 3, 2) + bytes((0x1C, 0xE4))
+        self.assertEqual(functions["decode_pxc"](data), (3, 2, bytes((0, 1, 3, 3, 2, 1))))
+        for corrupt in (data[:-1], data + b"x", struct.pack("<HH", 0, 2), struct.pack("<HH", 65535, 65535)):
+            with self.assertRaises(SmokeError):
+                functions["decode_pxc"](corrupt)
+
+    def test_image_match_checks_every_pixel_and_portrait_rotation(self):
+        levels = bytes((x * 3 + y) % 4 for y in range(9) for x in range(13))
+        pixels = bytearray([255] * (792 * 528))
+        for y in range(9):
+            for x in range(13):
+                pixels[(527 - (123 + x)) * 792 + 231 + y] = (0, 85, 170, 255)[levels[y * 13 + x]]
+        pgm = lambda: b"P5\n792 528\n255\n" + bytes(pixels)
+        result = functions["find_image_rect"](pgm(), 13, 9, levels)
+        self.assertEqual((result["x"], result["y"], result["compared_pixels"]), (123, 231, 117))
+        pixels[(527 - (123 + 1)) * 792 + 231 + 7] = 255
+        self.assertIsNone(functions["find_image_rect"](pgm(), 13, 9, levels))
+
+    def test_screenshot_parser_checks_complete_palette_and_bottom_up_rows(self):
+        width, height, stride = 3, 2, 4
+        header = bytearray(62)
+        header[:2] = b"BM"
+        struct.pack_into("<I", header, 2, 70)
+        struct.pack_into("<I", header, 10, 62)
+        struct.pack_into("<IiiHHII", header, 14, 40, width, height, 1, 1, 0, stride*height)
+        header[54:62] = b"\0\0\0\0\xff\xff\xff\0"
+        data = bytes(header) + b"\x40\0\0\0\xa0\0\0\0"
+        self.assertEqual(functions["decode_screenshot_bmp"](data), (3, 2, bytes((255, 0, 255, 0, 255, 0))))
+        for corrupt in (data[:-1], data + b"x", data[:54] + b"\xff" + data[55:]):
+            with self.assertRaises(SmokeError):
+                functions["decode_screenshot_bmp"](corrupt)
+
+    def test_qr_finder_detector_requires_all_49_module_samples(self):
+        width = height = 64
+        pixels = bytearray([255] * width * height)
+        pattern = ("1111111", "1000001", "1011101", "1011101", "1011101", "1000001", "1111111")
+        for x0, y0 in ((3, 3), (38, 3), (3, 38)):
+            for row in range(7):
+                for col in range(7):
+                    if pattern[row][col] == "1":
+                        for y in range(y0 + row*3, y0 + (row+1)*3):
+                            for x in range(x0 + col*3, x0 + (col+1)*3):
+                                pixels[y*width+x] = 0
+        pgm = lambda: b"P5\n64 64\n255\n" + bytes(pixels)
+        found = functions["qr_finders"](pgm())
+        self.assertEqual({(item["x"], item["y"], item["module_pixels"]) for item in found},
+                         {(13, 13, 3), (48, 13, 3), (13, 48, 3)})
+        pixels[13*width+13] = 255
+        self.assertNotIn((13, 13), {(item["x"], item["y"]) for item in functions["qr_finders"](pgm())})
 
 
 if __name__ == "__main__":

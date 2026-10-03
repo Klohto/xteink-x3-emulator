@@ -76,8 +76,20 @@ pixels, and reboots a fresh CPU to reopen guest-written reading progress.
 The battery workflow changes the BQ27220 inputs and observes the reader's
 actual percentage and charging icon. The clock workflow injects UTC time,
 checks the clock header, then changes format and UTC offset through
-the actual Settings UI. The button workflow completes the real global
+the actual Settings UI. It decodes the guest-written FAT settings timestamp
+to check the calendar callback and a timezone rollback onto leap day; no
+calendar-render coverage is claimed. The button workflow completes the real global
 remapping wizard and checks both physical button behavior and persistence.
+
+A separate Power shortcut workflow assigns Short Press Next Page and Long
+Press Previous Page through Controls > Power Button. It injects native
+200 ms and 900 ms Power pulses, compares returned reader pixels and checks
+bindings and saved progress after a fresh CPU boot. The source threshold is
+fixed at 400 ms; no editable threshold menu is claimed. Power is a separate
+active-low GPIO3 input, whereas the six front/side button names use the ADC
+ladder. To request a native timed Power pulse, set
+`/machine`'s `power-button-hold-ns` first, then set `power-button=true`.
+The property becomes false when its virtual timer releases GPIO3.
 
 The fixture explicitly seeds LYRA theme and disables the sleep timeout. The
 gyro-enabled and clock-visible/synced preferences are also seeded for those

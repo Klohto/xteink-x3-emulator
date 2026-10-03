@@ -27,6 +27,17 @@ class SmokeArtifactTests(unittest.TestCase):
             broken[key] += 1
             self.assertFalse(smoke["assess_trace_accounting"](data, broken, 1)["complete"])
 
+    def test_trace_observer_rejects_replaced_path_even_when_bytes_match(self):
+        data = b'{"seq":1,"event":"frame-complete"}\n'
+        metrics = {"output-errors": 0, "trace-events-attempted": 1, "trace-events-flushed": 1,
+                   "trace-bytes-flushed": len(data), "dump-frames-written": 1,
+                   "trace-fd-size": len(data), "trace-fd-position": len(data), "trace-path-size": len(data),
+                   "trace-fd-inode": 100, "trace-path-inode": 100, "trace-file-linked": True}
+        self.assertTrue(smoke["assess_trace_accounting"](data, metrics, 1)["complete"])
+        for change in ({"trace-path-inode": 101}, {"trace-file-linked": False}, {"trace-fd-size": len(data) + 1}):
+            with self.subTest(change=change):
+                self.assertFalse(smoke["assess_trace_accounting"](data, metrics | change, 1)["complete"])
+
     def test_reading_flow_pass_does_not_relax_full_diagnostics_acceptance(self):
         report = {"checks": dict.fromkeys(smoke["PASS_CONDITIONS"] + smoke["READING_FLOW_CONDITIONS"], True)}
         report["checks"]["model_diagnostics_clean"] = False

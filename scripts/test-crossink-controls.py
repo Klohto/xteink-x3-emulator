@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise stock X3 gyro, battery, clock and physical button remapping.
+"""Exercise stock X3 gyro, battery, clock and physical button remapping and Power shortcuts.
 
 Sensor inputs reach guest drivers through native I2C registers. Settings and
 saved book progress are read from the guest-written FAT card. Functional
@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import math
+import struct
 import importlib.util
 import json
 from pathlib import Path
@@ -30,13 +32,22 @@ SOURCE_FILES = {
              "src/activities/reader/EpubReaderActivity.cpp"),
     "battery": ("lib/hal/HalPowerManager.cpp", "lib/hal/HalGPIO.cpp", "src/main.cpp",
                 "src/components/themes/BaseTheme.cpp"),
-    "clock": ("lib/hal/HalClock.cpp", "src/SettingsList.h",
+    "clock": ("lib/hal/HalClock.cpp", "lib/hal/HalStorage.cpp", "src/SettingsList.h",
               "src/activities/settings/ClockOffsetActivity.cpp", "src/activities/settings/SettingsActivity.cpp"),
+    "power-shortcuts": ("src/SettingsList.h", "src/QuickActions.h", "src/CrossPointSettings.h",
+                        "src/main.cpp", "src/activities/reader/EpubReaderActivity.cpp"),
     "button-remap": ("src/activities/settings/ButtonRemapActivity.cpp", "src/SettingsList.h",
                      "src/MappedInputManager.cpp", "src/activities/settings/SettingsActivity.cpp"),
 }
 
 SOURCE_SHA256 = {
+    'src/activities/reader/ControlsOptionsActivity.cpp': '5e059ead0ec9ece3af4431de95abd24a2c19853c1b412325086868a0a0a55d44',
+    'src/activities/reader/ReaderUtils.h': 'd82ee89df6e8041a34d757896f329bd8dc3303eb681b3803602b897d3a5ff26c',
+    'src/util/ButtonShortcutController.h': 'eeac6af8788adf7db4ffd8811fc42d29c3b862cf69eb144f0bc9aaa7fb8e67c0',
+    'src/components/HeaderDate.cpp': '78e3aac37a0110328f8fceafe22ef7754aae4394c153bec74f6e1a17ac0a46f0',
+    'src/CrossPointSettings.h': 'e4776b7ee73e09aaf0bc59929954c5745aff0e461381153814f7170e68d3501e',
+    'src/QuickActions.h': 'd2eeb595d108345ae22ea2fa909672922fdbd433c720d336135781159ce20f3f',
+    'lib/hal/HalStorage.cpp': '0d9d58c99add63525b2924bb6c88d987e4cd429fcb692fb3aecdcbefd78ead8c',
     'lib/hal/HalClock.cpp': 'c788f9245e3c5789a616e8827967464bdd1a685f24cfd5b9014a66f18b7a1db2',
     'lib/hal/HalGPIO.cpp': '582186a32630b7e522d3c33e65543a3f4809454954ff1d6902c2552cb7b08866',
     'lib/hal/HalPowerManager.cpp': 'b95d39380cd238885053e212418b1f1742043f1d12626110e76d364c0937a850',
@@ -208,13 +219,64 @@ def open_settings(replay, category):
         replay.tap("confirm", f"settings-category-{index + 1}", "Settings tab row: select next category")
 
 
+def saved_settings_timestamp(replay):
+    """Decode the actual FAT short entry modified by the guest's save."""
+    card = SMOKE["Fat16Card"](replay.experiment.run_dir / "sd.img")
+    parent = next(entry for entry in card.directory() if entry["name"] == ".crosspoint")
+    entry = next(entry for entry in card.directory(parent["cluster"])
+                 if entry["name"] == "crossink-settings.json")
+    data = card.chain(parent["cluster"])
+    matches = [data[offset:offset + 32] for offset in range(0, len(data), 32)
+               if data[offset] not in (0, 0xE5) and data[offset + 11] & 0x18 == 0
+               and struct.unpack_from("<H", data, offset + 26)[0] == entry["cluster"]
+               and struct.unpack_from("<I", data, offset + 28)[0] == entry["size"]]
+    if len(matches) != 1:
+        raise FUNCTIONS.SmokeError("cannot uniquely identify the guest settings FAT entry")
+    time_word, date_word = struct.unpack_from("<HH", matches[0], 22)
+    result = {"year": 1980 + (date_word >> 9), "month": (date_word >> 5) & 15,
+              "day": date_word & 31, "hour": time_word >> 11,
+              "minute": (time_word >> 5) & 63, "second": (time_word & 31) * 2,
+              "date_raw": date_word, "time_raw": time_word}
+    try:
+        datetime(**{key: result[key] for key in ("year", "month", "day", "hour", "minute", "second")})
+    except ValueError as error:
+        raise FUNCTIONS.SmokeError("guest FAT timestamp is invalid") from error
+    return result
+
+
+def check_rtc_calendar_callback(replay, offset_q):
+    replay.qmp.execute("stop")
+    try:
+        stamp = saved_settings_timestamp(replay)
+        epoch = replay.qmp.execute("qom-get", {"path": "/machine/i2c/rtc", "property": "epoch-seconds"})
+        now = replay.experiment.clock(replay.qmp)
+    finally:
+        replay.qmp.execute("cont")
+    saved_action = replay.receipt["actions"][-1]
+    start = saved_action["input"]["press_t_ns"]
+    # HalClock caches for ten seconds. The guest save occurs between the real
+    # Back press and this completed frame; retain that source-supported window.
+    earliest = epoch - math.ceil((now - start) / 1e9) - 10
+    latest = epoch
+    local_shift = (offset_q - 48) * 15 * 60
+    expected_minutes = {datetime.fromtimestamp(second + local_shift, timezone.utc).strftime("%Y-%m-%d %H:%M")
+                        for second in range(earliest, latest + 1)}
+    actual = f"{stamp['year']:04}-{stamp['month']:02}-{stamp['day']:02} {stamp['hour']:02}:{stamp['minute']:02}"
+    replay.check("rtc_calendar_and_offset_written_by_guest_fat_callback",
+                 actual in expected_minutes and stamp["second"] == 0
+                 and (stamp["year"], stamp["month"], stamp["day"]) == (2024, 2, 29),
+                 {"fat_timestamp": stamp, "expected_local_minutes": sorted(expected_minutes),
+                  "rtc_epoch_at_observation": epoch, "source_clock_cache_ns": 10_000_000_000,
+                  "guest_offset_q": offset_q, "firmware_hook": False})
+
+
 def clock_workflow(replay):
     replay.capture("home-clock-initial", 0)
     replay.check("stock_rtc_available", "SDK RTC found" in replay.experiment.log_text("serial.log"))
     initial_browser = replay.tap("confirm", "browser-clock-initial", "Open File Browser's source-backed clock header")
     replay.tap("back", "home-clock-before-injection", "Return from Browser to the same Home selection")
-    epoch = int(datetime(2024, 2, 29, 23, 0, tzinfo=timezone.utc).timestamp())
-    inject(replay, "rtc", "epoch-seconds", epoch, "Set external RTC to leap day 23:00 UTC; no firmware time hook")
+    epoch = int(datetime(2024, 3, 1, 0, 5, tzinfo=timezone.utc).timestamp())
+    inject(replay, "rtc", "epoch-seconds", epoch, "Set external RTC to March 1 00:05 UTC; no firmware time hook")
     wait_virtual(replay, 10_100_000_000, "expire the stock 10 second clock cache")
     new_clock = home_roundtrip(replay, "home-clock-leapday")
     delta = difference_bounds(replay.experiment.frames["home-clock-initial"], new_clock)
@@ -236,24 +298,25 @@ def clock_workflow(replay):
     replay.check("clock12hour_saved_by_guest", settings(replay)["clockFormat"] == 1)
     replay.tap("down", "clock-offset-row", "Device: next row is UTC Offset")
     offset_before = replay.tap("confirm", "clock-offset-picker", "Open actual UTC offset picker with live RTC preview")
-    replay.tap("confirm", "clock-offset-hour-field", "Offset picker: advance sign field to hour field")
-    offset_after = replay.tap("down", "clock-offset-plus1hour", "Offset picker: increment hour to UTC+1")
+    replay.tap("confirm", "clock-offset-edit-field", "Offset picker: advance the selected editable field")
+    offset_after = replay.tap("down", "clock-offset-quarter-hour", "Offset picker: adjust the selected quarter-hour field")
     replay.check("clock_offset_preview_changed", FUNCTIONS.changed_pixels(
         replay.experiment.frames[offset_before], replay.experiment.frames[offset_after]) > 0)
     replay.tap("back", "clock-offset-saved", "Leave picker: source onExit saves the offset")
     stored = settings(replay)
-    replay.check("clock_offset_saved_by_guest", stored["clockUtcOffsetQ"] == 52, stored)
+    replay.check("clock_offset_saved_by_guest", stored["clockUtcOffsetQ"] == 47, stored)
+    check_rtc_calendar_callback(replay, stored["clockUtcOffsetQ"])
     replay.tap("back", "clock-system-return", "Close Device submenu")
     replay.tap("back", "clock-system-tab-row", "Return settings selection to tab row")
-    replay.tap("back", "home-clock-plus1", "Close Settings and render local date rollover")
+    replay.tap("back", "home-clock-adjusted", "Close Settings and render the saved local clock offset")
     replay.restart()
     stored = settings(replay)
     replay.check("clock_format_and_offset_survive_cold_restart", stored["clockFormat"] == 1
-                 and stored["clockUtcOffsetQ"] == 52, stored)
+                 and stored["clockUtcOffsetQ"] == 47, stored)
     replay.receipt["observations"]["clock_model_limits"] = {
         "external_rtc_reinitialized_on_new_cpu": True, "online_ntp_sync_tested": False,
         "clock_visible_fixture_flag_seeded": True, "header_date_synced_flag_seeded": True,
-        "calendar_render_tested": False}
+        "calendar_render_tested": False, "calendar_guest_fat_callback_tested": True}
     replay.save()
 
 
@@ -296,8 +359,251 @@ def button_remap_workflow(replay):
     replay.tap("confirm", "remapped-reopen-exit", "Physical Confirm/logical Back exits the restarted reader")
 
 
+def move(replay, button, count, label):
+    for index in range(count):
+        replay.tap(button, f"{label}-{index + 1}", f"{label}: physical {button} {index + 1}/{count}")
+
+
+def reader_controls(replay, submenu, label):
+    """Enter the source-ordered Settings > Controls rows from a real reader."""
+    replay.reader_menu()
+    move(replay, "confirm", 2, label + "-settings-tab")
+    move(replay, "down", 4, label + "-controls-row")
+    replay.tap("confirm", label + "-controls", "Reader Settings: open actual Controls Options")
+    move(replay, "down", {"power": 0, "front": 1, "side": 2}[submenu], label + "-submenu-row")
+    replay.tap("confirm", label + "-submenu", f"Open actual {submenu} button settings")
+
+
+def close_reader_controls(replay, label):
+    replay.tap("back", label + "-parent", "Close button submenu to Controls Options")
+    return replay.tap("back", label + "-reader", "Close Controls Options and resume actual reader", reader=True)
+
+
+def choose_popup(replay, direction, count, label):
+    replay.tap("confirm", label + "-picker", "Open the selected source-ordered option picker")
+    move(replay, direction, count, label + "-option")
+    return replay.tap("confirm", label + "-saved", "Commit selected setting through the guest UI")
+
+
+def side_layouts_workflow(replay):
+    initial = replay.experiment.frames["reader-initial"]
+    reader_controls(replay, "side", "side-next-prev")
+    choose_popup(replay, "down", 1, "side-next-prev")
+    replay.check("next_prev_layout_saved_by_ui", settings(replay)["sideButtonLayout"] == 1)
+    close_reader_controls(replay, "side-next-prev")
+    page1 = replay.tap("up", "side-up-page1", "Next/Previous layout: physical Up advances page", reader=True)
+    replay.check("next_prev_up_changes_content", SMOKE["changed_content_pixels"](initial,
+                 replay.experiment.frames[page1]) > 1000)
+    returned = replay.tap("down", "side-down-page0", "Next/Previous layout: physical Down returns page", reader=True)
+    replay.check("next_prev_down_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+
+    reader_controls(replay, "side", "side-disabled")
+    choose_popup(replay, "up", 2, "side-disabled")
+    replay.check("disabled_layout_saved_by_ui", settings(replay)["sideButtonLayout"] == 2)
+    close_reader_controls(replay, "side-disabled")
+    for button in ("up", "down"):
+        before = replay.experiment.refresh_count(replay.qmp)
+        replay.experiment.press(replay.qmp, button, purpose=f"Disabled side layout: physical {button} cannot turn a page")
+        wait_virtual(replay, 1_500_000_000, f"observe disabled {button} after the released guest poll")
+        replay.check(f"disabled_side_{button}_does_not_refresh", replay.experiment.refresh_count(replay.qmp) == before)
+    alive = replay.tap("right", "disabled-front-page1", "Front Right still advances while side page inputs are disabled",
+                       reader=True)
+    replay.check("disabled_side_keeps_front_navigation", SMOKE["changed_content_pixels"](initial,
+                 replay.experiment.frames[alive]) > 1000)
+    returned = replay.tap("left", "disabled-front-page0", "Front Left restores page independently of side layout",
+                          reader=True)
+    replay.check("disabled_side_front_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+
+    reader_controls(replay, "side", "side-next-next")
+    choose_popup(replay, "down", 3, "side-next-next")
+    replay.check("next_next_layout_saved_by_ui", settings(replay)["sideButtonLayout"] == 3)
+    close_reader_controls(replay, "side-next-next")
+    page1 = replay.tap("up", "both-next-up-page1", "Next/Next layout: physical Up advances", reader=True)
+    page2 = replay.tap("down", "both-next-down-page2", "Next/Next layout: physical Down also advances", reader=True)
+    replay.check("both_side_buttons_advance_distinct_pages", SMOKE["changed_content_pixels"](
+                 replay.experiment.frames[page1], replay.experiment.frames[page2]) > 1000)
+    returned = replay.tap("left", "both-next-front-page1", "Front Left returns to the preceding saved page", reader=True)
+    replay.check("next_next_front_return_matches_page1", FUNCTIONS.changed_pixels(replay.experiment.frames[page1],
+                 replay.experiment.frames[returned]) == 0)
+    replay.tap("back", "home-side-layouts", "Exit reader and save actual page1")
+    replay.check("side_layout_page1_progress_saved", replay.progress()["page_number"] == 1, replay.progress())
+    replay.restart()
+    replay.check("next_next_layout_survives_new_cpu", settings(replay)["sideButtonLayout"] == 3)
+    reopened = replay.tap("confirm", "next-next-reopen-page1", "Reopen actual persisted progress", reader=True)
+    replay.check("next_next_reopens_exact_page1", FUNCTIONS.changed_pixels(replay.experiment.frames[page1],
+                 replay.experiment.frames[reopened]) == 0)
+    advanced = replay.tap("up", "next-next-after-reboot-page2", "New CPU keeps both-side-next mapping", reader=True)
+    replay.check("next_next_after_restart_matches_page2", FUNCTIONS.changed_pixels(replay.experiment.frames[page2],
+                 replay.experiment.frames[advanced]) == 0)
+    replay.tap("back", "home-side-layouts-final", "Flush final page2 progress")
+    replay.check("side_layout_final_progress_page2", replay.progress()["page_number"] == 2, replay.progress())
+
+
+def reader_remap_workflow(replay):
+    initial = replay.experiment.frames["reader-initial"]
+    reader_controls(replay, "front", "reader-remap")
+    replay.tap("down", "reader-remap-row", "Front Buttons: select separate In Reader remapping wizard")
+    replay.tap("confirm", "reader-remap-cancel-wizard", "Enter actual reader-specific wizard")
+    before = settings(replay)
+    replay.tap("down", "reader-remap-cancelled", "Physical Down cancels wizard without saving")
+    fields = ("readerFrontButtonsEnabled", "readerFrontButtonBack", "readerFrontButtonConfirm",
+              "readerFrontButtonLeft", "readerFrontButtonRight")
+    replay.check("reader_remap_cancel_preserves_fields", [settings(replay)[k] for k in fields] == [before[k] for k in fields])
+    replay.tap("confirm", "reader-remap-reset-wizard", "Reenter reader-specific wizard")
+    replay.tap("up", "reader-remap-reset-defaults", "Physical Up saves default mapping and disables reader override")
+    replay.check("reader_remap_reset_saves_defaults", [settings(replay)[k] for k in fields] == [0, 0, 1, 2, 3])
+    replay.tap("confirm", "reader-remap-apply-wizard", "Reenter wizard to apply a separate reader-only mapping")
+    for physical, role in (("back", "Back"), ("confirm", "Confirm"), ("right", "Left"), ("left", "Right")):
+        replay.tap(physical, f"reader-assign-{role.lower()}", f"Reader wizard: assign physical {physical} to {role}")
+    replay.check("reader_remap_apply_saves_fields", [settings(replay)[k] for k in fields] == [1, 0, 1, 3, 2])
+    replay.check("reader_remap_leaves_global_mapping_default", [settings(replay)[k] for k in
+                 ("frontButtonBack", "frontButtonConfirm", "frontButtonLeft", "frontButtonRight")] == [0, 1, 2, 3])
+    close_reader_controls(replay, "reader-remap")
+    page1 = replay.tap("left", "reader-remapped-left-page1", "Reader-only physical Left now means logical Right/Next",
+                       reader=True)
+    replay.check("reader_only_left_advances_content", SMOKE["changed_content_pixels"](initial,
+                 replay.experiment.frames[page1]) > 1000)
+    returned = replay.tap("right", "reader-remapped-right-page0", "Reader-only physical Right now means Previous",
+                          reader=True)
+    replay.check("reader_only_right_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    replay.tap("left", "reader-remap-page1-repeat", "Create actual page1 progress through reader-only mapping", reader=True)
+    replay.tap("back", "home-reader-remap", "Physical Back remains Back outside and inside the reader")
+    replay.check("reader_remap_saved_page1", replay.progress()["page_number"] == 1, replay.progress())
+    replay.restart()
+    replay.check("reader_remap_survives_new_cpu", [settings(replay)[k] for k in fields] == [1, 0, 1, 3, 2])
+    reopened = replay.tap("confirm", "reader-remap-reopen", "Global physical Confirm still reopens actual saved book",
+                          reader=True)
+    replay.check("reader_remap_reopens_exact_progress", FUNCTIONS.changed_pixels(replay.experiment.frames[page1],
+                 replay.experiment.frames[reopened]) == 0)
+    returned = replay.tap("right", "reader-remap-after-reboot-page0", "Restarted reader retains separate Right/Previous mapping",
+                          reader=True)
+    replay.check("reader_remap_after_restart_restores_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    reader_controls(replay, "front", "reader-remap-final-reset")
+    replay.tap("down", "reader-remap-final-reset-row", "Select reader-only remap action")
+    replay.tap("confirm", "reader-remap-final-reset-wizard", "Open custom reader mapping for real reset")
+    replay.tap("up", "reader-remap-final-reset-saved", "Reset custom mapping through physical Up")
+    replay.check("reader_remap_custom_reset_disables_override", [settings(replay)[k] for k in fields] == [0, 0, 1, 2, 3])
+    close_reader_controls(replay, "reader-remap-final-reset")
+    restored = replay.tap("right", "reader-remap-default-right-page1", "Default Right/Next works after actual reset", reader=True)
+    replay.check("reader_remap_reset_restores_default_runtime", FUNCTIONS.changed_pixels(replay.experiment.frames[page1],
+                 replay.experiment.frames[restored]) == 0)
+    replay.tap("back", "home-reader-remap-final", "Save restored-default reader progress")
+
+
+def tap_held(replay, button, label, purpose, hold_ms, *, reader=False):
+    if button != "power":
+        raise FUNCTIONS.SmokeError("this helper drives the dedicated GPIO3 Power input")
+    replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": False})
+    replay.qmp.set_buttons(0)
+    wait_virtual(replay, 250_000_000, "released GPIO3 Power before the next physical pulse")
+    count = replay.experiment.refresh_count(replay.qmp)
+    action = {"button": "power", "gpio": 3, "active_level": 0, "purpose": purpose,
+              "status": "requested", "after_frame_count": count, "boot_index": replay.boot_index}
+    replay.receipt["actions"].append(action)
+    replay.save()
+    replay.qmp.execute("stop")
+    try:
+        started = replay.experiment.clock(replay.qmp)
+        replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button-hold-ns",
+                                       "value": hold_ms * 1_000_000})
+        replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": True})
+        actual_hold = replay.qmp.execute("qom-get", {"path": "/machine", "property": "power-button-hold-ns"})
+        if actual_hold != hold_ms * 1_000_000 or not replay.qmp.execute("qom-get", {
+                "path": "/machine", "property": "power-button"}):
+            raise FUNCTIONS.SmokeError("native Power GPIO did not assert the requested pulse")
+    finally:
+        replay.qmp.execute("cont")
+    replay.experiment.wait("native GPIO3 Power timer release", lambda: not replay.qmp.execute("qom-get", {
+        "path": "/machine", "property": "power-button"}))
+    released = replay.experiment.clock(replay.qmp)
+    action["input"] = {"press_t_ns": started, "scheduled_hold_ns": actual_hold,
+                       "scheduled_release_t_ns": started + actual_hold, "release_observed_t_ns": released,
+                       "release_transport": "GPIO3 QEMU_CLOCK_VIRTUAL timer", "firmware_hook": False}
+    action["status"] = "released"
+    replay.check(f"power-pulse-{len(replay.receipt['actions'])}", released >= started + actual_hold, action["input"])
+    replay.sequence += 1
+    captured = f"{replay.sequence:03d}-{label}"
+    info = replay.capture(captured, count, reader=reader)
+    action.update({"status": "captured", "frame": info})
+    replay.save()
+    return captured
+
+
+def power_shortcuts_workflow(replay):
+    replay.capture("home-power-shortcuts", 0)
+    open_settings(replay, 2)
+    replay.tap("down", "power-controls-row", "Controls: select Power Button submenu")
+    replay.tap("confirm", "power-controls", "Open actual Power shortcut settings")
+    replay.tap("confirm", "power-short-options", "First row: choose a Short Press action")
+    replay.tap("down", "power-short-sleep-option", "Shortcut picker: move from Ignore to Sleep")
+    replay.tap("down", "power-short-next-option", "Shortcut picker: choose Next Page")
+    replay.tap("confirm", "power-short-next-saved", "Save actual Short Press Next Page binding")
+    replay.check("short_power_next_page_saved_by_guest_ui", settings(replay)["shortPwrBtn"] == 2)
+    replay.tap("down", "power-long-row", "Power submenu: choose Long Press row")
+    replay.tap("confirm", "power-long-options", "Open actual Long Press shortcut picker")
+    replay.tap("down", "power-long-next-option", "Default Sleep binding: move to Next Page")
+    replay.tap("down", "power-long-previous-option", "Choose Previous Page in source shortcut order")
+    replay.tap("confirm", "power-long-previous-saved", "Save actual Long Press Previous Page binding")
+    stored = settings(replay)
+    replay.check("long_power_previous_page_saved_by_guest_ui", stored["shortPwrBtn"] == 2
+                 and stored["longPwrBtn"] == 31, stored)
+    replay.tap("back", "power-controls-return", "Close Power submenu")
+    replay.tap("back", "power-controls-tab-row", "Move Settings focus back to category row")
+    replay.tap("back", "home-power-shortcuts-saved", "Exit Settings with both guest-written bindings")
+    replay.tap("down", "power-browse-row", "Home: wrap Settings selection back to Browse Files")
+    replay.tap("confirm", "power-browser", "Open real File Browser")
+    before = replay.experiment.refresh_count(replay.qmp)
+    replay.experiment.press(replay.qmp, "confirm", purpose="Open original EPUB for physical Power shortcut test")
+    replay.experiment.wait("reader for Power shortcuts", replay.experiment.book_is_open)
+    replay.capture("power-reader-page0", before, reader=True)
+    initial = replay.experiment.frames["power-reader-page0"]
+    forward = tap_held(replay, "power", "power-short-page1", "Physical Power 200 ms: Short Press Next Page", 200,
+                       reader=True)
+    page1 = replay.experiment.frames[forward]
+    replay.check("short_power_changes_text_page", SMOKE["changed_content_pixels"](initial, page1) > 1000)
+    returned = tap_held(replay, "power", "power-long-page0", "Physical Power 900 ms: Long Press Previous Page", 900,
+                        reader=True)
+    replay.check("long_power_restores_exact_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    tap_held(replay, "power", "power-short-page1-repeat", "Repeat actual Short Press Next Page", 200, reader=True)
+    replay.tap("back", "home-power-progress", "Exit reader and flush Power-created page1 progress")
+    progress = replay.progress()
+    replay.check("power_shortcut_saved_actual_page1", progress["spine_index"] == 0 and progress["page_number"] == 1,
+                 progress)
+    replay.restart()
+    stored = settings(replay)
+    replay.check("power_shortcut_bindings_survive_new_cpu", stored["shortPwrBtn"] == 2 and stored["longPwrBtn"] == 31,
+                 stored)
+    reopened = replay.tap("confirm", "power-reopen-page1", "New CPU: reopen actual saved Power-created progress",
+                          reader=True)
+    replay.check("power_shortcut_progress_reopens_exact_page", FUNCTIONS.changed_pixels(page1,
+                 replay.experiment.frames[reopened]) == 0)
+    returned = tap_held(replay, "power", "power-long-after-reboot", "Restarted CPU: physical 900 ms Previous Page", 900,
+                        reader=True)
+    replay.check("long_power_after_reboot_restores_exact_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    replay.tap("back", "home-power-final", "Exit restarted reader and save page0")
+    replay.check("power_shortcut_final_progress_page0", replay.progress()["page_number"] == 0, replay.progress())
+    replay.receipt.setdefault("observations", {})["power_threshold_contract"] = {
+        "source_fixed_threshold_ms": 400, "short_injected_ms": 200, "long_injected_ms": 900,
+        "threshold_menu_tested": False, "shortcut_bindings_seeded": False}
+    replay.save()
+
+
 WORKFLOWS = {"gyro": gyro_workflow, "battery": battery_workflow,
-             "clock": clock_workflow, "button-remap": button_remap_workflow}
+             "clock": clock_workflow, "button-remap": button_remap_workflow,
+             "power-shortcuts": power_shortcuts_workflow,
+             "side-layouts": side_layouts_workflow, "reader-remap": reader_remap_workflow}
+CONTROL_SOURCES = ("src/SettingsList.h", "src/MappedInputManager.cpp", "src/CrossPointSettings.h",
+                   "src/activities/reader/EpubReaderActivity.cpp",
+                   "src/activities/reader/EpubReaderMenuActivity.cpp",
+                   "src/activities/reader/ControlsOptionsActivity.cpp")
+SOURCE_FILES["side-layouts"] = CONTROL_SOURCES
+SOURCE_FILES["reader-remap"] = CONTROL_SOURCES + ("src/activities/settings/ButtonRemapActivity.cpp",)
 
 
 def fixture_files(name):
@@ -333,10 +639,10 @@ def main(argv=None):
     for name in args.workflows:
         files, seed = fixture_files(name)
         receipt = FUNCTIONS.run_workflow(name, args, args.output / name, fixture_files=files,
-                                         open_book=name in ("gyro", "battery"))
+                                         open_book=name in ("gyro", "battery", "side-layouts", "reader-remap"))
         receipt["seeded_settings"] = seed
         receipt["seeded_settings_are_menu_coverage"] = False
-        receipt["native_sensor_controls"] = True
+        receipt["native_sensor_controls"] = name in ("gyro", "battery", "clock")
         FUNCTIONS.write_json(args.output / name / "validation.json", receipt)
         receipts[name] = receipt
     report = {"schema_version": 1, "firmware_source_commit": FUNCTIONS.SOURCE_COMMIT,

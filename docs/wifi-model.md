@@ -4,9 +4,10 @@ The experimental WiFi backend executes the stock firmware's driver and lwIP
 stack. It does not replace an ESP-IDF API, change a firmware instruction or
 substitute Ethernet hardware that the CrossInk image cannot drive.
 
-Actual CrossInk acceptance is still blocked during PHY initialization. Native
-MAC/DMA tests pass, but a native test is not evidence that Join Network, Hotspot,
-WebDAV, OPDS or nearby transfers work. The function ledger retains that boundary.
+Stock CrossInk now completes PHY initialization and its network scan detects
+the virtual AP. Joining and the remaining network functions are being tested.
+Native MAC/DMA tests alone do not establish Join Network, Hotspot, WebDAV, OPDS
+or nearby transfers. The function ledger retains that boundary.
 
 ## Sources
 
@@ -33,16 +34,24 @@ beacon intervals and a synthetic RSSI are functional model parameters.
 
 | PHY engine | Request | Completion | Firmware evidence |
 | --- | --- | --- | --- |
-| Measurement at REGI2C `+50/+5c` | Both control bits 21 and 19; status bit 1 retriggers | Status bits 26:24 become 7 after a virtual timer | `4228cd94..4228ce04` |
+| Measurement at REGI2C `+50/+5c` | Both control bits 21 and 19 start; rising status bit 1 independently retriggers | Status bits 26:24 become 7 after a virtual timer | `4228cd94..4228ce04`; ungated retrigger in `4228cc3a..4228cc5e` |
 | DC comparators at REGI2C `+4c` | Rising bit 1; falling bit cancels | Bit 24; comparator signs at 31:30 | `4228fdca..4228ffb6` |
+| FE/NRX IQ measurement | FE `60006144` bit 1 enables; NRX `6001c02c` bit 23 pulses request | FE `60006174` bit 16; NRX `6001c08c` bits 18:12 count | `4228e396..4228e4aa` |
 
-These two engines measure a deterministic ideal-zero circuit. They implement
+These engines measure a deterministic ideal-zero circuit. They implement
 the observed request/completion protocol and allow the original search loops
 to execute. They do not simulate an RF circuit. Completion is timed rather
 than forced on every read, software cannot forge read-only results, reset
 cancels pending requests, and every completion increments
 `/machine/regi2c`'s `synthetic-measurements` counter. `calibration-modelled`,
 `analog-modelled` and `timing-calibrated` remain false.
+
+The IQ request preserves the original firmware's FE/NRX read-modify-write
+configuration. Its timer survives the falling request pulse; disabling FE
+cancels it. Completed quadrature accumulators at `60006148/14c/150/154`
+contain ideal-zero synthetic input, and the sample count reflects the programmed
+NRX threshold. The additional `synthetic-iq-measurements` counter distinguishes
+this engine. Completion does not depend on whether a virtual AP exists.
 
 The SYSCON latches reside in the clock device so that machine reset and VMState
 cover them. MAC reset holds the MAC, clears guest state and pending air frames,

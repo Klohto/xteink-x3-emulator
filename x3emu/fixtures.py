@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 import hashlib
 from io import BytesIO
+import json
 import re
 import struct
 import xml.etree.ElementTree as ET
@@ -211,9 +212,9 @@ def _xtc_page(width: int, height: int, page: int, grayscale: bool) -> bytes:
         bitmap = bytearray(plane_size * 2)
         for y in range(height):
             for x in range(width):
-                # XTH value 0 is white, 3 black; the two middle codes remain
-                # exact source selectors rather than claimed optical levels.
-                value = 3 - pattern_level(x, y, width, height, page)
+                # Stock streamXtchRenderPass selects dark with code1 and
+                # light with code2; these middle codes are not a linear ramp.
+                value = (3, 1, 2, 0)[pattern_level(x, y, width, height, page)]
                 offset = (width - 1 - x) * (height // 8) + y // 8
                 bit = 1 << (7 - y % 8)
                 if value & 2:
@@ -282,7 +283,7 @@ def pattern_sample_points(
     return [{"x": x, "y": y,
              "luminance": GRAY_LUMINANCES[pattern_level(x, y, width, height, page)],
              "mono_luminance": 255 if pattern_level(x, y, width, height, page) >= 2 else 0,
-             "xth_code": 3 - pattern_level(x, y, width, height, page)}
+             "xth_code": (3, 1, 2, 0)[pattern_level(x, y, width, height, page)]}
             for x, y in coordinates]
 
 
@@ -365,6 +366,85 @@ def make_function_fixture_files(*, configured_dictionary: bool = True) -> dict[s
             "/Books/c-text.txt": make_text_fixture(),
             "/Books/d-markdown.md": make_text_fixture(markdown=True),
             "/Books/e-features.epub": make_advanced_epub()}
+
+
+def make_stable_epub() -> bytes:
+    """Add an original, source-compatible XLocations manifest to the rich EPUB.
+
+    The optional metadata lives inside META-INF/x-locations.json. Word units
+    are whitespace-separated body text authored in the six original XHTML
+    documents. One reference page has the first chapter's word count, so page2
+    resolves exactly to spine1 at unit0 in stock ReferencePageNavigation.
+    This fixture is separate from make_advanced_epub, whose bytes stay stable.
+    """
+    base = make_advanced_epub()
+    output = BytesIO()
+    with ZipFile(BytesIO(base)) as original, ZipFile(output, "w") as archive:
+        spine, start = [], 0
+        for index in range(6):
+            document = ET.fromstring(original.read(f"OEBPS/chapter{index + 1}.xhtml"))
+            body = document.find("{http://www.w3.org/1999/xhtml}body")
+            if body is None:
+                raise ValueError("fixture chapter has no XHTML body")
+            words = len(re.findall(r"\S+", " ".join(body.itertext())))
+            if words == 0:
+                raise ValueError("fixture chapter has no words")
+            spine.append({"index": index, "startLocation": start + 1, "endLocation": start + words,
+                          "wordStart": start, "wordCount": words})
+            start += words
+        words_per_page = spine[0]["wordCount"]
+        locations = {"format": "x-locations", "version": 1, "totalLocations": start, "totalWords": start,
+                     "wordsPerReferencePage": words_per_page,
+                     "totalReferencePages": (start + words_per_page - 1) // words_per_page, "spine": spine}
+        for name in original.namelist():
+            info = ZipInfo(name, FIXTURE_TIMESTAMP)
+            info.compress_type = ZIP_STORED if name == "mimetype" else ZIP_DEFLATED
+            archive.writestr(info, original.read(name))
+        info = ZipInfo("META-INF/x-locations.json", FIXTURE_TIMESTAMP)
+        info.compress_type = ZIP_DEFLATED
+        archive.writestr(info, json.dumps(locations, sort_keys=True, separators=(",", ":")).encode())
+    return output.getvalue()
+
+
+def make_reader_options_epub() -> bytes:
+    """Return separate original input for visible image/CSS option checks.
+
+    The first chapter starts with a 264x170 asymmetric image and deliberately
+    styled text, followed by the baseline's original multipage prose. EPUB3
+    publisher pagebreaks are author markers, not stable XLocations metadata.
+    Existing basic, advanced and stable fixture bytes are unchanged.
+    """
+    output = BytesIO()
+    with ZipFile(BytesIO(make_test_epub())) as original, ZipFile(output, "w") as archive:
+        for name in original.namelist():
+            data = original.read(name)
+            if name == "OEBPS/content.opf":
+                text = data.decode().replace("CrossInk Emulator Test Book", "Synthetic Reader Options Book")
+                data = text.replace("<manifest>", '<manifest><item id="reader-art" href="reader-art.png" media-type="image/png"/>').encode()
+            elif name == "OEBPS/style.css":
+                data += (b"\n.publisher-heading { font-size: 1.7em; font-style: italic; font-weight: normal; "
+                         b"text-align: right; margin-left: 45px; margin-right: 25px; }\n"
+                         b".publisher-emphasis { font-style: italic; font-weight: bold; text-align: center; "
+                         b"margin-left: 35px; margin-right: 35px; text-indent: 0; }\n"
+                         b".publisher-image { text-align: center; margin-top: 0; margin-bottom: 8px; }\n")
+            elif name == "OEBPS/chapter1.xhtml":
+                text = data.decode().replace('xmlns="http://www.w3.org/1999/xhtml"',
+                    'xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"')
+                prefix = ('<span epub:type="pagebreak" role="doc-pagebreak" id="publisher-page-1" title="1"/>'
+                          '<p class="publisher-image"><img src="reader-art.png" width="264" height="170" '
+                          'alt="Original asymmetric reader-option geometry"/></p>'
+                          '<h1 class="publisher-heading">Author Styled Heading</h1>'
+                          '<p class="publisher-emphasis">The author places these bold italic words at the center, '
+                          'with deliberate margins. The image and the heading belong to this original fixture.</p>'
+                          '<span epub:type="pagebreak" role="doc-pagebreak" id="publisher-page-2" title="2"/>')
+                data = text.replace("<body>", "<body>" + prefix, 1).encode()
+            info = ZipInfo(name, FIXTURE_TIMESTAMP)
+            info.compress_type = ZIP_STORED if name == "mimetype" else ZIP_DEFLATED
+            archive.writestr(info, data)
+        info = ZipInfo("OEBPS/reader-art.png", FIXTURE_TIMESTAMP)
+        info.compress_type = ZIP_DEFLATED
+        archive.writestr(info, make_png(264, 170))
+    return output.getvalue()
 
 
 def fixture_hashes(files: Mapping[str, bytes]) -> dict[str, str]:

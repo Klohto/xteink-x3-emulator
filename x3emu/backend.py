@@ -65,7 +65,7 @@ DEVICE_PROPERTIES = {
     "assist_debug": ("unsupported-uses", "sp-checks", "spill-count", "last-sp", "last-pc"),
     "regi2c": ("unsupported-accesses", "transfer-count", "read-count", "write-count",
                 "analog-modelled", "calibration-modelled", "power-control-modelled", "timing-calibrated",
-                "phy-handshake-modelled", "synthetic-measurements"),
+                "phy-handshake-modelled", "synthetic-measurements", "synthetic-iq-measurements"),
     "wifi": ("unsupported-accesses", "tx-frames", "rx-frames", "rx-dropped", "bad-dma",
              "ethernet-tx", "ethernet-rx", "beacons", "auth-requests", "assoc-requests",
              "radio-modelled", "timing-calibrated", "encryption-modelled", "air-enabled", "ssid", "channel"),
@@ -81,8 +81,9 @@ REQUIRED_COUNTERS = {"machine": MACHINE_PROPERTIES,
                      "imu": ("unsupported-accesses",), "assist_debug": ("unsupported-uses", "spill-count"),
                      "regi2c": ("unsupported-accesses",)}
 WIFI_PHY_OBSERVATIONS = ("phy-handshake-modelled", "synthetic-measurements")
+OPTIONAL_PHY_OBSERVATIONS = WIFI_PHY_OBSERVATIONS + ("synthetic-iq-measurements",)
 REQUIRED_OBSERVATIONS = {"regi2c": tuple(prop for prop in DEVICE_PROPERTIES["regi2c"]
-                                       if prop not in WIFI_PHY_OBSERVATIONS),
+                                       if prop not in OPTIONAL_PHY_OBSERVATIONS),
                          "assist_debug": DEVICE_PROPERTIES["assist_debug"]}
 
 
@@ -487,6 +488,8 @@ def _record_capabilities(result: dict, state: dict) -> None:
             result["model_limits"][name] = state[device][prop]
     if "synthetic-measurements" in state.get("regi2c", {}):
         result["wifi"]["phy_synthetic_measurements"] = state["regi2c"]["synthetic-measurements"]
+    if "synthetic-iq-measurements" in state.get("regi2c", {}):
+        result["wifi"]["phy_synthetic_iq_measurements"] = state["regi2c"]["synthetic-iq-measurements"]
 
 
 def run(config: RunConfig) -> dict:

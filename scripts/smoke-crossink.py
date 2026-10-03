@@ -313,11 +313,19 @@ def assess_trace_accounting(data: bytes, metrics: dict, refresh_count: int) -> d
         sequence_ok = False
         result["parse_error"] = str(error)
     result.update({"file_bytes": len(data), "file_records": len(records), "sequence_complete": sequence_ok})
+    observer_names = ("trace-fd-size", "trace-fd-position", "trace-fd-inode", "trace-path-size", "trace-path-inode",
+                      "trace-file-linked")
+    observer_present = any(name in metrics for name in observer_names)
+    observer_complete = (not observer_present or
+        (all(name in metrics for name in observer_names) and metrics["trace-file-linked"] is True
+         and metrics["trace-fd-inode"] == metrics["trace-path-inode"]
+         and metrics["trace-fd-size"] == metrics["trace-path-size"] == metrics["trace-fd-position"] == len(data)))
+    result.update({"file_observer_supported": observer_present, "file_observer_consistent": observer_complete})
     result["complete"] = bool(sequence_ok and metrics.get("output-errors") == 0
         and metrics.get("trace-events-attempted") == len(records)
         and metrics.get("trace-events-flushed") == len(records)
         and metrics.get("trace-bytes-flushed") == len(data)
-        and metrics.get("dump-frames-written") == refresh_count)
+        and metrics.get("dump-frames-written") == refresh_count and observer_complete)
     return result
 
 

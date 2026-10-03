@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "upstream_repository": "https://github.com/espressif/qemu.git",
+  "upstream_revision": "febae182e132e4055529be423a818225ebddaa3a",
+  "source_tree": "7653cf987df9608aa579ba02bfeb466a2e701095",
+  "subprojects": [
+    {
+      "name": "berkeley-softfloat-3",
+      "repository": "https://gitlab.com/qemu-project/berkeley-softfloat-3.git",
+      "revision": "b64af41c3276f97f0e181920400ee056b9c88037",
+      "source_tree": "2deedfb2818c1f63055285983e524cd5b2c8852a",
+      "wrap_sha256": "f5b245e02a2f9400d7cfcc4a10860ed8c6d088577cf753ce6fe161e475a7d9ff",
+      "patch_directory": "berkeley-softfloat-3"
+    },
+    {
+      "name": "berkeley-testfloat-3",
+      "repository": "https://gitlab.com/qemu-project/berkeley-testfloat-3.git",
+      "revision": "e7af9751d9f9fd3b47911f51a5cfd08af256a9ab",
+      "source_tree": "e396e5bd0b085f41e8fd0486d9984db47a077367",
+      "wrap_sha256": "b4d204e9f59e671c1c636259d8521b9c7f29116cc4b9ff6598e8e635f0359bef",
+      "patch_directory": "berkeley-testfloat-3"
+    },
+    {
+      "name": "dtc",
+      "repository": "https://gitlab.com/qemu-project/dtc.git",
+      "revision": "b6910bec11614980a21e46fbccc35934b671bd81",
+      "source_tree": "5de1e174f53a6ea499a49ac7b5eb7fe816dd9902",
+      "wrap_sha256": "932ca47fc50a6932207a6fc82e15d07d848e93c4ff9abcd0cc34c15f40a30885",
+      "patch_directory": null
+    },
+    {
+      "name": "keycodemapdb",
+      "repository": "https://gitlab.com/qemu-project/keycodemapdb.git",
+      "revision": "f5772a62ec52591ff6870b7e8ef32482371f22c6",
+      "source_tree": "eaa3f9fb1e2c7687b334f57cb605140cb5450f16",
+      "wrap_sha256": "306b37c10ce735432220c08c6832dc67c0a306b88a0023c65937c90c638dba97",
+      "patch_directory": null
+    }
+  ],
+  "patch_sha256": "ed9d7d350445551065ad7d829fe59ed3ddacf513c187952fa1113a89b72e5a74",
+  "binary_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "version": "QEMU emulator version 9.2.2",
+  "source_directory": "/tmp/x3-native-candidate-ed9d7d3504455510/src",
+  "build_directory": "/tmp/x3-native-candidate-ed9d7d3504455510/build",
+  "binary": "/tmp/x3-native-candidate-ed9d7d3504455510/install/bin/qemu-system-riscv32",
+  "bios_directory": "/tmp/x3-native-candidate-ed9d7d3504455510/install/share/qemu",
+  "timing_calibrated": false,
+  "native_device_tests_passed": true,
+  "native_device_test_suites": [
+    {
+      "name": "esp32c3-gpspi-test",
+      "cases_passed": 3,
+      "tap_sha256": "1970f766505c6d834930115d0c2fac92d943a8985b4b423af412cb0c2ef3d2d7",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/esp32c3-gpspi-test.tap"
+    },
+    {
+      "name": "xteink-x3-adc-test",
+      "cases_passed": 11,
+      "tap_sha256": "b07b4c0ea0a6250ff820832deb6c65626f3bc129f8c26c0d26c5b082fc2e3ef7",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/xteink-x3-adc-test.tap"
+    },
+    {
+      "name": "esp32c3-i2c-test",
+      "cases_passed": 12,
+      "tap_sha256": "cb9720446ddde10f98d161cbb41c4deae1455a2b4f68b60a0260c80a72179dad",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/esp32c3-i2c-test.tap"
+    },
+    {
+      "name": "xteink-x3-epd-test",
+      "cases_passed": 10,
+      "tap_sha256": "fe24d6b1dd713c8f094ac199525f5c8862f229af06fe55f1642116f1fe237f54",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/xteink-x3-epd-test.tap"
+    },
+    {
+      "name": "esp32c3-usb-test",
+      "cases_passed": 6,
+      "tap_sha256": "100fede3b858264a28dbf4d29a0e88184e9fbe7173f9b41760d952028387eb76",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/esp32c3-usb-test.tap"
+    },
+    {
+      "name": "xteink-x3-sd-test",
+      "cases_passed": 6,
+      "tap_sha256": "57f7f75399bf7b665a493a209d2343074847e22406b06997f49270296dea76f5",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/xteink-x3-sd-test.tap"
+    },
+    {
+      "name": "esp32c3-flash-test",
+      "cases_passed": 11,
+      "tap_sha256": "b4d7a1834ba3edd03caa60b64ed619bdf9e34204953cff25d35a9fc49ee92eab",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/esp32c3-flash-test.tap"
+    },
+    {
+      "name": "esp32c3-rtc-test",
+      "cases_passed": 16,
+      "tap_sha256": "3e8e229ad7019e994828f21c4a08291cb22b3f67272ff4debb68f94d8d65f587",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/esp32c3-rtc-test.tap"
+    },
+    {
+      "name": "xteink-x3-soc-test",
+      "cases_passed": 2,
+      "tap_sha256": "8473c00c514b28695fa191da7646f47afeb469cae2c0321a97a0aea847511a48",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/xteink-x3-soc-test.tap"
+    },
+    {
+      "name": "esp32c3-assist-debug-test",
+      "cases_passed": 4,
+      "tap_sha256": "5732c051f6a9727689f29a696f5a69f1b21cd2ecb2fa702f062c2067bbfca89b",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/esp32c3-assist-debug-test.tap"
+    },
+    {
+      "name": "esp32c3-regi2c-test",
+      "cases_passed": 10,
+      "tap_sha256": "5da6a4a3ee949aaa800186ddc45d06eddf7519e7966e4e58c8333edb7c77fc28",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/esp32c3-regi2c-test.tap"
+    },
+    {
+      "name": "esp32c3-wifi-test",
+      "cases_passed": 4,
+      "tap_sha256": "fabb10ecaff25366165e2b2b68eea8d4b7e19dede4e2066f97a0afba3e638ef6",
+      "tap": "/tmp/x3-native-candidate-ed9d7d3504455510/build/native-tests/esp32c3-wifi-test.tap"
+    }
+  ],
+  "native_device_test_cases_passed": 95,
+  "source_apply_tree_verified": true,
+  "wrapped_dependency_trees_verified_after_tests": true,
+  "native_device_test_skips": 0,
+  "binary_mode": "0755",
+  "metadata_sha256": "0ff79cc7a5c75c54a84382b047345043569a701072e2b496a0f878ca864aaf57",
+  "archive": {
+    "original_sha256": "18f4463c1a2d1715feefa798e300a2dcf3e371f9024c659d15ac6289e9f50ab9",
+    "original_receipt": "full-gate-receipt.json"
+  }
+}

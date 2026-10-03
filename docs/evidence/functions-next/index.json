@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "firmware_source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "speed_selection_allowed": false,
+  "all_functions_verified": false,
+  "receipts": [
+    {
+      "path": "docs/evidence/functions-next/percent.json",
+      "sha256": "bb4e136cc80fe40649a54009ef3d3511e24a4ca1d9cd2e23091aa61f9301cdf0",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 11
+    },
+    {
+      "path": "docs/evidence/functions-next/autoturn.json",
+      "sha256": "fdb252aea949ca5dd2dc02e37989ed2efa68d7e2f4c028318b5b93743f7a4150",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": false,
+      "checks": 13
+    },
+    {
+      "path": "docs/evidence/functions-next/dictionary.json",
+      "sha256": "3d44e5bcac2dace575d4f46acfa13c6c4edc1fb4c6a502d04faeac14a89529da",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": false,
+      "checks": 24
+    },
+    {
+      "path": "docs/evidence/functions-next/completion.json",
+      "sha256": "3cb2b4e413e5edff71f03b20b57f5bfbb3c6d92232fd7c4d70cc3c3a1c9d10ae",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 19
+    },
+    {
+      "path": "docs/evidence/functions-next/footnotes.json",
+      "sha256": "c4d770765c6c6b130f0bd2e2988e9ff9220947c789e007abb3e7808b5c91dad0",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 13
+    },
+    {
+      "path": "docs/evidence/functions-next/qr-screenshot.json",
+      "sha256": "38b52f7a3120ae89343b02ef94ee07a7caf2643925cc795dd130fa673211c65e",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": false,
+      "checks": 14
+    },
+    {
+      "path": "docs/evidence/functions-next/layout.json",
+      "sha256": "3fa2838976d8f1c404bb8bad443ba2391734b35588c22317ef72ef008f8ee02a",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 20
+    },
+    {
+      "path": "docs/evidence/functions-next/endbook.json",
+      "sha256": "c40e6cfec947569a69f13b9f6d4449ad0bf13922f755570382908c941f80ba0e",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 13
+    },
+    {
+      "path": "docs/evidence/functions-next/battery.json",
+      "sha256": "364994ee233c3639e0f32e9c6c347e2adc89d4135cebdfcbc63b1b5e3d4cef05",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 18
+    },
+    {
+      "path": "docs/evidence/functions-next/power-shortcuts.json",
+      "sha256": "bde50bb3bb04ee1c9f1f55d89177c239ef49d74e5949056895f249ec85ec108e",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 27
+    },
+    {
+      "path": "docs/evidence/functions-next/gyro.json",
+      "sha256": "4efb9b067859af3b3c45b0d5da148378a751c34c398d4e7c1bd48844bbee709a",
+      "backend_sha256": "fa902300b9b3de6b0bc0b8d0de2c69f0cc7720baf4e0b4ea0d15133d5941c9e1",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 32
+    },
+    {
+      "path": "docs/evidence/functions-next/button-remap.json",
+      "sha256": "18ee2f2b15b92318e9ef28f02324baeb746afa8f20f400396e9ad7358ef20f70",
+      "backend_sha256": "fa902300b9b3de6b0bc0b8d0de2c69f0cc7720baf4e0b4ea0d15133d5941c9e1",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 19
+    },
+    {
+      "path": "docs/evidence/functions-next/settings.json",
+      "sha256": "9ea341603b7b847c58a3b3042ea4877669c03dc4baf6ac7fcd23426ace3bfcc9",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": false,
+      "checks": 23
+    },
+    {
+      "path": "docs/evidence/functions-next/home-saved.json",
+      "sha256": "08c0e68d2230ef778b803838f83c521d774eafff03b49fdd4773e88bbf2c5054",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 14
+    },
+    {
+      "path": "docs/evidence/functions-next/completion-policies.json",
+      "sha256": "c93a028088b4cf0d4dbb84c21925783608cd29d033f9b53a1b9ff53de8010e88",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 18
+    },
+    {
+      "path": "docs/evidence/functions-next/reader-cleanup.json",
+      "sha256": "f1596e66c963119884e54c2b1ae98368f7b4caa2e47383de1338f136eff74480",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": false,
+      "checks": 17
+    },
+    {
+      "path": "docs/evidence/functions-next/file-options.json",
+      "sha256": "db69a5e8605019ecce761852574764e0f65ba685624210c1037d07e11facd760",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 14
+    },
+    {
+      "path": "docs/evidence/functions-next/reader-controls.json",
+      "sha256": "39b8b70cc108018aeb96d2063a5162f4eba1c4c8c6f32a40f229a86bf2412882",
+      "backend_sha256": "bcf5b6ec66244ac30c08aec141369c93603d054e84f2ce705f3d63adc5202312",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 12
+    },
+    {
+      "path": "docs/evidence/functions-next/media.json",
+      "sha256": "a93b61a031aaa90a9842d9a1ebbdc8de7c30f929e17877c2a6eab25b561f977c",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 24
+    },
+    {
+      "path": "docs/evidence/functions-next/fixed.json",
+      "sha256": "39c02914787f035caaad3f243c5dab9c20cb3e9f87d345bc0f6ad2cbc749d909",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 25
+    },
+    {
+      "path": "docs/evidence/functions-next/quick-lock.json",
+      "sha256": "239b0ca60a6b6960f049a6fcacd79de40e14f0d704c1dca90d63c21512f7648f",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 11
+    },
+    {
+      "path": "docs/evidence/functions-next/rotation.json",
+      "sha256": "d96e711f0d1926418803b81b89b3086cbb265f8a19c99f4cb56c59f5ec49272c",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 16
+    },
+    {
+      "path": "docs/evidence/functions-next/sleep.json",
+      "sha256": "e878caa7ebbdc8258a9d74a2e282f460c7ad6b3de469d314c83f21142ff58968",
+      "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 17
+    },
+    {
+      "path": "docs/evidence/functions-next/favorites.json",
+      "sha256": "5eaeb1a08f49638e7831baf13b7303156c47618b6f0ccd1f059216cdabf7cf35",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 24
+    },
+    {
+      "path": "docs/evidence/functions-next/favorites-boot-disabled.json",
+      "sha256": "3dc27762cd94021e2811b3150a7cf0c2f51cb7c928fd8caa8dffdae4dfb6d836",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 21
+    },
+    {
+      "path": "docs/evidence/functions-next/clock-calendar.json",
+      "sha256": "8d53f13d9119435288091b15466925b4d9f027e46549036298992a93c9f06540",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 23
+    },
+    {
+      "path": "docs/evidence/functions-next/preferred-folder.json",
+      "sha256": "e09157e4b430131dbb4034cfbf47c260068a6a63af3f653bf3ac388e90a3ba8b",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 20
+    },
+    {
+      "path": "docs/evidence/functions-next/wifi-scan.json",
+      "sha256": "68e85caf2ec0ce5eb44b32b16de2276cdcce11f44ce5b0fa5eb903d54421f311",
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 10
+    },
+    {
+      "path": "docs/evidence/functions-next/quick-actions.json",
+      "sha256": "1daea8b06a240532e45dbb217751e1566fdb5dbe3cfaaa5ba73f98d5c033ee85",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 23
+    },
+    {
+      "path": "docs/evidence/functions-next/page-overlay.json",
+      "sha256": "aec27d9b37a20d07d1728ac384d6d0b64a28836b5f3da96417d74a3cfacb5522",
+      "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+      "functional_pass": true,
+      "strict_pass": false,
+      "panel_trace_complete": true,
+      "checks": 24
+    }
+  ]
+}

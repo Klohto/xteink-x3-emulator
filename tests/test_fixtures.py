@@ -1,6 +1,7 @@
 """Validate fixture containers against independently decoded source formats."""
 
 from io import BytesIO
+import json
 import struct
 import unittest
 import xml.etree.ElementTree as ET
@@ -11,7 +12,7 @@ from x3emu.fixtures import (
     DICTIONARY_BASE, DICTIONARY_NAME, alpha_sample_points, fixture_hashes,
     make_advanced_epub, make_bmp, make_dictionary_files,
     make_fixed_book_fixture_files, make_function_fixture_files,
-    make_media_fixture_files, make_png, make_text_fixture, make_xtc,
+    make_media_fixture_files, make_png, make_reader_options_epub, make_stable_epub, make_text_fixture, make_xtc,
     pattern_sample_points,
 )
 
@@ -199,7 +200,11 @@ class FixedBookFixtureTests(unittest.TestCase):
                             location = (527 - x) * 99 + y // 8
                             a = (bitmap[location] >> (7 - y % 8)) & 1
                             b = (bitmap[52272 + location] >> (7 - y % 8)) & 1
-                            self.assertEqual((a << 1) | b, sample["xth_code"])
+                            code = (a << 1) | b
+                            self.assertEqual(code, sample["xth_code"])
+                            # Independent stock selector semantics, rather
+                            # than a linear inverse-gray encoding assumption.
+                            self.assertEqual((255, 85, 170, 0)[code], sample["luminance"])
                         else:
                             value = (bitmap[y * 66 + x // 8] >> (7 - x % 8)) & 1
                             self.assertEqual(value * 255, sample["mono_luminance"])
@@ -216,6 +221,60 @@ class FixedBookFixtureTests(unittest.TestCase):
 
 
 class EpubFixtureTests(unittest.TestCase):
+    def test_reader_options_epub_first_image_css_and_publisher_markers(self):
+        payload = make_reader_options_epub()
+        self.assertEqual(payload, make_reader_options_epub())
+        with ZipFile(BytesIO(payload)) as archive:
+            self.assertNotEqual(payload, make_advanced_epub())
+            document = ET.fromstring(archive.read("OEBPS/chapter1.xhtml"))
+            ns = {"h": "http://www.w3.org/1999/xhtml", "e": "http://www.idpf.org/2007/ops"}
+            body = document.find("h:body", ns)
+            image = list(body)[1].find("h:img", ns)
+            self.assertEqual(image.attrib["src"], "reader-art.png")
+            self.assertEqual((image.attrib["width"], image.attrib["height"]), ("264", "170"))
+            header, rows = png_data(archive.read("OEBPS/" + image.attrib["src"]))
+            self.assertEqual(header[:4], (264, 170, 8, 0))
+            self.assertEqual(set(value for index, value in enumerate(rows) if index % 265 != 0), {0, 85, 170, 255})
+            self.assertGreater(len(" ".join(body.itertext()).split()), 2500)
+            markers = body.findall("h:span", ns)
+            self.assertEqual([marker.attrib["title"] for marker in markers], ["1", "2"])
+            self.assertTrue(all(marker.attrib["{http://www.idpf.org/2007/ops}type"] == "pagebreak" for marker in markers))
+            css = archive.read("OEBPS/style.css").decode()
+            self.assertIn(".publisher-heading", css)
+            self.assertIn("font-style: italic", css)
+            self.assertIn("text-align: center", css)
+            package = ET.fromstring(archive.read("OEBPS/content.opf"))
+            items = package.findall("{http://www.idpf.org/2007/opf}manifest/{http://www.idpf.org/2007/opf}item")
+            self.assertTrue(any(item.attrib.get("href") == "reader-art.png" for item in items))
+            for index in range(2, 7):
+                # The new variant only changes its first chapter; existing
+                # advanced/stable factories are independent and remain stable.
+                self.assertIn(f"OEBPS/chapter{index}.xhtml", archive.namelist())
+
+    def test_stable_epub_manifest_ranges_and_first_chapter_boundary(self):
+        stable = make_stable_epub()
+        self.assertEqual(stable, make_stable_epub())
+        with ZipFile(BytesIO(stable)) as archive, ZipFile(BytesIO(make_advanced_epub())) as original:
+            self.assertEqual(set(archive.namelist()) - set(original.namelist()), {"META-INF/x-locations.json"})
+            for name in original.namelist():
+                self.assertEqual(archive.read(name), original.read(name))
+            locations = json.loads(archive.read("META-INF/x-locations.json"))
+            self.assertEqual((locations["format"], locations["version"]), ("x-locations", 1))
+            self.assertEqual(len(locations["spine"]), 6)
+            count = 0
+            for index, entry in enumerate(locations["spine"]):
+                document = ET.fromstring(archive.read(f"OEBPS/chapter{index + 1}.xhtml"))
+                body = document.find("{http://www.w3.org/1999/xhtml}body")
+                words = len(" ".join(body.itertext()).split())
+                self.assertEqual(entry, {"index": index, "startLocation": count + 1,
+                                        "endLocation": count + words, "wordStart": count, "wordCount": words})
+                count += words
+            self.assertEqual(locations["totalLocations"], count)
+            self.assertEqual(locations["totalWords"], count)
+            self.assertEqual(locations["wordsPerReferencePage"], locations["spine"][1]["wordStart"])
+            self.assertEqual(locations["totalReferencePages"],
+                             (count + locations["wordsPerReferencePage"] - 1) // locations["wordsPerReferencePage"])
+
     def test_advanced_epub_xml_assets_spine_and_internal_note_targets(self):
         payload = make_advanced_epub()
         with ZipFile(BytesIO(payload)) as archive:

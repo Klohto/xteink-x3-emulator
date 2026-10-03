@@ -3380,10 +3380,10 @@ index 82ee697..ca739d9 100644
  static void esp32c3_jtag_types(void)
 diff --git a/hw/misc/esp32c3_regi2c.c b/hw/misc/esp32c3_regi2c.c
 new file mode 100644
-index 0000000..0608679
+index 0000000..ccf9a7b
 --- /dev/null
 +++ b/hw/misc/esp32c3_regi2c.c
-@@ -0,0 +1,388 @@
+@@ -0,0 +1,548 @@
 +/*
 + * ESP32-C3 packed internal analog-register I2C transport.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -3410,6 +3410,10 @@ index 0000000..0608679
 + * DC comparator protocol at0x4c is established by the same image's function
 + * 4228fdca..4228ffb6: bit1 starts, bit24 completes, bits31:30 give the two
 + * comparator signs. It likewise measures a synthetic ideal-zero RF circuit.
++ * IQ protocol in 4228e396..4228e4aa uses FE144 bit1 enable, a pulse of
++ * NRX02c bit23, then FE174 bit16 completion and NRX08c bits18:12 count.
++ * FE148/14c/150/154 are synthetic ideal-zero quadrature accumulators. This
++ * timed digital handshake is independent of the existence of a virtual AP.
 + */
 +#include "qemu/osdep.h"
 +#include "qapi/error.h"
@@ -3432,6 +3436,23 @@ index 0000000..0608679
 +#define PHY_DONE (7u << 24)
 +#define PHY_COMPARATOR (3u << 30)
 +#define DC_DONE BIT(24)
++#define IQ_ENABLE BIT(1)
++#define IQ_REQUEST BIT(23)
++#define IQ_DONE BIT(16)
++
++static void regi2c_iq_complete(void *opaque)
++{
++    ESP32C3Regi2CState *s = opaque;
++
++    if (s->iq_pending) {
++        s->fe_status = IQ_DONE;
++        /* Firmware programs its sample-count threshold in NRX02c[31:24]. */
++        s->nrx_count = MIN(s->nrx_control >> 24, 0x7fu) << 12;
++        s->iq_pending = false;
++        s->synthetic_measurements++;
++        s->synthetic_iq_measurements++;
++    }
++}
 +
 +static void regi2c_dc_complete(void *opaque)
 +{
@@ -3608,8 +3629,12 @@ index 0000000..0608679
 +        /* Completion/comparator fields belong to the measurement engine. */
 +        s->phy_status = (v & ~(PHY_DONE | PHY_COMPARATOR)) |
 +                        (old & (PHY_DONE | PHY_COMPARATOR));
-+        if (!(old & BIT(1)) && (v & BIT(1)) &&
-+            (s->phy_control & PHY_GATE) == PHY_GATE) {
++        /*
++         * Stock 4228cc3a..4228cc5e toggles this request bit and polls
++         * PHY_DONE without enabling either PHY_GATE bit first. The gated
++         * initial-start path at 0x5c is a separate observed protocol.
++         */
++        if (!(old & BIT(1)) && (v & BIT(1))) {
 +            regi2c_phy_start(s);
 +        }
 +        return;
@@ -3637,6 +3662,112 @@ index 0000000..0608679
 +    .impl = {.min_access_size = 4, .max_access_size = 4},
 +};
 +
++static uint64_t regi2c_fe_read(void *opaque, hwaddr addr, unsigned size)
++{
++    ESP32C3Regi2CState *s = opaque;
++
++    switch (addr) {
++    case 0x00: return s->fe_config;   /* 60006140 */
++    case 0x04: return s->fe_control;  /* 60006144 */
++    case 0x08: /* I/Q accumulator registers, ideal-zero synthetic input. */
++    case 0x0c:
++    case 0x10:
++    case 0x14: return 0;
++    case 0x34: return s->fe_status;   /* 60006174 */
++    default:
++        regi2c_unsupported(s, "unmodelled FE read", 0x60006140 + addr);
++        return 0;
++    }
++}
++
++static void regi2c_fe_write(void *opaque, hwaddr addr, uint64_t value,
++                           unsigned size)
++{
++    ESP32C3Regi2CState *s = opaque;
++
++    switch (addr) {
++    case 0x00:
++        s->fe_config = value;
++        break;
++    case 0x04:
++        s->fe_control = value;
++        if (!(value & IQ_ENABLE)) {
++            timer_del(s->iq_timer);
++            s->iq_pending = false;
++            s->fe_status = 0;
++            s->nrx_count = 0;
++        }
++        break;
++    case 0x08:
++    case 0x0c:
++    case 0x10:
++    case 0x14:
++    case 0x34:
++        /* The measurement outputs cannot be manufactured by software. */
++        break;
++    default:
++        regi2c_unsupported(s, "unmodelled FE write", 0x60006140 + addr);
++    }
++}
++
++static uint64_t regi2c_nrx_control_read(void *opaque, hwaddr addr, unsigned size)
++{
++    return ((ESP32C3Regi2CState *)opaque)->nrx_control;
++}
++
++static void regi2c_nrx_control_write(void *opaque, hwaddr addr, uint64_t value,
++                                    unsigned size)
++{
++    ESP32C3Regi2CState *s = opaque;
++    uint32_t old = s->nrx_control;
++
++    s->nrx_control = value;
++    if (!(old & IQ_REQUEST) && (value & IQ_REQUEST) &&
++        (s->fe_control & IQ_ENABLE)) {
++        s->fe_status = 0;
++        s->nrx_count = 0;
++        s->iq_pending = true;
++        timer_mod(s->iq_timer, qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) +
++                  MAX(s->phy_measurement_ns, 1));
++    }
++    /* NRX bit23 falling ends the trigger pulse, not the measurement. */
++}
++
++static uint64_t regi2c_nrx_count_read(void *opaque, hwaddr addr, unsigned size)
++{
++    return ((ESP32C3Regi2CState *)opaque)->nrx_count;
++}
++
++static void regi2c_nrx_count_write(void *opaque, hwaddr addr, uint64_t value,
++                                  unsigned size)
++{
++    /* Read-only synthetic sample count. */
++}
++
++static const MemoryRegionOps regi2c_fe_ops = {
++    .read = regi2c_fe_read,
++    .write = regi2c_fe_write,
++    .endianness = DEVICE_LITTLE_ENDIAN,
++    .valid = {.min_access_size = 4, .max_access_size = 4},
++    .impl = {.min_access_size = 4, .max_access_size = 4},
++};
++
++static const MemoryRegionOps regi2c_nrx_control_ops = {
++    .read = regi2c_nrx_control_read,
++    .write = regi2c_nrx_control_write,
++    .endianness = DEVICE_LITTLE_ENDIAN,
++    .valid = {.min_access_size = 4, .max_access_size = 4},
++    .impl = {.min_access_size = 4, .max_access_size = 4},
++};
++
++static const MemoryRegionOps regi2c_nrx_count_ops = {
++    .read = regi2c_nrx_count_read,
++    .write = regi2c_nrx_count_write,
++    .endianness = DEVICE_LITTLE_ENDIAN,
++    .valid = {.min_access_size = 4, .max_access_size = 4},
++    .impl = {.min_access_size = 4, .max_access_size = 4},
++};
++
 +static void regi2c_reset(DeviceState *dev)
 +{
 +    ESP32C3Regi2CState *s = ESP32C3_REGI2C(dev);
@@ -3644,6 +3775,7 @@ index 0000000..0608679
 +    timer_del(s->timer);
 +    timer_del(s->phy_timer);
 +    timer_del(s->dc_timer);
++    timer_del(s->iq_timer);
 +    memset(s->command, 0, sizeof(s->command));
 +    memset(s->control, 0, sizeof(s->control));
 +    memset(s->saradc, 0, sizeof(s->saradc));
@@ -3656,6 +3788,12 @@ index 0000000..0608679
 +    s->phy_pending = false;
 +    s->dc_control = 0;
 +    s->dc_pending = false;
++    s->fe_config = 0;
++    s->fe_control = 0;
++    s->fe_status = 0;
++    s->nrx_control = 0;
++    s->nrx_count = 0;
++    s->iq_pending = false;
 +}
 +
 +static bool regi2c_unmodelled(Object *obj, Error **errp)
@@ -3676,8 +3814,8 @@ index 0000000..0608679
 +
 +static const VMStateDescription vmstate_regi2c = {
 +    .name = TYPE_ESP32C3_REGI2C,
-+    .version_id = 2,
-+    .minimum_version_id = 2,
++    .version_id = 3,
++    .minimum_version_id = 3,
 +    .post_load = regi2c_post_load,
 +    .fields = (VMStateField[]) {
 +        VMSTATE_UINT32_ARRAY(command, ESP32C3Regi2CState, 2),
@@ -3693,6 +3831,14 @@ index 0000000..0608679
 +        VMSTATE_UINT32(dc_control, ESP32C3Regi2CState),
 +        VMSTATE_BOOL(dc_pending, ESP32C3Regi2CState),
 +        VMSTATE_TIMER_PTR(dc_timer, ESP32C3Regi2CState),
++        VMSTATE_UINT32(fe_config, ESP32C3Regi2CState),
++        VMSTATE_UINT32(fe_control, ESP32C3Regi2CState),
++        VMSTATE_UINT32(fe_status, ESP32C3Regi2CState),
++        VMSTATE_UINT32(nrx_control, ESP32C3Regi2CState),
++        VMSTATE_UINT32(nrx_count, ESP32C3Regi2CState),
++        VMSTATE_BOOL(iq_pending, ESP32C3Regi2CState),
++        VMSTATE_TIMER_PTR(iq_timer, ESP32C3Regi2CState),
++        VMSTATE_UINT64(synthetic_iq_measurements, ESP32C3Regi2CState),
 +        VMSTATE_UINT64(synthetic_measurements, ESP32C3Regi2CState),
 +        VMSTATE_UINT64(unsupported_count, ESP32C3Regi2CState),
 +        VMSTATE_UINT64(transfer_count, ESP32C3Regi2CState),
@@ -3718,9 +3864,19 @@ index 0000000..0608679
 +    memory_region_init_io(&s->iomem, obj, &regi2c_ops, s,
 +                          TYPE_ESP32C3_REGI2C, 0x60);
 +    sysbus_init_mmio(dev, &s->iomem);
++    memory_region_init_io(&s->fe_iomem, obj, &regi2c_fe_ops, s,
++                          TYPE_ESP32C3_REGI2C ".fe", 0x38);
++    sysbus_init_mmio(dev, &s->fe_iomem);
++    memory_region_init_io(&s->nrx_control_iomem, obj, &regi2c_nrx_control_ops, s,
++                          TYPE_ESP32C3_REGI2C ".nrx-control", 4);
++    sysbus_init_mmio(dev, &s->nrx_control_iomem);
++    memory_region_init_io(&s->nrx_count_iomem, obj, &regi2c_nrx_count_ops, s,
++                          TYPE_ESP32C3_REGI2C ".nrx-count", 4);
++    sysbus_init_mmio(dev, &s->nrx_count_iomem);
 +    s->timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, regi2c_complete, s);
 +    s->phy_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, regi2c_phy_complete, s);
 +    s->dc_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, regi2c_dc_complete, s);
++    s->iq_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, regi2c_iq_complete, s);
 +    object_property_add_uint64_ptr(obj, "unsupported-accesses",
 +                                  &s->unsupported_count, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "transfer-count", &s->transfer_count,
@@ -3731,6 +3887,9 @@ index 0000000..0608679
 +                                  OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "synthetic-measurements",
 +                                  &s->synthetic_measurements,
++                                  OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "synthetic-iq-measurements",
++                                  &s->synthetic_iq_measurements,
 +                                  OBJ_PROP_FLAG_READ);
 +    object_property_add_bool(obj, "phy-handshake-modelled",
 +                             regi2c_phy_handshake_modelled, NULL);
@@ -3748,6 +3907,7 @@ index 0000000..0608679
 +    timer_free(s->timer);
 +    timer_free(s->phy_timer);
 +    timer_free(s->dc_timer);
++    timer_free(s->iq_timer);
 +}
 +
 +static void regi2c_class_init(ObjectClass *klass, void *data)
@@ -5265,7 +5425,7 @@ index 0000000..6626e7d
 +type_init(xteink_x3_adc_register_types)
 diff --git a/hw/net/esp32c3_wifi.c b/hw/net/esp32c3_wifi.c
 new file mode 100644
-index 0000000..8997dde
+index 0000000..2495eea
 --- /dev/null
 +++ b/hw/net/esp32c3_wifi.c
 @@ -0,0 +1,516 @@
@@ -5298,6 +5458,7 @@ index 0000000..8997dde
 +#include "hw/net/esp32c3_wifi.h"
 +#include "exec/address-spaces.h"
 +#include "zlib.h"
++#include "trace.h"
 +
 +#define DMA_HIGH 0x3fc00000u
 +#define MAC_EVENTS 0xc3c
@@ -5491,8 +5652,7 @@ index 0000000..8997dde
 +        goto done;
 +    }
 +    s->tx_frames++;
-+    qemu_log_mask(LOG_UNIMP, "esp32c3-wifi: TX queue=%u desc=0x%08x len=%zu fc=0x%04x\n",
-+                  queue, desc, len, lduw_le_p(frame));
++    trace_esp32c3_wifi_tx(queue, desc, len, lduw_le_p(frame));
 +    if (s->air_enabled) {
 +        wifi_station_frame(s, frame, len);
 +    }
@@ -5794,6 +5954,17 @@ index 00a9e9d..e306416 100644
  
  subdir('can')
 +system_ss.add(when: 'CONFIG_RISCV_ESP32C3', if_true: files('esp32c3_wifi.c'))
+diff --git a/hw/net/trace-events b/hw/net/trace-events
+index d0f1d8c..46e3b82 100644
+--- a/hw/net/trace-events
++++ b/hw/net/trace-events
+@@ -511,3 +511,6 @@ xen_netdev_connect(int dev, unsigned int tx, unsigned int rx, int port) "vif%u t
+ xen_netdev_frontend_changed(const char *dev, int state) "vif%s state %d"
+ xen_netdev_tx(int dev, int ref, int off, int len, unsigned int flags, const char *c, const char *d, const char *m, const char *e) "vif%u ref %u off %u len %u flags 0x%x%s%s%s%s"
+ xen_netdev_rx(int dev, int idx, int status, int flags) "vif%u idx %d status %d flags 0x%x"
++
++# esp32c3_wifi.c
++esp32c3_wifi_tx(unsigned queue, uint32_t desc, size_t len, uint16_t fc) "queue=%u desc=0x%08x len=%zu fc=0x%04x"
 diff --git a/hw/riscv/Kconfig b/hw/riscv/Kconfig
 index 4177705..6c812df 100644
 --- a/hw/riscv/Kconfig
@@ -5808,7 +5979,7 @@ index 4177705..6c812df 100644
  config RISCV_ESP32C6
      bool
 diff --git a/hw/riscv/esp32c3.c b/hw/riscv/esp32c3.c
-index ed698fb..95b0946 100644
+index ed698fb..84fc5b1 100644
 --- a/hw/riscv/esp32c3.c
 +++ b/hw/riscv/esp32c3.c
 @@ -14,6 +14,7 @@
@@ -6262,7 +6433,7 @@ index ed698fb..95b0946 100644
  
      /* Realize all the I/O peripherals we depend on */
  
-@@ -446,15 +777,41 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -446,15 +777,47 @@ static void esp32c3_machine_init(MachineState *machine)
      }
  
      /* Initialize OpenCores Ethernet controller now sicne it requires the interrupt matrix */
@@ -6294,6 +6465,12 @@ index ed698fb..95b0946 100644
 +        sysbus_realize(SYS_BUS_DEVICE(&ms->regi2c), &error_fatal);
 +        memory_region_add_subregion_overlap(sys_mem, 0x6000e000,
 +            sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->regi2c), 0), 0);
++        memory_region_add_subregion_overlap(sys_mem, 0x60006140,
++            sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->regi2c), 1), 0);
++        memory_region_add_subregion_overlap(sys_mem, 0x6001c02c,
++            sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->regi2c), 2), 0);
++        memory_region_add_subregion_overlap(sys_mem, 0x6001c08c,
++            sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->regi2c), 3), 0);
 +        sysbus_realize(SYS_BUS_DEVICE(&ms->assist_debug), &error_fatal);
 +        memory_region_add_subregion_overlap(sys_mem, DR_REG_ASSIST_DEBUG_BASE,
 +            sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->assist_debug), 0), 0);
@@ -6305,7 +6482,7 @@ index ed698fb..95b0946 100644
      /* RTC CNTL realization */
      {
          sysbus_realize(SYS_BUS_DEVICE(&ms->rtccntl), &error_fatal);
-@@ -463,6 +820,25 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -463,6 +826,25 @@ static void esp32c3_machine_init(MachineState *machine)
          /* Connect CNTL's reset-request GPIO to the SoC's reset GPIO */
          qdev_connect_gpio_out_named(DEVICE(&ms->rtccntl), ESP32C3_RTC_CPU_RESET_GPIO, 0,
                                      qdev_get_gpio_in_named(DEVICE(&ms->soc), ESP32C3_RESET_GPIO_NAME, 0));
@@ -6331,7 +6508,7 @@ index ed698fb..95b0946 100644
      }
  
      /* SPI1 controller (SPI Flash) */
-@@ -471,6 +847,14 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -471,6 +853,14 @@ static void esp32c3_machine_init(MachineState *machine)
          sysbus_realize(SYS_BUS_DEVICE(&ms->spi1), &error_fatal);
          MemoryRegion *mr = sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->spi1), 0);
          memory_region_add_subregion_overlap(sys_mem, DR_REG_SPI1_BASE, mr, 0);
@@ -6346,7 +6523,7 @@ index ed698fb..95b0946 100644
          if (blk) {
              esp32c3_init_spi_flash(ms, blk);
          }
-@@ -488,8 +872,75 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -488,8 +878,75 @@ static void esp32c3_machine_init(MachineState *machine)
      /* GPIO realization */
      {
          sysbus_realize(SYS_BUS_DEVICE(&ms->gpio), &error_fatal);
@@ -6422,7 +6599,7 @@ index ed698fb..95b0946 100644
      }
  
      /* (Extmem) Cache realization */
-@@ -520,6 +971,12 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -520,6 +977,12 @@ static void esp32c3_machine_init(MachineState *machine)
          sysbus_realize(SYS_BUS_DEVICE(&ms->clock), &error_fatal);
          MemoryRegion *mr = sysbus_mmio_get_region(SYS_BUS_DEVICE(&ms->clock), 0);
          memory_region_add_subregion_overlap(sys_mem, DR_REG_SYSTEM_BASE, mr, 0);
@@ -6435,7 +6612,7 @@ index ed698fb..95b0946 100644
          /* Connect the IRQ lines to the interrupt matrix */
          for (int i = 0; i < ESP32C3_SYSTEM_CPU_INTR_COUNT; i++) {
              sysbus_connect_irq(SYS_BUS_DEVICE(&ms->clock), i,
-@@ -660,6 +1117,62 @@ static void esp32c3_machine_init(MachineState *machine)
+@@ -660,6 +1123,62 @@ static void esp32c3_machine_init(MachineState *machine)
  
  
  /* Initialize machine type */
@@ -6498,7 +6675,7 @@ index ed698fb..95b0946 100644
  static void esp32c3_machine_class_init(ObjectClass *oc, void *data)
  {
      MachineClass *mc = MACHINE_CLASS(oc);
-@@ -670,6 +1183,12 @@ static void esp32c3_machine_class_init(ObjectClass *oc, void *data)
+@@ -670,6 +1189,12 @@ static void esp32c3_machine_class_init(ObjectClass *oc, void *data)
      mc->default_cpus = 1;
      // 0x4f600
      mc->default_ram_size = 400 * 1024;
@@ -6511,7 +6688,7 @@ index ed698fb..95b0946 100644
  }
  
  /* Create a new type of machine ("child class") */
-@@ -679,6 +1198,8 @@ static const TypeInfo esp32c3_info = {
+@@ -679,6 +1204,8 @@ static const TypeInfo esp32c3_info = {
      .parent = TYPE_MACHINE,
      /* Real size in bytes of our machine instance */
      .instance_size = sizeof(Esp32C3MachineState),
@@ -7816,10 +7993,10 @@ index 8ac6ebb..199977c 100644
 +void esp32c3_jtag_set_sleep(ESP32C3UsbJtagState *s, bool sleeping);
 diff --git a/include/hw/misc/esp32c3_regi2c.h b/include/hw/misc/esp32c3_regi2c.h
 new file mode 100644
-index 0000000..f226026
+index 0000000..5e80f70
 --- /dev/null
 +++ b/include/hw/misc/esp32c3_regi2c.h
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,47 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#ifndef HW_ESP32C3_REGI2C_H
 +#define HW_ESP32C3_REGI2C_H
@@ -7833,9 +8010,13 @@ index 0000000..f226026
 +struct ESP32C3Regi2CState {
 +    SysBusDevice parent_obj;
 +    MemoryRegion iomem;
++    MemoryRegion fe_iomem;
++    MemoryRegion nrx_control_iomem;
++    MemoryRegion nrx_count_iomem;
 +    QEMUTimer *timer;
 +    QEMUTimer *phy_timer;
 +    QEMUTimer *dc_timer;
++    QEMUTimer *iq_timer;
 +    uint32_t command[2];
 +    uint32_t control[3];
 +    uint8_t saradc[8];
@@ -7846,6 +8027,12 @@ index 0000000..f226026
 +    bool phy_pending;
 +    uint32_t dc_control;
 +    bool dc_pending;
++    uint32_t fe_config;
++    uint32_t fe_control;
++    uint32_t fe_status;
++    uint32_t nrx_control;
++    uint32_t nrx_count;
++    bool iq_pending;
 +    uint32_t transaction_ns;
 +    uint32_t phy_measurement_ns;
 +    uint64_t unsupported_count;
@@ -7853,6 +8040,7 @@ index 0000000..f226026
 +    uint64_t read_count;
 +    uint64_t write_count;
 +    uint64_t synthetic_measurements;
++    uint64_t synthetic_iq_measurements;
 +};
 +
 +#endif
@@ -9633,10 +9821,10 @@ index 0000000..29461a0
 +}
 diff --git a/tests/qtest/esp32c3-regi2c-test.c b/tests/qtest/esp32c3-regi2c-test.c
 new file mode 100644
-index 0000000..3419823
+index 0000000..512a54d
 --- /dev/null
 +++ b/tests/qtest/esp32c3-regi2c-test.c
-@@ -0,0 +1,253 @@
+@@ -0,0 +1,390 @@
 +/*
 + * Packed analog-register I2C transport through the C3 guest MMIO interface.
 + * Protocol constants follow the pinned mask-ROM helpers, not RTC-I2C headers.
@@ -9854,6 +10042,49 @@ index 0000000..3419823
 +    qtest_quit(qts);
 +}
 +
++static void test_phy_ungated_retrigger(void)
++{
++    QTestState *qts = start();
++    const uint32_t done = 7u << 24;
++    QDict *reply;
++
++    /* The stock cc3a..cc5e loop does not enable the 0x5c gates. */
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x5c), ==, 0);
++    qtest_writel(qts, BASE + 0x50, done | 2);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, 2);
++    qtest_clock_step(qts, 999);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, 2);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 0);
++    qtest_clock_step(qts, 1);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, done | 2);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 1);
++
++    /* A sustained request does not manufacture additional measurements. */
++    qtest_writel(qts, BASE + 0x50, 2);
++    qtest_clock_step(qts, 1000);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 1);
++    qtest_writel(qts, BASE + 0x50, 0);
++    qtest_writel(qts, BASE + 0x50, 2);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, 2);
++    qtest_writel(qts, BASE + 0x5c, 0); /* Existing explicit cancellation. */
++    qtest_clock_step(qts, 1000);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, 2);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 1);
++
++    /* Digital reset cancels an ungated request as well as a gated one. */
++    qtest_writel(qts, BASE + 0x50, 0);
++    qtest_writel(qts, BASE + 0x50, 2);
++    reply = qtest_qmp(qts, "{ 'execute': 'system_reset' }");
++    g_assert_false(qdict_haskey(reply, "error"));
++    qobject_unref(reply);
++    qtest_clock_step(qts, 2000);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x50), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, BASE + 0x5c), ==, 0);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 1);
++    g_assert_cmpuint(counter(qts, "unsupported-accesses"), ==, 0);
++    qtest_quit(qts);
++}
++
 +static void test_dc_comparator_handshake(void)
 +{
 +    QTestState *qts = start();
@@ -9876,6 +10107,97 @@ index 0000000..3419823
 +    qtest_quit(qts);
 +}
 +
++#define FE UINT64_C(0x60006140)
++#define NRX_CONTROL UINT64_C(0x6001c02c)
++#define NRX_COUNT UINT64_C(0x6001c08c)
++#define IQ_DONE (1u << 16)
++#define IQ_REQUEST (1u << 23)
++
++static void test_iq_pulse_handshake(void)
++{
++    QTestState *qts = start();
++    const uint32_t threshold = 70u << 24;
++
++    /* Source4228e396 programs threshold70, then pulses NRX bit23. */
++    qtest_writel(qts, NRX_CONTROL, threshold | IQ_REQUEST);
++    qtest_clock_step(qts, 2000);
++    g_assert_cmphex(qtest_readl(qts, FE + 0x34), ==, 0);
++    qtest_writel(qts, NRX_CONTROL, threshold);
++    qtest_writel(qts, FE, 1u << 26);
++    qtest_writel(qts, FE + 4, 0x00100001);
++    qtest_writel(qts, FE + 4, qtest_readl(qts, FE + 4) | 2);
++    g_assert_cmphex(qtest_readl(qts, FE), ==, 1u << 26);
++    g_assert_cmphex(qtest_readl(qts, FE + 4), ==, 0x00100003);
++    qtest_clock_step(qts, 2000);
++    g_assert_cmphex(qtest_readl(qts, FE + 0x34), ==, 0);
++
++    qtest_writel(qts, NRX_CONTROL, threshold | IQ_REQUEST);
++    qtest_clock_step(qts, 999);
++    g_assert_cmphex(qtest_readl(qts, FE + 0x34), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, NRX_COUNT), ==, 0);
++    qtest_writel(qts, NRX_CONTROL, threshold); /* Falling pulse is not cancel. */
++    qtest_clock_step(qts, 1);
++    g_assert_cmphex(qtest_readl(qts, FE + 0x34), ==, IQ_DONE);
++    g_assert_cmphex(qtest_readl(qts, NRX_COUNT), ==, 70u << 12);
++    g_assert_cmpuint(counter(qts, "synthetic-iq-measurements"), ==, 1);
++    g_assert_cmpuint(counter(qts, "synthetic-measurements"), ==, 1);
++
++    for (unsigned off = 8; off <= 0x14; off += 4) {
++        qtest_writel(qts, FE + off, 0xffffffff);
++        g_assert_cmphex(qtest_readl(qts, FE + off), ==, 0);
++    }
++    qtest_writel(qts, FE + 0x34, 0);
++    qtest_writel(qts, NRX_COUNT, 0xffffffff);
++    g_assert_cmphex(qtest_readl(qts, FE + 0x34), ==, IQ_DONE);
++    g_assert_cmphex(qtest_readl(qts, NRX_COUNT), ==, 70u << 12);
++    g_assert_cmpuint(counter(qts, "unsupported-accesses"), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_iq_repeat_cancel_reset(void)
++{
++    QTestState *qts = start();
++    const uint32_t request = (70u << 24) | IQ_REQUEST;
++    QDict *reply;
++
++    qtest_writel(qts, FE + 4, 3);
++    qtest_writel(qts, NRX_CONTROL, request);
++    qtest_clock_step(qts, 1000);
++    qtest_writel(qts, NRX_CONTROL, request);
++    qtest_clock_step(qts, 2000);
++    g_assert_cmpuint(counter(qts, "synthetic-iq-measurements"), ==, 1);
++    qtest_writel(qts, NRX_CONTROL, 0xff000000);
++    qtest_writel(qts, NRX_CONTROL, 0xff000000 | IQ_REQUEST);
++    g_assert_cmphex(qtest_readl(qts, FE + 0x34), ==, 0);
++    qtest_clock_step(qts, 1000);
++    g_assert_cmphex(qtest_readl(qts, NRX_COUNT), ==, 0x7fu << 12);
++    g_assert_cmpuint(counter(qts, "synthetic-iq-measurements"), ==, 2);
++
++    qtest_writel(qts, NRX_CONTROL, 0);
++    qtest_writel(qts, NRX_CONTROL, request);
++    qtest_writel(qts, FE + 4, 1);
++    qtest_clock_step(qts, 1000);
++    g_assert_cmphex(qtest_readl(qts, FE + 0x34), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, NRX_COUNT), ==, 0);
++    g_assert_cmpuint(counter(qts, "synthetic-iq-measurements"), ==, 2);
++
++    qtest_writel(qts, FE + 4, 3);
++    qtest_writel(qts, NRX_CONTROL, 0);
++    qtest_writel(qts, NRX_CONTROL, request);
++    reply = qtest_qmp(qts, "{ 'execute': 'system_reset' }");
++    g_assert_false(qdict_haskey(reply, "error"));
++    qobject_unref(reply);
++    qtest_clock_step(qts, 2000);
++    g_assert_cmphex(qtest_readl(qts, FE), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, FE + 4), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, FE + 0x34), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, NRX_CONTROL), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, NRX_COUNT), ==, 0);
++    g_assert_cmpuint(counter(qts, "synthetic-iq-measurements"), ==, 2);
++    g_assert_cmpuint(counter(qts, "unsupported-accesses"), ==, 0);
++    qtest_quit(qts);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -9887,7 +10209,10 @@ index 0000000..3419823
 +    qtest_add_func("/esp32c3-regi2c/phy-measurement-handshake",
 +                   test_phy_measurement_handshake);
 +    qtest_add_func("/esp32c3-regi2c/phy-reset-pending", test_phy_reset_pending);
++    qtest_add_func("/esp32c3-regi2c/phy-ungated-retrigger", test_phy_ungated_retrigger);
 +    qtest_add_func("/esp32c3-regi2c/dc-comparator-handshake", test_dc_comparator_handshake);
++    qtest_add_func("/esp32c3-regi2c/iq-pulse-handshake", test_iq_pulse_handshake);
++    qtest_add_func("/esp32c3-regi2c/iq-repeat-cancel-reset", test_iq_repeat_cancel_reset);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/esp32c3-rtc-test.c b/tests/qtest/esp32c3-rtc-test.c

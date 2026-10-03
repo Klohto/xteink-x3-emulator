@@ -1,0 +1,3400 @@
+{
+  "schema_version": 1,
+  "workflow": "media",
+  "firmware_source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "firmware_release_source_commit": "b25beb13761d5851f98e7eada09aa5e7d430df48",
+  "backend_kind": "real ESP32-C3 QEMU guest",
+  "functional_pass": true,
+  "strict_pass": false,
+  "completed": true,
+  "speed_selection_allowed": false,
+  "timing_calibrated": false,
+  "physical_output_validated": false,
+  "checks": {
+    "pinned_full_flash": true,
+    "003-a-mono.bmp_source_geometry_and_tones": true,
+    "004-b-gray.bmp_source_geometry_and_tones": true,
+    "004-b-gray.bmp_native_four_tones": true,
+    "005-c-gray.png_source_geometry_and_tones": true,
+    "006-d-alpha.png_source_geometry_and_tones": true,
+    "png_alpha_white_compositing": true,
+    "007-e-small.bmp_source_geometry_and_tones": true,
+    "007-e-small.bmp_native_four_tones": true,
+    "008-f-small.png_source_geometry_and_tones": true,
+    "009-return-e-small.bmp_source_geometry_and_tones": true,
+    "009-return-e-small.bmp_native_four_tones": true,
+    "010-return-d-alpha.png_source_geometry_and_tones": true,
+    "011-return-c-gray.png_source_geometry_and_tones": true,
+    "012-return-b-gray.bmp_source_geometry_and_tones": true,
+    "012-return-b-gray.bmp_native_four_tones": true,
+    "013-return-a-mono.bmp_source_geometry_and_tones": true,
+    "image_previous_restores_original": true,
+    "rom_cold_boot": true,
+    "controlled_cold_boot_reset_sequence": true,
+    "hardware_detect_x3": true,
+    "post_gpio_x3": true,
+    "no_sd_error_or_guest_panic": true,
+    "backend_stopped_cleanly": true
+  },
+  "frames": {
+    "home": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e",
+      "pixel_sha256": "e578cc6b8de54475dd0509362996561163ceb43ecd21b99b04b6343fbe029d11",
+      "dark_pixels": 15713,
+      "light_pixels": 402463,
+      "path": "frames/home.pgm",
+      "t_ns": 2836809624,
+      "frame_count": 4,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 1608319460,
+      "observed_quiet_interval_ns": 1228490164,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1956536157,
+      "dump_refresh_count": 4,
+      "trace_frame_count": 4,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 92,
+        "trace-events-flushed": 92,
+        "trace-bytes-flushed": 6913,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 4,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 6913,
+        "trace-fd-position": 6913,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 6913,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 6913,
+        "file_records": 92,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 1608318620
+    },
+    "001-root-browser": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "49659e9871c167d6b7801fe982c3a1774ed4cfeaca5282b6849c2ff6e5ad9e56",
+      "pixel_sha256": "39d75c25caaf2d521aa24806e30b91d9552232dc3daefbb3f532c128397ac526",
+      "dark_pixels": 12366,
+      "light_pixels": 405810,
+      "path": "frames/001-root-browser.pgm",
+      "t_ns": 5827000080,
+      "frame_count": 5,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 4601139616,
+      "observed_quiet_interval_ns": 1225860464,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2915562478,
+      "dump_refresh_count": 5,
+      "trace_frame_count": 5,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 108,
+        "trace-events-flushed": 108,
+        "trace-bytes-flushed": 8139,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 5,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 8139,
+        "trace-fd-position": 8139,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 8139,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 8139,
+        "file_records": 108,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 4598357472
+    },
+    "002-fixture-folder": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "4ec641d303b9ecd116dd46605765259ceeac41c99ec0449edfe9a9f4388200e4",
+      "pixel_sha256": "bf01e406522302602b5f797b235048aff0fe858a3967f666b22b9666e39dd20f",
+      "dark_pixels": 15566,
+      "light_pixels": 402610,
+      "path": "frames/002-fixture-folder.pgm",
+      "t_ns": 8527881656,
+      "frame_count": 6,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 7475091352,
+      "observed_quiet_interval_ns": 1052790304,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1657700270,
+      "dump_refresh_count": 6,
+      "trace_frame_count": 6,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 124,
+        "trace-events-flushed": 124,
+        "trace-bytes-flushed": 9372,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 6,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 9372,
+        "trace-fd-position": 9372,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 9372,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 9372,
+        "file_records": 124,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 7471220312
+    },
+    "003-a-mono.bmp": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "571cba3f944aa9d3e848319c27bafb40be817ef6e89a9193e3023acac785048f",
+      "pixel_sha256": "820373c25913e0a908feacc48b7d810129e503b8a731cce138503ccd8c4a9672",
+      "dark_pixels": 195035,
+      "light_pixels": 223141,
+      "path": "frames/003-a-mono.bmp.pgm",
+      "t_ns": 12422778424,
+      "frame_count": 11,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 11356327600,
+      "observed_quiet_interval_ns": 1066450824,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 3914053256,
+      "dump_refresh_count": 11,
+      "trace_frame_count": 11,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 204,
+        "trace-events-flushed": 204,
+        "trace-bytes-flushed": 15616,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 11,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 15616,
+        "trace-fd-position": 15616,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 15616,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 15616,
+        "file_records": 204,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 11354108272
+    },
+    "004-b-gray.bmp": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "192ce3557bb5ad39ac9a4cfacd537d7b2c47b8b0c6c22b96ae6655fbf49081dc",
+      "pixel_sha256": "01c161839132d8fa85077ffa76bb6125fcfd181c7bf49f31f6a47803df08041e",
+      "dark_pixels": 273582,
+      "light_pixels": 144594,
+      "path": "frames/004-b-gray.bmp.pgm",
+      "t_ns": 20793762584,
+      "frame_count": 19,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 19572935512,
+      "observed_quiet_interval_ns": 1220827072,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2916996650,
+      "dump_refresh_count": 19,
+      "trace_frame_count": 19,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 337,
+        "trace-events-flushed": 337,
+        "trace-bytes-flushed": 25986,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 19,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 25986,
+        "trace-fd-position": 25986,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 25986,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 25986,
+        "file_records": 337,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 19570803952
+    },
+    "005-c-gray.png": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "7628173bf022df2b68d71e2da0e61ffb035bc1f4505428d29245fd26ffb81ff4",
+      "pixel_sha256": "f5c267d16990c29fae691cbf1c91e2d46d7093ff5ef1620752a58715c63ea984",
+      "dark_pixels": 258864,
+      "light_pixels": 159312,
+      "path": "frames/005-c-gray.png.pgm",
+      "t_ns": 26507762584,
+      "frame_count": 22,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 25431713904,
+      "observed_quiet_interval_ns": 1076048680,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1699289869,
+      "dump_refresh_count": 22,
+      "trace_frame_count": 22,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 385,
+        "trace-events-flushed": 385,
+        "trace-bytes-flushed": 29733,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 22,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 29733,
+        "trace-fd-position": 29733,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 29733,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 29733,
+        "file_records": 385,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 25430137256
+    },
+    "006-d-alpha.png": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "a4c10eb81da403fd5938b92f54c64ebe1f7bc35c60d1422ea62abb2b81883c25",
+      "pixel_sha256": "a2c8a63ffb947d2af87357fc6ca502b01da4e0ef9f3f89b86d92f98c3d9671ca",
+      "dark_pixels": 264022,
+      "light_pixels": 154154,
+      "path": "frames/006-d-alpha.png.pgm",
+      "t_ns": 31352762584,
+      "frame_count": 25,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 30259276816,
+      "observed_quiet_interval_ns": 1093485768,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 841889889,
+      "dump_refresh_count": 25,
+      "trace_frame_count": 25,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 433,
+        "trace-events-flushed": 433,
+        "trace-bytes-flushed": 33478,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 25,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 33478,
+        "trace-fd-position": 33478,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 33478,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 33478,
+        "file_records": 433,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 30258718696
+    },
+    "007-e-small.bmp": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "30b426fe29999177b07fff33bae47aa2f5f6b52966b5f73c4b8a6317f6c89b10",
+      "pixel_sha256": "fb4ced73509896f61c042a1b004969fbce8db5e2a8714b32c4b69e26620b4d2c",
+      "dark_pixels": 72590,
+      "light_pixels": 345586,
+      "path": "frames/007-e-small.bmp.pgm",
+      "t_ns": 37393000272,
+      "frame_count": 33,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 36169035192,
+      "observed_quiet_interval_ns": 1223965080,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2843913538,
+      "dump_refresh_count": 33,
+      "trace_frame_count": 33,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 566,
+        "trace-events-flushed": 566,
+        "trace-bytes-flushed": 43852,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 33,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 43852,
+        "trace-fd-position": 43852,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 43852,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 43852,
+        "file_records": 566,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 36168637816
+    },
+    "008-f-small.png": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "b9e7b05232a2bda9b09f78d4431139a0c0659a92b41be489ccd29ae2c30b8efa",
+      "pixel_sha256": "bd4a0da597a4973f8d623c6071e3819b4c6a79e1eb745e5649a888b77c4fac49",
+      "dark_pixels": 68845,
+      "light_pixels": 349331,
+      "path": "frames/008-f-small.png.pgm",
+      "t_ns": 42822762584,
+      "frame_count": 36,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 41806433208,
+      "observed_quiet_interval_ns": 1016329376,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2805122975,
+      "dump_refresh_count": 36,
+      "trace_frame_count": 36,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 614,
+        "trace-events-flushed": 614,
+        "trace-bytes-flushed": 47599,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 36,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 47599,
+        "trace-fd-position": 47599,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 47599,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 47599,
+        "file_records": 614,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 41803137256
+    },
+    "009-return-e-small.bmp": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "3b2bb654790dd581c28ff15460f08c9dd3825b5e4319f854085d9c4172045ba3",
+      "pixel_sha256": "fb4ced73509896f61c042a1b004969fbce8db5e2a8714b32c4b69e26620b4d2c",
+      "dark_pixels": 72590,
+      "light_pixels": 345586,
+      "path": "frames/009-return-e-small.bmp.pgm",
+      "t_ns": 48978762584,
+      "frame_count": 44,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 47743762584,
+      "observed_quiet_interval_ns": 1235000000,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2843913538,
+      "dump_refresh_count": 44,
+      "trace_frame_count": 44,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 747,
+        "trace-events-flushed": 747,
+        "trace-bytes-flushed": 57972,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 44,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 57972,
+        "trace-fd-position": 57972,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 57972,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 57972,
+        "file_records": 747,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 47743637816
+    },
+    "010-return-d-alpha.png": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "e9a0bdcf84fc74d564f459261b5b46ac2d44a1d1bf3097a6ae7dccf2ca957529",
+      "pixel_sha256": "a2c8a63ffb947d2af87357fc6ca502b01da4e0ef9f3f89b86d92f98c3d9671ca",
+      "dark_pixels": 264022,
+      "light_pixels": 154154,
+      "path": "frames/010-return-d-alpha.png.pgm",
+      "t_ns": 54620868600,
+      "frame_count": 47,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 53592642352,
+      "observed_quiet_interval_ns": 1028226248,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 841889889,
+      "dump_refresh_count": 47,
+      "trace_frame_count": 47,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 795,
+        "trace-events-flushed": 795,
+        "trace-bytes-flushed": 61718,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 47,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 61718,
+        "trace-fd-position": 61718,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 61718,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 61718,
+        "file_records": 795,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 53591776016
+    },
+    "011-return-c-gray.png": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "b3dff04e16619811ef6d1c4699270bd2d299021e73ed7a956cb73e6ba5339cf3",
+      "pixel_sha256": "f5c267d16990c29fae691cbf1c91e2d46d7093ff5ef1620752a58715c63ea984",
+      "dark_pixels": 258864,
+      "light_pixels": 159312,
+      "path": "frames/011-return-c-gray.png.pgm",
+      "t_ns": 59006795776,
+      "frame_count": 50,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 57988801376,
+      "observed_quiet_interval_ns": 1017994400,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1699289869,
+      "dump_refresh_count": 50,
+      "trace_frame_count": 50,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 843,
+        "trace-events-flushed": 843,
+        "trace-bytes-flushed": 65465,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 50,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 65465,
+        "trace-fd-position": 65465,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 65465,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 65465,
+        "file_records": 843,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 57987971128
+    },
+    "012-return-b-gray.bmp": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "41ea0c4c58cf90298609bd570e7886ce2754bf571d6805859faeec6a0d34817f",
+      "pixel_sha256": "01c161839132d8fa85077ffa76bb6125fcfd181c7bf49f31f6a47803df08041e",
+      "dark_pixels": 273582,
+      "light_pixels": 144594,
+      "path": "frames/012-return-b-gray.bmp.pgm",
+      "t_ns": 66361002576,
+      "frame_count": 58,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 65223358112,
+      "observed_quiet_interval_ns": 1137644464,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2916996650,
+      "dump_refresh_count": 58,
+      "trace_frame_count": 58,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 976,
+        "trace-events-flushed": 976,
+        "trace-bytes-flushed": 75834,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 58,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 75834,
+        "trace-fd-position": 75834,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 75834,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 75834,
+        "file_records": 976,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 65219803952
+    },
+    "013-return-a-mono.bmp": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "d8f0a10ca4ca993f884bba0171569e372ae54a9cec688d54a5d2bee8370f0e4a",
+      "pixel_sha256": "820373c25913e0a908feacc48b7d810129e503b8a731cce138503ccd8c4a9672",
+      "dark_pixels": 195035,
+      "light_pixels": 223141,
+      "path": "frames/013-return-a-mono.bmp.pgm",
+      "t_ns": 71699762584,
+      "frame_count": 62,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 70694417048,
+      "observed_quiet_interval_ns": 1005345536,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 3914053256,
+      "dump_refresh_count": 62,
+      "trace_frame_count": 62,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 1040,
+        "trace-events-flushed": 1040,
+        "trace-bytes-flushed": 80870,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 62,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 80870,
+        "trace-fd-position": 80870,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 80870,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 80870,
+        "file_records": 1040,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 70693191328
+    },
+    "014-browser-after-images": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "b633c0c80dde832218f58249af8e32048d5c15b16fc97ae4f6bd9445595f2dba",
+      "pixel_sha256": "bf01e406522302602b5f797b235048aff0fe858a3967f666b22b9666e39dd20f",
+      "dark_pixels": 15566,
+      "light_pixels": 402610,
+      "path": "frames/014-browser-after-images.pgm",
+      "t_ns": 75632099848,
+      "frame_count": 66,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 74596766632,
+      "observed_quiet_interval_ns": 1035333216,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1657700270,
+      "dump_refresh_count": 66,
+      "trace_frame_count": 66,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 1107,
+        "trace-events-flushed": 1107,
+        "trace-bytes-flushed": 86160,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 66,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 86160,
+        "trace-fd-position": 86160,
+        "trace-fd-inode": 537160,
+        "trace-path-size": 86160,
+        "trace-path-inode": 537160,
+        "trace-file-linked": true,
+        "file_bytes": 86160,
+        "file_records": 1107,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 74594576480
+    }
+  },
+  "actions": [
+    {
+      "button": "confirm",
+      "purpose": "Home: open Browse Files",
+      "after_count": 4,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 3878763616,
+        "press_t_ns": 4032163784,
+        "release_deadline_t_ns": 4432163784,
+        "release_observed_t_ns": 4458852800,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 3386819256,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 645344528,
+        "preceding_settled_frame_t_ns": 2836809624,
+        "purpose": "Home: open Browse Files",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Browser: enter the only visible root folder",
+      "after_count": 5,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 6770762584,
+        "press_t_ns": 6900016024,
+        "release_deadline_t_ns": 7300016024,
+        "release_observed_t_ns": 7333627472,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 6360000088,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 540015936,
+        "preceding_settled_frame_t_ns": 5827000080,
+        "purpose": "Browser: enter the only visible root folder",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Open the original 1-bit BMP",
+      "after_count": 6,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 9527936584,
+        "press_t_ns": 9657768928,
+        "release_deadline_t_ns": 10057768928,
+        "release_observed_t_ns": 10076383808,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 9087788704,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 569980224,
+        "preceding_settled_frame_t_ns": 8527881656,
+        "purpose": "Open the original 1-bit BMP",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "after_count": 11,
+      "hold_ms": 1600,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 14179762584,
+        "press_t_ns": 14578986800,
+        "release_deadline_t_ns": 16178986800,
+        "release_observed_t_ns": 16199486432,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 13151000136,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1427986664,
+        "preceding_settled_frame_t_ns": 12422778424,
+        "purpose": "Image viewer: open next sibling through guest file enumeration",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "after_count": 19,
+      "hold_ms": 1600,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 22736762584,
+        "press_t_ns": 23050766528,
+        "release_deadline_t_ns": 24650766528,
+        "release_observed_t_ns": 24668100088,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 21720762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1330003944,
+        "preceding_settled_frame_t_ns": 20793762584,
+        "purpose": "Image viewer: open next sibling through guest file enumeration",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "after_count": 22,
+      "hold_ms": 1600,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 27551000224,
+        "press_t_ns": 27733762584,
+        "release_deadline_t_ns": 29333762584,
+        "release_observed_t_ns": 29359683440,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 27058962376,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 674800208,
+        "preceding_settled_frame_t_ns": 26507762584,
+        "purpose": "Image viewer: open next sibling through guest file enumeration",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "after_count": 25,
+      "hold_ms": 1600,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 32270000248,
+        "press_t_ns": 32482766472,
+        "release_deadline_t_ns": 34082766472,
+        "release_observed_t_ns": 34104434864,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 31753763616,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 729002856,
+        "preceding_settled_frame_t_ns": 31352762584,
+        "purpose": "Image viewer: open next sibling through guest file enumeration",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "after_count": 33,
+      "hold_ms": 1600,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 39371765272,
+        "press_t_ns": 39607847344,
+        "release_deadline_t_ns": 41207847344,
+        "release_observed_t_ns": 41226268104,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 38455000284,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1152847060,
+        "preceding_settled_frame_t_ns": 37393000272,
+        "purpose": "Image viewer: open next sibling through guest file enumeration",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "up",
+      "purpose": "Image viewer: open previous sibling",
+      "after_count": 36,
+      "hold_ms": 1600,
+      "input": {
+        "button": "up",
+        "mask": 16,
+        "request_t_ns": 43820764928,
+        "press_t_ns": 44061896064,
+        "release_deadline_t_ns": 45661896064,
+        "release_observed_t_ns": 45681294216,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 43312000320,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 749895744,
+        "preceding_settled_frame_t_ns": 42822762584,
+        "purpose": "Image viewer: open previous sibling",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "up",
+      "purpose": "Image viewer: open previous sibling",
+      "after_count": 44,
+      "hold_ms": 1600,
+      "input": {
+        "button": "up",
+        "mask": 16,
+        "request_t_ns": 50782962376,
+        "press_t_ns": 51071766504,
+        "release_deadline_t_ns": 52671766504,
+        "release_observed_t_ns": 52687773152,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 49859762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1212003920,
+        "preceding_settled_frame_t_ns": 48978762584,
+        "purpose": "Image viewer: open previous sibling",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "up",
+      "purpose": "Image viewer: open previous sibling",
+      "after_count": 47,
+      "hold_ms": 1600,
+      "input": {
+        "button": "up",
+        "mask": 16,
+        "request_t_ns": 55451002520,
+        "press_t_ns": 55604002520,
+        "release_deadline_t_ns": 57204002520,
+        "release_observed_t_ns": 57225440656,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 55030813640,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 573188880,
+        "preceding_settled_frame_t_ns": 54620868600,
+        "purpose": "Image viewer: open previous sibling",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "up",
+      "purpose": "Image viewer: open previous sibling",
+      "after_count": 50,
+      "hold_ms": 1600,
+      "input": {
+        "button": "up",
+        "mask": 16,
+        "request_t_ns": 60046002552,
+        "press_t_ns": 60226762584,
+        "release_deadline_t_ns": 61826762584,
+        "release_observed_t_ns": 61845629344,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 59528002552,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 698760032,
+        "preceding_settled_frame_t_ns": 59006795776,
+        "purpose": "Image viewer: open previous sibling",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "up",
+      "purpose": "Image viewer: open previous sibling",
+      "after_count": 58,
+      "hold_ms": 1600,
+      "input": {
+        "button": "up",
+        "mask": 16,
+        "request_t_ns": 67845002584,
+        "press_t_ns": 67987763312,
+        "release_deadline_t_ns": 69587763312,
+        "release_observed_t_ns": 69600391656,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 67089763616,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 897999696,
+        "preceding_settled_frame_t_ns": 66361002576,
+        "purpose": "Image viewer: open previous sibling",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "back",
+      "purpose": "Exit image viewer to source folder",
+      "after_count": 62,
+      "hold_ms": 400,
+      "input": {
+        "button": "back",
+        "mask": 1,
+        "request_t_ns": 72907762584,
+        "press_t_ns": 73257121632,
+        "release_deadline_t_ns": 73657121632,
+        "release_observed_t_ns": 73676887576,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 72271777424,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 985344208,
+        "preceding_settled_frame_t_ns": 71699762584,
+        "purpose": "Exit image viewer to source folder",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    }
+  ],
+  "limitations": [
+    "Ideal digital targets only; no physical grayscale or ghosting comparison",
+    "QMP input delivery depends on host scheduling; releases use virtual timers",
+    "Seeded CrossInk preferences are explicit fixture inputs, not a settings UI test"
+  ],
+  "input_settings": {
+    "sleepTimeoutMinutes": 60,
+    "shortPwrBtn": 1,
+    "sleepScreen": 2,
+    "sleepScreenCoverFilter": 0,
+    "sideButtonLongPress": 3
+  },
+  "input_file_sha256": {
+    "/.crosspoint/crossink-settings.json": "4e54dcef6520e13ec17064d9812a8d18b2f35764cb4f3eae7d05758768f1c446",
+    "/Media/a-mono.bmp": "5e00d99981022c39abb11eeca786bed0e2c9cbefeae1ccb8125240b4f8858a46",
+    "/Media/b-gray.bmp": "a8b9303501d8343b1a892d5bf41dae20eeed57e7bd18dcf87e61e3277e164c2b",
+    "/Media/c-gray.png": "ee98276b46903c6e11b7afa13faba07063351e3fe17256916abf9671f0be9c8b",
+    "/Media/d-alpha.png": "e1a16ffa62467ecde8c632ff486852b32341e57af940211992732702dd1aefc3",
+    "/Media/e-small.bmp": "6e717825ea197786c7fd7d71199d879fb3c0506d58bf5649b72d422bd58a324c",
+    "/Media/f-small.png": "e997a5cf7febe5c28091258eaf0033457e9244cfc01c101e2973f31c05aec3cc"
+  },
+  "fixture": {
+    "path": "/tmp/x3-panel-display-cohort-ca893-a/media/fixture-card.img",
+    "format": "MBR/FAT16",
+    "layout": {
+      "size_bytes": 67108864,
+      "partition_lba": 2048,
+      "partition_sectors": 129024,
+      "sectors_per_cluster": 4,
+      "fat_sectors": 126,
+      "fat1_lba": 2049,
+      "fat2_lba": 2175,
+      "root_lba": 2301,
+      "root_sectors": 32,
+      "data_lba": 2333,
+      "data_clusters": 32184
+    },
+    "files": [
+      {
+        "name": ".crosspoint/crossink-settings.json",
+        "size_bytes": 119,
+        "first_cluster": 3,
+        "clusters": 1,
+        "sha256": "4e54dcef6520e13ec17064d9812a8d18b2f35764cb4f3eae7d05758768f1c446"
+      },
+      {
+        "name": "Media/a-mono.bmp",
+        "size_bytes": 53918,
+        "first_cluster": 5,
+        "clusters": 27,
+        "sha256": "5e00d99981022c39abb11eeca786bed0e2c9cbefeae1ccb8125240b4f8858a46"
+      },
+      {
+        "name": "Media/b-gray.bmp",
+        "size_bytes": 209158,
+        "first_cluster": 32,
+        "clusters": 103,
+        "sha256": "a8b9303501d8343b1a892d5bf41dae20eeed57e7bd18dcf87e61e3277e164c2b"
+      },
+      {
+        "name": "Media/c-gray.png",
+        "size_bytes": 1943,
+        "first_cluster": 135,
+        "clusters": 1,
+        "sha256": "ee98276b46903c6e11b7afa13faba07063351e3fe17256916abf9671f0be9c8b"
+      },
+      {
+        "name": "Media/d-alpha.png",
+        "size_bytes": 6062,
+        "first_cluster": 136,
+        "clusters": 3,
+        "sha256": "e1a16ffa62467ecde8c632ff486852b32341e57af940211992732702dd1aefc3"
+      },
+      {
+        "name": "Media/e-small.bmp",
+        "size_bytes": 52342,
+        "first_cluster": 139,
+        "clusters": 26,
+        "sha256": "6e717825ea197786c7fd7d71199d879fb3c0506d58bf5649b72d422bd58a324c"
+      },
+      {
+        "name": "Media/f-small.png",
+        "size_bytes": 551,
+        "first_cluster": 165,
+        "clusters": 1,
+        "sha256": "e997a5cf7febe5c28091258eaf0033457e9244cfc01c101e2973f31c05aec3cc"
+      }
+    ],
+    "directories": [
+      {
+        "name": ".crosspoint",
+        "first_cluster": 2,
+        "clusters": 1
+      },
+      {
+        "name": "Media",
+        "first_cluster": 4,
+        "clusters": 1
+      }
+    ],
+    "persistent": true,
+    "hardware_validation": "pending"
+  },
+  "input_card_sha256": "89e30e8fbb8804310fdadf121c22c3cd0b6449bc0330d3eaed5150d7d49f1097",
+  "launcher_argv": [
+    "qemu-deps/venv/bin/python",
+    "-m",
+    "x3emu",
+    "run",
+    "--backend",
+    "/tmp/x3-panel-private-proof-ca893/qemu-system-riscv32",
+    "--flash",
+    "local/firmware/crossink-v1.6.0-x3-full-flash.bin",
+    "--sd",
+    "/tmp/x3-panel-display-cohort-ca893-a/media/fixture-card.img",
+    "--output",
+    "/tmp/x3-panel-display-cohort-ca893-a/media/run",
+    "--seconds",
+    "1800.0",
+    "--icount",
+    "--icount-shift",
+    "3",
+    "--power-on",
+    "--rom-dir",
+    "local/qemu/install/share/qemu"
+  ],
+  "input_events": [
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 3878763616,
+      "press_t_ns": 4032163784,
+      "release_deadline_t_ns": 4432163784,
+      "release_observed_t_ns": 4458852800,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 3386819256,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 645344528,
+      "preceding_settled_frame_t_ns": 2836809624,
+      "purpose": "Home: open Browse Files",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 6770762584,
+      "press_t_ns": 6900016024,
+      "release_deadline_t_ns": 7300016024,
+      "release_observed_t_ns": 7333627472,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 6360000088,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 540015936,
+      "preceding_settled_frame_t_ns": 5827000080,
+      "purpose": "Browser: enter the only visible root folder",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 9527936584,
+      "press_t_ns": 9657768928,
+      "release_deadline_t_ns": 10057768928,
+      "release_observed_t_ns": 10076383808,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 9087788704,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 569980224,
+      "preceding_settled_frame_t_ns": 8527881656,
+      "purpose": "Open the original 1-bit BMP",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 14179762584,
+      "press_t_ns": 14578986800,
+      "release_deadline_t_ns": 16178986800,
+      "release_observed_t_ns": 16199486432,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 13151000136,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1427986664,
+      "preceding_settled_frame_t_ns": 12422778424,
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 22736762584,
+      "press_t_ns": 23050766528,
+      "release_deadline_t_ns": 24650766528,
+      "release_observed_t_ns": 24668100088,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 21720762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1330003944,
+      "preceding_settled_frame_t_ns": 20793762584,
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 27551000224,
+      "press_t_ns": 27733762584,
+      "release_deadline_t_ns": 29333762584,
+      "release_observed_t_ns": 29359683440,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 27058962376,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 674800208,
+      "preceding_settled_frame_t_ns": 26507762584,
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 32270000248,
+      "press_t_ns": 32482766472,
+      "release_deadline_t_ns": 34082766472,
+      "release_observed_t_ns": 34104434864,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 31753763616,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 729002856,
+      "preceding_settled_frame_t_ns": 31352762584,
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 39371765272,
+      "press_t_ns": 39607847344,
+      "release_deadline_t_ns": 41207847344,
+      "release_observed_t_ns": 41226268104,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 38455000284,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1152847060,
+      "preceding_settled_frame_t_ns": 37393000272,
+      "purpose": "Image viewer: open next sibling through guest file enumeration",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "up",
+      "mask": 16,
+      "request_t_ns": 43820764928,
+      "press_t_ns": 44061896064,
+      "release_deadline_t_ns": 45661896064,
+      "release_observed_t_ns": 45681294216,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 43312000320,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 749895744,
+      "preceding_settled_frame_t_ns": 42822762584,
+      "purpose": "Image viewer: open previous sibling",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "up",
+      "mask": 16,
+      "request_t_ns": 50782962376,
+      "press_t_ns": 51071766504,
+      "release_deadline_t_ns": 52671766504,
+      "release_observed_t_ns": 52687773152,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 49859762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1212003920,
+      "preceding_settled_frame_t_ns": 48978762584,
+      "purpose": "Image viewer: open previous sibling",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "up",
+      "mask": 16,
+      "request_t_ns": 55451002520,
+      "press_t_ns": 55604002520,
+      "release_deadline_t_ns": 57204002520,
+      "release_observed_t_ns": 57225440656,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 55030813640,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 573188880,
+      "preceding_settled_frame_t_ns": 54620868600,
+      "purpose": "Image viewer: open previous sibling",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "up",
+      "mask": 16,
+      "request_t_ns": 60046002552,
+      "press_t_ns": 60226762584,
+      "release_deadline_t_ns": 61826762584,
+      "release_observed_t_ns": 61845629344,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 59528002552,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 698760032,
+      "preceding_settled_frame_t_ns": 59006795776,
+      "purpose": "Image viewer: open previous sibling",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "up",
+      "mask": 16,
+      "request_t_ns": 67845002584,
+      "press_t_ns": 67987763312,
+      "release_deadline_t_ns": 69587763312,
+      "release_observed_t_ns": 69600391656,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 67089763616,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 897999696,
+      "preceding_settled_frame_t_ns": 66361002576,
+      "purpose": "Image viewer: open previous sibling",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "back",
+      "mask": 1,
+      "request_t_ns": 72907762584,
+      "press_t_ns": 73257121632,
+      "release_deadline_t_ns": 73657121632,
+      "release_observed_t_ns": 73676887576,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 72271777424,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 985344208,
+      "preceding_settled_frame_t_ns": 71699762584,
+      "purpose": "Exit image viewer to source folder",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    }
+  ],
+  "observations": {
+    "003-a-mono.bmp_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "004-b-gray.bmp_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 85,
+        "observed_mean": 85.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "85": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 170,
+        "observed_mean": 170.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "170": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "004-b-gray.bmp_native_four_tones": {
+      "255": 144594,
+      "0": 119670,
+      "170": 78408,
+      "85": 75504
+    },
+    "005-c-gray.png_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 45.26627218934911,
+        "observed_mean": 45.26627218934911,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 139,
+          "255": 30
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "006-d-alpha.png_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 45.26627218934911,
+        "observed_mean": 45.26627218934911,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 139,
+          "255": 30
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "png_alpha_white_compositing": [
+      {
+        "source": {
+          "x": 297,
+          "y": 49,
+          "source_luminance": 0,
+          "alpha": 255,
+          "white_composite_luminance": 0
+        },
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 363,
+          "y": 49,
+          "source_luminance": 0,
+          "alpha": 64,
+          "white_composite_luminance": 191
+        },
+        "observed_mean": 108.63905325443787,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 97,
+          "255": 72
+        }
+      },
+      {
+        "source": {
+          "x": 429,
+          "y": 49,
+          "source_luminance": 0,
+          "alpha": 0,
+          "white_composite_luminance": 255
+        },
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "007-e-small.bmp_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 33,
+          "y": 198,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 362,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 99,
+          "y": 198,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 296,
+        "expected_luminance": 85,
+        "observed_mean": 85.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "85": 169
+        }
+      },
+      {
+        "source": {
+          "x": 165,
+          "y": 198,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 230,
+        "expected_luminance": 170,
+        "observed_mean": 170.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "170": 169
+        }
+      },
+      {
+        "source": {
+          "x": 231,
+          "y": 198,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 164,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 24,
+          "y": 24,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 222,
+        "panel_y": 371,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 239,
+          "y": 371,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 569,
+        "panel_y": 156,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 99,
+          "y": 148,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 346,
+        "panel_y": 296,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "007-e-small.bmp_native_four_tones": {
+      "255": 345586,
+      "0": 34112,
+      "170": 19602,
+      "85": 18876
+    },
+    "008-f-small.png_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 33,
+          "y": 198,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 362,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 99,
+          "y": 198,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 296,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 165,
+          "y": 198,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 230,
+        "expected_luminance": 40.739644970414204,
+        "observed_mean": 40.739644970414204,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 142,
+          "255": 27
+        }
+      },
+      {
+        "source": {
+          "x": 231,
+          "y": 198,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 164,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 24,
+          "y": 24,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 222,
+        "panel_y": 371,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 239,
+          "y": 371,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 569,
+        "panel_y": 156,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 99,
+          "y": 148,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 346,
+        "panel_y": 296,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "009-return-e-small.bmp_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 33,
+          "y": 198,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 362,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 99,
+          "y": 198,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 296,
+        "expected_luminance": 85,
+        "observed_mean": 85.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "85": 169
+        }
+      },
+      {
+        "source": {
+          "x": 165,
+          "y": 198,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 230,
+        "expected_luminance": 170,
+        "observed_mean": 170.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "170": 169
+        }
+      },
+      {
+        "source": {
+          "x": 231,
+          "y": 198,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 164,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 24,
+          "y": 24,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 222,
+        "panel_y": 371,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 239,
+          "y": 371,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 569,
+        "panel_y": 156,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 99,
+          "y": 148,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 346,
+        "panel_y": 296,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "009-return-e-small.bmp_native_four_tones": {
+      "255": 345586,
+      "0": 34112,
+      "170": 19602,
+      "85": 18876
+    },
+    "010-return-d-alpha.png_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 45.26627218934911,
+        "observed_mean": 45.26627218934911,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 139,
+          "255": 30
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "011-return-c-gray.png_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 45.26627218934911,
+        "observed_mean": 45.26627218934911,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 139,
+          "255": 30
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0.0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255.0,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": true,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "012-return-b-gray.bmp_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 85,
+        "observed_mean": 85.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "85": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 170,
+        "observed_mean": 170.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "170": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "012-return-b-gray.bmp_native_four_tones": {
+      "255": 144594,
+      "0": 119670,
+      "170": 78408,
+      "85": 75504
+    },
+    "013-return-a-mono.bmp_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ]
+  },
+  "image_completion_observations": {
+    "003-a-mono.bmp": [],
+    "004-b-gray.bmp": [
+      {
+        "frame": {
+          "width": 792,
+          "height": 528,
+          "file_sha256": "99ca63875ecce0ef71676985951bf4acd7b0832ea9b558a81b8b28bdd26128b7",
+          "pixel_sha256": "100b5499a32895da625cdce3bb1d9ebd6f1e7aececd1bc547f88620be9a92769",
+          "dark_pixels": 273582,
+          "light_pixels": 144594,
+          "path": "frames/004-b-gray.bmp-pending-18.pgm",
+          "t_ns": 19145793384,
+          "frame_count": 18,
+          "minimum_quiet_interval_ns": 1000000000,
+          "quiet_interval_start_t_ns": 18144880240,
+          "observed_quiet_interval_ns": 1000913144,
+          "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+          "pixel_crc32": 184426553,
+          "dump_refresh_count": 18,
+          "trace_frame_count": 18,
+          "trace_complete": true,
+          "output_accounting_supported": true,
+          "output_accounting": {
+            "output-errors": 0,
+            "trace-events-attempted": 317,
+            "trace-events-flushed": 317,
+            "trace-bytes-flushed": 24425,
+            "trace-write-errors": 0,
+            "trace-flush-errors": 0,
+            "trace-close-errors": 0,
+            "dump-frames-written": 18,
+            "dump-open-errors": 0,
+            "dump-write-errors": 0,
+            "dump-flush-errors": 0,
+            "dump-close-errors": 0,
+            "trace-fd-size": 24425,
+            "trace-fd-position": 24425,
+            "trace-fd-inode": 537160,
+            "trace-path-size": 24425,
+            "trace-path-inode": 537160,
+            "trace-file-linked": true,
+            "file_bytes": 24425,
+            "file_records": 317,
+            "sequence_complete": true,
+            "file_observer_supported": true,
+            "file_observer_consistent": true,
+            "complete": true
+          },
+          "last_frame_complete_t_ns": 18132052120
+        },
+        "error": "observable effect failed: 004-b-gray.bmp_source_geometry_and_tones"
+      }
+    ],
+    "005-c-gray.png": [],
+    "006-d-alpha.png": [],
+    "007-e-small.bmp": [],
+    "008-f-small.png": [],
+    "009-return-e-small.bmp": [],
+    "010-return-d-alpha.png": [],
+    "011-return-c-gray.png": [],
+    "012-return-b-gray.bmp": [
+      {
+        "frame": {
+          "width": 792,
+          "height": 528,
+          "file_sha256": "64a69866857336eb7ef41e716e8b1706c71576ab6a35032df73cdea34abbf920",
+          "pixel_sha256": "100b5499a32895da625cdce3bb1d9ebd6f1e7aececd1bc547f88620be9a92769",
+          "dark_pixels": 273582,
+          "light_pixels": 144594,
+          "path": "frames/012-return-b-gray.bmp-pending-57.pgm",
+          "t_ns": 64797142088,
+          "frame_count": 57,
+          "minimum_quiet_interval_ns": 1000000000,
+          "quiet_interval_start_t_ns": 63792271576,
+          "observed_quiet_interval_ns": 1004870512,
+          "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+          "pixel_crc32": 184426553,
+          "dump_refresh_count": 57,
+          "trace_frame_count": 57,
+          "trace_complete": true,
+          "output_accounting_supported": true,
+          "output_accounting": {
+            "output-errors": 0,
+            "trace-events-attempted": 956,
+            "trace-events-flushed": 956,
+            "trace-bytes-flushed": 74273,
+            "trace-write-errors": 0,
+            "trace-flush-errors": 0,
+            "trace-close-errors": 0,
+            "dump-frames-written": 57,
+            "dump-open-errors": 0,
+            "dump-write-errors": 0,
+            "dump-flush-errors": 0,
+            "dump-close-errors": 0,
+            "trace-fd-size": 74273,
+            "trace-fd-position": 74273,
+            "trace-fd-inode": 537160,
+            "trace-path-size": 74273,
+            "trace-path-inode": 537160,
+            "trace-file-linked": true,
+            "file_bytes": 74273,
+            "file_records": 956,
+            "sequence_complete": true,
+            "file_observer_supported": true,
+            "file_observer_consistent": true,
+            "complete": true
+          },
+          "last_frame_complete_t_ns": 63781052120
+        },
+        "error": "observable effect failed: 012-return-b-gray.bmp_source_geometry_and_tones"
+      }
+    ],
+    "013-return-a-mono.bmp": []
+  },
+  "stock_output_limits": {
+    "png_viewer": "One BW pass after four-level Bayer quantization; native four-tone PNG display is not exercised"
+  },
+  "state_before_shutdown": {
+    "status": {
+      "status": "running",
+      "running": true
+    },
+    "machine": {
+      "unsupported-io-reads": 47,
+      "unsupported-io-writes": 54,
+      "virtual-time-ns": 76089762584,
+      "power-button": false,
+      "power-button-hold-ns": 1000000000,
+      "unsupported-io-json": [
+        {
+          "address": "0x600050f0",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x40384d5c",
+          "last_read_pc": "0x40384d5c",
+          "first_write_pc": "0x40384d64",
+          "last_write_pc": "0x40384d64",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x60006090",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x40384d44",
+          "last_read_pc": "0x40384d44",
+          "first_write_pc": "0x40384d52",
+          "last_write_pc": "0x40384d52",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001ccd4",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x40384d12",
+          "last_read_pc": "0x40384d34",
+          "first_write_pc": "0x40384d24",
+          "last_write_pc": "0x40384d3a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001d054",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384cee",
+          "last_read_pc": "0x40384d00",
+          "first_write_pc": "0x40384cfe",
+          "last_write_pc": "0x40384d08",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6002609c",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x40384cc4",
+          "last_read_pc": "0x40384ce2",
+          "first_write_pc": "0x40384cd4",
+          "last_write_pc": "0x40384ce8",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600260ac",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384d6e",
+          "last_read_pc": "0x40384da0",
+          "first_write_pc": "0x40384d80",
+          "last_write_pc": "0x40384d96",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c101c",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x4005165a",
+          "last_read_pc": "0x4005165a",
+          "first_write_pc": "0x4005165e",
+          "last_write_pc": "0x4005165e",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c1090",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d18",
+          "last_read_pc": "0x421d3d1c",
+          "first_write_pc": "0x421d41ce",
+          "last_write_pc": "0x421d41e4",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1094",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c1098",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c109c",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a0",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a4",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a8",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d24",
+          "last_read_pc": "0x421d3d24",
+          "first_write_pc": "0x421d41d2",
+          "last_write_pc": "0x421d41d2",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b0",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d40fe",
+          "last_read_pc": "0x421d4126",
+          "first_write_pc": "0x421d410c",
+          "last_write_pc": "0x421d412a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c10b4",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d2e",
+          "last_read_pc": "0x421d3d2e",
+          "first_write_pc": "0x421d41d6",
+          "last_write_pc": "0x421d41d6",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b8",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3f8e",
+          "last_read_pc": "0x421d4172",
+          "first_write_pc": "0x421d3f92",
+          "last_write_pc": "0x421d4178",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10c0",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d28",
+          "last_read_pc": "0x421d3d28",
+          "first_write_pc": "0x421d41e8",
+          "last_write_pc": "0x421d41e8",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10c4",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d4138",
+          "last_read_pc": "0x421d414e",
+          "first_write_pc": "0x421d413c",
+          "last_write_pc": "0x421d4154",
+          "last_write_value": "0x000000c0"
+        },
+        {
+          "address": "0x600c10c8",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d34",
+          "last_read_pc": "0x421d3d34",
+          "first_write_pc": "0x421d41ec",
+          "last_write_pc": "0x421d41ec",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10cc",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3fa0",
+          "last_read_pc": "0x421d4194",
+          "first_write_pc": "0x421d3fa4",
+          "last_write_pc": "0x421d419a",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10d8",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d41fe",
+          "last_write_pc": "0x421d4200",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10fc",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3afa",
+          "last_read_pc": "0x421d3b08",
+          "first_write_pc": "0x421d3b06",
+          "last_write_pc": "0x421d3b0c",
+          "last_write_value": "0x00000005"
+        },
+        {
+          "address": "0x600c1100",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3cb8",
+          "last_read_pc": "0x421d3bd6",
+          "first_write_pc": "0x421d3cbc",
+          "last_write_pc": "0x421d3c82",
+          "last_write_value": "0x00000018"
+        },
+        {
+          "address": "0x600c1130",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d42",
+          "last_read_pc": "0x421d3d42",
+          "first_write_pc": "0x421d4206",
+          "last_write_pc": "0x421d4206",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1134",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3fb0",
+          "last_read_pc": "0x421d41b4",
+          "first_write_pc": "0x421d3fb4",
+          "last_write_pc": "0x421d41ba",
+          "last_write_value": "0x00000002"
+        }
+      ]
+    },
+    "panel": {
+      "unsupported-count": 0,
+      "protocol-errors": 0,
+      "refresh-count": 66,
+      "busy-active": false,
+      "spi-bytes": 7071480,
+      "command-count": 700,
+      "waveform-crc": 874060891,
+      "framebuffer-crc": 1657700270,
+      "waveform-supported": true,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false,
+      "output-errors": 0,
+      "trace-events-attempted": 1107,
+      "trace-events-flushed": 1107,
+      "trace-bytes-flushed": 86160,
+      "trace-write-errors": 0,
+      "trace-flush-errors": 0,
+      "trace-close-errors": 0,
+      "dump-frames-written": 66,
+      "dump-open-errors": 0,
+      "dump-write-errors": 0,
+      "dump-flush-errors": 0,
+      "dump-close-errors": 0,
+      "trace-fd-size": 86160,
+      "trace-fd-position": 86160,
+      "trace-fd-inode": 537160,
+      "trace-path-size": 86160,
+      "trace-path-inode": 537160,
+      "trace-file-linked": true
+    },
+    "adc": {
+      "buttons": 0,
+      "unsupported-uses": 2,
+      "hold-ns": 400000000,
+      "currentrelease-deadline-ns": 0
+    },
+    "spi0": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "spi1": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "rtc": {
+      "sleeping": false,
+      "deep-sleep-active": false,
+      "sleep-count": 0,
+      "wake-count": 0,
+      "unsupported-count": 0,
+      "analog-modelled": false,
+      "rtc-watchdog-modelled": true,
+      "rtc-watchdog-timing-calibrated": false,
+      "sleep-transition-calibrated": false,
+      "watchdog-stage": 0,
+      "watchdog-feed-count": 3,
+      "watchdog-expiry-count": 0
+    },
+    "clock": {
+      "rtc-crc-count": 0,
+      "rtc-crc-hardware-verified": false,
+      "rtc-crc-timing-calibrated": false
+    },
+    "i2c": {
+      "unsupported-accesses": 0,
+      "transfer-count": 107,
+      "transferred-bytes": 513,
+      "nack-count": 0
+    },
+    "usb": {
+      "unsupported-accesses": 0,
+      "transmitted-bytes": 4787,
+      "received-bytes": 0,
+      "host-connected": true,
+      "transmitted-packets": 210,
+      "received-packets": 0,
+      "backend-stalls": 0,
+      "tx-overruns": 0,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false,
+      "usb-enumeration-modelled": false
+    },
+    "fuel_gauge": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "soc-percent": 80,
+      "voltage-mv": 3900,
+      "current-ma": -40,
+      "fuel-gauging-modelled": false
+    },
+    "sensor_rtc": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "epoch-seconds": 1767225703,
+      "oscillator-stopped": false,
+      "alarm-modelled": false,
+      "alarm-irq-wired": false
+    },
+    "imu": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "accel-x-mg": 0,
+      "accel-y-mg": 0,
+      "accel-z-mg": 1000,
+      "gyro-x-mdps": 0,
+      "gyro-y-mdps": 0,
+      "gyro-z-mdps": 0,
+      "motion-hold-ns": 0,
+      "motion-release-deadline-ns": 0,
+      "sampling-timing-modelled": false
+    },
+    "assist_debug": {
+      "unsupported-uses": 2,
+      "sp-checks": 27343855,
+      "spill-count": 0,
+      "last-sp": 1070178400,
+      "last-pc": 1077458628
+    },
+    "regi2c": {
+      "unsupported-accesses": 16,
+      "transfer-count": 62916,
+      "read-count": 31482,
+      "write-count": 31528,
+      "analog-modelled": false,
+      "calibration-modelled": false,
+      "power-control-modelled": false,
+      "timing-calibrated": false,
+      "phy-handshake-modelled": true,
+      "synthetic-measurements": 0
+    },
+    "wifi": {
+      "unsupported-accesses": 0,
+      "tx-frames": 0,
+      "rx-frames": 0,
+      "rx-dropped": 0,
+      "bad-dma": 0,
+      "ethernet-tx": 0,
+      "ethernet-rx": 0,
+      "beacons": 0,
+      "auth-requests": 0,
+      "assoc-requests": 0,
+      "radio-modelled": false,
+      "timing-calibrated": false,
+      "encryption-modelled": false,
+      "air-enabled": false,
+      "ssid": "X3EMU",
+      "channel": 6
+    }
+  },
+  "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+  "model_diagnostics_clean": false,
+  "model_limits": {
+    "cpu_cache_timing_calibrated": false,
+    "electrical_behaviour_modelled": false,
+    "rtc_crc_hardware_verified": false,
+    "rtc_crc_timing_calibrated": false,
+    "rtc_analog_modelled": false,
+    "rtc_watchdog_modelled": true,
+    "rtc_watchdog_timing_calibrated": false,
+    "sleep_transition_calibrated": false,
+    "regi2c_analog_modelled": false,
+    "regi2c_calibration_modelled": false,
+    "regi2c_power_control_modelled": false,
+    "regi2c_timing_calibrated": false,
+    "regi2c_phy_handshake_modelled": true
+  },
+  "panel_trace_complete": true,
+  "panel_trace": {
+    "frame_events": 66,
+    "native_refresh_count": 66
+  },
+  "final_output_accounting": {
+    "unsupported-count": 0,
+    "protocol-errors": 0,
+    "refresh-count": 66,
+    "busy-active": false,
+    "spi-bytes": 7071480,
+    "command-count": 700,
+    "waveform-crc": 874060891,
+    "framebuffer-crc": 1657700270,
+    "waveform-supported": true,
+    "timing-calibrated": false,
+    "physical-effects-modelled": false,
+    "output-errors": 0,
+    "trace-events-attempted": 1107,
+    "trace-events-flushed": 1107,
+    "trace-bytes-flushed": 86160,
+    "trace-write-errors": 0,
+    "trace-flush-errors": 0,
+    "trace-close-errors": 0,
+    "dump-frames-written": 66,
+    "dump-open-errors": 0,
+    "dump-write-errors": 0,
+    "dump-flush-errors": 0,
+    "dump-close-errors": 0,
+    "trace-fd-size": 86160,
+    "trace-fd-position": 86160,
+    "trace-fd-inode": 537160,
+    "trace-path-size": 86160,
+    "trace-path-inode": 537160,
+    "trace-file-linked": true,
+    "file_bytes": 86160,
+    "file_records": 1107,
+    "sequence_complete": true,
+    "file_observer_supported": true,
+    "file_observer_consistent": true,
+    "complete": true
+  },
+  "status": "failed",
+  "archive": {
+    "original_receipt_sha256": "dbc0f4a52a7d2e62955ec6480a9c01b016e2b870a8163922aabd8699a4a1545f",
+    "original_receipt": "media/validation.json",
+    "archived_date": "2026-10-03"
+  }
+}

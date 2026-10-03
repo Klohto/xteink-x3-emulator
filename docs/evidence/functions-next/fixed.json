@@ -1,0 +1,2857 @@
+{
+  "schema_version": 1,
+  "workflow": "fixed",
+  "firmware_source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "firmware_release_source_commit": "b25beb13761d5851f98e7eada09aa5e7d430df48",
+  "backend_kind": "real ESP32-C3 QEMU guest",
+  "functional_pass": true,
+  "strict_pass": false,
+  "completed": true,
+  "speed_selection_allowed": false,
+  "timing_calibrated": false,
+  "physical_output_validated": false,
+  "checks": {
+    "pinned_full_flash": true,
+    "opened_a-fixed.xtc": true,
+    "003-xtc-page0_source_geometry_and_tones": true,
+    "004-fixed-page1_source_geometry_and_tones": true,
+    "005-fixed-page2_source_geometry_and_tones": true,
+    "fixed_return_False": true,
+    "fixed_recent_metadata_False": true,
+    "fixed_guest_cache_path_False": true,
+    "fixed_progress_False": true,
+    "fixed_reopen_False": true,
+    "opened_b-gray.xtch": true,
+    "011-xtch-page0_source_geometry_and_tones": true,
+    "012-fixed-page1_source_geometry_and_tones": true,
+    "013-fixed-page2_source_geometry_and_tones": true,
+    "fixed_return_True": true,
+    "fixed_recent_metadata_True": true,
+    "fixed_guest_cache_path_True": true,
+    "fixed_progress_True": true,
+    "fixed_reopen_True": true,
+    "rom_cold_boot": true,
+    "controlled_cold_boot_reset_sequence": true,
+    "hardware_detect_x3": true,
+    "post_gpio_x3": true,
+    "no_sd_error_or_guest_panic": true,
+    "backend_stopped_cleanly": true
+  },
+  "frames": {
+    "home": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e",
+      "pixel_sha256": "e578cc6b8de54475dd0509362996561163ceb43ecd21b99b04b6343fbe029d11",
+      "dark_pixels": 15713,
+      "light_pixels": 402463,
+      "path": "frames/home.pgm",
+      "t_ns": 2694762584,
+      "frame_count": 4,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 1608523092,
+      "observed_quiet_interval_ns": 1086239492,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1956536157,
+      "dump_refresh_count": 4,
+      "trace_frame_count": 4,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 92,
+        "trace-events-flushed": 92,
+        "trace-bytes-flushed": 6913,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 4,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 6913,
+        "trace-fd-position": 6913,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 6913,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 6913,
+        "file_records": 92,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 1608318620
+    },
+    "001-root-browser": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "c2940bc5eaaa142fa1b79127997d8dcb2c6a1aa1ed3f81ce62ee53169e88e57c",
+      "pixel_sha256": "88463e847b4144178d9bc915c566ab4a7dac032b7ef07d315b5033a3e1a1448f",
+      "dark_pixels": 12367,
+      "light_pixels": 405809,
+      "path": "frames/001-root-browser.pgm",
+      "t_ns": 5804866824,
+      "frame_count": 5,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 4719243800,
+      "observed_quiet_interval_ns": 1085623024,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 637136882,
+      "dump_refresh_count": 5,
+      "trace_frame_count": 5,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 108,
+        "trace-events-flushed": 108,
+        "trace-bytes-flushed": 8138,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 5,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 8138,
+        "trace-fd-position": 8138,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 8138,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 8138,
+        "file_records": 108,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 4718357472
+    },
+    "002-fixture-folder": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "b4070ac6272b1deac7efe23a32c6e7ce4d7c9c2cf15d5a275bdc61f99816d09a",
+      "pixel_sha256": "6a251bc986bb6a84506bc78350827246840c75ed3f5bad7dfd663ddf122fc22e",
+      "dark_pixels": 11733,
+      "light_pixels": 406443,
+      "path": "frames/002-fixture-folder.pgm",
+      "t_ns": 8801762600,
+      "frame_count": 6,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 7655441520,
+      "observed_quiet_interval_ns": 1146321080,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 3768451578,
+      "dump_refresh_count": 6,
+      "trace_frame_count": 6,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 124,
+        "trace-events-flushed": 124,
+        "trace-bytes-flushed": 9371,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 6,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 9371,
+        "trace-fd-position": 9371,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 9371,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 9371,
+        "file_records": 124,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 7655440528
+    },
+    "003-xtc-page0": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "2cc1614d06bb5210a1b55e4853f5bf92410ddb05379860ade999cd2a965bcf8a",
+      "pixel_sha256": "4fda9c7a0d781f910f1e9b7fc9329fe001e9c7408fa7f4d32a3fed11e487a1d0",
+      "dark_pixels": 206184,
+      "light_pixels": 211992,
+      "path": "frames/003-xtc-page0.pgm",
+      "t_ns": 12442548704,
+      "frame_count": 10,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 11435976976,
+      "observed_quiet_interval_ns": 1006571728,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1525150005,
+      "dump_refresh_count": 10,
+      "trace_frame_count": 10,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 191,
+        "trace-events-flushed": 191,
+        "trace-bytes-flushed": 14597,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 10,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 14597,
+        "trace-fd-position": 14597,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 14597,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 14597,
+        "file_records": 191,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 11432054304
+    },
+    "004-fixed-page1": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "0391d2041cf7840dfd26b78d41be349995f1bbd9ed769df73d7a0cb3f3f58b2e",
+      "pixel_sha256": "185913679ded439c9fde2ed694ef3513a44a4b0b01f1d05b59743a01991a2f9e",
+      "dark_pixels": 209088,
+      "light_pixels": 209088,
+      "path": "frames/004-fixed-page1.pgm",
+      "t_ns": 15650983944,
+      "frame_count": 11,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 14649089400,
+      "observed_quiet_interval_ns": 1001894544,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2699854999,
+      "dump_refresh_count": 11,
+      "trace_frame_count": 11,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 207,
+        "trace-events-flushed": 207,
+        "trace-bytes-flushed": 15846,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 11,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 15846,
+        "trace-fd-position": 15846,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 15846,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 15846,
+        "file_records": 207,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 14646440520
+    },
+    "005-fixed-page2": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "a1e97f68b7fbe9ce5bbd2e61afe5d5f987cae3951f519c339260cda4e6bce24d",
+      "pixel_sha256": "6ace34c39e859da2a98103ea0e0fe88624bf44e11b555d6b13ca462c0aa74993",
+      "dark_pixels": 209088,
+      "light_pixels": 209088,
+      "path": "frames/005-fixed-page2.pgm",
+      "t_ns": 18454329312,
+      "frame_count": 12,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 17346832144,
+      "observed_quiet_interval_ns": 1107497168,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1019422661,
+      "dump_refresh_count": 12,
+      "trace_frame_count": 12,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 223,
+        "trace-events-flushed": 223,
+        "trace-bytes-flushed": 17095,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 12,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 17095,
+        "trace-fd-position": 17095,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 17095,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 17095,
+        "file_records": 223,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 17344469504
+    },
+    "006-fixed-page1-return": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "7b5365db8478ecbeae00524b1b65f508f0f9761a39464f6e161284ebedf405b0",
+      "pixel_sha256": "185913679ded439c9fde2ed694ef3513a44a4b0b01f1d05b59743a01991a2f9e",
+      "dark_pixels": 209088,
+      "light_pixels": 209088,
+      "path": "frames/006-fixed-page1-return.pgm",
+      "t_ns": 21421779128,
+      "frame_count": 13,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 20314216960,
+      "observed_quiet_interval_ns": 1107562168,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2699854999,
+      "dump_refresh_count": 13,
+      "trace_frame_count": 13,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 239,
+        "trace-events-flushed": 239,
+        "trace-bytes-flushed": 18344,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 13,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 18344,
+        "trace-fd-position": 18344,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 18344,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 18344,
+        "file_records": 239,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 20312606664
+    },
+    "007-home-after-fixed": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "1c35a98ffdb6f0d58a56c4d238f96d1a83c5b5e8a85c52d00eb6c01eac317cc3",
+      "pixel_sha256": "d08108efcbd085f3a74667f101e40d221b94f614ecc80b3a045d55d6aaa75e06",
+      "dark_pixels": 50246,
+      "light_pixels": 367930,
+      "path": "frames/007-home-after-fixed.pgm",
+      "t_ns": 25210762584,
+      "frame_count": 19,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 24183048868,
+      "observed_quiet_interval_ns": 1027713716,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 803752010,
+      "dump_refresh_count": 19,
+      "trace_frame_count": 19,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 335,
+        "trace-events-flushed": 335,
+        "trace-bytes-flushed": 25837,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 19,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 25837,
+        "trace-fd-position": 25837,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 25837,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 25837,
+        "file_records": 335,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 24181942140
+    },
+    "008-fixed-page1-reopened": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "059c3cca06030dcd33f42231000258297f04960e14ec0fa02cce2a9b6c9d8498",
+      "pixel_sha256": "185913679ded439c9fde2ed694ef3513a44a4b0b01f1d05b59743a01991a2f9e",
+      "dark_pixels": 209088,
+      "light_pixels": 209088,
+      "path": "frames/008-fixed-page1-reopened.pgm",
+      "t_ns": 30453846200,
+      "frame_count": 23,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 29440041888,
+      "observed_quiet_interval_ns": 1013804312,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2699854999,
+      "dump_refresh_count": 23,
+      "trace_frame_count": 23,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 402,
+        "trace-events-flushed": 402,
+        "trace-bytes-flushed": 31063,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 23,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 31063,
+        "trace-fd-position": 31063,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 31063,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 31063,
+        "file_records": 402,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 29439054304
+    },
+    "009-fixed-browser": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "43452daff1715055f5c68fdf5754c8c9bab42509fd6f9b74c952582f7f977c06",
+      "pixel_sha256": "6a251bc986bb6a84506bc78350827246840c75ed3f5bad7dfd663ddf122fc22e",
+      "dark_pixels": 11733,
+      "light_pixels": 406443,
+      "path": "frames/009-fixed-browser.pgm",
+      "t_ns": 33724784184,
+      "frame_count": 24,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 32687288832,
+      "observed_quiet_interval_ns": 1037495352,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 3768451578,
+      "dump_refresh_count": 24,
+      "trace_frame_count": 24,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 418,
+        "trace-events-flushed": 418,
+        "trace-bytes-flushed": 32312,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 24,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 32312,
+        "trace-fd-position": 32312,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 32312,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 32312,
+        "file_records": 418,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 32645971112
+    },
+    "010-xtch-selected": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "50eac7a23751527a742ceb77b5ca276e4480f7f5bb20603b7c027ad773a560f6",
+      "pixel_sha256": "62297564075c7ec5398f91dfef2f2fdfbd05449f3bd4c955f1881d7af37cc8dd",
+      "dark_pixels": 11720,
+      "light_pixels": 406456,
+      "path": "frames/010-xtch-selected.pgm",
+      "t_ns": 36521762584,
+      "frame_count": 25,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 35486906968,
+      "observed_quiet_interval_ns": 1034855616,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 9611795,
+      "dump_refresh_count": 25,
+      "trace_frame_count": 25,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 434,
+        "trace-events-flushed": 434,
+        "trace-bytes-flushed": 33558,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 25,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 33558,
+        "trace-fd-position": 33558,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 33558,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 33558,
+        "file_records": 434,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 35485137248
+    },
+    "011-xtch-page0": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "3c8913e0e5dc642771b00a327e8802a76a72cb81d49cbfb9ea0a4ab737abcd8a",
+      "pixel_sha256": "f2958d0e114ebb22d064808187190f412f11d8da9731bca04c7004b9549fbe71",
+      "dark_pixels": 284592,
+      "light_pixels": 133584,
+      "path": "frames/011-xtch-page0.pgm",
+      "t_ns": 41621059288,
+      "frame_count": 31,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 40596640464,
+      "observed_quiet_interval_ns": 1024418824,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 3797679176,
+      "dump_refresh_count": 31,
+      "trace_frame_count": 31,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 538,
+        "trace-events-flushed": 538,
+        "trace-bytes-flushed": 41661,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 31,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 41661,
+        "trace-fd-position": 41661,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 41661,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 41661,
+        "file_records": 538,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 40586803848
+    },
+    "012-fixed-page1": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "bf81098955e45cc60f140d19578681178da88575a6cfcd2cd246fb5d1f884d6b",
+      "pixel_sha256": "e5dadf78f4a9ee77f8d45685d0b20159330d39e6f88215f5a89fadebf042c191",
+      "dark_pixels": 284592,
+      "light_pixels": 133584,
+      "path": "frames/012-fixed-page1.pgm",
+      "t_ns": 46839010864,
+      "frame_count": 33,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 45790303144,
+      "observed_quiet_interval_ns": 1048707720,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1816794916,
+      "dump_refresh_count": 33,
+      "trace_frame_count": 33,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 577,
+        "trace-events-flushed": 577,
+        "trace-bytes-flushed": 44708,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 33,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 44708,
+        "trace-fd-position": 44708,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 44708,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 44708,
+        "file_records": 577,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 45777945248
+    },
+    "013-fixed-page2": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "364c598506c569992608c767324aae2920fa21c1f120179d62d60eaffd3a909c",
+      "pixel_sha256": "94a74b75bfaa3b2a8f3e3a8dc64d0c59637946e9bfa0e9b152c8d53add302ff1",
+      "dark_pixels": 287496,
+      "light_pixels": 130680,
+      "path": "frames/013-fixed-page2.pgm",
+      "t_ns": 51999314896,
+      "frame_count": 35,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 50981007424,
+      "observed_quiet_interval_ns": 1018307472,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 280206039,
+      "dump_refresh_count": 35,
+      "trace_frame_count": 35,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 616,
+        "trace-events-flushed": 616,
+        "trace-bytes-flushed": 47754,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 35,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 47754,
+        "trace-fd-position": 47754,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 47754,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 47754,
+        "file_records": 616,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 50973691784
+    },
+    "014-fixed-page1-return": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "43b730fcd0ea2a51fbafc5edc86e1aee572f4292974b4fa7d6a940ea24a58cad",
+      "pixel_sha256": "e5dadf78f4a9ee77f8d45685d0b20159330d39e6f88215f5a89fadebf042c191",
+      "dark_pixels": 284592,
+      "light_pixels": 133584,
+      "path": "frames/014-fixed-page1-return.pgm",
+      "t_ns": 56338000480,
+      "frame_count": 37,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 55334224800,
+      "observed_quiet_interval_ns": 1003775680,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1816794916,
+      "dump_refresh_count": 37,
+      "trace_frame_count": 37,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 655,
+        "trace-events-flushed": 655,
+        "trace-bytes-flushed": 50801,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 37,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 50801,
+        "trace-fd-position": 50801,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 50801,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 50801,
+        "file_records": 655,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 55325945248
+    },
+    "015-home-after-fixed": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "576a9b78b575cab028b15e2d6b95c72ba2ed76a4cd23271e35f9a3af075d86fb",
+      "pixel_sha256": "b316905877aab3220865e97f833f11fa4cbe2804fe92965f2be038ee8390f33d",
+      "dark_pixels": 33644,
+      "light_pixels": 384532,
+      "path": "frames/015-home-after-fixed.pgm",
+      "t_ns": 60446763792,
+      "frame_count": 43,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 59325028484,
+      "observed_quiet_interval_ns": 1121735308,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1436244544,
+      "dump_refresh_count": 43,
+      "trace_frame_count": 43,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 751,
+        "trace-events-flushed": 751,
+        "trace-bytes-flushed": 58293,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 43,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 58293,
+        "trace-fd-position": 58293,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 58293,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 58293,
+        "file_records": 751,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 59321191348
+    },
+    "016-fixed-page1-reopened": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "10e5b159dec9a4fd4a1419b34d9ecc82744d9dde9c891f77d323f28bdba3716e",
+      "pixel_sha256": "e5dadf78f4a9ee77f8d45685d0b20159330d39e6f88215f5a89fadebf042c191",
+      "dark_pixels": 284592,
+      "light_pixels": 133584,
+      "path": "frames/016-fixed-page1-reopened.pgm",
+      "t_ns": 67288000600,
+      "frame_count": 49,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 66050432912,
+      "observed_quiet_interval_ns": 1237567688,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1816794916,
+      "dump_refresh_count": 49,
+      "trace_frame_count": 49,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 855,
+        "trace-events-flushed": 855,
+        "trace-bytes-flushed": 66397,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 49,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 66397,
+        "trace-fd-position": 66397,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 66397,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 66397,
+        "file_records": 855,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 66037886904
+    },
+    "017-home-fixed-exit": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "b723abb27e9176ccba77fde1a303547ca6bdf23568e922331b9428a28acce878",
+      "pixel_sha256": "b316905877aab3220865e97f833f11fa4cbe2804fe92965f2be038ee8390f33d",
+      "dark_pixels": 33644,
+      "light_pixels": 384532,
+      "path": "frames/017-home-fixed-exit.pgm",
+      "t_ns": 72029115016,
+      "frame_count": 55,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 70875717428,
+      "observed_quiet_interval_ns": 1153397588,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1436244544,
+      "dump_refresh_count": 55,
+      "trace_frame_count": 55,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 951,
+        "trace-events-flushed": 951,
+        "trace-bytes-flushed": 73889,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 55,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 73889,
+        "trace-fd-position": 73889,
+        "trace-fd-inode": 672023,
+        "trace-path-size": 73889,
+        "trace-path-inode": 672023,
+        "trace-file-linked": true,
+        "file_bytes": 73889,
+        "file_records": 951,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 70873220316
+    }
+  },
+  "actions": [
+    {
+      "button": "confirm",
+      "purpose": "Home: open Browse Files",
+      "after_count": 4,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 3953000056,
+        "press_t_ns": 4153000056,
+        "release_deadline_t_ns": 4553000056,
+        "release_observed_t_ns": 4581320304,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 3326807728,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 826192328,
+        "preceding_settled_frame_t_ns": 2694762584,
+        "purpose": "Home: open Browse Files",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Browser: enter the only visible root folder",
+      "after_count": 5,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 6895762584,
+        "press_t_ns": 7095000088,
+        "release_deadline_t_ns": 7495000088,
+        "release_observed_t_ns": 7516099096,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 6165000080,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 930000008,
+        "preceding_settled_frame_t_ns": 5804866824,
+        "purpose": "Browser: enter the only visible root folder",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Open original three-page fixed book",
+      "after_count": 6,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 9811000120,
+        "press_t_ns": 9936811520,
+        "release_deadline_t_ns": 10336811520,
+        "release_observed_t_ns": 10350396104,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 9244762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 692048936,
+        "preceding_settled_frame_t_ns": 8801762600,
+        "purpose": "Open original three-page fixed book",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Fixed reader: advance to page1",
+      "after_count": 10,
+      "hold_ms": 400,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 13612762584,
+        "press_t_ns": 13930762584,
+        "release_deadline_t_ns": 14330762584,
+        "release_observed_t_ns": 14346521200,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 12866762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1064000000,
+        "preceding_settled_frame_t_ns": 12442548704,
+        "purpose": "Fixed reader: advance to page1",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Fixed reader: advance to page2",
+      "after_count": 11,
+      "hold_ms": 400,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 16527762584,
+        "press_t_ns": 16625766960,
+        "release_deadline_t_ns": 17025766960,
+        "release_observed_t_ns": 17044139952,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 15931000168,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 694766792,
+        "preceding_settled_frame_t_ns": 15650983944,
+        "purpose": "Fixed reader: advance to page2",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "up",
+      "purpose": "Fixed reader: return to page1",
+      "after_count": 12,
+      "hold_ms": 400,
+      "input": {
+        "button": "up",
+        "mask": 16,
+        "request_t_ns": 19493813640,
+        "press_t_ns": 19593860112,
+        "release_deadline_t_ns": 19993860112,
+        "release_observed_t_ns": 20016623336,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 18924091520,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 669768592,
+        "preceding_settled_frame_t_ns": 18454329312,
+        "purpose": "Fixed reader: return to page1",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "back",
+      "purpose": "Exit reader and flush original fixed-book progress",
+      "after_count": 13,
+      "hold_ms": 400,
+      "input": {
+        "button": "back",
+        "mask": 1,
+        "request_t_ns": 22285762584,
+        "press_t_ns": 22417397640,
+        "release_deadline_t_ns": 22817397640,
+        "release_observed_t_ns": 22838102496,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 21842091520,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 575306120,
+        "preceding_settled_frame_t_ns": 21421779128,
+        "purpose": "Exit reader and flush original fixed-book progress",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Home: reopen saved fixed-book page",
+      "after_count": 19,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 27633813640,
+        "press_t_ns": 27943000312,
+        "release_deadline_t_ns": 28343000312,
+        "release_observed_t_ns": 28366681528,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 26433914496,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1509085816,
+        "preceding_settled_frame_t_ns": 25210762584,
+        "purpose": "Home: reopen saved fixed-book page",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "back",
+      "purpose": "Long Back: return to browser",
+      "after_count": 23,
+      "hold_ms": 1100,
+      "input": {
+        "button": "back",
+        "mask": 1,
+        "request_t_ns": 31308782736,
+        "press_t_ns": 31458768672,
+        "release_deadline_t_ns": 32558768672,
+        "release_observed_t_ns": 32652683424,
+        "scheduled_hold_ns": 1100000000,
+        "neutral_interval_start_t_ns": 30919091520,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 539677152,
+        "preceding_settled_frame_t_ns": 30453846200,
+        "purpose": "Long Back: return to browser",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Browser: select the grayscale fixed-page book",
+      "after_count": 24,
+      "hold_ms": 400,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 34754762584,
+        "press_t_ns": 34920762584,
+        "release_deadline_t_ns": 35320762584,
+        "release_observed_t_ns": 35346000368,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 34249762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 671000000,
+        "preceding_settled_frame_t_ns": 33724784184,
+        "purpose": "Browser: select the grayscale fixed-page book",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Open original three-page fixed book",
+      "after_count": 25,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 37527813640,
+        "press_t_ns": 37651000384,
+        "release_deadline_t_ns": 38051000384,
+        "release_observed_t_ns": 38072224376,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 36907789768,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 743210616,
+        "preceding_settled_frame_t_ns": 36521762584,
+        "purpose": "Open original three-page fixed book",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Fixed reader: advance to page1",
+      "after_count": 31,
+      "hold_ms": 400,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 43412000408,
+        "press_t_ns": 43733766512,
+        "release_deadline_t_ns": 44133766512,
+        "release_observed_t_ns": 44200765272,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 42755762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 978003928,
+        "preceding_settled_frame_t_ns": 41621059288,
+        "purpose": "Fixed reader: advance to page1",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "down",
+      "purpose": "Fixed reader: advance to page2",
+      "after_count": 33,
+      "hold_ms": 400,
+      "input": {
+        "button": "down",
+        "mask": 32,
+        "request_t_ns": 48552762584,
+        "press_t_ns": 48929763592,
+        "release_deadline_t_ns": 49329763592,
+        "release_observed_t_ns": 49376713352,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 47517762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1412001008,
+        "preceding_settled_frame_t_ns": 46839010864,
+        "purpose": "Fixed reader: advance to page2",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "up",
+      "purpose": "Fixed reader: return to page1",
+      "after_count": 35,
+      "hold_ms": 400,
+      "input": {
+        "button": "up",
+        "mask": 16,
+        "request_t_ns": 53055765272,
+        "press_t_ns": 53289132584,
+        "release_deadline_t_ns": 53689132584,
+        "release_observed_t_ns": 53749872936,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 52429000456,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 860132128,
+        "preceding_settled_frame_t_ns": 51999314896,
+        "purpose": "Fixed reader: return to page1",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "back",
+      "purpose": "Exit reader and flush original fixed-book progress",
+      "after_count": 37,
+      "hold_ms": 400,
+      "input": {
+        "button": "back",
+        "mask": 1,
+        "request_t_ns": 57418762584,
+        "press_t_ns": 57697004608,
+        "release_deadline_t_ns": 58097004608,
+        "release_observed_t_ns": 58111890328,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 56576784528,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1120220080,
+        "preceding_settled_frame_t_ns": 56338000480,
+        "purpose": "Exit reader and flush original fixed-book progress",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Home: reopen saved fixed-book page",
+      "after_count": 43,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 62766762584,
+        "press_t_ns": 63114000592,
+        "release_deadline_t_ns": 63514000592,
+        "release_observed_t_ns": 63540101984,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 61539000576,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1575000016,
+        "preceding_settled_frame_t_ns": 60446763792,
+        "purpose": "Home: reopen saved fixed-book page",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "back",
+      "purpose": "Exit reopened book",
+      "after_count": 49,
+      "hold_ms": 400,
+      "input": {
+        "button": "back",
+        "mask": 1,
+        "request_t_ns": 69034091520,
+        "press_t_ns": 69249766840,
+        "release_deadline_t_ns": 69649766840,
+        "release_observed_t_ns": 69666419912,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 68368762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 881004256,
+        "preceding_settled_frame_t_ns": 67288000600,
+        "purpose": "Exit reopened book",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    }
+  ],
+  "limitations": [
+    "Ideal digital targets only; no physical grayscale or ghosting comparison",
+    "QMP input delivery depends on host scheduling; releases use virtual timers",
+    "Seeded CrossInk preferences are explicit fixture inputs, not a settings UI test"
+  ],
+  "input_settings": {
+    "sleepTimeoutMinutes": 60,
+    "shortPwrBtn": 1,
+    "sleepScreen": 2,
+    "sleepScreenCoverFilter": 0,
+    "sideButtonLongPress": 3
+  },
+  "input_file_sha256": {
+    "/.crosspoint/crossink-settings.json": "4e54dcef6520e13ec17064d9812a8d18b2f35764cb4f3eae7d05758768f1c446",
+    "/Books/a-fixed.xtc": "9e5f3f9f55e917f2ba254b123af2e5d836236bdb0cbce180f65c8a6cc8b82a33",
+    "/Books/b-gray.xtch": "8b62da3a9f7368e983039be339aa7297dfe43d6e50daea717df7e42791d0952f"
+  },
+  "fixture": {
+    "path": "/tmp/x3-panel-display-cohort-ca893-a/fixed/fixture-card.img",
+    "format": "MBR/FAT16",
+    "layout": {
+      "size_bytes": 67108864,
+      "partition_lba": 2048,
+      "partition_sectors": 129024,
+      "sectors_per_cluster": 4,
+      "fat_sectors": 126,
+      "fat1_lba": 2049,
+      "fat2_lba": 2175,
+      "root_lba": 2301,
+      "root_sectors": 32,
+      "data_lba": 2333,
+      "data_clusters": 32184
+    },
+    "files": [
+      {
+        "name": ".crosspoint/crossink-settings.json",
+        "size_bytes": 119,
+        "first_cluster": 3,
+        "clusters": 1,
+        "sha256": "4e54dcef6520e13ec17064d9812a8d18b2f35764cb4f3eae7d05758768f1c446"
+      },
+      {
+        "name": "Books/a-fixed.xtc",
+        "size_bytes": 157370,
+        "first_cluster": 5,
+        "clusters": 77,
+        "sha256": "9e5f3f9f55e917f2ba254b123af2e5d836236bdb0cbce180f65c8a6cc8b82a33"
+      },
+      {
+        "name": "Books/b-gray.xtch",
+        "size_bytes": 314186,
+        "first_cluster": 82,
+        "clusters": 154,
+        "sha256": "8b62da3a9f7368e983039be339aa7297dfe43d6e50daea717df7e42791d0952f"
+      }
+    ],
+    "directories": [
+      {
+        "name": ".crosspoint",
+        "first_cluster": 2,
+        "clusters": 1
+      },
+      {
+        "name": "Books",
+        "first_cluster": 4,
+        "clusters": 1
+      }
+    ],
+    "persistent": true,
+    "hardware_validation": "pending"
+  },
+  "input_card_sha256": "18b7355ef6d0803fd6fa2bdca8ea020383bb72af8e2bbc0e3343d7096b2b9906",
+  "launcher_argv": [
+    "qemu-deps/venv/bin/python",
+    "-m",
+    "x3emu",
+    "run",
+    "--backend",
+    "/tmp/x3-panel-private-proof-ca893/qemu-system-riscv32",
+    "--flash",
+    "local/firmware/crossink-v1.6.0-x3-full-flash.bin",
+    "--sd",
+    "/tmp/x3-panel-display-cohort-ca893-a/fixed/fixture-card.img",
+    "--output",
+    "/tmp/x3-panel-display-cohort-ca893-a/fixed/run",
+    "--seconds",
+    "1800.0",
+    "--icount",
+    "--icount-shift",
+    "3",
+    "--power-on",
+    "--rom-dir",
+    "local/qemu/install/share/qemu"
+  ],
+  "input_events": [
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 3953000056,
+      "press_t_ns": 4153000056,
+      "release_deadline_t_ns": 4553000056,
+      "release_observed_t_ns": 4581320304,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 3326807728,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 826192328,
+      "preceding_settled_frame_t_ns": 2694762584,
+      "purpose": "Home: open Browse Files",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 6895762584,
+      "press_t_ns": 7095000088,
+      "release_deadline_t_ns": 7495000088,
+      "release_observed_t_ns": 7516099096,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 6165000080,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 930000008,
+      "preceding_settled_frame_t_ns": 5804866824,
+      "purpose": "Browser: enter the only visible root folder",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 9811000120,
+      "press_t_ns": 9936811520,
+      "release_deadline_t_ns": 10336811520,
+      "release_observed_t_ns": 10350396104,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 9244762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 692048936,
+      "preceding_settled_frame_t_ns": 8801762600,
+      "purpose": "Open original three-page fixed book",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 13612762584,
+      "press_t_ns": 13930762584,
+      "release_deadline_t_ns": 14330762584,
+      "release_observed_t_ns": 14346521200,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 12866762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1064000000,
+      "preceding_settled_frame_t_ns": 12442548704,
+      "purpose": "Fixed reader: advance to page1",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 16527762584,
+      "press_t_ns": 16625766960,
+      "release_deadline_t_ns": 17025766960,
+      "release_observed_t_ns": 17044139952,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 15931000168,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 694766792,
+      "preceding_settled_frame_t_ns": 15650983944,
+      "purpose": "Fixed reader: advance to page2",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "up",
+      "mask": 16,
+      "request_t_ns": 19493813640,
+      "press_t_ns": 19593860112,
+      "release_deadline_t_ns": 19993860112,
+      "release_observed_t_ns": 20016623336,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 18924091520,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 669768592,
+      "preceding_settled_frame_t_ns": 18454329312,
+      "purpose": "Fixed reader: return to page1",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "back",
+      "mask": 1,
+      "request_t_ns": 22285762584,
+      "press_t_ns": 22417397640,
+      "release_deadline_t_ns": 22817397640,
+      "release_observed_t_ns": 22838102496,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 21842091520,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 575306120,
+      "preceding_settled_frame_t_ns": 21421779128,
+      "purpose": "Exit reader and flush original fixed-book progress",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 27633813640,
+      "press_t_ns": 27943000312,
+      "release_deadline_t_ns": 28343000312,
+      "release_observed_t_ns": 28366681528,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 26433914496,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1509085816,
+      "preceding_settled_frame_t_ns": 25210762584,
+      "purpose": "Home: reopen saved fixed-book page",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "back",
+      "mask": 1,
+      "request_t_ns": 31308782736,
+      "press_t_ns": 31458768672,
+      "release_deadline_t_ns": 32558768672,
+      "release_observed_t_ns": 32652683424,
+      "scheduled_hold_ns": 1100000000,
+      "neutral_interval_start_t_ns": 30919091520,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 539677152,
+      "preceding_settled_frame_t_ns": 30453846200,
+      "purpose": "Long Back: return to browser",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 34754762584,
+      "press_t_ns": 34920762584,
+      "release_deadline_t_ns": 35320762584,
+      "release_observed_t_ns": 35346000368,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 34249762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 671000000,
+      "preceding_settled_frame_t_ns": 33724784184,
+      "purpose": "Browser: select the grayscale fixed-page book",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 37527813640,
+      "press_t_ns": 37651000384,
+      "release_deadline_t_ns": 38051000384,
+      "release_observed_t_ns": 38072224376,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 36907789768,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 743210616,
+      "preceding_settled_frame_t_ns": 36521762584,
+      "purpose": "Open original three-page fixed book",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 43412000408,
+      "press_t_ns": 43733766512,
+      "release_deadline_t_ns": 44133766512,
+      "release_observed_t_ns": 44200765272,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 42755762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 978003928,
+      "preceding_settled_frame_t_ns": 41621059288,
+      "purpose": "Fixed reader: advance to page1",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "down",
+      "mask": 32,
+      "request_t_ns": 48552762584,
+      "press_t_ns": 48929763592,
+      "release_deadline_t_ns": 49329763592,
+      "release_observed_t_ns": 49376713352,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 47517762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1412001008,
+      "preceding_settled_frame_t_ns": 46839010864,
+      "purpose": "Fixed reader: advance to page2",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "up",
+      "mask": 16,
+      "request_t_ns": 53055765272,
+      "press_t_ns": 53289132584,
+      "release_deadline_t_ns": 53689132584,
+      "release_observed_t_ns": 53749872936,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 52429000456,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 860132128,
+      "preceding_settled_frame_t_ns": 51999314896,
+      "purpose": "Fixed reader: return to page1",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "back",
+      "mask": 1,
+      "request_t_ns": 57418762584,
+      "press_t_ns": 57697004608,
+      "release_deadline_t_ns": 58097004608,
+      "release_observed_t_ns": 58111890328,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 56576784528,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1120220080,
+      "preceding_settled_frame_t_ns": 56338000480,
+      "purpose": "Exit reader and flush original fixed-book progress",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 62766762584,
+      "press_t_ns": 63114000592,
+      "release_deadline_t_ns": 63514000592,
+      "release_observed_t_ns": 63540101984,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 61539000576,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1575000016,
+      "preceding_settled_frame_t_ns": 60446763792,
+      "purpose": "Home: reopen saved fixed-book page",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "back",
+      "mask": 1,
+      "request_t_ns": 69034091520,
+      "press_t_ns": 69249766840,
+      "release_deadline_t_ns": 69649766840,
+      "release_observed_t_ns": 69666419912,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 68368762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 881004256,
+      "preceding_settled_frame_t_ns": 67288000600,
+      "purpose": "Exit reopened book",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    }
+  ],
+  "observations": {
+    "003-xtc-page0_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "004-fixed-page1_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "005-fixed-page2_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "fixed_recent_metadata_False": {
+      "path": "/Books/a-fixed.xtc",
+      "title": "Synthetic Fixed Book",
+      "author": "X3 Original Fixtures",
+      "coverBmpPath": "/.crosspoint/xtc_2950885321/thumb_[HEIGHT].bmp",
+      "coverState": 0
+    },
+    "fixed_guest_cache_path_False": {
+      "cache": "/.crosspoint/xtc_2950885321"
+    },
+    "fixed_progress_False": {
+      "path": "/.crosspoint/xtc_2950885321/progress.bin",
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    },
+    "011-xtch-page0_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 85,
+        "observed_mean": 85.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "85": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 170,
+        "observed_mean": 170.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "170": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "012-fixed-page1_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 85,
+        "observed_mean": 85.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "85": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 170,
+        "observed_mean": 170.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "170": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "013-fixed-page2_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 170,
+        "observed_mean": 170.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "170": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 85,
+        "observed_mean": 85.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "85": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "fixed_recent_metadata_True": {
+      "path": "/Books/b-gray.xtch",
+      "title": "Synthetic Gray Book",
+      "author": "X3 Original Fixtures",
+      "coverBmpPath": "/.crosspoint/xtc_3638748996/thumb_[HEIGHT].bmp",
+      "coverState": 0
+    },
+    "fixed_guest_cache_path_True": {
+      "cache": "/.crosspoint/xtc_3638748996"
+    },
+    "fixed_progress_True": {
+      "path": "/.crosspoint/xtc_3638748996/progress.bin",
+      "sha256": "67abdd721024f0ff4e0b3f4c2fc13bc5bad42d0b7851d456d88d203d15aaa450"
+    }
+  },
+  "image_completion_observations": {
+    "003-xtc-page0": [],
+    "004-fixed-page1": [],
+    "005-fixed-page2": [],
+    "011-xtch-page0": [],
+    "012-fixed-page1": [],
+    "013-fixed-page2": []
+  },
+  "state_before_shutdown": {
+    "status": {
+      "status": "running",
+      "running": true
+    },
+    "machine": {
+      "unsupported-io-reads": 47,
+      "unsupported-io-writes": 54,
+      "virtual-time-ns": 72897000704,
+      "power-button": false,
+      "power-button-hold-ns": 1000000000,
+      "unsupported-io-json": [
+        {
+          "address": "0x600050f0",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x40384d5c",
+          "last_read_pc": "0x40384d5c",
+          "first_write_pc": "0x40384d64",
+          "last_write_pc": "0x40384d64",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x60006090",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x40384d44",
+          "last_read_pc": "0x40384d44",
+          "first_write_pc": "0x40384d52",
+          "last_write_pc": "0x40384d52",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001ccd4",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x40384d12",
+          "last_read_pc": "0x40384d34",
+          "first_write_pc": "0x40384d24",
+          "last_write_pc": "0x40384d3a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001d054",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384cee",
+          "last_read_pc": "0x40384d00",
+          "first_write_pc": "0x40384cfe",
+          "last_write_pc": "0x40384d08",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6002609c",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x40384cc4",
+          "last_read_pc": "0x40384ce2",
+          "first_write_pc": "0x40384cd4",
+          "last_write_pc": "0x40384ce8",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600260ac",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384d6e",
+          "last_read_pc": "0x40384da0",
+          "first_write_pc": "0x40384d80",
+          "last_write_pc": "0x40384d96",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c101c",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x4005165a",
+          "last_read_pc": "0x4005165a",
+          "first_write_pc": "0x4005165e",
+          "last_write_pc": "0x4005165e",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c1090",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d18",
+          "last_read_pc": "0x421d3d1c",
+          "first_write_pc": "0x421d41ce",
+          "last_write_pc": "0x421d41e4",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1094",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c1098",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c109c",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a0",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a4",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a8",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d24",
+          "last_read_pc": "0x421d3d24",
+          "first_write_pc": "0x421d41d2",
+          "last_write_pc": "0x421d41d2",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b0",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d40fe",
+          "last_read_pc": "0x421d4126",
+          "first_write_pc": "0x421d410c",
+          "last_write_pc": "0x421d412a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c10b4",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d2e",
+          "last_read_pc": "0x421d3d2e",
+          "first_write_pc": "0x421d41d6",
+          "last_write_pc": "0x421d41d6",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b8",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3f8e",
+          "last_read_pc": "0x421d4172",
+          "first_write_pc": "0x421d3f92",
+          "last_write_pc": "0x421d4178",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10c0",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d28",
+          "last_read_pc": "0x421d3d28",
+          "first_write_pc": "0x421d41e8",
+          "last_write_pc": "0x421d41e8",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10c4",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d4138",
+          "last_read_pc": "0x421d414e",
+          "first_write_pc": "0x421d413c",
+          "last_write_pc": "0x421d4154",
+          "last_write_value": "0x000000c0"
+        },
+        {
+          "address": "0x600c10c8",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d34",
+          "last_read_pc": "0x421d3d34",
+          "first_write_pc": "0x421d41ec",
+          "last_write_pc": "0x421d41ec",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10cc",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3fa0",
+          "last_read_pc": "0x421d4194",
+          "first_write_pc": "0x421d3fa4",
+          "last_write_pc": "0x421d419a",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10d8",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d41fe",
+          "last_write_pc": "0x421d4200",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10fc",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3afa",
+          "last_read_pc": "0x421d3b08",
+          "first_write_pc": "0x421d3b06",
+          "last_write_pc": "0x421d3b0c",
+          "last_write_value": "0x00000005"
+        },
+        {
+          "address": "0x600c1100",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3cb8",
+          "last_read_pc": "0x421d3bd6",
+          "first_write_pc": "0x421d3cbc",
+          "last_write_pc": "0x421d3c82",
+          "last_write_value": "0x00000018"
+        },
+        {
+          "address": "0x600c1130",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d42",
+          "last_read_pc": "0x421d3d42",
+          "first_write_pc": "0x421d4206",
+          "last_write_pc": "0x421d4206",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1134",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3fb0",
+          "last_read_pc": "0x421d41b4",
+          "first_write_pc": "0x421d3fb4",
+          "last_write_pc": "0x421d41ba",
+          "last_write_value": "0x00000002"
+        }
+      ]
+    },
+    "panel": {
+      "unsupported-count": 0,
+      "protocol-errors": 0,
+      "refresh-count": 55,
+      "busy-active": false,
+      "spi-bytes": 6232709,
+      "command-count": 604,
+      "waveform-crc": 874060891,
+      "framebuffer-crc": 1436244544,
+      "waveform-supported": true,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false,
+      "output-errors": 0,
+      "trace-events-attempted": 951,
+      "trace-events-flushed": 951,
+      "trace-bytes-flushed": 73889,
+      "trace-write-errors": 0,
+      "trace-flush-errors": 0,
+      "trace-close-errors": 0,
+      "dump-frames-written": 55,
+      "dump-open-errors": 0,
+      "dump-write-errors": 0,
+      "dump-flush-errors": 0,
+      "dump-close-errors": 0,
+      "trace-fd-size": 73889,
+      "trace-fd-position": 73889,
+      "trace-fd-inode": 672023,
+      "trace-path-size": 73889,
+      "trace-path-inode": 672023,
+      "trace-file-linked": true
+    },
+    "adc": {
+      "buttons": 0,
+      "unsupported-uses": 2,
+      "hold-ns": 400000000,
+      "currentrelease-deadline-ns": 0
+    },
+    "spi0": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "spi1": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "rtc": {
+      "sleeping": false,
+      "deep-sleep-active": false,
+      "sleep-count": 0,
+      "wake-count": 0,
+      "unsupported-count": 0,
+      "analog-modelled": false,
+      "rtc-watchdog-modelled": true,
+      "rtc-watchdog-timing-calibrated": false,
+      "sleep-transition-calibrated": false,
+      "watchdog-stage": 0,
+      "watchdog-feed-count": 3,
+      "watchdog-expiry-count": 0
+    },
+    "clock": {
+      "rtc-crc-count": 0,
+      "rtc-crc-hardware-verified": false,
+      "rtc-crc-timing-calibrated": false
+    },
+    "i2c": {
+      "unsupported-accesses": 0,
+      "transfer-count": 137,
+      "transferred-bytes": 688,
+      "nack-count": 0
+    },
+    "usb": {
+      "unsupported-accesses": 0,
+      "transmitted-bytes": 5806,
+      "received-bytes": 0,
+      "host-connected": true,
+      "transmitted-packets": 240,
+      "received-packets": 0,
+      "backend-stalls": 0,
+      "tx-overruns": 0,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false,
+      "usb-enumeration-modelled": false
+    },
+    "fuel_gauge": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "soc-percent": 80,
+      "voltage-mv": 3900,
+      "current-ma": -40,
+      "fuel-gauging-modelled": false
+    },
+    "sensor_rtc": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "epoch-seconds": 1767225706,
+      "oscillator-stopped": false,
+      "alarm-modelled": false,
+      "alarm-irq-wired": false
+    },
+    "imu": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "accel-x-mg": 0,
+      "accel-y-mg": 0,
+      "accel-z-mg": 1000,
+      "gyro-x-mdps": 0,
+      "gyro-y-mdps": 0,
+      "gyro-z-mdps": 0,
+      "motion-hold-ns": 0,
+      "motion-release-deadline-ns": 0,
+      "sampling-timing-modelled": false
+    },
+    "assist_debug": {
+      "unsupported-uses": 2,
+      "sp-checks": 46575064,
+      "spill-count": 0,
+      "last-sp": 1070219024,
+      "last-pc": 1109091586
+    },
+    "regi2c": {
+      "unsupported-accesses": 16,
+      "transfer-count": 63552,
+      "read-count": 31816,
+      "write-count": 31864,
+      "analog-modelled": false,
+      "calibration-modelled": false,
+      "power-control-modelled": false,
+      "timing-calibrated": false,
+      "phy-handshake-modelled": true,
+      "synthetic-measurements": 0
+    },
+    "wifi": {
+      "unsupported-accesses": 0,
+      "tx-frames": 0,
+      "rx-frames": 0,
+      "rx-dropped": 0,
+      "bad-dma": 0,
+      "ethernet-tx": 0,
+      "ethernet-rx": 0,
+      "beacons": 0,
+      "auth-requests": 0,
+      "assoc-requests": 0,
+      "radio-modelled": false,
+      "timing-calibrated": false,
+      "encryption-modelled": false,
+      "air-enabled": false,
+      "ssid": "X3EMU",
+      "channel": 6
+    }
+  },
+  "backend_sha256": "ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880",
+  "model_diagnostics_clean": false,
+  "model_limits": {
+    "cpu_cache_timing_calibrated": false,
+    "electrical_behaviour_modelled": false,
+    "rtc_crc_hardware_verified": false,
+    "rtc_crc_timing_calibrated": false,
+    "rtc_analog_modelled": false,
+    "rtc_watchdog_modelled": true,
+    "rtc_watchdog_timing_calibrated": false,
+    "sleep_transition_calibrated": false,
+    "regi2c_analog_modelled": false,
+    "regi2c_calibration_modelled": false,
+    "regi2c_power_control_modelled": false,
+    "regi2c_timing_calibrated": false,
+    "regi2c_phy_handshake_modelled": true
+  },
+  "panel_trace_complete": true,
+  "panel_trace": {
+    "frame_events": 55,
+    "native_refresh_count": 55
+  },
+  "final_output_accounting": {
+    "unsupported-count": 0,
+    "protocol-errors": 0,
+    "refresh-count": 55,
+    "busy-active": false,
+    "spi-bytes": 6232709,
+    "command-count": 604,
+    "waveform-crc": 874060891,
+    "framebuffer-crc": 1436244544,
+    "waveform-supported": true,
+    "timing-calibrated": false,
+    "physical-effects-modelled": false,
+    "output-errors": 0,
+    "trace-events-attempted": 951,
+    "trace-events-flushed": 951,
+    "trace-bytes-flushed": 73889,
+    "trace-write-errors": 0,
+    "trace-flush-errors": 0,
+    "trace-close-errors": 0,
+    "dump-frames-written": 55,
+    "dump-open-errors": 0,
+    "dump-write-errors": 0,
+    "dump-flush-errors": 0,
+    "dump-close-errors": 0,
+    "trace-fd-size": 73889,
+    "trace-fd-position": 73889,
+    "trace-fd-inode": 672023,
+    "trace-path-size": 73889,
+    "trace-path-inode": 672023,
+    "trace-file-linked": true,
+    "file_bytes": 73889,
+    "file_records": 951,
+    "sequence_complete": true,
+    "file_observer_supported": true,
+    "file_observer_consistent": true,
+    "complete": true
+  },
+  "status": "failed",
+  "archive": {
+    "original_receipt_sha256": "7f826fa0df33d89ad05bfceecc8008dcab3f7470479ab2b5500ca19a453e214c",
+    "original_receipt": "fixed/validation.json",
+    "archived_date": "2026-10-03"
+  }
+}

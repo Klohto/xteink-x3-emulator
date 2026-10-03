@@ -21,7 +21,7 @@ Git.
 | I2C | C3 command/FIFO/interrupt path with BQ27220 gauge, DS3231 RTC and QMI8658 IMU models |
 | USB and console | UART ROM output, bidirectional USB Serial/JTAG FIFO and stock CRC-checked file-transfer commands |
 | Sleep and watchdogs | RTC counter, timer/GPIO wake, retained state, digital CPU sleep/restart and distinct watchdog reset domains |
-| Experimental WiFi | C3 MAC/DMA/TSF, digital reset and an open virtual AP; stock initialization and network functions are still under development |
+| Experimental WiFi | C3 MAC/DMA/TSF, digital reset and an open virtual AP; stock CrossInk initialization and scanning pass, further network functions remain under test |
 
 The official CrossInk v1.6.0 application has been programmed through the ROM;
 every byte of the resulting 16 MiB flash matches the prepared image. Stock
@@ -31,9 +31,9 @@ against the same backend. See [`docs/validation.md`](docs/validation.md) for
 their checks, hashes and recorded results.
 
 The reading flow passes: page turns restore the same grayscale pixels and the
-book reopens at its saved page. Strict acceptance remains false because known
-unsupported model uses and an incomplete panel trace are still reported.
-The committed evidence preserves those failures.
+book reopens at its saved page. Recent private runs retain complete, linked
+panel traces. Strict acceptance remains false because unsupported model uses
+are still reported; the original receipt's incomplete trace is also preserved.
 
 Expanded stock workflows verify chapter navigation, bookmarks, clipping export,
 font persistence after a cold CPU, motion-sensor page turns, button remapping,
@@ -44,6 +44,12 @@ revision; these results do not establish an all-functions pass. The complete
 source inventory and remaining checks are in
 [`docs/function-coverage.md`](docs/function-coverage.md), with archived proofs
 under [`docs/evidence/functions`](docs/evidence/functions).
+
+Further receipts in [`docs/evidence/functions-next`](docs/evidence/functions-next)
+verify layout persistence, percent navigation, automatic turns, footnotes,
+screenshots, completion, power shortcuts, library cleanup and image formats.
+The current native patch passes 12 suites with 95 cases and zero skips; exact
+build provenance is in [`docs/evidence/native-build-iq.json`](docs/evidence/native-build-iq.json).
 
 Hardware speed calibration is pending. Every run records unsupported accesses
 and sets `speed_selection_allowed: false`. Instruction counting, nominal bus

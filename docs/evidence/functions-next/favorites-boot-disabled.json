@@ -1,0 +1,2286 @@
+{
+  "schema_version": 1,
+  "workflow": "favorites-boot-disabled",
+  "firmware_source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "firmware_release_source_commit": "b25beb13761d5851f98e7eada09aa5e7d430df48",
+  "backend_kind": "real ESP32-C3 QEMU guest",
+  "functional_pass": true,
+  "strict_pass": false,
+  "completed": true,
+  "speed_selection_allowed": false,
+  "timing_calibrated": false,
+  "harness_script_sha256": "74bfa54fc5075ef6fdd83b0eecf62171e31a5e49b993d30537a7d40d0760c670",
+  "shared_helper_sha256": "dc522481b4817ea26ed899e66b2c1b6c5f5fe5a4c6b01b43b261945236da8510",
+  "physical_output_validated": false,
+  "checks": {
+    "pinned_full_flash": true,
+    "boot_favorite_ui_saved": true,
+    "006-favorite-image-viewer_source_geometry_and_tones": true,
+    "007-favorite-sleep-pinned_source_geometry_and_tones": true,
+    "sleep_favorite_ui_saved": true,
+    "sleep_controller_idle": true,
+    "sleep_frame_matches_native_crc": true,
+    "sleep_dump_matches_refresh_counter": true,
+    "sleep_render_completed": true,
+    "pinned-favorite-sleep_source_geometry_and_tones": true,
+    "sleep_favorite_precedence": true,
+    "boot_favorite_guest_load_policy": true,
+    "boot_favorite_original_mono_bmp": true,
+    "boot_favorite_native_completed_target_policy": true,
+    "both_favorites_retained_after_deep_reset": true,
+    "rom_cold_boot": true,
+    "controlled_cold_boot_reset_sequence": true,
+    "hardware_detect_x3": true,
+    "post_gpio_x3": true,
+    "no_sd_error_or_guest_panic": true,
+    "backend_stopped_cleanly": true
+  },
+  "frames": {
+    "home": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e",
+      "pixel_sha256": "e578cc6b8de54475dd0509362996561163ceb43ecd21b99b04b6343fbe029d11",
+      "dark_pixels": 15713,
+      "light_pixels": 402463,
+      "path": "frames/home.pgm",
+      "t_ns": 2782762584,
+      "frame_count": 4,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 1610709548,
+      "observed_quiet_interval_ns": 1172053036,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1956536157,
+      "dump_refresh_count": 4,
+      "trace_frame_count": 4,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 92,
+        "trace-events-flushed": 92,
+        "trace-bytes-flushed": 6913,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 4,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 6913,
+        "trace-fd-position": 6913,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 6913,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 6913,
+        "file_records": 92,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 1608318620
+    },
+    "001-root-browser": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "2efacd00724d1e19ea947064b4928e7fdb41f11ce46999ce791c87afc0b9058d",
+      "pixel_sha256": "3ff1bc33c8449592925e2de06f019f90c44a6272b7c7d2e39cd0c4b49c373347",
+      "dark_pixels": 13242,
+      "light_pixels": 404934,
+      "path": "frames/001-root-browser.pgm",
+      "t_ns": 5855120592,
+      "frame_count": 5,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 4691344448,
+      "observed_quiet_interval_ns": 1163776144,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1169987434,
+      "dump_refresh_count": 5,
+      "trace_frame_count": 5,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 108,
+        "trace-events-flushed": 108,
+        "trace-bytes-flushed": 8139,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 5,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 8139,
+        "trace-fd-position": 8139,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 8139,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 8139,
+        "file_records": 108,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 4689718688
+    },
+    "002-fixture-folder": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "d1ccf9bc4763c97893ed45deeeb5cc717b4999e25149870aaf504338af499894",
+      "pixel_sha256": "64a185a82da7c63b4815f91bebcbf34a76baff5163ab47e375ce54c81319a8f6",
+      "dark_pixels": 11096,
+      "light_pixels": 407080,
+      "path": "frames/002-fixture-folder.pgm",
+      "t_ns": 8697118064,
+      "frame_count": 6,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 7575169344,
+      "observed_quiet_interval_ns": 1121948720,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1643510500,
+      "dump_refresh_count": 6,
+      "trace_frame_count": 6,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 124,
+        "trace-events-flushed": 124,
+        "trace-bytes-flushed": 9372,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 6,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 9372,
+        "trace-fd-position": 9372,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 9372,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 9372,
+        "file_records": 124,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 7574108280
+    },
+    "003-favorite-image-browser-menu": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "7159dbce326e425e27c5c5e758ee168b7a9948ab4a523514dfe914ab51b9ddf3",
+      "pixel_sha256": "a2168d51bf4dc14f2600616418f84501f9c6cc7d248d7424353437d5681f92c8",
+      "dark_pixels": 23788,
+      "light_pixels": 394388,
+      "path": "frames/003-favorite-image-browser-menu.pgm",
+      "t_ns": 12318806976,
+      "frame_count": 7,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 11227936960,
+      "observed_quiet_interval_ns": 1090870016,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 4028015715,
+      "dump_refresh_count": 7,
+      "trace_frame_count": 7,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 140,
+        "trace-events-flushed": 140,
+        "trace-bytes-flushed": 10621,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 7,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 10621,
+        "trace-fd-position": 10621,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 10621,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 10621,
+        "file_records": 140,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 11183644976
+    },
+    "004-favorite-boot-row": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "2363c37fb0bf89ff3cc460cdb0f0184508eead8ae828ecc45cefaf6dc681ed7a",
+      "pixel_sha256": "6f557fe4cacf75358e0c881e40bf138dfc14e84c93c70850eaffa7e4c3d6ea87",
+      "dark_pixels": 23677,
+      "light_pixels": 394499,
+      "path": "frames/004-favorite-boot-row.pgm",
+      "t_ns": 15203000160,
+      "frame_count": 8,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 14090218568,
+      "observed_quiet_interval_ns": 1112781592,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2188618740,
+      "dump_refresh_count": 8,
+      "trace_frame_count": 8,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 156,
+        "trace-events-flushed": 156,
+        "trace-bytes-flushed": 11870,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 8,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 11870,
+        "trace-fd-position": 11870,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 11870,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 11870,
+        "file_records": 156,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 14087386448
+    },
+    "005-favorite-boot-pinned": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "ec9c1000a3da991a938d36ef52a9a3a4f9a9f80f8fe65db70b45e1089f758046",
+      "pixel_sha256": "e2762031dd199a7415bfd669aaff4e884943faf3c1b59c430916471905729bab",
+      "dark_pixels": 11188,
+      "light_pixels": 406988,
+      "path": "frames/005-favorite-boot-pinned.pgm",
+      "t_ns": 18493227976,
+      "frame_count": 9,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 17348202960,
+      "observed_quiet_interval_ns": 1145025016,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2122897764,
+      "dump_refresh_count": 9,
+      "trace_frame_count": 9,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 172,
+        "trace-events-flushed": 172,
+        "trace-bytes-flushed": 13119,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 9,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 13119,
+        "trace-fd-position": 13119,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 13119,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 13119,
+        "file_records": 172,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 16354189604
+    },
+    "006-favorite-image-viewer": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "7a32953d7c0e64e6c22e2aa0b6645647f1ea40484d6dcc718c8f70ae666b8956",
+      "pixel_sha256": "66d15623713cf0e1ab795a334008bfbb188ae349601099b9b6f24acb767a1e1e",
+      "dark_pixels": 194907,
+      "light_pixels": 223269,
+      "path": "frames/006-favorite-image-viewer.pgm",
+      "t_ns": 22174763792,
+      "frame_count": 14,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 21127234200,
+      "observed_quiet_interval_ns": 1047529592,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2884936836,
+      "dump_refresh_count": 14,
+      "trace_frame_count": 14,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 252,
+        "trace-events-flushed": 252,
+        "trace-bytes-flushed": 19364,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 14,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 19364,
+        "trace-fd-position": 19364,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 19364,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 19364,
+        "file_records": 252,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 21123804984
+    },
+    "007-favorite-sleep-pinned": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "9db9efccd3437aeb56449518583b4a142ab1c9a685c8a0331bc4a3fd6eac9072",
+      "pixel_sha256": "5f4887c6f7e93a55cb233d1751c9e0c8f4f5e35d0d16d4f94241d424eafbadb0",
+      "dark_pixels": 197201,
+      "light_pixels": 220975,
+      "path": "frames/007-favorite-sleep-pinned.pgm",
+      "t_ns": 27140410096,
+      "frame_count": 16,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 26097764776,
+      "observed_quiet_interval_ns": 1042645320,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2077478259,
+      "dump_refresh_count": 16,
+      "trace_frame_count": 16,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 291,
+        "trace-events-flushed": 291,
+        "trace-bytes-flushed": 22387,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 16,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 22387,
+        "trace-fd-position": 22387,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 22387,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 22387,
+        "file_records": 291,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 26093942136
+    },
+    "008-favorite-browser": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "c74ed6eea086edc961d1d8aea1ccc79382da1bdf9ff07dcf6dfc202c6538340e",
+      "pixel_sha256": "66d15623713cf0e1ab795a334008bfbb188ae349601099b9b6f24acb767a1e1e",
+      "dark_pixels": 194907,
+      "light_pixels": 223269,
+      "path": "frames/008-favorite-browser.pgm",
+      "t_ns": 29449762984,
+      "frame_count": 20,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 28239247968,
+      "observed_quiet_interval_ns": 1210515016,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 2884936836,
+      "dump_refresh_count": 20,
+      "trace_frame_count": 20,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 348,
+        "trace-events-flushed": 348,
+        "trace-bytes-flushed": 26858,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 20,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 26858,
+        "trace-fd-position": 26858,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 26858,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 26858,
+        "file_records": 348,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 28236888056
+    },
+    "pinned-favorite-sleep": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "310731e0ef30eef8f35fc8f73dc3b9d9e456d7b58996a032b1238506f8684914",
+      "pixel_sha256": "4fda9c7a0d781f910f1e9b7fc9329fe001e9c7408fa7f4d32a3fed11e487a1d0",
+      "dark_pixels": 206184,
+      "light_pixels": 211992,
+      "path": "frames/pinned-favorite-sleep.pgm",
+      "frame_count": 27,
+      "pixel_crc32": 1525150005,
+      "t_ns": 33188343941,
+      "settled_with": "firmware deep sleep with inactive panel BUSY",
+      "trace_complete": true,
+      "output_accounting": {
+        "unsupported-count": 0,
+        "protocol-errors": 0,
+        "refresh-count": 27,
+        "busy-active": false,
+        "spi-bytes": 2985567,
+        "command-count": 297,
+        "waveform-crc": 874060891,
+        "framebuffer-crc": 1525150005,
+        "waveform-supported": true,
+        "timing-calibrated": false,
+        "physical-effects-modelled": false,
+        "output-errors": 0,
+        "trace-events-attempted": 477,
+        "trace-events-flushed": 477,
+        "trace-bytes-flushed": 36869,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 27,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 36869,
+        "trace-fd-position": 36869,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 36869,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 36869,
+        "file_records": 477,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      }
+    },
+    "favorite-home-after-wake": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "21460ddddc803e3e17e0dc1f36d5a9340415fd0f1ff5b6126df69ac11d2c35e8",
+      "pixel_sha256": "e578cc6b8de54475dd0509362996561163ceb43ecd21b99b04b6343fbe029d11",
+      "dark_pixels": 15713,
+      "light_pixels": 402463,
+      "path": "frames/favorite-home-after-wake.pgm",
+      "t_ns": 35675313701,
+      "frame_count": 29,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 34570228557,
+      "observed_quiet_interval_ns": 1105085144,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 1956536157,
+      "dump_refresh_count": 29,
+      "trace_frame_count": 29,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 530,
+        "trace-events-flushed": 530,
+        "trace-bytes-flushed": 40983,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 29,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 40983,
+        "trace-fd-position": 40983,
+        "trace-fd-inode": 787157,
+        "trace-path-size": 40983,
+        "trace-path-inode": 787157,
+        "trace-file-linked": true,
+        "file_bytes": 40983,
+        "file_records": 530,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 34010529009
+    }
+  },
+  "actions": [
+    {
+      "button": "confirm",
+      "purpose": "Home: open Browse Files",
+      "after_count": 4,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 3896800624,
+        "press_t_ns": 4121806656,
+        "release_deadline_t_ns": 4521806656,
+        "release_observed_t_ns": 4553681520,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 3348000056,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 773806600,
+        "preceding_settled_frame_t_ns": 2782762584,
+        "purpose": "Home: open Browse Files",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Browser: enter the only visible root folder",
+      "after_count": 5,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 6841000088,
+        "press_t_ns": 7009919560,
+        "release_deadline_t_ns": 7409919560,
+        "release_observed_t_ns": 7435935864,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 6337000088,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 672919472,
+        "preceding_settled_frame_t_ns": 5855120592,
+        "purpose": "Browser: enter the only visible root folder",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Browser long Confirm: open BMP actions",
+      "after_count": 6,
+      "hold_ms": 1100,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 9827000120,
+        "press_t_ns": 10007326576,
+        "release_deadline_t_ns": 11107326576,
+        "release_observed_t_ns": 11191935856,
+        "scheduled_hold_ns": 1100000000,
+        "neutral_interval_start_t_ns": 9247000112,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 760326464,
+        "preceding_settled_frame_t_ns": 8697118064,
+        "purpose": "Browser long Confirm: open BMP actions",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "up",
+      "purpose": "BMP action menu: wrap Rename to Set as Boot Screen",
+      "after_count": 7,
+      "hold_ms": 400,
+      "input": {
+        "button": "up",
+        "mask": 16,
+        "request_t_ns": 13326000152,
+        "press_t_ns": 13519906408,
+        "release_deadline_t_ns": 13919906408,
+        "release_observed_t_ns": 13950047888,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 12817762584,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 702143824,
+        "preceding_settled_frame_t_ns": 12318806976,
+        "purpose": "BMP action menu: wrap Rename to Set as Boot Screen",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Set boot favorite through the real browser action",
+      "after_count": 8,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 15986810912,
+        "press_t_ns": 16181799688,
+        "release_deadline_t_ns": 16581799688,
+        "release_observed_t_ns": 17017779200,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 15536807728,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 644991960,
+        "preceding_settled_frame_t_ns": 15203000160,
+        "purpose": "Set boot favorite through the real browser action",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "Open the same original BMP",
+      "after_count": 9,
+      "hold_ms": 400,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 19303000224,
+        "press_t_ns": 19422928544,
+        "release_deadline_t_ns": 19822928544,
+        "release_observed_t_ns": 19842115920,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 18879763616,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 543164928,
+        "preceding_settled_frame_t_ns": 18493227976,
+        "purpose": "Open the same original BMP",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "confirm",
+      "purpose": "X3 image Confirm: set favorite sleep wallpaper",
+      "after_count": 14,
+      "hold_ms": 1600,
+      "input": {
+        "button": "confirm",
+        "mask": 2,
+        "request_t_ns": 23872762584,
+        "press_t_ns": 24148064552,
+        "release_deadline_t_ns": 25748064552,
+        "release_observed_t_ns": 25765106024,
+        "scheduled_hold_ns": 1600000000,
+        "neutral_interval_start_t_ns": 22703000240,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 1445064312,
+        "preceding_settled_frame_t_ns": 22174763792,
+        "purpose": "X3 image Confirm: set favorite sleep wallpaper",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "back",
+      "purpose": "Return to Browser after sleep-favorite confirmation",
+      "after_count": 16,
+      "hold_ms": 400,
+      "input": {
+        "button": "back",
+        "mask": 1,
+        "request_t_ns": 27479486416,
+        "press_t_ns": 27482395192,
+        "release_deadline_t_ns": 27882395192,
+        "release_observed_t_ns": 27979602088,
+        "scheduled_hold_ns": 400000000,
+        "neutral_interval_start_t_ns": 27156047896,
+        "minimum_neutral_interval_ns": 250000000,
+        "observed_neutral_interval_ns": 326347296,
+        "preceding_settled_frame_t_ns": 27140410096,
+        "purpose": "Return to Browser after sleep-favorite confirmation",
+        "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+      }
+    },
+    {
+      "button": "power",
+      "gpio": 3,
+      "active_level": 0,
+      "press_t_ns": 30257074032,
+      "hold_ns": 200000000,
+      "release_transport": "QEMU_CLOCK_VIRTUAL timer",
+      "purpose": "Sleep: pinned BMP must take precedence over the different root fallback"
+    },
+    {
+      "button": "power",
+      "gpio": 3,
+      "active_level": 0,
+      "press_t_ns": 33188343941,
+      "hold_ns": 1000000000,
+      "release_transport": "QEMU_CLOCK_VIRTUAL timer",
+      "purpose": "Wake through physical GPIO3 and load the saved favorite boot image"
+    }
+  ],
+  "limitations": [
+    "Ideal digital targets only; no physical grayscale or ghosting comparison",
+    "QMP input delivery depends on host scheduling; releases use virtual timers",
+    "Seeded CrossInk preferences are explicit fixture inputs, not a settings UI test"
+  ],
+  "input_settings": {
+    "sleepTimeoutMinutes": 60,
+    "shortPwrBtn": 1,
+    "sleepScreen": 2,
+    "sleepScreenCoverFilter": 0,
+    "sideButtonLongPress": 3,
+    "customBootscreenEnabled": 0
+  },
+  "input_file_sha256": {
+    "/.crosspoint/crossink-settings.json": "6e898cdb67b17b761bab10fce048b546907742ab073f9bc4bdc61c5d46a9eb69",
+    "/Media/a-mono.bmp": "5e00d99981022c39abb11eeca786bed0e2c9cbefeae1ccb8125240b4f8858a46",
+    "/sleep.bmp": "a8b9303501d8343b1a892d5bf41dae20eeed57e7bd18dcf87e61e3277e164c2b"
+  },
+  "fixture": {
+    "path": "/tmp/x3-panel-quick-4eca/favorites-boot-disabled/fixture-card.img",
+    "format": "MBR/FAT16",
+    "layout": {
+      "size_bytes": 67108864,
+      "partition_lba": 2048,
+      "partition_sectors": 129024,
+      "sectors_per_cluster": 4,
+      "fat_sectors": 126,
+      "fat1_lba": 2049,
+      "fat2_lba": 2175,
+      "root_lba": 2301,
+      "root_sectors": 32,
+      "data_lba": 2333,
+      "data_clusters": 32184
+    },
+    "files": [
+      {
+        "name": ".crosspoint/crossink-settings.json",
+        "size_bytes": 149,
+        "first_cluster": 3,
+        "clusters": 1,
+        "sha256": "6e898cdb67b17b761bab10fce048b546907742ab073f9bc4bdc61c5d46a9eb69"
+      },
+      {
+        "name": "Media/a-mono.bmp",
+        "size_bytes": 53918,
+        "first_cluster": 5,
+        "clusters": 27,
+        "sha256": "5e00d99981022c39abb11eeca786bed0e2c9cbefeae1ccb8125240b4f8858a46"
+      },
+      {
+        "name": "sleep.bmp",
+        "size_bytes": 209158,
+        "first_cluster": 32,
+        "clusters": 103,
+        "sha256": "a8b9303501d8343b1a892d5bf41dae20eeed57e7bd18dcf87e61e3277e164c2b"
+      }
+    ],
+    "directories": [
+      {
+        "name": ".crosspoint",
+        "first_cluster": 2,
+        "clusters": 1
+      },
+      {
+        "name": "Media",
+        "first_cluster": 4,
+        "clusters": 1
+      }
+    ],
+    "persistent": true,
+    "hardware_validation": "pending"
+  },
+  "input_card_sha256": "5b35cb676551f69cd4c85cdf6068f2295f0082f9c119a706896290c4385ea5ae",
+  "launcher_argv": [
+    "qemu-deps/venv/bin/python",
+    "-m",
+    "x3emu",
+    "run",
+    "--backend",
+    "/tmp/x3-native-checkpoint-4e324b5c/install/bin/qemu-system-riscv32",
+    "--flash",
+    "local/firmware/crossink-v1.6.0-x3-full-flash.bin",
+    "--sd",
+    "/tmp/x3-panel-quick-4eca/favorites-boot-disabled/fixture-card.img",
+    "--output",
+    "/tmp/x3-panel-quick-4eca/favorites-boot-disabled/run",
+    "--seconds",
+    "1800.0",
+    "--icount",
+    "--icount-shift",
+    "3",
+    "--power-on",
+    "--rom-dir",
+    "/tmp/x3-native-checkpoint-4e324b5c/install/share/qemu"
+  ],
+  "input_events": [
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 3896800624,
+      "press_t_ns": 4121806656,
+      "release_deadline_t_ns": 4521806656,
+      "release_observed_t_ns": 4553681520,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 3348000056,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 773806600,
+      "preceding_settled_frame_t_ns": 2782762584,
+      "purpose": "Home: open Browse Files",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 6841000088,
+      "press_t_ns": 7009919560,
+      "release_deadline_t_ns": 7409919560,
+      "release_observed_t_ns": 7435935864,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 6337000088,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 672919472,
+      "preceding_settled_frame_t_ns": 5855120592,
+      "purpose": "Browser: enter the only visible root folder",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 9827000120,
+      "press_t_ns": 10007326576,
+      "release_deadline_t_ns": 11107326576,
+      "release_observed_t_ns": 11191935856,
+      "scheduled_hold_ns": 1100000000,
+      "neutral_interval_start_t_ns": 9247000112,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 760326464,
+      "preceding_settled_frame_t_ns": 8697118064,
+      "purpose": "Browser long Confirm: open BMP actions",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "up",
+      "mask": 16,
+      "request_t_ns": 13326000152,
+      "press_t_ns": 13519906408,
+      "release_deadline_t_ns": 13919906408,
+      "release_observed_t_ns": 13950047888,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 12817762584,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 702143824,
+      "preceding_settled_frame_t_ns": 12318806976,
+      "purpose": "BMP action menu: wrap Rename to Set as Boot Screen",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 15986810912,
+      "press_t_ns": 16181799688,
+      "release_deadline_t_ns": 16581799688,
+      "release_observed_t_ns": 17017779200,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 15536807728,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 644991960,
+      "preceding_settled_frame_t_ns": 15203000160,
+      "purpose": "Set boot favorite through the real browser action",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 19303000224,
+      "press_t_ns": 19422928544,
+      "release_deadline_t_ns": 19822928544,
+      "release_observed_t_ns": 19842115920,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 18879763616,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 543164928,
+      "preceding_settled_frame_t_ns": 18493227976,
+      "purpose": "Open the same original BMP",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "confirm",
+      "mask": 2,
+      "request_t_ns": 23872762584,
+      "press_t_ns": 24148064552,
+      "release_deadline_t_ns": 25748064552,
+      "release_observed_t_ns": 25765106024,
+      "scheduled_hold_ns": 1600000000,
+      "neutral_interval_start_t_ns": 22703000240,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 1445064312,
+      "preceding_settled_frame_t_ns": 22174763792,
+      "purpose": "X3 image Confirm: set favorite sleep wallpaper",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    },
+    {
+      "button": "back",
+      "mask": 1,
+      "request_t_ns": 27479486416,
+      "press_t_ns": 27482395192,
+      "release_deadline_t_ns": 27882395192,
+      "release_observed_t_ns": 27979602088,
+      "scheduled_hold_ns": 400000000,
+      "neutral_interval_start_t_ns": 27156047896,
+      "minimum_neutral_interval_ns": 250000000,
+      "observed_neutral_interval_ns": 326347296,
+      "preceding_settled_frame_t_ns": 27140410096,
+      "purpose": "Return to Browser after sleep-favorite confirmation",
+      "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+    }
+  ],
+  "observations": {
+    "006-favorite-image-viewer_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "007-favorite-sleep-pinned_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "pinned-favorite-sleep_source_geometry_and_tones": [
+      {
+        "source": {
+          "x": 66,
+          "y": 396,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 396,
+        "panel_y": 461,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 396,
+          "luminance": 85,
+          "mono_luminance": 0,
+          "xth_code": 1
+        },
+        "panel_x": 396,
+        "panel_y": 329,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 330,
+          "y": 396,
+          "luminance": 170,
+          "mono_luminance": 255,
+          "xth_code": 2
+        },
+        "panel_x": 396,
+        "panel_y": 197,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 462,
+          "y": 396,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 396,
+        "panel_y": 65,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 49,
+          "y": 49,
+          "luminance": 0,
+          "mono_luminance": 0,
+          "xth_code": 3
+        },
+        "panel_x": 49,
+        "panel_y": 478,
+        "expected_luminance": 0,
+        "observed_mean": 0.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "0": 169
+        }
+      },
+      {
+        "source": {
+          "x": 478,
+          "y": 742,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 742,
+        "panel_y": 49,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      },
+      {
+        "source": {
+          "x": 198,
+          "y": 297,
+          "luminance": 255,
+          "mono_luminance": 255,
+          "xth_code": 0
+        },
+        "panel_x": 297,
+        "panel_y": 329,
+        "expected_luminance": 255,
+        "observed_mean": 255.0,
+        "exact_source_dither_match": null,
+        "native_values": {
+          "255": 169
+        }
+      }
+    ],
+    "boot_favorite_guest_load_policy": {
+      "customBootscreenEnabled": false,
+      "pinned_boot_load_logged": false
+    },
+    "boot_favorite_native_completed_target_policy": {
+      "expected_full_bitmap_native_crc32": 1525150005,
+      "wake_frame_events": [
+        {
+          "seq": 510,
+          "t_ns": 33603014093,
+          "device": "epd",
+          "event": "frame-complete",
+          "value": 1956536157
+        },
+        {
+          "seq": 526,
+          "t_ns": 34010529009,
+          "device": "epd",
+          "event": "frame-complete",
+          "value": 1956536157
+        }
+      ]
+    }
+  },
+  "image_completion_observations": {
+    "006-favorite-image-viewer": [],
+    "007-favorite-sleep-pinned": []
+  },
+  "sleep_state": {
+    "status": {
+      "status": "paused",
+      "running": false
+    },
+    "machine": {
+      "unsupported-io-reads": 47,
+      "unsupported-io-writes": 54,
+      "virtual-time-ns": 33188343941,
+      "power-button": false,
+      "power-button-hold-ns": 200000000,
+      "unsupported-io-json": [
+        {
+          "address": "0x600050f0",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x40384d5c",
+          "last_read_pc": "0x40384d5c",
+          "first_write_pc": "0x40384d64",
+          "last_write_pc": "0x40384d64",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x60006090",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x40384d44",
+          "last_read_pc": "0x40384d44",
+          "first_write_pc": "0x40384d52",
+          "last_write_pc": "0x40384d52",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001ccd4",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x40384d12",
+          "last_read_pc": "0x40384d34",
+          "first_write_pc": "0x40384d24",
+          "last_write_pc": "0x40384d3a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001d054",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384cee",
+          "last_read_pc": "0x40384d00",
+          "first_write_pc": "0x40384cfe",
+          "last_write_pc": "0x40384d08",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6002609c",
+          "reads": 3,
+          "writes": 3,
+          "first_read_pc": "0x40384cc4",
+          "last_read_pc": "0x40384ce2",
+          "first_write_pc": "0x40384cd4",
+          "last_write_pc": "0x40384ce8",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600260ac",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384d6e",
+          "last_read_pc": "0x40384da0",
+          "first_write_pc": "0x40384d80",
+          "last_write_pc": "0x40384d96",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c101c",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x4005165a",
+          "last_read_pc": "0x4005165a",
+          "first_write_pc": "0x4005165e",
+          "last_write_pc": "0x4005165e",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c1090",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d18",
+          "last_read_pc": "0x421d3d1c",
+          "first_write_pc": "0x421d41ce",
+          "last_write_pc": "0x421d41e4",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1094",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c1098",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c109c",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a0",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a4",
+          "reads": 0,
+          "writes": 1,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a8",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d24",
+          "last_read_pc": "0x421d3d24",
+          "first_write_pc": "0x421d41d2",
+          "last_write_pc": "0x421d41d2",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b0",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d40fe",
+          "last_read_pc": "0x421d4126",
+          "first_write_pc": "0x421d410c",
+          "last_write_pc": "0x421d412a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c10b4",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d2e",
+          "last_read_pc": "0x421d3d2e",
+          "first_write_pc": "0x421d41d6",
+          "last_write_pc": "0x421d41d6",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b8",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3f8e",
+          "last_read_pc": "0x421d4172",
+          "first_write_pc": "0x421d3f92",
+          "last_write_pc": "0x421d4178",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10c0",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d28",
+          "last_read_pc": "0x421d3d28",
+          "first_write_pc": "0x421d41e8",
+          "last_write_pc": "0x421d41e8",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10c4",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d4138",
+          "last_read_pc": "0x421d414e",
+          "first_write_pc": "0x421d413c",
+          "last_write_pc": "0x421d4154",
+          "last_write_value": "0x000000c0"
+        },
+        {
+          "address": "0x600c10c8",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d34",
+          "last_read_pc": "0x421d3d34",
+          "first_write_pc": "0x421d41ec",
+          "last_write_pc": "0x421d41ec",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10cc",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3fa0",
+          "last_read_pc": "0x421d4194",
+          "first_write_pc": "0x421d3fa4",
+          "last_write_pc": "0x421d419a",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10d8",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d41fe",
+          "last_write_pc": "0x421d4200",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10fc",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3afa",
+          "last_read_pc": "0x421d3b08",
+          "first_write_pc": "0x421d3b06",
+          "last_write_pc": "0x421d3b0c",
+          "last_write_value": "0x00000005"
+        },
+        {
+          "address": "0x600c1100",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3cb8",
+          "last_read_pc": "0x421d3bd6",
+          "first_write_pc": "0x421d3cbc",
+          "last_write_pc": "0x421d3c82",
+          "last_write_value": "0x00000018"
+        },
+        {
+          "address": "0x600c1130",
+          "reads": 1,
+          "writes": 1,
+          "first_read_pc": "0x421d3d42",
+          "last_read_pc": "0x421d3d42",
+          "first_write_pc": "0x421d4206",
+          "last_write_pc": "0x421d4206",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1134",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3fb0",
+          "last_read_pc": "0x421d41b4",
+          "first_write_pc": "0x421d3fb4",
+          "last_write_pc": "0x421d41ba",
+          "last_write_value": "0x00000002"
+        }
+      ]
+    },
+    "panel": {
+      "unsupported-count": 0,
+      "protocol-errors": 0,
+      "refresh-count": 27,
+      "busy-active": false,
+      "spi-bytes": 2985567,
+      "command-count": 297,
+      "waveform-crc": 874060891,
+      "framebuffer-crc": 1525150005,
+      "waveform-supported": true,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false,
+      "output-errors": 0,
+      "trace-events-attempted": 477,
+      "trace-events-flushed": 477,
+      "trace-bytes-flushed": 36869,
+      "trace-write-errors": 0,
+      "trace-flush-errors": 0,
+      "trace-close-errors": 0,
+      "dump-frames-written": 27,
+      "dump-open-errors": 0,
+      "dump-write-errors": 0,
+      "dump-flush-errors": 0,
+      "dump-close-errors": 0,
+      "trace-fd-size": 36869,
+      "trace-fd-position": 36869,
+      "trace-fd-inode": 787157,
+      "trace-path-size": 36869,
+      "trace-path-inode": 787157,
+      "trace-file-linked": true
+    },
+    "adc": {
+      "buttons": 0,
+      "unsupported-uses": 2,
+      "hold-ns": 400000000,
+      "currentrelease-deadline-ns": 0
+    },
+    "spi0": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "spi1": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "rtc": {
+      "sleeping": true,
+      "deep-sleep-active": true,
+      "sleep-count": 1,
+      "wake-count": 0,
+      "unsupported-count": 0,
+      "analog-modelled": false,
+      "rtc-watchdog-modelled": true,
+      "rtc-watchdog-timing-calibrated": false,
+      "sleep-transition-calibrated": false,
+      "watchdog-stage": 0,
+      "watchdog-feed-count": 3,
+      "watchdog-expiry-count": 0
+    },
+    "clock": {
+      "rtc-crc-count": 1,
+      "rtc-crc-hardware-verified": false,
+      "rtc-crc-timing-calibrated": false
+    },
+    "i2c": {
+      "unsupported-accesses": 0,
+      "transfer-count": 63,
+      "transferred-bytes": 297,
+      "nack-count": 0
+    },
+    "usb": {
+      "unsupported-accesses": 0,
+      "transmitted-bytes": 3126,
+      "received-bytes": 0,
+      "host-connected": true,
+      "transmitted-packets": 129,
+      "received-packets": 0,
+      "backend-stalls": 0,
+      "tx-overruns": 0,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false,
+      "usb-enumeration-modelled": false
+    },
+    "fuel_gauge": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "soc-percent": 80,
+      "voltage-mv": 3900,
+      "current-ma": -40,
+      "fuel-gauging-modelled": false
+    },
+    "sensor_rtc": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "epoch-seconds": 1767225633,
+      "oscillator-stopped": false,
+      "alarm-modelled": false,
+      "alarm-irq-wired": false
+    },
+    "imu": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "accel-x-mg": 0,
+      "accel-y-mg": 0,
+      "accel-z-mg": 1000,
+      "gyro-x-mdps": 0,
+      "gyro-y-mdps": 0,
+      "gyro-z-mdps": 0,
+      "motion-hold-ns": 0,
+      "motion-release-deadline-ns": 0,
+      "sampling-timing-modelled": false
+    },
+    "assist_debug": {
+      "unsupported-uses": 2,
+      "sp-checks": 9767039,
+      "spill-count": 0,
+      "last-sp": 1070239568,
+      "last-pc": 1077418170
+    },
+    "regi2c": {
+      "unsupported-accesses": 22,
+      "transfer-count": 27846,
+      "read-count": 13912,
+      "write-count": 13912,
+      "analog-modelled": false,
+      "calibration-modelled": false,
+      "power-control-modelled": false,
+      "timing-calibrated": false,
+      "phy-handshake-modelled": true,
+      "synthetic-measurements": 0
+    },
+    "wifi": {
+      "unsupported-accesses": 0,
+      "tx-frames": 0,
+      "rx-frames": 0,
+      "rx-dropped": 0,
+      "bad-dma": 0,
+      "ethernet-tx": 0,
+      "ethernet-rx": 0,
+      "beacons": 0,
+      "auth-requests": 0,
+      "assoc-requests": 0,
+      "radio-modelled": false,
+      "timing-calibrated": false,
+      "encryption-modelled": false,
+      "air-enabled": false,
+      "ssid": "X3EMU",
+      "channel": 6
+    }
+  },
+  "stock_output_limits": {
+    "boot_favorite": "Transient boot target is verified by its completed native CRC against the original BMP; no separate boot PGM is retained"
+  },
+  "state_before_shutdown": {
+    "status": {
+      "status": "running",
+      "running": true
+    },
+    "machine": {
+      "unsupported-io-reads": 94,
+      "unsupported-io-writes": 108,
+      "virtual-time-ns": 37186131245,
+      "power-button": false,
+      "power-button-hold-ns": 1000000000,
+      "unsupported-io-json": [
+        {
+          "address": "0x600050f0",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384d5c",
+          "last_read_pc": "0x40384d5c",
+          "first_write_pc": "0x40384d64",
+          "last_write_pc": "0x40384d64",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x60006090",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x40384d44",
+          "last_read_pc": "0x40384d44",
+          "first_write_pc": "0x40384d52",
+          "last_write_pc": "0x40384d52",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001ccd4",
+          "reads": 6,
+          "writes": 6,
+          "first_read_pc": "0x40384d12",
+          "last_read_pc": "0x40384d34",
+          "first_write_pc": "0x40384d24",
+          "last_write_pc": "0x40384d3a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6001d054",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x40384cee",
+          "last_read_pc": "0x40384d00",
+          "first_write_pc": "0x40384cfe",
+          "last_write_pc": "0x40384d08",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x6002609c",
+          "reads": 6,
+          "writes": 6,
+          "first_read_pc": "0x40384cc4",
+          "last_read_pc": "0x40384ce2",
+          "first_write_pc": "0x40384cd4",
+          "last_write_pc": "0x40384ce8",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600260ac",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x40384d6e",
+          "last_read_pc": "0x40384da0",
+          "first_write_pc": "0x40384d80",
+          "last_write_pc": "0x40384d96",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c101c",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x4005165a",
+          "last_read_pc": "0x4005165a",
+          "first_write_pc": "0x4005165e",
+          "last_write_pc": "0x4005165e",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c1090",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3d18",
+          "last_read_pc": "0x421d3d1c",
+          "first_write_pc": "0x421d41ce",
+          "last_write_pc": "0x421d41e4",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1094",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c1098",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c109c",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d39ec",
+          "last_write_pc": "0x421d39ec",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a0",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a4",
+          "reads": 0,
+          "writes": 2,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d3a46",
+          "last_write_pc": "0x421d3a46",
+          "last_write_value": "0x001f803e"
+        },
+        {
+          "address": "0x600c10a8",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d24",
+          "last_read_pc": "0x421d3d24",
+          "first_write_pc": "0x421d41d2",
+          "last_write_pc": "0x421d41d2",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b0",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d40fe",
+          "last_read_pc": "0x421d4126",
+          "first_write_pc": "0x421d410c",
+          "last_write_pc": "0x421d412a",
+          "last_write_value": "0x00000000"
+        },
+        {
+          "address": "0x600c10b4",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d2e",
+          "last_read_pc": "0x421d3d2e",
+          "first_write_pc": "0x421d41d6",
+          "last_write_pc": "0x421d41d6",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10b8",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d3f8e",
+          "last_read_pc": "0x421d4172",
+          "first_write_pc": "0x421d3f92",
+          "last_write_pc": "0x421d4178",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10c0",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d28",
+          "last_read_pc": "0x421d3d28",
+          "first_write_pc": "0x421d41e8",
+          "last_write_pc": "0x421d41e8",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10c4",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d4138",
+          "last_read_pc": "0x421d414e",
+          "first_write_pc": "0x421d413c",
+          "last_write_pc": "0x421d4154",
+          "last_write_value": "0x000000c0"
+        },
+        {
+          "address": "0x600c10c8",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d34",
+          "last_read_pc": "0x421d3d34",
+          "first_write_pc": "0x421d41ec",
+          "last_write_pc": "0x421d41ec",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10cc",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d3fa0",
+          "last_read_pc": "0x421d4194",
+          "first_write_pc": "0x421d3fa4",
+          "last_write_pc": "0x421d419a",
+          "last_write_value": "0x00000002"
+        },
+        {
+          "address": "0x600c10d8",
+          "reads": 0,
+          "writes": 4,
+          "first_read_pc": "0x00000000",
+          "last_read_pc": "0x00000000",
+          "first_write_pc": "0x421d41fe",
+          "last_write_pc": "0x421d4200",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c10fc",
+          "reads": 4,
+          "writes": 4,
+          "first_read_pc": "0x421d3afa",
+          "last_read_pc": "0x421d3b08",
+          "first_write_pc": "0x421d3b06",
+          "last_write_pc": "0x421d3b0c",
+          "last_write_value": "0x00000005"
+        },
+        {
+          "address": "0x600c1100",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d3cb8",
+          "last_read_pc": "0x421d3bd6",
+          "first_write_pc": "0x421d3cbc",
+          "last_write_pc": "0x421d3c82",
+          "last_write_value": "0x00000018"
+        },
+        {
+          "address": "0x600c1130",
+          "reads": 2,
+          "writes": 2,
+          "first_read_pc": "0x421d3d42",
+          "last_read_pc": "0x421d3d42",
+          "first_write_pc": "0x421d4206",
+          "last_write_pc": "0x421d4206",
+          "last_write_value": "0x00000001"
+        },
+        {
+          "address": "0x600c1134",
+          "reads": 8,
+          "writes": 8,
+          "first_read_pc": "0x421d3fb0",
+          "last_read_pc": "0x421d41b4",
+          "first_write_pc": "0x421d3fb4",
+          "last_write_pc": "0x421d41ba",
+          "last_write_value": "0x00000002"
+        }
+      ]
+    },
+    "panel": {
+      "unsupported-count": 0,
+      "protocol-errors": 0,
+      "refresh-count": 29,
+      "busy-active": false,
+      "spi-bytes": 3299680,
+      "command-count": 331,
+      "waveform-crc": 874060891,
+      "framebuffer-crc": 1956536157,
+      "waveform-supported": true,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false,
+      "output-errors": 0,
+      "trace-events-attempted": 530,
+      "trace-events-flushed": 530,
+      "trace-bytes-flushed": 40983,
+      "trace-write-errors": 0,
+      "trace-flush-errors": 0,
+      "trace-close-errors": 0,
+      "dump-frames-written": 29,
+      "dump-open-errors": 0,
+      "dump-write-errors": 0,
+      "dump-flush-errors": 0,
+      "dump-close-errors": 0,
+      "trace-fd-size": 40983,
+      "trace-fd-position": 40983,
+      "trace-fd-inode": 787157,
+      "trace-path-size": 40983,
+      "trace-path-inode": 787157,
+      "trace-file-linked": true
+    },
+    "adc": {
+      "buttons": 0,
+      "unsupported-uses": 4,
+      "hold-ns": 400000000,
+      "currentrelease-deadline-ns": 0
+    },
+    "spi0": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "spi1": {
+      "unsupported-reads": 0,
+      "unsupported-writes": 0
+    },
+    "rtc": {
+      "sleeping": false,
+      "deep-sleep-active": false,
+      "sleep-count": 1,
+      "wake-count": 1,
+      "unsupported-count": 0,
+      "analog-modelled": false,
+      "rtc-watchdog-modelled": true,
+      "rtc-watchdog-timing-calibrated": false,
+      "sleep-transition-calibrated": false,
+      "watchdog-stage": 0,
+      "watchdog-feed-count": 6,
+      "watchdog-expiry-count": 0
+    },
+    "clock": {
+      "rtc-crc-count": 2,
+      "rtc-crc-hardware-verified": false,
+      "rtc-crc-timing-calibrated": false
+    },
+    "i2c": {
+      "unsupported-accesses": 0,
+      "transfer-count": 104,
+      "transferred-bytes": 488,
+      "nack-count": 0
+    },
+    "usb": {
+      "unsupported-accesses": 0,
+      "transmitted-bytes": 4585,
+      "received-bytes": 0,
+      "host-connected": true,
+      "transmitted-packets": 187,
+      "received-packets": 0,
+      "backend-stalls": 0,
+      "tx-overruns": 0,
+      "timing-calibrated": false,
+      "physical-effects-modelled": false,
+      "usb-enumeration-modelled": false
+    },
+    "fuel_gauge": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "soc-percent": 80,
+      "voltage-mv": 3900,
+      "current-ma": -40,
+      "fuel-gauging-modelled": false
+    },
+    "sensor_rtc": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "epoch-seconds": 1767225665,
+      "oscillator-stopped": false,
+      "alarm-modelled": false,
+      "alarm-irq-wired": false
+    },
+    "imu": {
+      "unsupported-accesses": 0,
+      "temperature-mc": 25000,
+      "injection-count": 0,
+      "physical-effects-modelled": false,
+      "accel-x-mg": 0,
+      "accel-y-mg": 0,
+      "accel-z-mg": 1000,
+      "gyro-x-mdps": 0,
+      "gyro-y-mdps": 0,
+      "gyro-z-mdps": 0,
+      "motion-hold-ns": 0,
+      "motion-release-deadline-ns": 0,
+      "sampling-timing-modelled": false
+    },
+    "assist_debug": {
+      "unsupported-uses": 4,
+      "sp-checks": 14646125,
+      "spill-count": 0,
+      "last-sp": 1070219024,
+      "last-pc": 1077429020
+    },
+    "regi2c": {
+      "unsupported-accesses": 34,
+      "transfer-count": 41534,
+      "read-count": 20786,
+      "write-count": 20822,
+      "analog-modelled": false,
+      "calibration-modelled": false,
+      "power-control-modelled": false,
+      "timing-calibrated": false,
+      "phy-handshake-modelled": true,
+      "synthetic-measurements": 0
+    },
+    "wifi": {
+      "unsupported-accesses": 0,
+      "tx-frames": 0,
+      "rx-frames": 0,
+      "rx-dropped": 0,
+      "bad-dma": 0,
+      "ethernet-tx": 0,
+      "ethernet-rx": 0,
+      "beacons": 0,
+      "auth-requests": 0,
+      "assoc-requests": 0,
+      "radio-modelled": false,
+      "timing-calibrated": false,
+      "encryption-modelled": false,
+      "air-enabled": false,
+      "ssid": "X3EMU",
+      "channel": 6
+    }
+  },
+  "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+  "model_diagnostics_clean": false,
+  "model_limits": {
+    "cpu_cache_timing_calibrated": false,
+    "electrical_behaviour_modelled": false,
+    "rtc_crc_hardware_verified": false,
+    "rtc_crc_timing_calibrated": false,
+    "rtc_analog_modelled": false,
+    "rtc_watchdog_modelled": true,
+    "rtc_watchdog_timing_calibrated": false,
+    "sleep_transition_calibrated": false,
+    "regi2c_analog_modelled": false,
+    "regi2c_calibration_modelled": false,
+    "regi2c_power_control_modelled": false,
+    "regi2c_timing_calibrated": false,
+    "regi2c_phy_handshake_modelled": true
+  },
+  "panel_trace_complete": true,
+  "panel_trace": {
+    "frame_events": 29,
+    "native_refresh_count": 29
+  },
+  "final_output_accounting": {
+    "unsupported-count": 0,
+    "protocol-errors": 0,
+    "refresh-count": 29,
+    "busy-active": false,
+    "spi-bytes": 3299680,
+    "command-count": 331,
+    "waveform-crc": 874060891,
+    "framebuffer-crc": 1956536157,
+    "waveform-supported": true,
+    "timing-calibrated": false,
+    "physical-effects-modelled": false,
+    "output-errors": 0,
+    "trace-events-attempted": 530,
+    "trace-events-flushed": 530,
+    "trace-bytes-flushed": 40983,
+    "trace-write-errors": 0,
+    "trace-flush-errors": 0,
+    "trace-close-errors": 0,
+    "dump-frames-written": 29,
+    "dump-open-errors": 0,
+    "dump-write-errors": 0,
+    "dump-flush-errors": 0,
+    "dump-close-errors": 0,
+    "trace-fd-size": 40983,
+    "trace-fd-position": 40983,
+    "trace-fd-inode": 787157,
+    "trace-path-size": 40983,
+    "trace-path-inode": 787157,
+    "trace-file-linked": true,
+    "file_bytes": 40983,
+    "file_records": 530,
+    "sequence_complete": true,
+    "file_observer_supported": true,
+    "file_observer_consistent": true,
+    "complete": true
+  },
+  "status": "failed",
+  "archive": {
+    "original_receipt_sha256": "b19816453bcf0d25f89c22381e2ab81899b69f30bc3ee7c5dbbdf5e9d1871a7b",
+    "original_receipt": "favorites-boot-disabled/validation.json",
+    "archived_date": "2026-10-03"
+  }
+}

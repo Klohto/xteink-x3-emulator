@@ -20,6 +20,16 @@ renames the open trace and creates a new empty file at its former path: writes
 to the original descriptor still succeed, while path linkage and sizes reveal
 that the named file is incomplete. This does not relax acceptance checks.
 
+The observer also detected this condition in a real stock-firmware run: the
+open descriptor retained its original inode and all successfully flushed
+bytes, while the named file changed to a different inode containing only a
+prefix. That run remains invalid. A separate replay kept the backend and live
+outputs under a private `/tmp` directory, then archived regular files only
+after both guests exited. Custom grayscale sleep/wake and four reader
+orientations had complete sequences, byte counts and file linkage there.
+Archive receipts verify each copied regular file's SHA256; stopped QMP FIFOs
+are transport endpoints and are not capture artifacts.
+
 `trace-write-errors`, `trace-flush-errors` and `trace-close-errors` distinguish
 the corresponding failed stdio calls. `dump-open-errors`, `dump-write-errors`,
 `dump-flush-errors` and `dump-close-errors` cover the PGM export. A frame counts
@@ -55,7 +65,10 @@ painted black. The PNG check compares that source-derived B/W dither and alpha
 compositing. It does not attribute a four-tone PNG viewer to this firmware.
 Large BMPs can leave a B/W base idle for more than one virtual second while the
 guest reads and renders its gray planes, so the harness also waits for the
-expected complete source pattern and an additional refresh. Three-page `.xtc`
+expected complete source pattern and an additional refresh. Loading/Done
+popups can also preserve individual sample points. The completion predicate
+therefore compares every image-interior pixel, excluding the viewer's bottom
+button hints and outer border. Three-page `.xtc`
 and `.xtch` files contain
 distinct asymmetric geometry, metadata and two chapter records. `.xtch` is the
 stock container extension; `XTH` is its internal page magic. Source sample
@@ -66,6 +79,35 @@ The rotation, lock and custom sleep workflows supply explicitly recorded
 CrossInk preferences in the stock namespaced settings file. The guest loads
 these settings and performs the actions itself. These seeded preferences are
 input fixtures; their use does not prove the settings editor UI.
+
+The Quick Actions workflow seeds five explicit slot values, then uses the
+actual Controls editor to assign Long Menu as their owner and commit through
+the Save footer. It verifies the saved owner and slot values, then invokes
+manual refresh, dark mode, focus, guide dots and screenshot from the actual
+five-slot popup. Per-book option bytes and guest-created screenshot bytes are
+checked separately from visible effects. Seeding the slot values does not
+establish that every slot picker was edited by the UI.
+For this original plain-text fixture in portrait light mode, the harness also
+rejects solid modal borders in the page body and waits for the actual later
+refresh. A fully parsed prior section cache and a quiet Indexing popup do not
+prove that reindexing has finished.
+
+The favorites workflow uses Browser long Confirm to set a BMP boot favorite
+and X3 image Confirm to set its sleep favorite. It verifies that the pinned
+sleep file takes precedence over a different root fallback, and that the
+unchanged guest loads the saved boot favorite after genuine GPIO deep wake.
+The brief boot target's completed native CRC is compared with a full native
+bitmap decoded from the original BMP; it has no separate retained boot PGM.
+The Page Overlay
+workflow pins an original RGBA PNG through the viewer, verifies automatic
+selection of overlay mode, and compares alpha below 128 against the actual
+reader background. This threshold transparency differs from the PNG viewer's
+compositing against white.
+The preferred-folder workflow selects and clears the folder through its actual
+Browser directory menu, then compares the resulting sleep image before and
+after clearing it. A separate fixture disables the global custom-boot setting
+while retaining both favorites, and verifies the source's splashless-wake
+policy. These seeded global preferences do not prove their settings pickers.
 
 Receipts separate `functional_pass` from `strict_pass`. A stock UI effect can
 be observed while strict validation fails because diagnostics or trace output
