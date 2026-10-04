@@ -421,7 +421,7 @@ def main(argv: list[str] | None = None) -> int:
         "Xteink X3 / CrossInk v1.6.0 offline Linux runtime\n\n"
         "Host: Ubuntu 24.04 x86-64, Python 3.11+, glibc 2.38+.\n"
         "Install distro runtime libraries explicitly before running:\n"
-        "  sudo apt-get install python3 libglib2.0-0t64 libpixman-1-0 libgcrypt20 zlib1g libslirp0\n\n"
+        "  sudo apt-get install python3 libglib2.0-0t64 libpixman-1-0 libgcrypt20 zlib1g libslirp0 libzstd1 libncursesw6 libtinfo6\n\n"
         "Start: python3 launch.py\nOpen the printed loopback Front panel address.\n"
         "Enter confirms; Backspace goes back; arrows navigate; P is Power.\n"
         "Ctrl-C stops the backend and preserves its flash/card/eFuse and run.json.\n"

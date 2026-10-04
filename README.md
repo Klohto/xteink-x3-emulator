@@ -19,7 +19,7 @@ artifact, extract the enclosed `.tar.gz`, and run from the extracted directory
 on **Ubuntu 24.04 x86-64**:
 
 ```sh
-sudo apt-get install python3 libglib2.0-0t64 libpixman-1-0 libgcrypt20 zlib1g libslirp0
+sudo apt-get install python3 libglib2.0-0t64 libpixman-1-0 libgcrypt20 zlib1g libslirp0 libzstd1 libncursesw6 libtinfo6
 python3 launch.py
 ```
 
