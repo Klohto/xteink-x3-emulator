@@ -48,6 +48,18 @@ CCMP_REFERENCE_HASHES = {
     'hostap_ccmp.c': 'c8f67c3ed3c0270c614b6268d56000acb0c2a6a6c79b5ca9572064a04f5405c8',
     'rfc3610.txt': 'd6c857b1dea18d8259ee0ccc5468859990200e8580d0ad55dc75963d0c46588d',
 }
+CCMP_SCOPE_FLAGS = {
+    'ccmp-ordinary-tx-scope-modelled': True,
+    'ccmp-station-rx-scope-modelled': True,
+    'ccmp-hardware-replay-modelled': False,
+    'encryption-modelled': False,
+    'timing-calibrated': False,
+}
+CCMP_TRAFFIC_COUNTERS = ('tx-ccmp-encrypted-frames', 'rx-ccmp-decrypted-frames')
+CCMP_ERROR_COUNTERS = ('tx-ccmp-rejected-frames', 'rx-ccmp-rejected-frames', 'rx-ccmp-auth-failed-frames',
+    'bad-dma', 'peer-dropped-frames', 'peer-malformed-inputs', 'peer-channel-drops',
+    'peer-unmodelled-frames', 'peer-link-errors', 'tx-fcs-unverified-frames',
+    'tx-length-errors', 'tx-buffer-prefix-errors')
 
 
 class WireError(RuntimeError):
@@ -111,6 +123,8 @@ def crypto_preflight():
     import cryptography
     from cryptography.hazmat.primitives.keywrap import aes_key_wrap
     from cryptography.hazmat.primitives.ciphers.aead import AESCCM
+    if cryptography.__version__ != '46.0.0':
+        raise WireError('secure fixture requires the verified cryptography 46.0.0 provider')
     # RFC 6070 iteration4096 vector and RFC 3394 section4.1.
     derived = hashlib.pbkdf2_hmac('sha1', b'password', b'salt', 4096, 20)
     if derived.hex() != '4b007901b765489abead49d926f721d065a429c1':
@@ -259,6 +273,88 @@ def fresh_secure_connection(serial, baseline, expected):
         observation.update(got_ip_line=callbacks[-1].group(0), completion_line=completions[-1].group(0),
             verified=flags == expected and callbacks[-1].end() <= completions[-1].start())
     return observation
+
+
+def assess_native_ccmp(values, *, require_traffic):
+    """Require precise scoped capabilities while preserving broad limits."""
+    if not isinstance(values, dict):
+        raise WireError('native CCMP observations are not a property mapping')
+    for name, expected in CCMP_SCOPE_FLAGS.items():
+        if type(values.get(name)) is not bool or values[name] is not expected:
+            raise WireError('native CCMP scope/limit flag missing, mistyped or unexpected: ' + name)
+    for name in CCMP_TRAFFIC_COUNTERS + CCMP_ERROR_COUNTERS:
+        if type(values.get(name)) is not int or values[name] < 0:
+            raise WireError('native CCMP/error counter missing, mistyped or negative: ' + name)
+        if name in CCMP_ERROR_COUNTERS and values[name] != 0:
+            raise WireError('native CCMP/raw packet error counter is nonzero: ' + name)
+        if require_traffic and name in CCMP_TRAFFIC_COUNTERS and values[name] == 0:
+            raise WireError('native CCMP encrypted/decrypted traffic counter is zero: ' + name)
+    return True
+
+
+def observe_native_ccmp(qmp, *, require_traffic=False):
+    """Only read native counters; no register, key, RAM, or API mutation."""
+    names = tuple(CCMP_SCOPE_FLAGS) + CCMP_TRAFFIC_COUNTERS + CCMP_ERROR_COUNTERS
+    try:
+        values = {name: qmp.execute('qom-get', {'path': '/machine/wifi', 'property': name}) for name in names}
+    except Exception as error:
+        raise WireError('native backend lacks the required read-only scoped CCMP observations: ' + str(error)) from error
+    assess_native_ccmp(values, require_traffic=require_traffic)
+    return values
+
+
+def actual_m1_nonce_hashes(raw_ap):
+    """Hash the actual transmitted M1 nonce; never report temporal keys."""
+    result = set()
+    for record in raw_ap.get('records', []):
+        if record.get('purpose') != 'wpa2-message-1':
+            continue
+        frame = base64.b64decode(record['raw_base64'], validate=True)
+        if frame[:2] != bytes.fromhex('0802') or frame[24:32] != LLC + bytes.fromhex('888e'):
+            raise WireError('actual M1 wire record lacks clear FromDS EAPOL framing')
+        parsed = parse_eapol_key(frame[32:])
+        if parsed['info'] != 0x008a or parsed['replay'] != 1 or parsed['nonce'] == bytes(32):
+            raise WireError('actual M1 wire record has unexpected flags/replay/nonce')
+        result.add(sha(parsed['nonce']))
+    return result
+
+
+def visible_scan_identity(records, serial, record_baseline, serial_baseline, factory_mac):
+    """Verify new real scan/packet identity without OCR of the font's digit 3."""
+    if not isinstance(records, list) or not isinstance(serial, str) or type(record_baseline) is not int \
+            or not 0 <= record_baseline <= len(records) or type(serial_baseline) is not int \
+            or not 0 <= serial_baseline <= len(serial) or not isinstance(factory_mac, bytes) or len(factory_mac) != 6:
+        raise WireError('visible scan identity observer has invalid input/baseline')
+    advertisements = probes = 0
+    for record in records[record_baseline:]:
+        if record.get('purpose') not in ('visible-beacon', 'directed-probe-response', 'genuine-guest-dma-mpdu'):
+            continue
+        frame = base64.b64decode(record['raw_base64'], validate=True)
+        if len(frame) < 24:
+            raise WireError('visible scan identity wire frame lacks a MAC header')
+        control = int.from_bytes(frame[:2], 'little')
+        if control & 0x4003 or (control >> 2) & 3 != 0:
+            continue
+        subtype = (control >> 4) & 15
+        if record['direction'] == 'guest-to-ap' and subtype == 4 and frame[10:16] == factory_mac:
+            values = [value for tag, value in elements(frame[24:]) if tag == 0]
+            if values in ([b''], [SSID]):
+                probes += 1
+        elif record['direction'] == 'ap-to-guest' and subtype in (5, 8) and record['channel'] == 1:
+            if len(frame) < 36 or frame[10:16] != AP_MAC or frame[16:22] != AP_MAC:
+                raise WireError('visible scan advertisement BSSID/transmitter differs from actual fixture AP')
+            tags = elements(frame[36:])
+            if [value for tag, value in tags if tag == 0] != [SSID] \
+                    or [value for tag, value in tags if tag == 48] != [RSN_IE[2:]] \
+                    or [value for tag, value in tags if tag == 3] != [b'\x01']:
+                raise WireError('visible scan wire SSID/RSN/channel differs from actual fixture AP')
+            advertisements += 1
+    source_scan = re.search(r'WiFi scan usable networks=1 hidden=0 duplicates=0\b', serial[serial_baseline:]) is not None
+    return {'verified': bool(advertisements and probes and source_scan),
+        'new_exact_visible_advertisements': advertisements, 'new_actual_factory_mac_probes': probes,
+        'source_scan_has_exactly_one_visible_ap': source_scan, 'wire_record_baseline': record_baseline,
+        'serial_baseline': serial_baseline, 'ssid_sha256': sha(SSID), 'bssid': AP_MAC.hex(':'),
+        'factory_mac': factory_mac.hex(':'), 'rsn_ie_sha256': sha(RSN_IE), 'channel': 1}
 
 
 def checksum(data):
@@ -867,7 +963,9 @@ def run_secure_phase(args, output, host_root, helpers, dependencies, *, name, fl
         command += ['--efuse', str(efuse.resolve())]
     report = {'schema_version': 1, 'workflow': name, 'launcher_command': command,
         'host_dependency_files': dependencies, 'checks': {'backend_stopped_cleanly': False,
-            'panel_trace_complete': False}, 'frames': {}, 'functional_pass': False,
+            'panel_trace_complete': False, 'native_ccmp_final_positive_and_zero_errors': False,
+            'native_ccmp_readonly_observations_before_shutdown': False},
+        'frames': {}, 'functional_pass': False,
         'strict_pass': False, 'secure_wifi_pass': False, 'all_crossink_functions_verified': False,
         'speed_selection_allowed': False, 'guest_memory_or_api_modified': False,
         'input': {'flash_sha256': helpers['file_sha256'](flash), 'sd_sha256': helpers['file_sha256'](card),
@@ -892,6 +990,10 @@ def run_secure_phase(args, output, host_root, helpers, dependencies, *, name, fl
         replay.check('raw_peer_only_no_builtin_air',
             qmp.execute('qom-get', {'path': '/machine/wifi', 'property': 'peer-only'}) is True
             and qmp.execute('qom-get', {'path': '/machine/wifi', 'property': 'air-enabled'}) is False)
+        report['native_ccmp_initial'] = observe_native_ccmp(qmp)
+        replay.check('native_ccmp_scope_limits_and_initial_zero_errors', True)
+        replay.check('fresh_cpu_starts_without_inherited_ccmp_traffic', all(
+            report['native_ccmp_initial'][name] == 0 for name in CCMP_TRAFFIC_COUNTERS))
         if expected_store is None:
             replay.check('initial_no_guest_wifi_store', replay.absent('/.crosspoint/wifi.json'))
         else:
@@ -916,6 +1018,8 @@ def run_secure_phase(args, output, host_root, helpers, dependencies, *, name, fl
         experiment.wait('new genuine WPA2 handshake and encrypted DHCP completion', connected)
         replay.check('actual_new_secure_connection', connected(),
                      fresh_secure_connection(experiment.log_text('serial.log'), baseline, expected_flags))
+        report['native_ccmp_connected'] = observe_native_ccmp(qmp, require_traffic=True)
+        replay.check('actual_native_encryption_decryption_positive_and_zero_errors', True)
         if expected_store is None:
             replay.capture_text('save-password-prompt', ('Save', 'password'))
             replay.tap('confirm', 'password-saved', 'Accept source Save Password default Yes')
@@ -935,6 +1039,7 @@ def run_secure_phase(args, output, host_root, helpers, dependencies, *, name, fl
         if expected_store is not None:
             # A later environmental phase exposes the same authenticated AP to
             # scan. Only beacon/probe SSID advertisement changes; no guest state.
+            visible_wire_baseline = len(ap.snapshot()['records'])
             ap.hidden = False
             report['visible_advertisement_phase'] = {'same_ssid': SSID.decode(), 'same_bssid': AP_MAC.hex(':'),
                 'same_channel': 1, 'same_rsn_ie_hex': RSN_IE.hex(),
@@ -949,7 +1054,10 @@ def run_secure_phase(args, output, host_root, helpers, dependencies, *, name, fl
                 'Connecting to ssid=X3EMU auto=1 saved=1' in experiment.log_text('serial.log')[before:])
             experiment.press(qmp, 'confirm', purpose='Source Confirm interrupts saved auto-connect to expose scan list')
             helpers['wait_scan'](replay, 'saved-visible-network-list')
-            replay.capture_text('actual-visible-saved-row', ('X3EMU',))
+            replay.capture_text('actual-visible-saved-row', ('WiFi', 'Networks', 'Forget'))
+            identity = visible_scan_identity(ap.snapshot()['records'], experiment.log_text('serial.log'),
+                visible_wire_baseline, before, (output / 'run/efuse.bin').read_bytes()[24:30][::-1])
+            replay.check('new_visible_scan_exact_wire_and_source_identity', identity['verified'], identity)
             before_cancel = replay.read('/.crosspoint/wifi.json')
             replay.tap('left', 'forget-cancel-prompt', 'Saved row Left opens genuine Forget prompt')
             replay.capture_text('forget-cancel-panel', ('Forget', 'Cancel'))
@@ -983,6 +1091,11 @@ def run_secure_phase(args, output, host_root, helpers, dependencies, *, name, fl
                 report['snapshot_error'] = str(failure)
     finally:
         if qmp:
+            try:
+                report['native_ccmp_before_shutdown'] = observe_native_ccmp(qmp, require_traffic=True)
+                report['checks']['native_ccmp_readonly_observations_before_shutdown'] = True
+            except Exception as error:
+                report['native_ccmp_before_shutdown_error'] = str(error)
             qmp.close()
         if process and process.poll() is None:
             process.send_signal(signal.SIGINT)
@@ -1018,6 +1131,14 @@ def run_secure_phase(args, output, host_root, helpers, dependencies, *, name, fl
             report['panel_trace_complete'] = bool(report['frames']) and all(
                 frame.get('trace_complete') for frame in report['frames'].values()) and report['stopped_panel_trace']['complete']
             report['checks']['panel_trace_complete'] = report['panel_trace_complete']
+            try:
+                final_wifi = run.get('final_state', {}).get('wifi', {})
+                assess_native_ccmp(final_wifi, require_traffic=True)
+                report['native_ccmp_final'] = {name: final_wifi[name] for name in
+                    tuple(CCMP_SCOPE_FLAGS) + CCMP_TRAFFIC_COUNTERS + CCMP_ERROR_COUNTERS}
+                report['checks']['native_ccmp_final_positive_and_zero_errors'] = True
+            except WireError as error:
+                report['native_ccmp_final_error'] = str(error)
         report['functional_pass'] = bool(report.get('completed') and not report.get('error')
             and not report.get('shutdown_error') and report['checks'] and all(report['checks'].values()))
         report['secure_wifi_pass'] = report['functional_pass']
@@ -1078,6 +1199,16 @@ def run_secure_lifecycle(args):
         report['checks']['fresh_cpu_exact_written_flash_sd_efuse'] = all(
             second['input'][kind + '_sha256'] == sha((first_dir / 'run' / filename).read_bytes())
             for kind, filename in (('flash', 'flash.bin'), ('sd', 'sd.img'), ('efuse', 'efuse.bin')))
+        first_nonces, second_nonces = (actual_m1_nonce_hashes(phase['raw_ap']) for phase in (first, second))
+        first_keys, second_keys = ({value['ptk_sha256'] for value in phase['raw_ap']['eapol_verifications']
+            if value['purpose'] == 'wpa2-message-2-authenticated'} for phase in (first, second))
+        report['checks']['fresh_cpu_new_actual_m1_nonce_and_negotiated_key'] = bool(
+            first_nonces and second_nonces and first_nonces.isdisjoint(second_nonces)
+            and first_keys and second_keys and first_keys.isdisjoint(second_keys))
+        report['new_handshake_observation'] = {'first_m1_nonce_sha256': sorted(first_nonces),
+            'second_m1_nonce_sha256': sorted(second_nonces), 'pairwise_keys_distinct': first_keys.isdisjoint(second_keys),
+            'authenticator_nonce_source': 'declared public SHA256 fixture generations 1 and 1001; physical entropy unverified',
+            'temporal_keys_in_receipt': False}
     report['functional_pass'] = bool(len(report['phases']) == 2 and all(report['checks'].values()))
     report['secure_wifi_pass'] = report['functional_pass']
     report['strict_pass'] = bool(report['functional_pass'] and all(phase['strict_pass'] for phase in report['phases'].values()))

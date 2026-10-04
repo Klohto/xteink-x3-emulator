@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "kind": "public-safe-bounded-native119-secure-lifecycle-summary",
+  "native_elf_sha256": "ab28e1b48ab7921db5ad07c3abfa5db4f09708f8b31d500d3dc864c82cbbe3e0",
+  "native_patch_sha256": "1010a3adf336d33b4dafbae1f50989f7a499f5919874dd2de5edfee80f1462c5",
+  "native_source_tree": "b600322513688fa90994a9e95edc2cf569db1363",
+  "native_device_cases_passed": 119,
+  "native_suites_passed": 12,
+  "native_skips": 0,
+  "focused_host_tests_passed": 24,
+  "focused_host_tests_receipt_sha256": "790d55f3485b28c78342bb80758353f31d5941dd4f9e5d4f5b82e13fc8b7c629",
+  "original_secure_lifecycle_receipt_sha256": "a048c199451ce1964589b1ecedeedc79b31fd31ed1d1b1fcdb8dda719f6c2a45",
+  "independent_closed_guest_review_sha256": "fa3e0e44149a4f36706cf368eb3a64c75c9fb17ccf94ef68539b85e654388631",
+  "original_false_secure_cohort_receipt_sha256": "a633dbece356bd3cfe3d568ec6312ad8a886f7d7ca601ec34834882bb24faeb0",
+  "original_false_cohorts_preserved": true,
+  "actual_guest_bootloader_partition_table_app0_app1_ota_epub_unchanged": true,
+  "actual_written_flash_sd_efuse_new_cpu_chain": true,
+  "native_flags": {
+    "ccmp-ordinary-tx-scope-modelled": true,
+    "ccmp-station-rx-scope-modelled": true,
+    "ccmp-hardware-replay-modelled": false,
+    "encryption-modelled": false,
+    "timing-calibrated": false
+  },
+  "phases": {
+    "physical-password-save": {
+      "receipt_sha256": "1b3d94404db9ff4847097ef5db83a39fa80f3a99eae94e8eb5746f0d0cf521e4",
+      "checks_passed": 22,
+      "native_encrypted_tx_and_independent_wire_mic_count": 22,
+      "native_decrypted_rx_and_independent_wire_mic_count": 3,
+      "closed_panel_events": 785,
+      "closed_completed_panel_frames": 46,
+      "actual_eapol_and_encrypted_dhcp": true,
+      "native_packet_error_counters_zero": true
+    },
+    "fresh-cpu-reconnect-forget": {
+      "receipt_sha256": "37fe1ae0bc9aa27f2daab6e6246e8043e076efd41813d611472ec0f10756b2bb",
+      "checks_passed": 27,
+      "native_encrypted_tx_and_independent_wire_mic_count": 20,
+      "native_decrypted_rx_and_independent_wire_mic_count": 3,
+      "closed_panel_events": 553,
+      "closed_completed_panel_frames": 29,
+      "actual_eapol_and_encrypted_dhcp": true,
+      "native_packet_error_counters_zero": true
+    }
+  },
+  "strict_pass": false,
+  "all_crossink_functions_verified": false,
+  "physical_rf_modelled": false,
+  "speed_selection_allowed": false,
+  "private_credentials_keys_raw_packets_not_included": true,
+  "captive-dns-final": {
+    "receipt_sha256": "b4f18101a395daa5cd9417def5e12526ba21cb1df37bf0412bf88ddcfc88d4f6",
+    "functional_pass": true,
+    "all_guest_original_checks_passed": true,
+    "native_ccmp_tx_rx_counts_zero": true
+  },
+  "hotspot-final": {
+    "receipt_sha256": "c7c4ebaf515a7e2a9b312ffbd8deb5e2041ad7a4e5242d0db6e6a52eebf7f5e9",
+    "functional_pass": true,
+    "all_guest_original_checks_passed": true,
+    "native_ccmp_tx_rx_counts_zero": true
+  },
+  "source_files": [
+    {
+      "path": "scripts/test-crossink-secure-wifi.py",
+      "sha256": "99ce4d1070e825589954dd991decee61ecfc9ba85a5a0b337c9936d0aa61b676"
+    },
+    {
+      "path": "tests/test_secure_wifi.py",
+      "sha256": "bdeeee5ee92c13b4301b32ce26c7d86458cf67680a901dd94f05308499df257c"
+    },
+    {
+      "path": "docs/secure-wifi-validation.md",
+      "sha256": "1ed5395ff231ba0119696c23c655fcdc060736a1b4b4ed0dc31d3c3e6d075fc8"
+    }
+  ]
+}

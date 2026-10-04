@@ -9,6 +9,17 @@ script, flash and SD image tools, a runtime, local front panel, button controls 
 integration experiments. Firmware images and generated storage stay outside
 Git.
 
+The current working patch passes 119 native cases across 12 suites. Actual
+unchanged CrossInk passes EPUB reading and saved-page cold restoration, WPA2
+password Save/reconnect/Forget, hotspot/DHCP, captive DNS, and Nearby EPUB
+transfer/read/cold restoration on this backend. The encrypted profile is
+bounded pairwise station CCMP; additional group traffic is still being checked.
+See [native encryption validation](docs/native-ccmp-validation.md) and the
+[recovery record](docs/emulator-recovery-2026-10-04.md) for exact source pins,
+original receipts, preserved failures and remaining work. GitHub `main` remains
+the previous RX114 checkpoint while the current source is reviewed on
+`work/ccmp-source-checkpoint`.
+
 ## Current capabilities
 
 | Component | Implemented behavior |
@@ -21,7 +32,7 @@ Git.
 | I2C | C3 command/FIFO/interrupt path with BQ27220 gauge, DS3231 RTC and QMI8658 IMU models |
 | USB and console | UART ROM output, bidirectional USB Serial/JTAG FIFO and stock CRC-checked file-transfer commands |
 | Sleep and watchdogs | RTC counter, timer/GPIO wake, retained state, digital CPU sleep/restart and distinct watchdog reset domains |
-| Experimental WiFi | C3 MAC/DMA/TSF, digital reset, virtual AP and raw peer frames; stock scanning, DHCP and HTTP protocols have proofs, further network functions remain under test |
+| Experimental WiFi | C3 MAC/DMA/TSF, digital reset, raw peers, source-backed RX enable and bounded native CCMP; actual secure Save/reconnect/Forget, scanning, DHCP, hotspot and captive DNS |
 
 The official CrossInk v1.6.0 application has been programmed through the ROM;
 every byte of the resulting 16 MiB flash matches the prepared image. Stock
@@ -48,7 +59,7 @@ under [`docs/evidence/functions`](docs/evidence/functions).
 Further receipts in [`docs/evidence/functions-next`](docs/evidence/functions-next)
 verify layout persistence, percent navigation, automatic turns, footnotes,
 screenshots, completion, power shortcuts, library cleanup and image formats.
-The current native patch passes 12 suites with 111 cases and zero skips; exact
+The earlier TX-prefix native patch passes 12 suites with 111 cases and zero skips; exact
 build provenance is in [`docs/evidence/native-build-tx-prefix.json`](docs/evidence/native-build-tx-prefix.json).
 
 The [function ledger](docs/function-coverage.md) records subsequent evidence for

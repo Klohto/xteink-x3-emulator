@@ -1,6 +1,6 @@
-# Native CCMP candidate validation
+# Native CCMP validation
 
-The candidate encrypts ordinary protected station TX frames and authenticates
+The selected working backend encrypts ordinary protected station TX frames and authenticates
 and decrypts a bounded pairwise station RX profile in the native Wi-Fi model.
 It runs the unchanged official CrossInk v1.6.0 application. The guest still
 performs association, WPA2 key derivation, key installation, packet framing,
@@ -9,7 +9,7 @@ Python AES-CCM peer; it does not implement guest callbacks or write guest memory
 
 ## Native acceptance
 
-The complete candidate patch SHA-256 is
+The complete selected patch SHA-256 is
 `1010a3adf336d33b4dafbae1f50989f7a499f5919874dd2de5edfee80f1462c5`.
 Its patched source tree is `b600322513688fa90994a9e95edc2cf569db1363`
 on Espressif QEMU `febae182e132e4055529be423a818225ebddaa3a`.
@@ -45,6 +45,23 @@ binds the original receipts. Full private captures remain separate from the
 source repository. These results establish this reader regression, rather than
 whole-machine or physical-speed acceptance.
 
+## Actual secure and open-network gates
+
+The full stock secure lifecycle passes: real keyboard entry, authenticated
+M1/M2/M3/M4, encrypted DHCP, physical Save Password, a new CPU using the exact
+written media, a fresh handshake, Forget Cancel, Forget Confirm and a password
+requirement afterward. Independent reconstruction authenticates all 48 recorded
+protected MPDUs and verifies the guest's CPV1 checksum against its actual eFuse.
+Both CPUs have zero cryptographic or packet DMA errors and complete closed
+panel traces. Their precise [secure evidence](evidence/secure-wifi-2026-10-04.json)
+contains hashes and counts without credentials or packet bytes.
+
+Fresh stock hotspot and captive-DNS regressions also pass on this exact ELF.
+Nearby transfers the original EPUB, reads and restores both pages, saves page
+one and restores identical tones on a new CPU from the receiver's actual media.
+The original OCR-failed secure cohort and missing-decoder hotspot failure remain
+unchanged alongside their later passing runs.
+
 ## Encryption boundaries
 
 TX selects the current valid key-table row using the guest descriptor's exact
@@ -65,7 +82,10 @@ and unproved descriptor variants remain outside this candidate's scope. The
 broad `encryption-modelled` property and `ccmp-hardware-replay-modelled` remain
 false. Physical RF, entropy, speed and panel optics remain uncalibrated.
 
-The default source patch remains RX114 while actual secure Save, fresh-CPU
-reconnect and Forget, plus open-network regression gates, are in progress.
+These completed gates select the 119-case backend in the working source and
+local runtime. GitHub `main` remains the earlier RX114 checkpoint because
+automatic approval review rejected its update; source checkpoints are published
+on `work/ccmp-source-checkpoint` for review. A separate station-group RX extension
+is undergoing source and native validation and is not selected here.
 `all_crossink_functions_verified=false`, `complete_machine_verified=false`,
 and `speed_selection_allowed=false`.

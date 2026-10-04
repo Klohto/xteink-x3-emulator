@@ -22,9 +22,9 @@ newly verified. Fresh builds and actual stock-firmware executions establish the
 results below. New helpers were reconstructed where unpublished source was
 unavailable; earlier recorded hashes do not establish recovery of those bytes.
 
-## Selected RX safety fix
+## Verified RX safety baseline
 
-The selected patch SHA-256 is
+The RX114 baseline patch SHA-256 is
 `844a36765cd0bcec8e040c8197fceb40c9056647ac2610a12464dee21a24b480`.
 The newly built native ELF SHA-256 is
 `56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa`;
@@ -77,16 +77,22 @@ Two earlier host QR-oracle failures are retained as failures, not passes.
 The adjacent [recovery evidence](evidence/rx-enable-recovery-2026-10-04.json)
 binds exact original receipts and source inputs without exposing private stores.
 
-## Work continuing
+## Selected native encryption
 
 The independent CCMP foundation passes RFC 3610 vectors, cross-provider
 ciphertexts, authenticated-header tests and sanitizer checks. A separately
 built candidate now passes 119 native cases in the same 12 suites, with no
 skips. Its unchanged official CrossInk guest also passes page turns, saved
 progress and a new-CPU saved-page restore with zero text or tone differences.
-The candidate is not yet selected here. The actual Save/reconnect/Forget
-lifecycle and open-network regression gates must complete before selection.
+The actual Save/reconnect/Forget lifecycle, hotspot, captive DNS and strong
+Nearby EPUB reading/new-CPU regressions now pass. These gates select the bounded
+119-case backend locally and in the working patch. GitHub `main` remains RX114;
+automatic approval review blocked that ref update, and the source checkpoint
+has a separate review branch. The selected patch, ELF and complete source tree
+are bound in the native record below.
 See [the bounded native encryption record](native-ccmp-validation.md).
+
+## Work continuing
 
 Offline OPDS/KOReader editors and the remaining Nearby reading, folder,
 approval, collision, image and negative-protocol routes are undergoing actual

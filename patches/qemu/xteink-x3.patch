@@ -5425,12 +5425,304 @@ index 0000000..6626e7d
 +}
 +
 +type_init(xteink_x3_adc_register_types)
+diff --git a/hw/net/ccmp.c b/hw/net/ccmp.c
+new file mode 100644
+index 0000000..16e6acd
+--- /dev/null
++++ b/hw/net/ccmp.c
+@@ -0,0 +1,236 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++/* AES-CCM from RFC3610; bounded CCMP AAD/nonce follows hostap_2_11
++ * wlantest/ccmp.c ccmp_aad_nonce. No guest memory or hardware selection here.
++ */
++#include "qemu/osdep.h"
++#include "crypto/aes.h"
++#include "ccmp.h"
++
++static bool overlap(const void *a, size_t alen, const void *b, size_t blen)
++{
++    uintptr_t av = (uintptr_t)a, bv = (uintptr_t)b;
++    if (!alen || !blen) {
++        return false;
++    }
++    /* Differences avoid overflowing an address+length calculation. */
++    return av <= bv ? bv - av < alen : av - bv < blen;
++}
++
++static bool input_valid(const uint8_t *key, const uint8_t *nonce,
++                        const uint8_t *aad, size_t aad_len,
++                        const uint8_t *input, size_t len, size_t tag_len)
++{
++    return key && nonce && (aad || !aad_len) && (input || !len) &&
++           len <= X3_CCM_MAX_MESSAGE && aad_len <= X3_CCM_MAX_AAD &&
++           tag_len >= 4 && tag_len <= 16 && !(tag_len & 1);
++}
++
++static bool output_overlaps(const uint8_t *output, size_t len,
++                            const uint8_t *key, const uint8_t *nonce,
++                            const uint8_t *aad, size_t aad_len,
++                            const uint8_t *input, size_t input_len)
++{
++    return overlap(output, len, key, 16) ||
++           overlap(output, len, nonce, 13) ||
++           overlap(output, len, aad, aad_len) ||
++           overlap(output, len, input, input_len);
++}
++
++static void mac_block(const AES_KEY *key, uint8_t state[16],
++                       const uint8_t block[16])
++{
++    uint8_t x[16];
++    for (size_t i = 0; i < 16; i++) {
++        x[i] = state[i] ^ block[i];
++    }
++    AES_encrypt(x, state, key);
++}
++
++static void mac_value(const AES_KEY *key, const uint8_t nonce[13],
++                      const uint8_t *aad, size_t aad_len,
++                      const uint8_t *plain, size_t len,
++                      uint8_t mac[16], size_t tag_len)
++{
++    uint8_t block[16] = {0};
++    block[0] = (aad_len ? 0x40 : 0) | (((tag_len - 2) / 2) << 3) | 1;
++    memcpy(block + 1, nonce, 13);
++    block[14] = len >> 8;
++    block[15] = len;
++    memset(mac, 0, 16);
++    mac_block(key, mac, block);
++
++    if (aad_len) {
++        size_t pos = 0, used = 2;
++        memset(block, 0, 16);
++        block[0] = aad_len >> 8;
++        block[1] = aad_len;
++        while (pos < aad_len) {
++            size_t amount = MIN(aad_len - pos, 16 - used);
++            memcpy(block + used, aad + pos, amount);
++            pos += amount;
++            used += amount;
++            if (used == 16) {
++                mac_block(key, mac, block);
++                memset(block, 0, 16);
++                used = 0;
++            }
++        }
++        if (used) {
++            mac_block(key, mac, block);
++        }
++    }
++
++    for (size_t pos = 0; pos < len; pos += 16) {
++        size_t amount = MIN(len - pos, 16);
++        memset(block, 0, 16);
++        memcpy(block, plain + pos, amount);
++        mac_block(key, mac, block);
++    }
++}
++
++static void ctr_block(const AES_KEY *key, const uint8_t nonce[13],
++                       unsigned int counter, uint8_t stream[16])
++{
++    uint8_t block[16];
++    block[0] = 1;
++    memcpy(block + 1, nonce, 13);
++    block[14] = counter >> 8;
++    block[15] = counter;
++    AES_encrypt(block, stream, key);
++}
++
++static void ctr_payload(const AES_KEY *key, const uint8_t nonce[13],
++                         const uint8_t *input, size_t len, uint8_t *output)
++{
++    uint8_t stream[16];
++    unsigned int counter = 1;
++    for (size_t pos = 0; pos < len; pos += 16, counter++) {
++        size_t amount = MIN(len - pos, 16);
++        ctr_block(key, nonce, counter, stream);
++        for (size_t i = 0; i < amount; i++) {
++            output[pos + i] = input[pos + i] ^ stream[i];
++        }
++    }
++}
++
++int x3_ccm_encrypt(const uint8_t key[16], const uint8_t nonce[13],
++                   const uint8_t *aad, size_t aad_len,
++                   const uint8_t *plain, size_t len,
++                   uint8_t *cipher, uint8_t *tag, size_t tag_len)
++{
++    AES_KEY aes;
++    uint8_t mac[16], stream[16];
++    if (!input_valid(key, nonce, aad, aad_len, plain, len, tag_len) ||
++        (!cipher && len) || !tag ||
++        output_overlaps(cipher, len, key, nonce, aad, aad_len, plain, len) ||
++        output_overlaps(tag, tag_len, key, nonce, aad, aad_len, plain, len) ||
++        overlap(cipher, len, tag, tag_len)) {
++        return -1;
++    }
++    if (AES_set_encrypt_key(key, 128, &aes)) {
++        return -1;
++    }
++    mac_value(&aes, nonce, aad, aad_len, plain, len, mac, tag_len);
++    ctr_block(&aes, nonce, 0, stream);
++    ctr_payload(&aes, nonce, plain, len, cipher);
++    for (size_t i = 0; i < tag_len; i++) {
++        tag[i] = mac[i] ^ stream[i];
++    }
++    memset(&aes, 0, sizeof(aes));
++    return 0;
++}
++
++int x3_ccm_decrypt(const uint8_t key[16], const uint8_t nonce[13],
++                   const uint8_t *aad, size_t aad_len,
++                   const uint8_t *cipher, size_t len,
++                   const uint8_t *tag, size_t tag_len, uint8_t *plain)
++{
++    AES_KEY aes;
++    uint8_t mac[16], stream[16], difference = 0;
++    uint8_t *temporary;
++    int result = -1;
++    if (!input_valid(key, nonce, aad, aad_len, cipher, len, tag_len) ||
++        !tag || (!plain && len) ||
++        output_overlaps(plain, len, key, nonce, aad, aad_len, cipher, len) ||
++        overlap(plain, len, tag, tag_len)) {
++        return -1;
++    }
++    temporary = malloc(len ? len : 1);
++    if (!temporary) {
++        return -1;
++    }
++    if (!AES_set_encrypt_key(key, 128, &aes)) {
++        ctr_payload(&aes, nonce, cipher, len, temporary);
++        mac_value(&aes, nonce, aad, aad_len, temporary, len, mac, tag_len);
++        ctr_block(&aes, nonce, 0, stream);
++        for (size_t i = 0; i < tag_len; i++) {
++            difference |= (mac[i] ^ stream[i]) ^ tag[i];
++        }
++        if (!difference) {
++            if (len) {
++                memcpy(plain, temporary, len);
++            }
++            result = 0;
++        }
++    }
++    memset(temporary, 0, len);
++    free(temporary);
++    memset(&aes, 0, sizeof(aes));
++    return result;
++}
++
++int x3_ccmp_parameters(const uint8_t *header, size_t header_len,
++                       const uint8_t *extiv, size_t extiv_len,
++                       X3CCMPParameters *parameters)
++{
++    X3CCMPParameters result = {0};
++    uint16_t fc, subtype, authenticated_fc;
++    bool qos;
++    if (!header || !extiv || !parameters || extiv_len != 8 ||
++        (header_len != 24 && header_len != 26) ||
++        overlap(parameters, sizeof(*parameters), header, header_len) ||
++        overlap(parameters, sizeof(*parameters), extiv, extiv_len)) {
++        return -1;
++    }
++    fc = header[0] | ((uint16_t)header[1] << 8);
++    subtype = (fc >> 4) & 15;
++    qos = subtype == 8;
++    if ((fc & 15) != 8 || (subtype != 0 && !qos) ||
++        (fc & 0x0300) == 0x0300 || !(fc & 0x4000) ||
++        (fc & (0x8000 | 0x0400)) || (header[22] & 15) ||
++        header_len != (qos ? 26 : 24) ||
++        (qos && (header[24] & 0x80)) ||
++        extiv[2] || (extiv[3] & 0x3f) != 0x20) {
++        return -1;
++    }
++    result.pn = (uint64_t)extiv[0] | ((uint64_t)extiv[1] << 8) |
++                ((uint64_t)extiv[4] << 16) | ((uint64_t)extiv[5] << 24) |
++                ((uint64_t)extiv[6] << 32) | ((uint64_t)extiv[7] << 40);
++    if (!result.pn) {
++        return -1;
++    }
++    result.key_id = extiv[3] >> 6;
++    result.tid = qos ? header[24] & 15 : 0;
++    result.aad_len = qos ? 24 : 22;
++    authenticated_fc = (fc & ~(0x0070 | 0x0800 | 0x1000 | 0x2000)) | 0x4000;
++    result.aad[0] = authenticated_fc;
++    result.aad[1] = authenticated_fc >> 8;
++    memcpy(result.aad + 2, header + 4, 18);
++    /* Fragment number is zero in this supported scope; sequence is masked. */
++    result.aad[20] = header[22] & 15;
++    result.aad[21] = 0;
++    if (qos) {
++        result.aad[22] = result.tid;
++        result.aad[23] = 0;
++    }
++    result.nonce[0] = result.tid;
++    memcpy(result.nonce + 1, header + 10, 6);
++    result.nonce[7] = extiv[7];
++    result.nonce[8] = extiv[6];
++    result.nonce[9] = extiv[5];
++    result.nonce[10] = extiv[4];
++    result.nonce[11] = extiv[1];
++    result.nonce[12] = extiv[0];
++    *parameters = result;
++    return 0;
++}
+diff --git a/hw/net/ccmp.h b/hw/net/ccmp.h
+new file mode 100644
+index 0000000..436c004
+--- /dev/null
++++ b/hw/net/ccmp.h
+@@ -0,0 +1,44 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++#ifndef X3_CCMP_H
++#define X3_CCMP_H
++
++#include <stddef.h>
++#include <stdint.h>
++
++#define X3_CCM_MAX_MESSAGE 65535
++#define X3_CCM_MAX_AAD 65279
++
++/* AES-128 CCM, nonce13 and L=2; native CCMP always selects tag_len=8.
++ * Return 0 on success, -1 on invalid input or failed authentication.
++ * The caller supplies distinct buffers; every overlap with outputs is refused.
++ * A rejected operation leaves all output buffers unchanged.
++ */
++int x3_ccm_encrypt(const uint8_t key[16], const uint8_t nonce[13],
++                   const uint8_t *aad, size_t aad_len,
++                   const uint8_t *plain, size_t len,
++                   uint8_t *cipher, uint8_t *tag, size_t tag_len);
++int x3_ccm_decrypt(const uint8_t key[16], const uint8_t nonce[13],
++                   const uint8_t *aad, size_t aad_len,
++                   const uint8_t *cipher, size_t len,
++                   const uint8_t *tag, size_t tag_len, uint8_t *plain);
++
++typedef struct X3CCMPParameters {
++    uint8_t aad[24];
++    uint8_t nonce[13];
++    size_t aad_len;
++    uint64_t pn;
++    uint8_t key_id;
++    uint8_t tid; /* Non-QoS nonce priority0; not stock replay-domain index16. */
++} X3CCMPParameters;
++
++/* Bounded PV0 three-address Data/QoS Data only, header24/26 and ExtIV8.
++ * Reject fragments, A-MSDU, four-address, Order/HT Control and reserved ExtIV.
++ * Derive from supplied guest PN/ExtIV; never generates or advances a PN.
++ * No replay state is kept here: the stock signed48 per-TID check is authoritative.
++ * Protected must already be set. On failure, *parameters remains unchanged.
++ */
++int x3_ccmp_parameters(const uint8_t *header, size_t header_len,
++                       const uint8_t *extiv, size_t extiv_len,
++                       X3CCMPParameters *parameters);
++
++#endif
 diff --git a/hw/net/esp32c3_wifi.c b/hw/net/esp32c3_wifi.c
 new file mode 100644
-index 0000000..f7e93f4
+index 0000000..7119546
 --- /dev/null
 +++ b/hw/net/esp32c3_wifi.c
-@@ -0,0 +1,1123 @@
+@@ -0,0 +1,1333 @@
 +/*
 + * ESP32-C3 Wi-Fi MAC and an open virtual 802.11 access point.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -5450,7 +5742,8 @@ index 0000000..f7e93f4
 + *
 + * Frames pass through guest DMA and the real firmware Wi-Fi/lwIP stacks.
 + * No ESP-IDF or application function is intercepted. RF/PHY calibration,
-+ * encrypted air traffic, modem power transitions and airtime are unmodelled.
++ * general encrypted air traffic, modem power transitions and airtime are
++ * unmodelled. The bounded ordinary CCMP path below is separately exposed.
 + */
 +#include "qemu/osdep.h"
 +#include "qemu/log.h"
@@ -5464,6 +5757,7 @@ index 0000000..f7e93f4
 +#include "exec/address-spaces.h"
 +#include "zlib.h"
 +#include "trace.h"
++#include "ccmp.h"
 +
 +#define DMA_HIGH 0x3fc00000u
 +#define MAC_EVENTS 0xc3c
@@ -5474,6 +5768,10 @@ index 0000000..f7e93f4
 +#define BEACON_NS 102400000
 +#define PEER_HEADER_SIZE 8
 +#define PEER_MAX_QUEUED 128
++#define CCMP_ROWS 25
++#define CCMP_ROW_BASE 0x1400
++#define CCMP_ROW_STRIDE 40
++#define PLCP1_MODELLED (0xfffu | (31u << 17) | BIT(23))
 +
 +static bool wifi_local_air_enabled(ESP32C3WifiState *s)
 +{
@@ -5578,6 +5876,80 @@ index 0000000..f7e93f4
 +    return true;
 +}
 +
++static bool wifi_protected(const uint8_t *frame, size_t length)
++{
++    return length >= 2 && (lduw_le_p(frame) & BIT(14));
++}
++
++static bool wifi_ccmp_parameters(const uint8_t *frame, size_t length,
++                                 X3CCMPParameters *parameters,
++                                 size_t *header_length)
++{
++    size_t hlen;
++
++    if (length < 24) {
++        return false;
++    }
++    hlen = ((frame[0] >> 4) & 15) == 8 ? 26 : 24;
++    if (length < hlen + 8 + 8 ||
++        x3_ccmp_parameters(frame, hlen, frame + hlen, 8, parameters)) {
++        return false;
++    }
++    *header_length = hlen;
++    return true;
++}
++
++/* Official SDK hal_crypto_set/get_key_entry: 25 rows of ten words, the
++ * first two containing peer/cipher/interface/KeyID, then supplied key bytes.
++ * Read guest registers on every operation: no cached key, PN or replay state.
++ * This is a bounded configured-row contract, not general hardware priority.
++ */
++static bool wifi_ccmp_key(ESP32C3WifiState *s, unsigned row, unsigned iface,
++                          unsigned key_id, const uint8_t *peer,
++                          uint8_t key[16])
++{
++    unsigned base;
++    uint32_t metadata, control;
++
++    if (row >= CCMP_ROWS || iface > 1 ||
++        !(s->regs[0x814 / 4] & BIT(row))) {
++        return false;
++    }
++    control = s->regs[(0x800 + iface * 4) / 4];
++    if (control != 0x30103 && control != 0x30303) {
++        return false;
++    }
++    base = (CCMP_ROW_BASE + row * CCMP_ROW_STRIDE) / 4;
++    metadata = s->regs[base + 1];
++    if ((metadata & 0x001c0000) != 0x000c0000 ||
++        ((metadata >> 24) & 3) != iface || (metadata >> 30) != key_id ||
++        (peer && (s->regs[base] != ldl_le_p(peer) ||
++                  (metadata & 0xffff) != lduw_le_p(peer + 4)))) {
++        return false;
++    }
++    for (unsigned i = 0; i < 4; i++) {
++        stl_le_p(key + i * 4, s->regs[base + 2 + i]);
++    }
++    return true;
++}
++
++/* HAL setters prove this register storage and these control values. Other
++ * cipher/control behavior is still counted, never silently called modelled.
++ */
++static bool wifi_ccmp_register_known(hwaddr addr, uint32_t value)
++{
++    if (addr >= CCMP_ROW_BASE &&
++        addr < CCMP_ROW_BASE + CCMP_ROWS * CCMP_ROW_STRIDE) {
++        return true;
++    }
++    if (addr == 0x814) {
++        return !(value & ~0x01ffffffu);
++    }
++    return (addr == 0x800 || addr == 0x804) &&
++           (value == 0 || value == 0x30000 ||
++            value == 0x30103 || value == 0x30303);
++}
++
 +/*
 + * Host-only raw MPDU transport, not an ESP-NOW/application protocol:
 + * X3W1 | little-endian u16 channel | little-endian u16 MPDU length | MPDU.
@@ -5600,6 +5972,13 @@ index 0000000..f7e93f4
 +    }
 +    fc = lduw_le_p(frame);
 +    type = (fc >> 2) & 3;
++    if (fc & BIT(14)) {
++        X3CCMPParameters parameters;
++        size_t header_length;
++
++        return wifi_ccmp_parameters(frame, length, &parameters,
++                                    &header_length);
++    }
 +    return !(fc & (3 | BIT(14))) && (type == 0 || type == 2);
 +}
 +
@@ -5740,6 +6119,10 @@ index 0000000..f7e93f4
 +                    s->peer_rx_needed - PEER_HEADER_SIZE)) {
 +            s->peer_unmodelled++;
 +            s->unsupported++;
++            if (wifi_protected(s->peer_rx + PEER_HEADER_SIZE,
++                               s->peer_rx_needed - PEER_HEADER_SIZE)) {
++                s->rx_ccmp_rejected++;
++            }
 +        } else {
 +            s->peer_rx_frames++;
 +            if (s->reset_held || !wifi_queue(s,
@@ -5907,6 +6290,40 @@ index 0000000..f7e93f4
 +        s->tx_errors |= BIT(queue);
 +        goto done;
 +    }
++    if (wifi_protected(frame + ((d0 & BIT(29)) ? 8 : 0),
++                       len >= ((d0 & BIT(29)) ? 8 : 0) ?
++                       len - ((d0 & BIT(29)) ? 8 : 0) : 0)) {
++        X3CCMPParameters parameters;
++        uint8_t key[16], cipher[2304], mic[8];
++        uint32_t plcp1 = s->regs[(0x12f8 - queue * 76) / 4];
++        unsigned row = (plcp1 >> 17) & 31, iface = (plcp1 >> 23) & 1;
++        size_t hlen, payload_length;
++
++        /* Prepared ordinary stock TX reserves ExtIV8, MIC8 and FCS4.
++         * The descriptor selector is the full five-bit row, not bit19.
++         * Prefix/chain/PHY fallback crypto is explicitly unsupported.
++         */
++        if ((d0 & BIT(29)) || !(d0 & BIT(30)) ||
++            ldl_le_p(descriptor + 8) || phy_length != len || len < 4 ||
++            !wifi_ccmp_parameters(frame, len - 4, &parameters, &hlen) ||
++            !wifi_ccmp_key(s, row, iface, parameters.key_id, NULL, key)) {
++            goto ccmp_rejected;
++        }
++        payload_length = len - 4 - hlen - 8 - 8;
++        if (x3_ccm_encrypt(key, parameters.nonce, parameters.aad,
++                           parameters.aad_len, frame + hlen + 8,
++                           payload_length, cipher, mic, sizeof(mic))) {
++            memset(key, 0, sizeof(key));
++            goto ccmp_rejected;
++        }
++        memset(key, 0, sizeof(key));
++        /* Only local wire bytes change. The guest descriptor, body, PN and
++         * existing trailer reservations remain exactly as supplied by it.
++         */
++        memcpy(frame + hlen + 8, cipher, payload_length);
++        memcpy(frame + hlen + 8 + payload_length, mic, sizeof(mic));
++        s->tx_ccmp_encrypted++;
++    }
 +    /*
 +     * Official C3 hal_mac_tx.o mac_tx_set_plcp1 programs PLCP1 at
 +     * 0x12f8-slot*76 with the FCS-inclusive PSDU length. Open-MAC's Rust
@@ -5991,7 +6408,14 @@ index 0000000..f7e93f4
 +        wifi_peer_transmit(s, mpdu, len);
 +    }
 +    if (wifi_local_air_enabled(s)) {
-+        wifi_station_frame(s, mpdu, len);
++        if (wifi_protected(mpdu, len)) {
++            /* The built-in AP remains open; encrypted association/protocol
++             * handling belongs to an explicitly supplied external peer.
++             */
++            s->unsupported++;
++        } else {
++            wifi_station_frame(s, mpdu, len);
++        }
 +    }
 +    s->tx_complete |= BIT(queue);
 +done:
@@ -5999,6 +6423,16 @@ index 0000000..f7e93f4
 +    s->regs[(0x1320 - queue * 76) / 4] &= ~(0xfu << 12);
 +    s->events |= TX_DONE;
 +    wifi_irq(s);
++    return;
++
++ccmp_rejected:
++    s->tx_ccmp_rejected++;
++    s->unsupported++;
++    s->tx_errors |= BIT(queue);
++    /* Explicit bounded refusal has no success completion or IRQ. This does
++     * not assert the physical MAC's exact rejection/IRQ timing semantics.
++     * Existing generic non-crypto error completion remains unchanged.
++     */
 +}
 +
 +/*
@@ -6097,14 +6531,57 @@ index 0000000..f7e93f4
 +
 +static bool wifi_receive_frame(ESP32C3WifiState *s, ESP32C3AirFrame *f)
 +{
-+    uint8_t descriptor[12], data[48 + 2304 + 4];
++    uint8_t descriptor[12], data[48 + 2304 + 4], plain[2304];
 +    uint32_t desc, d0, buf, next, flags, total = 48 + f->length + 4;
++    uint32_t wire_fcs = crc32(0, f->data, f->length);
++    bool protected = wifi_protected(f->data, f->length);
++    size_t hlen = 0, payload_length = 0;
 +    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
 +    if (!wifi_rx_enabled(s)) {
 +        /* Guard even the previous-descriptor probe before guest buffers free. */
 +        s->rx_dropped++;
 +        s->rx_disabled_dropped++;
 +        return true;
++    }
++    if (protected) {
++        X3CCMPParameters parameters;
++        uint8_t key[16];
++
++        /* Official station path is interface0, node+308 pairwise context4,
++         * FromDS unicast, A1 station address, A2 BSSID/row peer. No generic
++         * key-row search, group fallback or inferred hardware priority.
++         */
++        if (!wifi_ccmp_parameters(f->data, f->length, &parameters, &hlen) ||
++            (lduw_le_p(f->data) & 0x0300) != 0x0200 ||
++            (f->data[4] & 1) || parameters.key_id ||
++            s->regs[0x060 / 4] != UINT32_MAX ||
++            s->regs[0x064 / 4] != 0x1ffff ||
++            s->regs[0x020 / 4] != UINT32_MAX ||
++            s->regs[0x024 / 4] != 0x1ffff ||
++            !wifi_address_matches(s, f->data + 4, 0x40, 0x60) ||
++            !wifi_address_matches(s, f->data + 10, 0x00, 0x20) ||
++            !wifi_ccmp_key(s, 4, 0, 0, f->data + 10, key)) {
++            s->rx_ccmp_rejected++;
++            s->unsupported++;
++            s->rx_dropped++;
++            return true;
++        }
++        payload_length = f->length - hlen - 8 - 8;
++        if (x3_ccm_decrypt(key, parameters.nonce, parameters.aad,
++                           parameters.aad_len, f->data + hlen + 8,
++                           payload_length,
++                           f->data + hlen + 8 + payload_length, 8, plain)) {
++            memset(key, 0, sizeof(key));
++            s->rx_ccmp_auth_failed++;
++            s->rx_ccmp_rejected++;
++            s->rx_dropped++;
++            return true;
++        }
++        memset(key, 0, sizeof(key));
++        /* Authentication precedes even descriptor probing. Equal/older PNs
++         * are delivered: the real guest signed48 per-TID replay check owns
++         * rejection. Keep Protected, ExtIV, MIC and length for its decap.
++         */
 +    }
 +    if (!s->rx_next || now < s->last_rx_ns + AIR_POLL_NS) {
 +        return false;
@@ -6125,7 +6602,7 @@ index 0000000..f7e93f4
 +    if (!(d0 & BIT(31)) || (d0 & BIT(30)) || (d0 & 0xfff) < total) {
 +        return false;
 +    }
-+    flags = wifi_rx_interface_flags(s, f);
++    flags = protected ? BIT(28) : wifi_rx_interface_flags(s, f);
 +    if (!flags) {
 +        s->rx_filter_dropped++;
 +        s->rx_dropped++;
@@ -6138,7 +6615,13 @@ index 0000000..f7e93f4
 +    stl_le_p(data + 20, 0xa6);
 +    stl_le_p(data + 44, f->length + 4);
 +    memcpy(data + 48, f->data, f->length);
-+    stl_le_p(data + 48 + f->length, crc32(0, f->data, f->length));
++    if (protected) {
++        memcpy(data + 48 + hlen + 8, plain, payload_length);
++    }
++    /* FCS belongs to the incoming ciphertext MPDU, before local plaintext
++     * substitution. Do not append another MIC/FCS or alter guest framing.
++     */
++    stl_le_p(data + 48 + f->length, wire_fcs);
 +    if (!wifi_dma(buf, data, total, true)) {
 +        s->bad_dma++;
 +        wifi_rx_dma_context(s, "packet-write", desc, d0, buf, next, total);
@@ -6156,6 +6639,7 @@ index 0000000..f7e93f4
 +    s->last_rx_desc = desc;
 +    s->last_rx_ns = now;
 +    s->rx_frames++;
++    s->rx_ccmp_decrypted += protected;
 +    s->rx_interface0 += !!(flags & BIT(28));
 +    s->rx_interface1 += !!(flags & BIT(29));
 +    s->events |= RX_DONE;
@@ -6219,12 +6703,13 @@ index 0000000..f7e93f4
 +    case 0x1260:
 +    case 0x1214:
 +    case 0x11c8:
-+        if (s->regs[addr / 4] & ~0xfffu) {
++        if (s->regs[addr / 4] & ~PLCP1_MODELLED) {
 +            wifi_unsupported(s, addr, false, s->regs[addr / 4]);
 +        }
-+        return s->regs[addr / 4]; /* PLCP1 PSDU length; upper PHY unmodelled. */
++        return s->regs[addr / 4]; /* Length/row/interface; other PHY unmodelled. */
 +    default:
-+        if (!mask || (s->regs[addr / 4] & ~mask)) {
++        if (!wifi_ccmp_register_known(addr, s->regs[addr / 4]) &&
++            (!mask || (s->regs[addr / 4] & ~mask))) {
 +            wifi_unsupported(s, addr, false, s->regs[addr / 4]);
 +        }
 +        return s->regs[addr / 4];
@@ -6261,7 +6746,7 @@ index 0000000..f7e93f4
 +    case 0x1260:
 +    case 0x1214:
 +    case 0x11c8:
-+        if (v & ~0xfffu) {
++        if (v & ~PLCP1_MODELLED) {
 +            wifi_unsupported(s, addr, true, v);
 +        }
 +        break;
@@ -6279,7 +6764,8 @@ index 0000000..f7e93f4
 +    default:
 +        if (addr <= 0xd08 && addr >= 0xce8 && !((0xd08 - addr) % 8)) {
 +            if (v & BIT(31)) { wifi_transmit(s, (0xd08 - addr) / 8, v); }
-+        } else if (!mask || (v & ~mask)) {
++        } else if (!wifi_ccmp_register_known(addr, v) &&
++                   (!mask || (v & ~mask))) {
 +            wifi_unsupported(s, addr, true, v);
 +        }
 +    }
@@ -6446,6 +6932,22 @@ index 0000000..f7e93f4
 +    object_property_add_bool(obj, "radio-modelled", wifi_false, NULL);
 +    object_property_add_bool(obj, "timing-calibrated", wifi_false, NULL);
 +    object_property_add_bool(obj, "encryption-modelled", wifi_false, NULL);
++    object_property_add_bool(obj, "ccmp-ordinary-tx-scope-modelled",
++                             wifi_true, NULL);
++    object_property_add_bool(obj, "ccmp-station-rx-scope-modelled",
++                             wifi_true, NULL);
++    object_property_add_bool(obj, "ccmp-hardware-replay-modelled",
++                             wifi_false, NULL);
++    object_property_add_uint64_ptr(obj, "tx-ccmp-encrypted-frames",
++                                   &s->tx_ccmp_encrypted, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "tx-ccmp-rejected-frames",
++                                   &s->tx_ccmp_rejected, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "rx-ccmp-decrypted-frames",
++                                   &s->rx_ccmp_decrypted, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "rx-ccmp-rejected-frames",
++                                   &s->rx_ccmp_rejected, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "rx-ccmp-auth-failed-frames",
++                                   &s->rx_ccmp_auth_failed, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint32_ptr(obj, "random-state",
 +                                   &s->random_state, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "random-read-count",
@@ -6555,14 +7057,14 @@ index 0000000..f7e93f4
 +static void wifi_register_types(void) { type_register_static(&wifi_info); }
 +type_init(wifi_register_types)
 diff --git a/hw/net/meson.build b/hw/net/meson.build
-index 00a9e9d..e306416 100644
+index 00a9e9d..407b16e 100644
 --- a/hw/net/meson.build
 +++ b/hw/net/meson.build
 @@ -70,3 +70,4 @@ system_ss.add(when: 'CONFIG_ROCKER', if_true: files(
  system_ss.add(files('rocker/rocker-hmp-cmds.c'))
  
  subdir('can')
-+system_ss.add(when: 'CONFIG_RISCV_ESP32C3', if_true: files('esp32c3_wifi.c'))
++system_ss.add(when: 'CONFIG_RISCV_ESP32C3', if_true: files('esp32c3_wifi.c', 'ccmp.c'))
 diff --git a/hw/net/trace-events b/hw/net/trace-events
 index d0f1d8c..46e3b82 100644
 --- a/hw/net/trace-events
@@ -8777,10 +9279,10 @@ index 0000000..949ed54
 +#endif
 diff --git a/include/hw/net/esp32c3_wifi.h b/include/hw/net/esp32c3_wifi.h
 new file mode 100644
-index 0000000..90ac30a
+index 0000000..e115845
 --- /dev/null
 +++ b/include/hw/net/esp32c3_wifi.h
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,68 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#ifndef HW_ESP32C3_WIFI_H
 +#define HW_ESP32C3_WIFI_H
@@ -8834,6 +9336,8 @@ index 0000000..90ac30a
 +    uint64_t tx_prefix_stripped, tx_prefix_errors;
 +    uint64_t rx_interface0, rx_interface1, rx_filter_dropped, rx_unverified;
 +    uint64_t rx_disabled_dropped;
++    uint64_t tx_ccmp_encrypted, tx_ccmp_rejected;
++    uint64_t rx_ccmp_decrypted, rx_ccmp_rejected, rx_ccmp_auth_failed;
 +    bool rx_context_logging;
 +    unsigned rx_control_logs, rx_dma_logs;
 +    uint64_t unsupported, bad_dma, beacons, auth_requests, assoc_requests;
@@ -11726,10 +12230,10 @@ index 0000000..475b32f
 +}
 diff --git a/tests/qtest/esp32c3-wifi-test.c b/tests/qtest/esp32c3-wifi-test.c
 new file mode 100644
-index 0000000..2b9c083
+index 0000000..d40f3ca
 --- /dev/null
 +++ b/tests/qtest/esp32c3-wifi-test.c
-@@ -0,0 +1,1329 @@
+@@ -0,0 +1,1832 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
 +#include "qemu/bswap.h"
@@ -13012,6 +13516,499 @@ index 0000000..2b9c083
 +    qtest_quit(qts);
 +}
 +
++/* Public synthetic fixtures: first six match the frozen independently
++ * verified AESCCM/hostap foundation. Seventh is a separate cryptography
++ * AESCCM oracle for the stock-shaped 388-byte prepared DMA reservation. */
++typedef struct CCMPVector {
++    const char *header, *extiv, *plain, *wire;
++} CCMPVector;
++static const CCMPVector ccmp_vectors[] = {
++    {
++        "0841778802000000000102000000000202000000000330b6",
++        "0300002000000000",
++        "aaaa030000000800dc01264b7095badf04294e7398bde2072c51769bc0e50a2f54799ec3e80d32577ca1c6eb10355a7fa4c9ee13385d82",
++        "0841778802000000000102000000000202000000000330b60300002000000000e2c6cc10e7c83b595d76cf77282cb8498a9017fb017e9e859f1badea9d1391c876928f24bcdcc71255abaa11e35353baa0d652111cf14e922cdcf70d466f4b",
++    },
++    {
++        "0842778802000000000102000000000202000000000330b6",
++        "0300002000000000",
++        "aaaa0300000008008cb1d6fb20456a8fb4d9fe23486d92b7dc01264b7095badf04294e7398bde2072c51769bc0e50a2f54799ec3e80d32",
++        "0842778802000000000102000000000202000000000330b60300002000000000e2c6cc10e7c83b590dc63fc778fc68193a60a7abd1aeee356f4bfd3a2d63213826c25f94cc6c1742055b1a61338303ea506622c1cca1fec5a0bf09966fcf49",
++    },
++    {
++        "8841778802000000000102000000000202000000000330b60000",
++        "0300002000000000",
++        "aaaa030000000800ec11365b80a5caef14395e83a8cdf2173c6186abd0f51a3f6489aed3f81d42678cb1d6fb20456a8fb4d9fe23486d92",
++        "8841778802000000000102000000000202000000000330b600000300002000000000e2c6cc10e7c83b596d66df67d81cc8799a80070b310e8e958f2b5dda8d0381d84662bf34acccb722a5bbba01d323634ab0c642216cc15ed628760f099e6fe4",
++    },
++    {
++        "8842778802000000000102000000000202000000000330b60000",
++        "0300002000000000",
++        "aaaa0300000008009cc1e60b30557a9fc4e90e33587da2c7ec11365b80a5caef14395e83a8cdf2173c6186abd0f51a3f6489aed3f81d42",
++        "8842778802000000000102000000000202000000000330b600000300002000000000e2c6cc10e7c83b591db60f3768ec78094a5057bbc1bede455f5bed2add53510836d24f64fc1c0752156bea51239313fa609612d1dcb18e766db03cad2a3ff8",
++    },
++    {
++        "8841778802000000000102000000000202000000000330b60700",
++        "0300002000000000",
++        "aaaa030000000800fc21466b90b5daff24496e93b8dd02274c7196bbe0052a4f7499bee3082d52779cc1e60b30557a9fc4e90e33587da2",
++        "8841778802000000000102000000000202000000000330b607000300002000000000a63a2a25db13a626250c3f3a6cab9a43db75c99fff68516e849d6b80b6f609f2643ef651d5dca1f8544a968dcc66df0ac66a99b1ce8d5bfc208494e8175df1",
++    },
++    {
++        "8842778802000000000102000000000202000000000330b60700",
++        "0300002000000000",
++        "aaaa030000000800acd1f61b40658aafd4f91e43688db2d7fc21466b90b5daff24496e93b8dd02274c7196bbe0052a4f7499bee3082d52",
++        "8842778802000000000102000000000202000000000330b607000300002000000000a63a2a25db13a62675fc8f4abc7bca132bc5b94f2f38e19e34cdbb50c646f94234ee2621652cf1a884fae63d1c368fda761a29619eddab4f2f13979b82b875",
++    },
++    {
++        "0841778802000000000102000000000202000000000330b6",
++        "0300002000000000",
++        "aaaa0300000008000b30557a9fc4e90e33587da2c7ec11365b80a5caef14395e83a8cdf2173c6186abd0f51a3f6489aed3f81d42678cb1d6fb20456a8fb4d9fe23486d92b7dc01264b7095badf04294e7398bde2072c51769bc0e50a2f54799ec3e80d32577ca1c6eb10355a7fa4c9ee13385d82a7ccf1163b6085aacff4193e6388add2f71c41668bb0d5fa1f44698eb3d8fd22476c91b6db00254a6f94b9de03284d7297bce1062b50759abfe4092e53789dc2e70c31567ba0c5ea0f34597ea3c8ed12375c81a6cbf0153a5f84a9cef3183d6287acd1f61b40658aafd4f91e43688db2d7fc21466b90b5daff24496e93b8dd02274c7196bbe0052a4f7499bee3082d52779cc1e60b30557a9fc4e90e33587da2c7ec11365b80a5caef14395e83a8cdf2173c6186abd0f51a3f6489aed3f81d42678cb1d6fb20456a8fb4d9fe23486d92b7dc01264b7095badf04294e7398bde2072c5176",
++        "0841778802000000000102000000000202000000000330b60300002000000000e2c6cc10e7c83b598a47bc46c77deb98bde1242a5e2f6db4e8ca7ebbb2e2a2b9a143dc1543ed94c382da99e0cc02806bd7e7a14043207d043ce51f4171a78ad3c0ff2cde268fb61b232e53ad800b5c131b915f495846a9d2cf32b635e8648af0f78345dbab1e8b346506ba0ca3bed4f82d47332d47d4783e1fbfda5bea1f46637f8f72f40421525bb39052071e25dbff15a0ac2d6188e77a4ba56388ab9c77b53a7ca47e3a048efd695196d96a5ec9d17dbe4d0c06c182a05eb940f2b052b1fdb22757f56b9cb20e7382abbe94ff16a180f87127e0ccaf5b04bf888a668c4431b073d91cad58eab7c00b39a97dc73e4bb04164526c2402998c383fd2463051bb2ec020a7e6cd7bde3285bb2079376db2be28de70c38ff22529bee099dfde8d4ebeb553a9bd3887d7d5ececf9c839073236b8f308f9365ccf4374cbddf40991ad7184d2e55b9073e56a0b66f0477a9252db1e7f5f59e03b65446d53eaaa4b3232",
++    },
++};
++
++static size_t decode_hex(const char *hex, uint8_t *bytes, size_t capacity)
++{
++    size_t length = strlen(hex) / 2;
++
++    g_assert_cmpuint(strlen(hex) % 2, ==, 0);
++    g_assert_cmpuint(length, <=, capacity);
++    for (size_t i = 0; i < length; i++) {
++        int high = g_ascii_xdigit_value(hex[i * 2]);
++        int low = g_ascii_xdigit_value(hex[i * 2 + 1]);
++
++        g_assert_cmpint(high, >=, 0);
++        g_assert_cmpint(low, >=, 0);
++        bytes[i] = (high << 4) | low;
++    }
++    return length;
++}
++
++static size_t ccmp_fixture(unsigned vector, uint8_t prepared[2308],
++                           uint8_t wire[2304], size_t *hlen)
++{
++    const CCMPVector *v = &ccmp_vectors[vector];
++    size_t used, plen, wlen;
++
++    memset(prepared, 0xa5, 2308);
++    *hlen = decode_hex(v->header, prepared, 2308);
++    used = *hlen + decode_hex(v->extiv, prepared + *hlen, 8);
++    plen = decode_hex(v->plain, prepared + used, 2308 - used);
++    memset(prepared + used + plen, 0xcc, 12); /* Existing MIC8/FCS4. */
++    wlen = decode_hex(v->wire, wire, 2304);
++    g_assert_cmpuint(wlen, ==, used + plen + 8);
++    return wlen + 4;
++}
++
++static void ccmp_key(QTestState *qts, unsigned row, unsigned iface,
++                     unsigned cipher, unsigned key_id,
++                     const uint8_t peer[6], bool valid)
++{
++    unsigned base = MAC + 0x1400 + row * 40;
++    uint32_t bitmap = qtest_readl(qts, MAC + 0x814);
++
++    g_assert_cmpuint(row, <, 25);
++    qtest_writel(qts, base, ldl_le_p(peer));
++    qtest_writel(qts, base + 4, lduw_le_p(peer + 4) | (cipher << 18) |
++                  (iface << 24) | (key_id << 30));
++    for (unsigned i = 0; i < 4; i++) {
++        qtest_writel(qts, base + 8 + i * 4, 0x03020100 + i * 0x04040404);
++    }
++    qtest_writel(qts, MAC + 0x814,
++                  valid ? bitmap | (1u << row) : bitmap & ~(1u << row));
++    qtest_writel(qts, MAC + 0x800 + iface * 4, 0x30103);
++}
++
++static void ccmp_send(QTestState *qts, const uint8_t *dma, size_t length,
++                      unsigned row, unsigned iface, uint32_t descriptor_flags,
++                      uint32_t next, unsigned phy_length)
++{
++    qtest_writel(qts, MAC + 0xc40, UINT32_MAX);
++    qtest_writel(qts, MAC + 0xcac, UINT32_MAX);
++    qtest_writel(qts, MAC + 0xca4, UINT32_MAX);
++    qtest_memwrite(qts, TX_BUFFER, dma, length);
++    qtest_writel(qts, TX_DESC, descriptor_flags | length << 12 | length);
++    qtest_writel(qts, TX_DESC + 4, TX_BUFFER);
++    qtest_writel(qts, TX_DESC + 8, next);
++    qtest_writel(qts, MAC + 0x12f8,
++                  phy_length | row << 17 | iface << 23);
++    qtest_writel(qts, MAC + 0xd08, (TX_DESC & 0xfffff) | 0xc0600000);
++}
++
++static void assert_tx_dma_unchanged(QTestState *qts, const uint8_t *dma,
++                                   size_t length, uint32_t flags, uint32_t next)
++{
++    uint8_t after[2308];
++
++    qtest_memread(qts, TX_BUFFER, after, length);
++    g_assert_cmpmem(after, length, dma, length);
++    g_assert_cmphex(qtest_readl(qts, TX_DESC), ==,
++                    flags | length << 12 | length);
++    g_assert_cmphex(qtest_readl(qts, TX_DESC + 4), ==, TX_BUFFER);
++    g_assert_cmphex(qtest_readl(qts, TX_DESC + 8), ==, next);
++}
++
++static void host_receive(int fd, uint8_t *data, size_t length)
++{
++    while (length) {
++        fd_set reads;
++        struct timeval timeout = { .tv_sec = 2 };
++        int amount;
++
++        FD_ZERO(&reads);
++        FD_SET(fd, &reads);
++        g_assert_cmpint(select(fd + 1, &reads, NULL, NULL, &timeout), ==, 1);
++        amount = recv(fd, data, length, 0);
++        g_assert_cmpint(amount, >, 0);
++        data += amount;
++        length -= amount;
++    }
++}
++
++static void test_ccmp_tx_selected_row_and_wire_oracle(void)
++{
++    static const unsigned rows[] = {0, 1, 4, 24};
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t dma[2308], expected[2304], received[8 + 2304];
++    uint64_t sent = 0;
++    const uint32_t flags = 3u << 30;
++    size_t hlen;
++
++    wait_connected(qts, true);
++    for (unsigned v = 0; v < G_N_ELEMENTS(ccmp_vectors); v++) {
++        size_t length = ccmp_fixture(v, dma, expected, &hlen);
++
++        for (unsigned r = 0; r < G_N_ELEMENTS(rows); r++) {
++            unsigned row = rows[r];
++
++            /* Only the selected row is valid: a fixed-row/bit19 fallback
++             * cannot accidentally pass even though all use cipher3. */
++            qtest_writel(qts, MAC + 0x814, 0);
++            ccmp_key(qts, row, 0, 3, 0, dma + 4, true);
++            ccmp_send(qts, dma, length, row, 0, flags, 0, length);
++            wait_count(qts, "peer-tx-frames", ++sent);
++            host_receive(fd, received, length - 4 + 8);
++            g_assert_cmpmem(received, 4, "X3W1", 4);
++            g_assert_cmpuint(lduw_le_p(received + 4), ==, 1);
++            g_assert_cmpuint(lduw_le_p(received + 6), ==, length - 4);
++            g_assert_cmpmem(received + 8, length - 4, expected, length - 4);
++            assert_tx_dma_unchanged(qts, dma, length, flags, 0);
++            g_assert_cmphex(qtest_readl(qts, MAC + 0xcb0), ==, 1);
++            g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 1u << 7);
++            g_assert_cmpuint(count(qts, "tx-ccmp-encrypted-frames"), ==, sent);
++            g_assert_cmpuint(count(qts, "tx-fcs-stripped-frames"), ==, sent);
++        }
++    }
++    /* Source-backed interface bit23 and optional-MFP control0x30303. */
++    size_t length = ccmp_fixture(2, dma, expected, &hlen);
++    ccmp_key(qts, 4, 1, 3, 0, dma + 4, true);
++    qtest_writel(qts, MAC + 0x804, 0x30303);
++    ccmp_send(qts, dma, length, 4, 1, flags, 0, length);
++    wait_count(qts, "peer-tx-frames", ++sent);
++    host_receive(fd, received, length - 4 + 8);
++    g_assert_cmpmem(received + 8, length - 4, expected, length - 4);
++    assert_tx_dma_unchanged(qts, dma, length, flags, 0);
++    g_assert_cmpuint(count(qts, "tx-ccmp-rejected-frames"), ==, 0);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    g_assert_true(flag(qts, "ccmp-ordinary-tx-scope-modelled"));
++    g_assert_false(flag(qts, "encryption-modelled"));
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void ccmp_expect_tx_refusal(QTestState *qts, const uint8_t *dma,
++                                  size_t length, unsigned row, unsigned iface,
++                                  uint32_t flags, uint32_t next, unsigned phy)
++{
++    uint64_t rejected = count(qts, "tx-ccmp-rejected-frames");
++    uint64_t encrypted = count(qts, "tx-ccmp-encrypted-frames");
++
++    ccmp_send(qts, dma, length, row, iface, flags, next, phy);
++    g_assert_cmpuint(count(qts, "tx-ccmp-rejected-frames"), ==, rejected + 1);
++    g_assert_cmpuint(count(qts, "tx-ccmp-encrypted-frames"), ==, encrypted);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xcb0), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xca8), ==, 1);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xd08), ==,
++                    (TX_DESC & 0xfffff) | 0xc0600000);
++    assert_tx_dma_unchanged(qts, dma, length, flags, next);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++}
++
++static void test_ccmp_tx_refusals_preserve_dma_and_irq(void)
++{
++    QTestState *qts = start(false);
++    uint8_t dma[2308], expected[2304], malformed[2308];
++    const uint32_t flags = 3u << 30;
++    size_t hlen, length = ccmp_fixture(0, dma, expected, &hlen);
++
++    ccmp_key(qts, 4, 0, 3, 0, dma + 4, true);
++    for (unsigned row = 25; row < 32; row++) {
++        ccmp_expect_tx_refusal(qts, dma, length, row, 0, flags, 0, length);
++    }
++    for (unsigned cipher = 0; cipher < 8; cipher++) {
++        if (cipher == 3) {
++            continue;
++        }
++        ccmp_key(qts, 4, 0, cipher, 0, dma + 4, true);
++        ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length);
++    }
++    ccmp_key(qts, 4, 0, 3, 0, dma + 4, false);
++    ccmp_key(qts, 1, 0, 3, 0, dma + 4, true); /* No fallback to valid row1. */
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length);
++    ccmp_key(qts, 4, 0, 3, 1, dma + 4, true);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length);
++    ccmp_key(qts, 4, 0, 3, 0, dma + 4, true);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 1, flags, 0, length);
++    qtest_writel(qts, MAC + 0x800, 0x30000);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length);
++    qtest_writel(qts, MAC + 0x800, 0xdeadbeef);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length);
++    qtest_writel(qts, MAC + 0x800, 0x30103);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, 1u << 31, 0, length);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, TX_DESC + 12, length);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, 0);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length + 4);
++    ccmp_expect_tx_refusal(qts, dma, 24 + 8 + 8 + 3, 4, 0, flags, 0,
++                           24 + 8 + 8 + 3);
++    for (unsigned alteration = 0; alteration < 6; alteration++) {
++        memcpy(malformed, dma, length);
++        switch (alteration) {
++        case 0: malformed[0] = 0xd0; break; /* Protected management. */
++        case 1: malformed[1] |= 3; break; /* Four-address. */
++        case 2: malformed[1] |= 0x80; break; /* Order/HT Control. */
++        case 3: malformed[22] |= 1; break; /* Fragment. */
++        case 4: malformed[hlen + 2] = 1; break; /* Reserved ExtIV. */
++        case 5: malformed[hlen] = 0; break; /* PN0 invalid. */
++        }
++        ccmp_expect_tx_refusal(qts, malformed, length, 4, 0, flags, 0, length);
++    }
++    memset(malformed, 0, 8);
++    stl_le_p(malformed, length);
++    memcpy(malformed + 8, dma, length);
++    ccmp_expect_tx_refusal(qts, malformed, length + 8, 4, 0,
++                           flags | (1u << 29), 0, length + 4);
++    g_assert_cmpuint(count(qts, "tx-frames"), ==, 0);
++    qtest_quit(qts);
++}
++
++static uint32_t ccmp_wire_fcs(const uint8_t *frame, size_t length)
++{
++    uint32_t crc = UINT32_MAX;
++
++    for (size_t byte = 0; byte < length; byte++) {
++        crc ^= frame[byte];
++        for (unsigned bit = 0; bit < 8; bit++) {
++            crc = (crc >> 1) ^ ((crc & 1) ? 0xedb88320u : 0);
++        }
++    }
++    return ~crc;
++}
++
++static void ccmp_host_send(QTestState *qts, int fd,
++                           const uint8_t *frame, size_t length)
++{
++    uint8_t packet[8 + 2304];
++    uint64_t peer = count(qts, "peer-rx-frames") + 1;
++
++    memcpy(packet, "X3W1", 4);
++    stw_le_p(packet + 4, 1);
++    stw_le_p(packet + 6, length);
++    memcpy(packet + 8, frame, length);
++    host_send(fd, packet, length + 8);
++    wait_count(qts, "peer-rx-frames", peer);
++    qtest_clock_step(qts, 2000000);
++}
++
++static void ccmp_expect_rx_refusal(QTestState *qts, int fd,
++                                   const uint8_t *frame, size_t length,
++                                   bool auth_failure)
++{
++    uint8_t before[2048], after[2048], desc_before[12], desc_after[12];
++    uint64_t rejected = count(qts, "rx-ccmp-rejected-frames");
++    uint64_t failed = count(qts, "rx-ccmp-auth-failed-frames");
++    uint64_t decrypted = count(qts, "rx-ccmp-decrypted-frames");
++
++    memset(before, 0x6d, sizeof(before));
++    qtest_memwrite(qts, RX_BUFFER, before, sizeof(before));
++    /* An invalid payload DMA address must never be probed on refusal. */
++    arm_rx(qts, 0x10, 4095);
++    qtest_memread(qts, RX_DESC, desc_before, sizeof(desc_before));
++    qtest_writel(qts, MAC + 0xc40, UINT32_MAX);
++    ccmp_host_send(qts, fd, frame, length);
++    g_assert_cmpuint(count(qts, "rx-ccmp-rejected-frames"), ==, rejected + 1);
++    g_assert_cmpuint(count(qts, "rx-ccmp-auth-failed-frames"), ==,
++                     failed + auth_failure);
++    g_assert_cmpuint(count(qts, "rx-ccmp-decrypted-frames"), ==, decrypted);
++    qtest_memread(qts, RX_BUFFER, after, sizeof(after));
++    qtest_memread(qts, RX_DESC, desc_after, sizeof(desc_after));
++    g_assert_cmpmem(before, sizeof(before), after, sizeof(after));
++    g_assert_cmpmem(desc_before, sizeof(desc_before), desc_after, sizeof(desc_after));
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++}
++
++static void test_ccmp_rx_authentication_and_guest_framing(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t dma[2308], wire[2304], received[48 + 2304 + 4], expected[2304];
++    uint64_t delivered = 0;
++    size_t hlen;
++
++    wait_connected(qts, true);
++    for (unsigned vector = 1; vector < 6; vector += 2) {
++        size_t length = ccmp_fixture(vector, dma, wire, &hlen) - 4;
++        size_t plen = length - hlen - 8 - 8;
++
++        program_filter(qts, 0, wire + 4, wire + 10);
++        ccmp_key(qts, 4, 0, 3, 0, wire + 10, true);
++        memcpy(expected, wire, length);
++        memcpy(expected + hlen + 8, dma + hlen + 8, plen);
++        /* Deliver the same PN twice: no invented native replay rejection.
++         * The unchanged guest ccmp_decap remains signed48/TID authority. */
++        for (unsigned repeat = 0; repeat < 2; repeat++) {
++            arm_rx(qts, RX_BUFFER, 4095);
++            qtest_writel(qts, MAC + 0xc40, UINT32_MAX);
++            ccmp_host_send(qts, fd, wire, length);
++            g_assert_cmpuint(count(qts, "rx-ccmp-decrypted-frames"), ==, ++delivered);
++            qtest_memread(qts, RX_BUFFER, received, length + 52);
++            g_assert_cmpuint(ldl_le_p(received + 44), ==, length + 4);
++            g_assert_cmpuint(received[47], ==, 0); /* Stock normal status. */
++            g_assert_cmphex(ldl_le_p(received) & 0x30000000, ==, 1u << 28);
++            g_assert_cmpmem(received + 48, length, expected, length);
++            g_assert_cmphex((uint32_t)ldl_le_p(received + 48 + length), ==,
++                            ccmp_wire_fcs(wire, length));
++            g_assert_cmphex(qtest_readl(qts, RX_DESC) & (1u << 30), ==, 1u << 30);
++        }
++        /* Payload, MIC and authenticated address corruption are independent
++         * refusals. No plaintext/descriptor DMA happens on any of them. */
++        wire[hlen + 8] ^= 1;
++        ccmp_expect_rx_refusal(qts, fd, wire, length, true);
++        wire[hlen + 8] ^= 1;
++        wire[length - 1] ^= 1;
++        ccmp_expect_rx_refusal(qts, fd, wire, length, true);
++        wire[length - 1] ^= 1;
++        wire[16] ^= 2; /* A3 is in authenticated AAD, outside RX filters. */
++        ccmp_expect_rx_refusal(qts, fd, wire, length, true);
++    }
++    /* A tampered packet with an invalid descriptor base must be rejected
++     * before even a descriptor read can increment bad-dma. */
++    size_t length = ccmp_fixture(1, dma, wire, &hlen) - 4;
++    qtest_writel(qts, 0x60026018, 1u << 2);
++    qtest_writel(qts, 0x60026018, 0);
++    program_filter(qts, 0, wire + 4, wire + 10);
++    ccmp_key(qts, 4, 0, 3, 0, wire + 10, true);
++    qtest_writel(qts, MAC + 0x084, 1u << 31);
++    qtest_writel(qts, MAC + 0x088, 0x10);
++    wire[length - 1] ^= 1;
++    uint64_t failed = count(qts, "rx-ccmp-auth-failed-frames");
++    ccmp_host_send(qts, fd, wire, length);
++    g_assert_cmpuint(count(qts, "rx-ccmp-auth-failed-frames"), ==, failed + 1);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x08c), ==, 0x10);
++    g_assert_false(flag(qts, "ccmp-hardware-replay-modelled"));
++    g_assert_true(flag(qts, "ccmp-station-rx-scope-modelled"));
++    g_assert_false(flag(qts, "encryption-modelled"));
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_ccmp_rx_scope_no_fallback_or_wildcards(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t dma[2308], wire[2304], peer[6];
++    size_t hlen, length = ccmp_fixture(1, dma, wire, &hlen) - 4;
++
++    wait_connected(qts, true);
++    for (unsigned refusal = 0; refusal < 14; refusal++) {
++        program_filter(qts, 0, wire + 4, wire + 10);
++        ccmp_key(qts, 4, 0, 3, 0, wire + 10, true);
++        ccmp_key(qts, 1, 0, 3, 0, wire + 10, true);
++        switch (refusal) {
++        case 0: ccmp_key(qts, 4, 0, 3, 0, wire + 10, false); break;
++        case 1: ccmp_key(qts, 4, 0, 4, 0, wire + 10, true); break;
++        case 2: ccmp_key(qts, 4, 1, 3, 0, wire + 10, true); break;
++        case 3: ccmp_key(qts, 4, 0, 3, 1, wire + 10, true); break;
++        case 4:
++            memcpy(peer, wire + 10, 6);
++            peer[5] ^= 1;
++            ccmp_key(qts, 4, 0, 3, 0, peer, true);
++            break;
++        case 5: qtest_writel(qts, MAC + 0x800, 0x30000); break;
++        case 6: qtest_writel(qts, MAC + 0x60, 0); break; /* Enabled wildcard. */
++        case 7: qtest_writel(qts, MAC + 0x64, 0x10000); break;
++        case 8: qtest_writel(qts, MAC + 0x20, 0); break;
++        case 9: qtest_writel(qts, MAC + 0x24, 0x1ff00); break;
++        case 10: qtest_writel(qts, MAC + 0x64, 0xffff); break; /* Disabled. */
++        case 11: qtest_writel(qts, MAC + 0x40, 0); break; /* Wrong RA. */
++        case 12: qtest_writel(qts, MAC, 0); break; /* Wrong BSSID. */
++        case 13: wire[4] |= 1; break; /* Group receiver. */
++        }
++        ccmp_expect_rx_refusal(qts, fd, wire, length, false);
++        wire[4] &= ~1;
++    }
++    /* A valid ToDS crypto MPDU belongs to another scope, not station RX. */
++    length = ccmp_fixture(0, dma, wire, &hlen) - 4;
++    program_filter(qts, 0, wire + 4, wire + 10);
++    ccmp_key(qts, 4, 0, 3, 0, wire + 10, true);
++    ccmp_expect_rx_refusal(qts, fd, wire, length, false);
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_ccmp_keys_reset_live_updates_and_readonly(void)
++{
++    QTestState *qts = start(false);
++    uint8_t dma[2308], wire[2304];
++    size_t hlen, length = ccmp_fixture(0, dma, wire, &hlen);
++    const uint32_t flags = 3u << 30;
++
++    ccmp_key(qts, 4, 0, 3, 0, dma + 4, true);
++    ccmp_send(qts, dma, length, 4, 0, flags, 0, length);
++    g_assert_cmpuint(count(qts, "tx-ccmp-encrypted-frames"), ==, 1);
++    qtest_writel(qts, MAC + 0x1400 + 4 * 40 + 4,
++                  lduw_le_p(dma + 8) | 4u << 18);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length);
++    ccmp_key(qts, 4, 0, 3, 0, dma + 4, true);
++    qtest_writel(qts, 0x60026018, 1u << 2);
++    qtest_writel(qts, 0x60026018, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x814), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x1400 + 4 * 40 + 8), ==, 0);
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length);
++    ccmp_key(qts, 4, 0, 3, 0, dma + 4, true);
++    qtest_qmp_assert_success(qts, "{ 'execute': 'system_reset' }");
++    qtest_qmp_eventwait(qts, "RESET");
++    ccmp_expect_tx_refusal(qts, dma, length, 4, 0, flags, 0, length);
++    g_assert_cmpuint(count(qts, "tx-ccmp-encrypted-frames"), ==, 1);
++    const char *properties[] = {
++        "ccmp-ordinary-tx-scope-modelled", "ccmp-station-rx-scope-modelled",
++        "ccmp-hardware-replay-modelled", "encryption-modelled",
++    };
++    for (unsigned i = 0; i < G_N_ELEMENTS(properties); i++) {
++        qobject_unref(qtest_qmp_assert_failure_ref(qts,
++            "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/wifi',"
++            " 'property': %s, 'value': false } }", properties[i]));
++    }
++    const char *counters[] = {
++        "tx-ccmp-encrypted-frames", "tx-ccmp-rejected-frames",
++        "rx-ccmp-decrypted-frames", "rx-ccmp-rejected-frames",
++        "rx-ccmp-auth-failed-frames",
++    };
++    for (unsigned i = 0; i < G_N_ELEMENTS(counters); i++) {
++        qobject_unref(qtest_qmp_assert_failure_ref(qts,
++            "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/wifi',"
++            " 'property': %s, 'value': 0 } }", counters[i]));
++    }
++    qtest_quit(qts);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -13057,6 +14054,16 @@ index 0000000..2b9c083
 +                   test_rx_pending_disabled_no_replay_and_reenable);
 +    qtest_add_func("/esp32c3/wifi/rx-enable-reset-readonly-lifetime",
 +                   test_rx_enable_reset_readonly_and_lifetime_observations);
++    qtest_add_func("/esp32c3/wifi/ccmp-tx-selected-row-wire-oracle",
++                   test_ccmp_tx_selected_row_and_wire_oracle);
++    qtest_add_func("/esp32c3/wifi/ccmp-tx-refusals-preserve-dma-irq",
++                   test_ccmp_tx_refusals_preserve_dma_and_irq);
++    qtest_add_func("/esp32c3/wifi/ccmp-rx-authentication-guest-framing",
++                   test_ccmp_rx_authentication_and_guest_framing);
++    qtest_add_func("/esp32c3/wifi/ccmp-rx-scope-no-fallback-wildcards",
++                   test_ccmp_rx_scope_no_fallback_or_wildcards);
++    qtest_add_func("/esp32c3/wifi/ccmp-keys-reset-live-updates-readonly",
++                   test_ccmp_keys_reset_live_updates_and_readonly);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/libqtest.c b/tests/qtest/libqtest.c

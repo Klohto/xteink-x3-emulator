@@ -221,6 +221,80 @@ class CCMPPeerTests(unittest.TestCase):
 
 
 class SecureLifecycleObserverTests(unittest.TestCase):
+    def test_visible_list_guard_accepts_new_exact_wire_identity_and_source_scan_without_glyph_ocr(self):
+        station = bytes.fromhex('025833454401')
+        with stopped_ap() as ap:
+            ap.hidden = False
+            probe = struct.pack('<HH6s6s6sH', 0x0040, 0, bytes((255,)) * 6, station, bytes((255,)) * 6, 0)
+            ap.receive(probe + bytes((0, 0)))
+            serial = 'older log\n[2] WIFI: WiFi scan usable networks=1 hidden=0 duplicates=0\n'
+            observe = WIRE['visible_scan_identity']
+            identity = observe(ap.records, serial, 0, len('older log\n'), station)
+            self.assertTrue(identity['verified'])
+            self.assertEqual(identity['new_actual_factory_mac_probes'], 1)
+            self.assertEqual(identity['new_exact_visible_advertisements'], 1)
+            # Stable list headings are verified from original panel pixels in
+            # the real cohort; the row's X3EMU/XGEMU OCR spelling is irrelevant.
+            self.assertFalse(observe(ap.records, serial, len(ap.records), 0, station)['verified'])
+            self.assertFalse(observe(ap.records, serial, 0, len(serial), station)['verified'])
+            self.assertFalse(observe(ap.records, serial.replace('networks=1', 'networks=2'), 0, 0, station)['verified'])
+            self.assertFalse(observe(ap.records, serial, 0, 0, bytes.fromhex('025833454402'))['verified'])
+
+    def test_visible_list_guard_refuses_changed_wire_ssid_bssid_rsn_and_channel_despite_metadata(self):
+        station = bytes.fromhex('025833454401')
+        with stopped_ap() as ap:
+            ap.hidden = False
+            probe = struct.pack('<HH6s6s6sH', 0x0040, 0, bytes((255,)) * 6, station, bytes((255,)) * 6, 0)
+            ap.receive(probe + bytes((0, 0)))
+            records = ap.records
+            response = base64.b64decode(records[-1]['raw_base64'])
+            for offset in (10, 16, 38, response.index(WIRE['RSN_IE']) + 7,
+                           response.index(bytes((3, 1, 1)), 36) + 2):
+                changed = response[:offset] + bytes((response[offset] ^ 1,)) + response[offset + 1:]
+                altered = records[:-1] + [{**records[-1], 'raw_base64': base64.b64encode(changed).decode()}]
+                with self.subTest(offset=offset), self.assertRaises(WIRE['WireError']):
+                    WIRE['visible_scan_identity'](altered,
+                        'WiFi scan usable networks=1 hidden=0 duplicates=0', 0, 0, station)
+
+    def test_native_scoped_capabilities_require_typed_complete_positive_traffic_and_zero_errors(self):
+        flags, traffic, errors = (WIRE[name] for name in
+            ('CCMP_SCOPE_FLAGS', 'CCMP_TRAFFIC_COUNTERS', 'CCMP_ERROR_COUNTERS'))
+        valid = {**flags, **dict.fromkeys(traffic, 3), **dict.fromkeys(errors, 0)}
+        self.assertTrue(WIRE['assess_native_ccmp'](valid, require_traffic=True))
+        idle = {**valid, **dict.fromkeys(traffic, 0)}
+        self.assertTrue(WIRE['assess_native_ccmp'](idle, require_traffic=False))
+        invalid = [(name, None) for name in valid]
+        invalid += [(name, int(expected)) for name, expected in flags.items()]
+        invalid += [(name, not expected) for name, expected in flags.items()]
+        invalid += [(name, value) for name in traffic for value in (0, -1, True, '1')]
+        invalid += [(name, value) for name in errors for value in (1, -1, False, '0')]
+        for name, value in invalid:
+            altered = dict(valid)
+            if value is None:
+                del altered[name]
+            else:
+                altered[name] = value
+            with self.subTest(name=name, value=value), self.assertRaises(WIRE['WireError']):
+                WIRE['assess_native_ccmp'](altered, require_traffic=True)
+
+    def test_native_ccmp_observer_uses_only_readonly_qom_get_and_refuses_unavailable_group(self):
+        values = {**WIRE['CCMP_SCOPE_FLAGS'], **dict.fromkeys(WIRE['CCMP_TRAFFIC_COUNTERS'], 1),
+                  **dict.fromkeys(WIRE['CCMP_ERROR_COUNTERS'], 0)}
+        class QMP:
+            def __init__(self, missing=None): self.commands, self.missing = [], missing
+            def execute(self, method, arguments):
+                self.commands.append((method, arguments))
+                if arguments['property'] == self.missing:
+                    raise RuntimeError('Property not found')
+                return values[arguments['property']]
+        qmp = QMP()
+        self.assertEqual(WIRE['observe_native_ccmp'](qmp, require_traffic=True), values)
+        self.assertEqual(len(qmp.commands), len(values))
+        self.assertTrue(all(method == 'qom-get' and arguments['path'] == '/machine/wifi'
+                            for method, arguments in qmp.commands))
+        with self.assertRaisesRegex(WIRE['WireError'], 'read-only scoped CCMP'):
+            WIRE['observe_native_ccmp'](QMP(missing='ccmp-station-rx-scope-modelled'))
+
     def test_new_connection_requires_new_attempt_correct_flags_ip_callback_and_completion(self):
         old = '[1] WIFI: Connecting to ssid=X3EMU auto=0 saved=0 encrypted=1 passProvided=1\n' \
               '[2] WIFI: STA event: got IP 192.168.44.2\n' \

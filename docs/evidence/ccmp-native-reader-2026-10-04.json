@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "bounded-native-ccmp-candidate-and-stock-reader-regression",
-  "candidate_selected_default": false,
+  "candidate_selected_default": true,
   "qemu_revision": "febae182e132e4055529be423a818225ebddaa3a",
   "source_tree": "b600322513688fa90994a9e95edc2cf569db1363",
   "patch_sha256": "1010a3adf336d33b4dafbae1f50989f7a499f5919874dd2de5edfee80f1462c5",
@@ -35,17 +35,30 @@
     "visible_text_offset": 586,
     "changed_restored_content_pixels": 0,
     "changed_restored_tone_pixels": 0,
-    "native_exit_statuses": [0, 0],
+    "native_exit_statuses": [
+      0,
+      0
+    ],
     "guest_memory_patched": false,
     "cpu_state_reused": false,
     "original_application_and_book_preserved": true
   },
-  "secure_lifecycle_final_pass": false,
-  "open_network_candidate_regression_final_pass": false,
+  "secure_lifecycle_final_pass": true,
+  "open_network_candidate_regression_final_pass": true,
   "strict_model_validation_pass": false,
   "all_crossink_functions_verified": false,
   "complete_machine_verified": false,
   "physical_timing_calibrated": false,
   "speed_selection_allowed": false,
-  "credentials_or_private_capture_bytes_included": false
+  "credentials_or_private_capture_bytes_included": false,
+  "secure_lifecycle_receipt_sha256": "a048c199451ce1964589b1ecedeedc79b31fd31ed1d1b1fcdb8dda719f6c2a45",
+  "independent_secure_and_open_review_sha256": "fa3e0e44149a4f36706cf368eb3a64c75c9fb17ccf94ef68539b85e654388631",
+  "nearby_epub_regression": {
+    "transfer_reading_receipt_sha256": "85f4e621dac8bfd8f3739c741da5bd6c5b581730cdb08c12189037affb7d85db",
+    "fresh_cpu_receipt_sha256": "898662556d89c02307c8b3578c898207d27310b78cfce9ca2f163ab3dd4a6775",
+    "functional_pass": true,
+    "changed_resume_tone_pixels": 0,
+    "original_application_and_book_preserved": true
+  },
+  "default_selection_applies_to": "current working source and local backend; GitHub main remains RX114 pending approval"
 }
