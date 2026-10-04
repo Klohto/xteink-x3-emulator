@@ -1,0 +1,25 @@
+name: Source checkpoint
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Archive the exact tracked source checkpoint
+        run: git archive --format=tar.gz --output=xteink-x3-source.tar.gz HEAD
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: xteink-x3-source-${{ github.sha }}
+          path: xteink-x3-source.tar.gz
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
