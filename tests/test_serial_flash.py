@@ -6,7 +6,11 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
+
+from x3emu import esptool_stub
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -146,6 +150,80 @@ class RealRomSerialFlashTests(unittest.TestCase):
             self.assertEqual(report["flasher"], "ESP32-C3 mask ROM")
             self.assertEqual(report["flash"]["applications"][0]["image"]["sha256"], SERIAL_FLASH.CROSSINK_V160_SHA256)
             self.assertTrue(report["flash"]["cold_boot_components_present"])
+
+
+class RamFlasherProfileTests(unittest.TestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.root = Path(directory.name)
+        self.qemu = self.root / "qemu"
+        self.qemu.write_text("unused executable fixture\n")
+        self.qemu.chmod(0o700)
+        self.bios = self.root / "bios"
+        self.bios.mkdir()
+        (self.bios / "esp32c3-rom.bin").write_bytes(b"unused ROM fixture")
+        self.vendor = self.root / "vendor"
+        (self.vendor / "2").mkdir(parents=True)
+        self.stub = self.vendor / "2/esp32c3.json"
+        self.stub.write_bytes((esptool_stub.STUB_DIRECTORY / "2/esp32c3.json").read_bytes())
+
+    def test_official_profile_pins_uploaded_segments_and_ram_addresses(self):
+        profile = esptool_stub.inspect_stub_profile(self.vendor)
+        self.assertEqual(profile["json_sha256"], "8d342da995f01240c8671937f290757bf67bdf4bb818b022539e8e40bf61623a")
+        self.assertEqual(profile["entry"], 0x40380E9A)
+        self.assertEqual(profile["bss_start"], 0x3FC84000)
+        self.assertEqual(profile["segments"], [
+            {"name": "text", "address": 0x40380000, "size_bytes": 5880,
+             "sha256": "c06cc1a34a02d8f8755692cf89843b388978d19a255b0d9c26b10a0f41a90ffb"},
+            {"name": "data", "address": 0x3FC96D68, "size_bytes": 204,
+             "sha256": "2cb1bc0835895d6818c8c2c6a32dacd248f8b78b0cd0a8dc500c7f1c300ec979"},
+        ])
+
+    def test_corrupt_or_missing_ram_code_refused_before_tool_or_guest_start(self):
+        for damaged in (b"corrupt RAM bytecode", None):
+            if damaged is None:
+                self.stub.unlink()
+            else:
+                self.stub.write_bytes(damaged)
+            with self.subTest(damaged=damaged), patch.object(
+                    SERIAL_FLASH, "inspect_stub_profile",
+                    side_effect=lambda: esptool_stub.inspect_stub_profile(self.vendor)), \
+                    patch.object(SERIAL_FLASH.subprocess, "run") as run, \
+                    patch.object(SERIAL_FLASH.subprocess, "Popen") as start:
+                with self.assertRaisesRegex(SERIAL_FLASH.SerialFlashError, "pinned official C3 RAM flasher"):
+                    SERIAL_FLASH.run_serial_flash(self.qemu, self.bios, self.root / "firmware",
+                                                  self.root / "output", use_stub=True)
+                run.assert_not_called()
+                start.assert_not_called()
+                self.assertFalse((self.root / "output").exists())
+
+    def test_external_tool_cannot_silently_bypass_pinned_ram_profile(self):
+        with patch.object(SERIAL_FLASH.subprocess, "run") as run, \
+                patch.object(SERIAL_FLASH.subprocess, "Popen") as start:
+            with self.assertRaisesRegex(SERIAL_FLASH.SerialFlashError, "project's esptool adapter"):
+                SERIAL_FLASH.run_serial_flash(self.qemu, self.bios, self.root / "firmware",
+                                              self.root / "output", use_stub=True,
+                                              esptool_command=["unverified-flasher"])
+            run.assert_not_called()
+            start.assert_not_called()
+
+    def test_rom_preflight_does_not_require_or_configure_ram_stub(self):
+        with patch.object(SERIAL_FLASH, "inspect_stub_profile") as inspect:
+            with self.assertRaisesRegex(SERIAL_FLASH.SerialFlashError, "missing or corrupt pinned component"):
+                SERIAL_FLASH.run_serial_flash(self.qemu, self.bios, self.root / "firmware",
+                                              self.root / "output", use_stub=False)
+            inspect.assert_not_called()
+
+    def test_unsupported_tool_version_refused_before_stub_configuration(self):
+        stub_class = SimpleNamespace(STUB_DIR="unchanged", STUB_SUBDIRS=["1"])
+        modules = {"esptool": SimpleNamespace(__version__="5.2.0"),
+                   "esptool.loader": SimpleNamespace(StubFlasher=stub_class)}
+        with patch.dict("sys.modules", modules):
+            with self.assertRaisesRegex(esptool_stub.StubProfileError, "requires esptool 5.1.0"):
+                esptool_stub.configure_stub_profile()
+        self.assertEqual(stub_class.STUB_DIR, "unchanged")
+        self.assertEqual(stub_class.STUB_SUBDIRS, ["1"])
 
 
 if __name__ == "__main__":

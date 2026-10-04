@@ -81,11 +81,11 @@ wire and verification evidence is described in
 [network-validation.md](network-validation.md#remaining-fidelity-and-service-boundaries).
 No CA or substitute manifest was injected.
 
-Secure Wi-Fi acceptance remains a **native emulator gap**, not a stock firmware
-defect. Upstream has an AES engine, but Wi-Fi key-slot/cipher selection,
-CCMP/TKIP TX/RX air transformations and RSN authentication have not been
-validated. Native `encryption-modelled=false` and rejection of Protected peer
-frames remain explicit. See the primary-object/register evidence in
-[wifi-crypto-audit.json](evidence/wifi-crypto-audit.json) and
-[wifi-model.md](wifi-model.md). Physical RF, optical behavior and calibrated
-timing/speed remain unverified independently of the application cases above.
+The earlier [crypto audit](evidence/wifi-crypto-audit.json) recorded secure
+Wi-Fi as a native gap. Subsequent [native CCMP validation](native-ccmp-validation.md)
+now proves bounded TX, pairwise station RX and station group RX, including
+actual unchanged-firmware Save/reconnect/Forget and GTK1 broadcast DHCP.
+General encryption remains false: TKIP/WEP/GCM, encrypted AP operation,
+rekeying, encrypted ESP-NOW and unproved frame/key variants are outside that
+profile. [Wi-Fi model limits](wifi-model.md), physical RF, optical behavior and
+calibrated timing/speed remain explicit and independent of the stock cases above.

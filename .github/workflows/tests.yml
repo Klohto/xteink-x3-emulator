@@ -25,7 +25,7 @@ jobs:
       - name: Check image, storage, runtime and clock behaviour
         run: python -m unittest discover -s tests -v
   native:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -37,6 +37,34 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git pkg-config libglib2.0-dev libpixman-1-dev libgcrypt20-dev ninja-build libslirp-dev libpcre2-dev zlib1g-dev
-          python -m pip install meson==1.8.5 pycotap==1.3.1
+          python -m pip install meson==1.8.5 pycotap==1.3.1 esptool==5.1.0
       - name: Build the pinned backend and exercise device protocols
         run: scripts/build-qemu.sh --fetch --test --jobs 4
+      - name: Prepare pinned CrossInk inputs and source notices
+        if: github.ref == 'refs/heads/main'
+        run: |
+          python -m x3emu.firmware --download --directory local/firmware
+          git clone --filter=blob:none --no-checkout https://github.com/uxjulia/CrossInk.git local/package-sources/CrossInk
+          git -C local/package-sources/CrossInk checkout --detach 31ce770487bfa9cb70447a374cdd8aae89d8bfe4
+          git clone --filter=blob:none --no-checkout https://github.com/Free-Ink/freeink-sdk.git local/package-sources/freeink-sdk
+          git -C local/package-sources/freeink-sdk checkout --detach b784446302c076b4b5a622627867f0c80905cc50
+      - name: Package the working Linux front panel and native backend
+        if: github.ref == 'refs/heads/main'
+        run: |
+          python scripts/package-runtime.py \
+            --output "$RUNNER_TEMP/xteink-x3-crossink-linux-x86_64" \
+            --archive "$RUNNER_TEMP/xteink-x3-crossink-linux-x86_64.tar.gz" \
+            --backend local/qemu/install/bin/qemu-system-riscv32 \
+            --rom-dir local/qemu/install/share/qemu \
+            --firmware-dir local/firmware --qemu-source local/qemu/src \
+            --crossink-source local/package-sources/CrossInk \
+            --sdk-source local/package-sources/freeink-sdk \
+            --slirp-notice /usr/share/doc/libslirp0/copyright
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: xteink-x3-crossink-linux-x86_64-${{ github.sha }}
+          path: ${{ runner.temp }}/xteink-x3-crossink-linux-x86_64.tar.gz
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error

@@ -1,5 +1,12 @@
 # Validation evidence
 
+This page preserves the historical baseline and its original receipts.
+Current source is on GitHub `main`: see [the 123-case native backend](native-ccmp-validation.md),
+[fresh actual CrossInk functions](function-coverage.md#fresh-continuation-proofs),
+and [ROM programming followed by actual boot/read](flashing-validation-2026-10-04.md).
+Later runs have complete closed traces; the old incomplete trace below remains
+a historical failure rather than being rewritten.
+
 Recorded on 2026-10-03 against the official CrossInk v1.6.0 binary. These
 experiments execute its ROM, bootloader, FreeRTOS application and native
 drivers with an original six-chapter EPUB. Firmware and complete flash/card
@@ -46,8 +53,10 @@ seconds, which measures emulator throughput.
 
 Programming and booting are separate checks: this receipt deliberately leaves
 `boot_verified: false`. The reader experiment cold-boots the byte-identical
-prepared image. The optional esptool RAM stub remains unsupported; its actual
-load-access fault is recorded in [flashing.md](flashing.md).
+prepared image. The original legacy RAM stub's load-access fault remains
+recorded in [flashing.md](flashing.md). The separately pinned official modern
+RAM flasher now passes compressed/uncompressed programming and subsequent
+reading; see [its current record](ram-flasher-validation-2026-10-04.md).
 
 ## Stock reader and persistent progress
 
@@ -146,7 +155,7 @@ An earlier candidate's genuine port-collision failure was retained. The tested
 POSIX fixture now keeps its listener socket reserved while QEMU allocates its
 test transport; the final gate uses this corrected fixture.
 
-The current RX comparator checkpoint passes **12 suites,105 cases and zero
+The subsequent RX comparator checkpoint passes **12 suites,105 cases and zero
 skips**. Official C3 library disassembly and byte-identical ROM functions
 establish station/AP receive callback bits, address masks, comparator enables
 and BSSID-check registers. Tests exercise AP-targeted authentication, both
@@ -176,9 +185,11 @@ the source boundaries and exact validated effects.
 
 ## Limits
 
-WiFi RF/encryption/channel behavior, BLE, some memory-protection and
-debug-monitor functions, physical panel effects and analog behavior remain
-unsupported. WiFi digital execution has the separate proofs above. Sensor values are synthetic.
+Wi-Fi RF/channel behavior, general encryption beyond the bounded native CCMP
+profile, BLE, some memory-protection and debug-monitor functions, physical
+panel effects and analog behavior remain unverified. Bounded native CCMP and
+actual secure guest execution have the newer proofs linked above. Sensor
+values are synthetic.
 The waveform endpoint is an inferred digital target, not an optical simulation.
 CPU/cache costs, card latency and physical bus/display timing are uncalibrated.
 

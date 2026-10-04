@@ -26,6 +26,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from x3emu.flash import FLASH_SIZE, FlashFormatError, inspect_flash, make_partition_table
 from x3emu.firmware import BOOT_APP0_SHA256, BOOT_BIN_SHA256, CROSSINK_V160_SHA256, ESPTOOL_VERSION
+from x3emu.esptool_stub import StubProfileError, inspect_stub_profile
 
 
 class SerialFlashError(RuntimeError):
@@ -198,8 +199,20 @@ def run_serial_flash(
         raise SerialFlashError(f"QEMU executable is missing: {qemu}")
     if not (bios / "esp32c3-rom.bin").is_file():
         raise SerialFlashError(f"ESP32-C3 ROM is missing in {bios}")
+    # Reject corrupt RAM bytecode before starting esptool or a guest. Selecting
+    # the modern profile never modifies the installed package or the mask ROM.
+    profile = None
+    if use_stub:
+        if esptool_command is not None:
+            raise SerialFlashError("the pinned RAM profile requires the project's esptool adapter")
+        try:
+            profile = inspect_stub_profile()
+        except StubProfileError as error:
+            raise SerialFlashError(str(error)) from error
     inputs = components(firmware)
-    converter = esptool_command if esptool_command is not None else [sys.executable, "-m", "esptool"]
+    converter = esptool_command if esptool_command is not None else (
+        [sys.executable, str(PROJECT_ROOT / "scripts/esptool-x3-modern.py")] if use_stub
+        else [sys.executable, "-m", "esptool"])
     if not converter:
         raise SerialFlashError("esptool command cannot be empty")
     version = subprocess.run(converter + ["version"], check=True, capture_output=True, text=True, timeout=10).stdout.splitlines()
@@ -244,6 +257,8 @@ def run_serial_flash(
         "initial_flash": "all 0xff", "qemu_command": command,
         "esptool_write_command": write, "serial_flash_verified": False, "boot_verified": False,
     }
+    if profile is not None:
+        report["ram_stub_profile"] = profile
     process = None
     channel = reader = None
     failure = None
@@ -297,6 +312,12 @@ def run_serial_flash(
             reader.close()
         if channel is not None:
             channel.close()
+        if process is not None:
+            report["native_exit_code"] = process.returncode
+    if failure is None and report.get("native_exit_code") != 0:
+        failure = SerialFlashError("native backend did not exit cleanly after programming")
+        report["status"] = "failed"
+        report["error"] = str(failure)
     if failure is None:
         try:
             report["readback"] = verify_programmed_bytes(flash, inputs)
@@ -322,7 +343,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=PROJECT_ROOT / "local/runs/serial-flash")
     parser.add_argument("--timeout", type=float, default=180)
     parser.add_argument("--baud", type=int, default=921600)
-    parser.add_argument("--stub", action="store_true", help="use esptool's official RAM flasher after the ROM connection")
+    parser.add_argument("--stub", action="store_true", help="use the pinned official modern v1.3.0 C3 RAM flasher after the ROM connection")
     parser.add_argument("--no-compress", action="store_true", help="disable compression for the RAM stub experiment")
     args = parser.parse_args()
     try:

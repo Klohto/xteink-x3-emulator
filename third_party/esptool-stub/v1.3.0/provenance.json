@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "provider": "Espressif",
+  "artifact": "official modern ESP32-C3 RAM flasher",
+  "version": "v1.3.0",
+  "release_url": "https://github.com/espressif/esp-flasher-stub/releases/tag/v1.3.0",
+  "release_api_url": "https://api.github.com/repos/espressif/esp-flasher-stub/releases/tags/v1.3.0",
+  "release_asset_name": "esp32c3.json",
+  "release_asset_digest": "sha256:8d342da995f01240c8671937f290757bf67bdf4bb818b022539e8e40bf61623a",
+  "retrieved_bytes_url": "https://raw.githubusercontent.com/espressif/esptool/70c1cc3a8726f7db1a7f266b4d306f456fbac924/esptool/targets/stub_flasher/2/esp32c3.json",
+  "esptool_provider_commit": "70c1cc3a8726f7db1a7f266b4d306f456fbac924",
+  "source_repository": "https://github.com/espressif/esp-flasher-stub",
+  "source_commit": "b4e2acb0e41b01505325fc484c7bf2d68aa93da4",
+  "source_tree": "a572e1a4eeb43a457dc7cf7cf90ebce4009e5ed2",
+  "source_library_repository": "https://github.com/espressif/esp-stub-lib",
+  "source_library_commit": "26d71c0b8bd40b99ca544a77c28467b03bbef038",
+  "json_path": "2/esp32c3.json",
+  "json_size_bytes": 8260,
+  "json_sha256": "8d342da995f01240c8671937f290757bf67bdf4bb818b022539e8e40bf61623a",
+  "entry": "0x40380e9a",
+  "bss_start": "0x3fc84000",
+  "uploaded_segments": [
+    {
+      "name": "text",
+      "address": "0x40380000",
+      "size_bytes": 5880,
+      "sha256": "c06cc1a34a02d8f8755692cf89843b388978d19a255b0d9c26b10a0f41a90ffb"
+    },
+    {
+      "name": "data",
+      "address": "0x3fc96d68",
+      "size_bytes": 204,
+      "sha256": "2cb1bc0835895d6818c8c2c6a32dacd248f8b78b0cd0a8dc500c7f1c300ec979"
+    }
+  ],
+  "license_expression": "Apache-2.0 OR MIT",
+  "licenses": [
+    {
+      "path": "LICENSE-MIT",
+      "upstream_url": "https://raw.githubusercontent.com/espressif/esp-flasher-stub/b4e2acb0e41b01505325fc484c7bf2d68aa93da4/LICENSE-MIT",
+      "sha256": "de9c9e7b2f939f909b27eea39630893885604c8cde7de4a822b53cb37d0036a0"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "upstream_url": "https://raw.githubusercontent.com/espressif/esp-flasher-stub/b4e2acb0e41b01505325fc484c7bf2d68aa93da4/LICENSE-APACHE",
+      "sha256": "3caf7db4e38f3b3a5e6eb3d7004473188e03f2e18129a0da6289a02c012d7277"
+    }
+  ],
+  "host_profile": {
+    "esptool_version": "5.1.0",
+    "stub_subdirectory": "2",
+    "directory_api": "esptool.loader.StubFlasher.STUB_DIR",
+    "selector": "--stub-version 2",
+    "scope": "separate host CLI process; installed esptool package unchanged"
+  },
+  "source_build_reproduced_here": false,
+  "guest_bytes_modified": false,
+  "native_backend_changed_for_profile": false
+}

@@ -5,7 +5,8 @@
 Implemented: pinned Espressif QEMU execution, original ROM and converted
 compatible official SDK bootloader, writable flash, GPIO/SPI wiring, ADC buttons, SD block operations, digital
 panel output, I2C discovery devices, USB console and RTC sleep/wake. The real
-ROM downloader programs CrossInk with verified byte readback. Native tests
+ROM downloader and pinned official modern RAM flasher program CrossInk with
+verified complete-flash byte readback. Native tests
 exercise the actual MMIO, interrupt and wire protocols.
 
 Stock firmware integration evidence and remaining functional gaps are recorded
@@ -23,7 +24,9 @@ Each record has a bounded backend/input profile. Format, trigger, value and
 error permutations do not yet have exhaustive execution coverage; the source
 inventory and preserved firmware defects are not an all-functions claim.
 
-- Resolve the optional esptool RAM flasher failure; retain the verified ROM path.
+- Broaden legacy RAM-flasher compatibility if needed; the pinned official
+  modern profile and default ROM path now pass. The original legacy failure
+  remains in [the modern flasher record](ram-flasher-validation-2026-10-04.md).
 - Test other CrossInk releases, app-generated OTA writes and rollback behavior.
 - Broaden the bounded Wi-Fi cipher/key/frame profile only with primary-source
   contracts and actual unchanged firmware gates. Physical USB enumeration and

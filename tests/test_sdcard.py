@@ -1,14 +1,17 @@
-from io import BytesIO
+from io import BytesIO, StringIO
+from contextlib import redirect_stdout, redirect_stderr
+import json
 from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 from zipfile import ZIP_STORED, ZipFile
 
 from x3emu.sdcard import (
     CARD_SIZE, PARTITION_LBA, SECTOR_SIZE, SdCardFormatError,
-    create_fat16_card, create_sdcard, fat16_layout, make_test_epub,
+    create_fat16_card, create_sdcard, fat16_layout, make_test_epub, main,
 )
 
 
@@ -225,6 +228,48 @@ class SdCardTests(unittest.TestCase):
         with self.assertRaises(SdCardFormatError):
             create_fat16_card(self.card, {"test.txt": "text"})
         self.assertFalse(self.card.exists())
+
+    def test_cli_copies_actual_local_unicode_files_without_adding_a_fixture(self):
+        files = {"čtení.epub": make_test_epub(), "notes.txt": b"my original notes\n"}
+        args = ["sdcard", "--output", str(self.card)]
+        for name, payload in files.items():
+            source = self.root / name
+            source.write_bytes(payload)
+            args += ["--file", str(source)]
+        with patch("sys.argv", args), redirect_stdout(StringIO()):
+            self.assertEqual(main(), 0)
+        for name, first, length in self._directory_files():
+            self.assertEqual(self._file_payload(first, length), files[name])
+        self.assertEqual({name for name, _, _ in self._directory_files()}, set(files))
+        manifest = json.loads(self.card.with_name(self.card.name + ".json").read_text())
+        self.assertEqual({row["name"] for row in manifest["files"]}, set(files))
+        self.assertNotIn("fixture", manifest)
+        self.assertEqual((self.root / "čtení.epub").read_bytes(), files["čtení.epub"])
+
+    def test_cli_duplicate_casefolded_basenames_preserve_existing_output(self):
+        one = self.root / "one" / "Book.epub"
+        two = self.root / "two" / "book.epub"
+        one.parent.mkdir()
+        two.parent.mkdir()
+        one.write_bytes(b"first book")
+        two.write_bytes(b"second book")
+        self.card.write_bytes(b"previous card remains")
+        with patch("sys.argv", ["sdcard", "--output", str(self.card), "--file", str(one), "--file", str(two)]), redirect_stderr(StringIO()):
+            with self.assertRaises(SystemExit) as failure:
+                main()
+        self.assertEqual(failure.exception.code, 1)
+        self.assertEqual(self.card.read_bytes(), b"previous card remains")
+
+    def test_cli_oversized_input_is_rejected_before_reading_or_replacing_output(self):
+        source = self.root / "large.epub"
+        with source.open("wb") as file:
+            file.truncate(CARD_SIZE + 1)
+        self.card.write_bytes(b"previous card remains")
+        with patch("sys.argv", ["sdcard", "--output", str(self.card), "--file", str(source)]), redirect_stderr(StringIO()):
+            with self.assertRaises(SystemExit) as failure:
+                main()
+        self.assertEqual(failure.exception.code, 1)
+        self.assertEqual(self.card.read_bytes(), b"previous card remains")
 
 
 if __name__ == "__main__":

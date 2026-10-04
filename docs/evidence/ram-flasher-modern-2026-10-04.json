@@ -1,0 +1,552 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-04",
+  "scope": "official modern RAM programming, default ROM regression, and actual programmed-image reader",
+  "backend_sha256": "504f14e45bfa818889204225827821da56299112645a1e35f66ba9121f854f50",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "host_esptool_version": "5.1.0",
+  "official_modern_stub_version": "v1.3.0",
+  "official_modern_stub_json_sha256": "8d342da995f01240c8671937f290757bf67bdf4bb818b022539e8e40bf61623a",
+  "firmware_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+  "full_flash_provenance": "assembled SDK bootloader, generated partitions, official OTA data and unchanged official application; not a factory full-image release",
+  "native_backend_changed": false,
+  "guest_bytes_modified": false,
+  "programming_runs": [
+    {
+      "mode": "modern compressed",
+      "status": "passed",
+      "receipt_sha256": "fcbae8c09a29632dadaa3deb4947ceefc7397eab1e06dd328400a9611776ffc8",
+      "tool_log_sha256": "c7243922ad40b9d999265c466cbf92a6b84c8f33c6307da54fa44c37cee247ca",
+      "diagnostics_sha256": "e86cf2130cf147455e1a9d646f19859b2c73781442d368dc0f80a6914a0a0cbc",
+      "raw_diagnostic_line_counts": {
+        "Adding SPI flash device": 1,
+        "M25P80: Unknown cmd 5a": 1,
+        "esp32c3-assist-debug: unmodelled instruction PC/SP recording enable": 1
+      },
+      "native_exit_code": 0,
+      "target_hash_verifications": 4,
+      "components": [
+        {
+          "offset": 0,
+          "size_bytes": 18672,
+          "sha256": "6e6b0d386095f0783e9f0513ea29ea2ce413790e7f7153a06a2b04e2b5f59fb6",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 32768,
+          "size_bytes": 3072,
+          "sha256": "bd0f7954aca2ef7d925ee21aaa1f3dc8822d1d6ce5cbbd26a135e5886bfff6ce",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 57344,
+          "size_bytes": 8192,
+          "sha256": "f94c5d786a7a8fab06ac5d10e33bf37711a6697636dc037559ea19cc410a17f0",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 65536,
+          "size_bytes": 6105536,
+          "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+          "independent_byte_equal": true
+        }
+      ],
+      "initial_flash_erased": true,
+      "full_flash_size_bytes": 16777216,
+      "full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "independent_full_image_byte_equal": true,
+      "unused_bytes": "0xff",
+      "boot_verified": false,
+      "rtc_snapshot_sha256": "909f96f0f589f4e89d4526b45ebe53e66adbfc63f9ce22469fd54fe3dcf65a23",
+      "download_mode_watchdog_clear": true,
+      "watchdog_expiries": 0,
+      "watchdog_feeds": 0,
+      "qmp_reset_events": 0,
+      "reset_state": "0x00003001"
+    },
+    {
+      "mode": "modern uncompressed",
+      "status": "passed",
+      "receipt_sha256": "3b967aaf456904a6745c460e6b3602127e192547ef5e1f1f553256d7157e28de",
+      "tool_log_sha256": "8d4eb172afe32ddf04b6607699d5df84c7ae022b2a5e3de78dae4557efc9b755",
+      "diagnostics_sha256": "e86cf2130cf147455e1a9d646f19859b2c73781442d368dc0f80a6914a0a0cbc",
+      "raw_diagnostic_line_counts": {
+        "Adding SPI flash device": 1,
+        "M25P80: Unknown cmd 5a": 1,
+        "esp32c3-assist-debug: unmodelled instruction PC/SP recording enable": 1
+      },
+      "native_exit_code": 0,
+      "target_hash_verifications": 4,
+      "components": [
+        {
+          "offset": 0,
+          "size_bytes": 18672,
+          "sha256": "6e6b0d386095f0783e9f0513ea29ea2ce413790e7f7153a06a2b04e2b5f59fb6",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 32768,
+          "size_bytes": 3072,
+          "sha256": "bd0f7954aca2ef7d925ee21aaa1f3dc8822d1d6ce5cbbd26a135e5886bfff6ce",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 57344,
+          "size_bytes": 8192,
+          "sha256": "f94c5d786a7a8fab06ac5d10e33bf37711a6697636dc037559ea19cc410a17f0",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 65536,
+          "size_bytes": 6105536,
+          "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+          "independent_byte_equal": true
+        }
+      ],
+      "initial_flash_erased": true,
+      "full_flash_size_bytes": 16777216,
+      "full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "independent_full_image_byte_equal": true,
+      "unused_bytes": "0xff",
+      "boot_verified": false,
+      "rtc_snapshot_sha256": "909f96f0f589f4e89d4526b45ebe53e66adbfc63f9ce22469fd54fe3dcf65a23",
+      "download_mode_watchdog_clear": true,
+      "watchdog_expiries": 0,
+      "watchdog_feeds": 0,
+      "qmp_reset_events": 0,
+      "reset_state": "0x00003001"
+    },
+    {
+      "mode": "default ROM",
+      "status": "passed",
+      "receipt_sha256": "fb015b2cc3f07c2f4f09d5894af2c906c76a24b21913ff8feb773de01d047849",
+      "tool_log_sha256": "fd902ed58d7893479a98d06ce3a2f582d0fec53ae764935aedf40838b8dd65ca",
+      "diagnostics_sha256": "e86cf2130cf147455e1a9d646f19859b2c73781442d368dc0f80a6914a0a0cbc",
+      "raw_diagnostic_line_counts": {
+        "Adding SPI flash device": 1,
+        "M25P80: Unknown cmd 5a": 1,
+        "esp32c3-assist-debug: unmodelled instruction PC/SP recording enable": 1
+      },
+      "native_exit_code": 0,
+      "target_hash_verifications": 4,
+      "components": [
+        {
+          "offset": 0,
+          "size_bytes": 18672,
+          "sha256": "6e6b0d386095f0783e9f0513ea29ea2ce413790e7f7153a06a2b04e2b5f59fb6",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 32768,
+          "size_bytes": 3072,
+          "sha256": "bd0f7954aca2ef7d925ee21aaa1f3dc8822d1d6ce5cbbd26a135e5886bfff6ce",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 57344,
+          "size_bytes": 8192,
+          "sha256": "f94c5d786a7a8fab06ac5d10e33bf37711a6697636dc037559ea19cc410a17f0",
+          "independent_byte_equal": true
+        },
+        {
+          "offset": 65536,
+          "size_bytes": 6105536,
+          "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+          "independent_byte_equal": true
+        }
+      ],
+      "initial_flash_erased": true,
+      "full_flash_size_bytes": 16777216,
+      "full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "independent_full_image_byte_equal": true,
+      "unused_bytes": "0xff",
+      "boot_verified": false,
+      "rtc_snapshot_sha256": "909f96f0f589f4e89d4526b45ebe53e66adbfc63f9ce22469fd54fe3dcf65a23",
+      "download_mode_watchdog_clear": true,
+      "watchdog_expiries": 0,
+      "watchdog_feeds": 0,
+      "qmp_reset_events": 0,
+      "reset_state": "0x00003001"
+    }
+  ],
+  "programmed_image_reader": {
+    "input_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "input_from": "modern compressed programming result",
+    "input_epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75",
+    "fixture": "new generated FAT16 card, no host-seeded cache or progress",
+    "receipt_sha256": "5c8ce39d349ae2e562598eb8beba4cbdf150a3f3d694f1b9ab2c73f7b4c7cdf2",
+    "run_manifest_sha256": "92fc912bf4145a64273cfd5b85b8543cc9af7a42f0461a29aa55bbc15ece3e51",
+    "original_status": "failed",
+    "original_strict_passed": false,
+    "original_functional_reading_flow_pass": true,
+    "failed_strict_checks": [
+      "model_diagnostics_clean"
+    ],
+    "functional_checks": {
+      "pinned_full_flash": true,
+      "original_epub_fixture": true,
+      "saved_page1_before_reopen": true,
+      "reopened_reader_from_home": true,
+      "rom_cold_boot": true,
+      "controlled_cold_boot_reset_sequence": true,
+      "hardware_detect_x3": true,
+      "post_gpio_x3": true,
+      "no_sd_error_or_guest_panic": true,
+      "sd_mount_and_book_open": true,
+      "parsed_fixture_metadata": true,
+      "persisted_forward_page": true,
+      "visible_forward_page_change": true,
+      "up_restores_page0": true,
+      "down_restores_page1": true,
+      "up_restores_page0_content": true,
+      "down_restores_page1_content": true,
+      "reopen_restores_page1": true,
+      "reopen_restores_page1_content": true,
+      "all_frames_have_x3_dimensions_and_content": true,
+      "real_startup_power_input_configured": true,
+      "backend_stopped_cleanly": true,
+      "speed_selection_remains_disabled": true,
+      "panel_trace_complete": true
+    },
+    "native_exit_code": 0,
+    "progress": {
+      "spine_index": 0,
+      "page_number": 1,
+      "page_count": 22,
+      "visible_text_offset": 586,
+      "sha256": "8e63988ebe254cd93efe19c81e445408bcf28fe9a63866ffc9abf5e585e17ec5"
+    },
+    "frames": {
+      "home": {
+        "file_sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e",
+        "pixel_sha256": "e578cc6b8de54475dd0509362996561163ceb43ecd21b99b04b6343fbe029d11",
+        "tones": [
+          0,
+          255
+        ],
+        "frame_count": 4,
+        "trace_complete": true,
+        "native_output_errors": 0
+      },
+      "navigation": {
+        "file_sha256": "dee163a4d82e3e8734ab4775eee2b6ce24bef84afff6695078a2e86d1713bb5d",
+        "pixel_sha256": "0a9533873ea174b2af0409b5b20f4196c5c3a5dcd62ed09ff2113277c2b21fee",
+        "tones": [
+          0,
+          255
+        ],
+        "frame_count": 5,
+        "trace_complete": true,
+        "native_output_errors": 0
+      },
+      "page0": {
+        "file_sha256": "4899915edba28df449b5e39cb3240a2b33ce998d6c16e5f0f325016d33d22222",
+        "pixel_sha256": "7b110f20da2d425f43278e671c31447c10934769e4e722422c4c712f6d1b5261",
+        "tones": [
+          0,
+          85,
+          170,
+          255
+        ],
+        "frame_count": 14,
+        "trace_complete": true,
+        "native_output_errors": 0
+      },
+      "page1": {
+        "file_sha256": "b668a825ad629a96996fdf37810c22072ee37ff99b2e61b6bae14f898ff2710a",
+        "pixel_sha256": "a0dbb2745a485b784b0be15d81790fcb3c57d313f5a04438c16d90fea6379a91",
+        "tones": [
+          0,
+          85,
+          170,
+          255
+        ],
+        "frame_count": 16,
+        "trace_complete": true,
+        "native_output_errors": 0
+      },
+      "page0-return": {
+        "file_sha256": "8539b542584a8baa2acf82191e379705d3b4647d79f01a91274c2e382182a469",
+        "pixel_sha256": "7b110f20da2d425f43278e671c31447c10934769e4e722422c4c712f6d1b5261",
+        "tones": [
+          0,
+          85,
+          170,
+          255
+        ],
+        "frame_count": 18,
+        "trace_complete": true,
+        "native_output_errors": 0
+      },
+      "page1-return": {
+        "file_sha256": "da7c7d8e47c025ea1e6058de809799c5a9b02ae95849f3b9698c8a24a6858c23",
+        "pixel_sha256": "a0dbb2745a485b784b0be15d81790fcb3c57d313f5a04438c16d90fea6379a91",
+        "tones": [
+          0,
+          85,
+          170,
+          255
+        ],
+        "frame_count": 20,
+        "trace_complete": true,
+        "native_output_errors": 0
+      },
+      "home-final": {
+        "file_sha256": "c839122ad1fec2265f651fba4c7262d841a697ca26930bcd5786e8aaef508578",
+        "pixel_sha256": "f227cf66baf1a4950c129e8d00f83ca9fbac1952f077f49d557c81c3585d0378",
+        "tones": [
+          0,
+          255
+        ],
+        "frame_count": 22,
+        "trace_complete": true,
+        "native_output_errors": 0
+      },
+      "page1-reopened": {
+        "file_sha256": "7a14ae205f2ded0a8a39f90f8abcedbacd665668e37d7349814bdf0e20a42e09",
+        "pixel_sha256": "a0dbb2745a485b784b0be15d81790fcb3c57d313f5a04438c16d90fea6379a91",
+        "tones": [
+          0,
+          85,
+          170,
+          255
+        ],
+        "frame_count": 27,
+        "trace_complete": true,
+        "native_output_errors": 0
+      },
+      "home-after-reopen": {
+        "file_sha256": "c15ccfee2205345590548272332f52c840f2095a7005a600851a8cb66a2a23bd",
+        "pixel_sha256": "f227cf66baf1a4950c129e8d00f83ca9fbac1952f077f49d557c81c3585d0378",
+        "tones": [
+          0,
+          255
+        ],
+        "frame_count": 29,
+        "trace_complete": true,
+        "native_output_errors": 0
+      }
+    },
+    "panel_frames": 29,
+    "panel_events": 849,
+    "panel_sequence_complete": true,
+    "native_output_errors": 0,
+    "diagnostics_sha256": "ac7d220b0378dbbcca89b37cb6abb2d1032ec9c52890bc8199407633f38207a6",
+    "raw_diagnostic_line_counts": {
+      "Adding SPI flash device": 1,
+      "M25P80: Unknown cmd 5a": 1,
+      "M25P80: Unknown cmd 7a": 1,
+      "esp32c3-assist-debug: unmodelled instruction PC/SP recording enable": 2,
+      "esp32c3-regi2c: unmodelled block/host/register (0x06000561)": 1,
+      "esp32c3-regi2c: unmodelled block/host/register (0x06000661)": 1,
+      "esp32c3-regi2c: unmodelled block/host/register (0x06000d6d)": 2,
+      "esp32c3-regi2c: unmodelled block/host/register (0x07000661)": 1,
+      "esp32c3-regi2c: unmodelled block/host/register (0x07f70d6d)": 1,
+      "esp32c3-regi2c: unmodelled block/host/register (0x07fb0d6d)": 1,
+      "esp32c3-regi2c: unmodelled block/host/register (0x07ff0561)": 1,
+      "ignoring pmpaddr write - locked": 2,
+      "ignoring pmpaddr write - pmpcfg + 1 locked": 14,
+      "ignoring pmpcfg write - locked": 88,
+      "xteink-x3-adc: unmodelled ADC DMA transfer": 1,
+      "xteink-x3-adc: unmodelled timer-triggered conversion": 1,
+      "xteink-x3: unmodelled SoC read 0x600050f0": 1,
+      "xteink-x3: unmodelled SoC read 0x60006090": 1,
+      "xteink-x3: unmodelled SoC read 0x6001ccd4": 1,
+      "xteink-x3: unmodelled SoC read 0x6001d054": 1,
+      "xteink-x3: unmodelled SoC read 0x6002609c": 1,
+      "xteink-x3: unmodelled SoC read 0x600260ac": 1,
+      "xteink-x3: unmodelled SoC read 0x600c101c": 1,
+      "xteink-x3: unmodelled SoC read 0x600c1090": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10a8": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10b0": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10b4": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10b8": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10c0": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10c4": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10c8": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10cc": 1,
+      "xteink-x3: unmodelled SoC read 0x600c10fc": 1,
+      "xteink-x3: unmodelled SoC read 0x600c1100": 1,
+      "xteink-x3: unmodelled SoC read 0x600c1130": 1,
+      "xteink-x3: unmodelled SoC read 0x600c1134": 1,
+      "xteink-x3: unmodelled SoC write 0x600050f0": 1,
+      "xteink-x3: unmodelled SoC write 0x60006090": 1,
+      "xteink-x3: unmodelled SoC write 0x6001ccd4": 1,
+      "xteink-x3: unmodelled SoC write 0x6001d054": 1,
+      "xteink-x3: unmodelled SoC write 0x6002609c": 1,
+      "xteink-x3: unmodelled SoC write 0x600260ac": 1,
+      "xteink-x3: unmodelled SoC write 0x600c101c": 1,
+      "xteink-x3: unmodelled SoC write 0x600c1090": 1,
+      "xteink-x3: unmodelled SoC write 0x600c1094": 1,
+      "xteink-x3: unmodelled SoC write 0x600c1098": 1,
+      "xteink-x3: unmodelled SoC write 0x600c109c": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10a0": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10a4": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10a8": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10b0": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10b4": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10b8": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10c0": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10c4": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10c8": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10cc": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10d8": 1,
+      "xteink-x3: unmodelled SoC write 0x600c10fc": 1,
+      "xteink-x3: unmodelled SoC write 0x600c1100": 1,
+      "xteink-x3: unmodelled SoC write 0x600c1130": 1,
+      "xteink-x3: unmodelled SoC write 0x600c1134": 1
+    },
+    "native_unsupported_counters": {
+      "status": {},
+      "machine": {
+        "unsupported-io-reads": 47,
+        "unsupported-io-writes": 54
+      },
+      "panel": {
+        "unsupported-count": 0
+      },
+      "adc": {
+        "unsupported-uses": 2
+      },
+      "spi0": {
+        "unsupported-reads": 0,
+        "unsupported-writes": 0
+      },
+      "spi1": {
+        "unsupported-reads": 0,
+        "unsupported-writes": 0
+      },
+      "rtc": {
+        "unsupported-count": 0
+      },
+      "clock": {},
+      "i2c": {
+        "unsupported-accesses": 0
+      },
+      "usb": {
+        "unsupported-accesses": 0
+      },
+      "fuel_gauge": {
+        "unsupported-accesses": 0
+      },
+      "sensor_rtc": {
+        "unsupported-accesses": 0
+      },
+      "imu": {
+        "unsupported-accesses": 0
+      },
+      "assist_debug": {
+        "unsupported-uses": 2
+      },
+      "regi2c": {
+        "unsupported-accesses": 16
+      },
+      "wifi": {
+        "unsupported-accesses": 0
+      }
+    },
+    "speed_selection_allowed": false
+  },
+  "diagnostic_meaning": {
+    "programming_raw_lines_per_run": 3,
+    "programming_unsupported_lines_per_run": 2,
+    "reader_raw_lines": 165,
+    "reader_locked_pmp_write_lines": 104,
+    "reader_unmodelled_or_unknown_lines": 60,
+    "reader_informational_lines": 1,
+    "SFDP_0x5a": "hw/block/m25p80.c logs this when the selected flash part has no sfdp_read callback; the default path returns zero data. Capability remains unmodelled.",
+    "flash_0x7a": "reader startup emits an unknown-command diagnostic through m25p80's default command branch; no implementation or physical equivalence is claimed.",
+    "ASSIST_DEBUG": "hw/misc/esp32c3_assist_debug.c explicitly counts nonzero PC/SP recording-enable writes at offset 0x44 as unsupported.",
+    "locked_PMP": "target/riscv/pmp.c refuses writes to locked PMP configuration/address entries, including a predecessor of a locked TOR entry. These messages are retained; they do not mean those entries were changed.",
+    "other_model_diagnostics": "SoC fallback accesses, ADC DMA/timer use and unknown analog regi2c accesses remain unsupported. Raw log lines can be deduplicated by a model; the native counters are also retained."
+  },
+  "legacy_failure": {
+    "version": "v1.8.0",
+    "esptool_version": "5.1.0",
+    "stub_selector": "1",
+    "json_sha256": "57d942bac59e04779259808033b741a5b6da43cc1b9e3fe6ba252bee6f23f4e0",
+    "original_receipt_sha256": "9eab19fb6c63793079f070dd93ec5bdbb8c8ee97a53cb8d4f910a7f7952df1a4",
+    "original_status": "failed",
+    "current_backend_receipt_sha256": "99dc1d5e96bd3dec7e94d47fe3351ad730b5e9b5e99c662c7968f16bc5cb1c32",
+    "current_backend_status": "failed",
+    "current_backend_diagnostics_sha256": "f8705562c483c1be3bfd8d381e44878846b00a9ea40f8f66b3007c507bc8278f",
+    "current_backend_raw_diagnostic_line_counts": {
+      "Adding SPI flash device": 1,
+      "Invalid read at addr 0x3FCE0008, size 4, region '(null)', reason: rejected": 1,
+      "M25P80: Unknown cmd 5a": 1,
+      "esp32c3-assist-debug: unmodelled instruction PC/SP recording enable": 1
+    },
+    "read_only_trace_receipt_sha256": "433bcdb5abd4dfb6a8586a412277b0fb2137cee0167873637fe02a0c935bb148",
+    "read_only_trace_status": "failed",
+    "mepc": "0x4004d198",
+    "mcause": 5,
+    "mtval": "0x3fce0008",
+    "panic_pc": "0x40052b02",
+    "legacy_chip_pointer_argument": "0x3fcdfff4",
+    "rom_eco_word": 3,
+    "synthetic_efuse_revision": "0.3",
+    "native_ram_extended": false
+  },
+  "executed_source_bindings": [
+    {
+      "path": "scripts/test-serial-flash.py",
+      "size_bytes": 17564,
+      "sha256": "1264d747e332063627bea85ac40bab6115f8df1790d5f24cb69461863248ebfc"
+    },
+    {
+      "path": "scripts/esptool-x3-modern.py",
+      "size_bytes": 856,
+      "sha256": "b297f2372b817149f6874f08eab4d8a18fcff9d7ac1894eb633947027d47a345"
+    },
+    {
+      "path": "x3emu/esptool_stub.py",
+      "size_bytes": 2283,
+      "sha256": "87e29fffdb3c391285d3f037cace509169a2baf6451278a1d4400139aa2bff1b"
+    },
+    {
+      "path": "tests/test_serial_flash.py",
+      "size_bytes": 11887,
+      "sha256": "9bcb6808db9e885717b1f1c217d5e74b6caa338ed42b0a3a67e5bd68085217e9"
+    },
+    {
+      "path": "scripts/smoke-crossink.py",
+      "size_bytes": 40286,
+      "sha256": "dc522481b4817ea26ed899e66b2c1b6c5f5fe5a4c6b01b43b261945236da8510"
+    },
+    {
+      "path": "x3emu/backend.py",
+      "size_bytes": 51968,
+      "sha256": "9be3f8aa0ccf2c99f398553dfbe3de5258d2ecb6e9102a633d3b6a1c6bb52787"
+    },
+    {
+      "path": "x3emu/sdcard.py",
+      "size_bytes": 17750,
+      "sha256": "c0de603bd3178b9f61f5182f89adb15a3c7270c44f65202e84de09517b9e8740"
+    },
+    {
+      "path": "x3emu/firmware.py",
+      "size_bytes": 7167,
+      "sha256": "75a768cdd3bf229f6a3a8a4cd274be6c9c33958ce7d0ca908591d225ac998c9b"
+    },
+    {
+      "path": "third_party/esptool-stub/v1.3.0/2/esp32c3.json",
+      "size_bytes": 8260,
+      "sha256": "8d342da995f01240c8671937f290757bf67bdf4bb818b022539e8e40bf61623a"
+    }
+  ],
+  "focused_unit_tests": {
+    "tests": 18,
+    "passed": 17,
+    "expected_opt_in_skip": 1,
+    "log_sha256": "ed9fe381580d7768e4c1f43f2c11b384a7fac5acdf6a77fb4a5c50acb91e038b"
+  },
+  "limitations": {
+    "legacy_stub_supported": false,
+    "physical_usb_web_serial_verified": false,
+    "physical_speed_calibrated": false,
+    "all_crossink_functions_verified": false,
+    "source_build_reproduced_here": false,
+    "original_failed_receipts_preserved": true,
+    "unsupported_diagnostics_retained": true
+  }
+}

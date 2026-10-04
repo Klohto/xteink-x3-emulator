@@ -1,4 +1,4 @@
-# Serial flashing with the real ROM
+# Serial flashing with the real ROM and official RAM flasher
 
 The X3 backend accepts firmware through the ESP32-C3 ROM downloader. The host
 runs Espressif's esptool, which sends commands and firmware bytes to UART0 over
@@ -90,9 +90,27 @@ software; selecting UART download mode does not disable the watchdog device.
 
 ## Coverage
 
-The verified flasher path uses `--no-stub`. The optional `--stub` experiment
-uploads and starts esptool's official RAM flasher, then fails during the first
-flash-begin command. Both compressed and uncompressed experiments failed.
+The default path uses `--no-stub`. The explicit `--stub` path now selects the
+pinned official modern C3 flasher v1.3.0 with esptool 5.1.0:
+
+```sh
+python scripts/test-serial-flash.py --stub --output local/runs/serial-flash-modern
+python scripts/test-serial-flash.py --stub --no-compress --output local/runs/serial-flash-modern-raw
+```
+
+The unchanged upstream JSON, licenses and provenance are in
+[`third_party/esptool-stub/v1.3.0`](../third_party/esptool-stub/v1.3.0/README.md).
+Its complete SHA-256 is checked before starting esptool or QEMU. A separate
+host adapter selects esptool's normal version-2 stub API without changing the
+installed esptool package. A missing or modified JSON, a different esptool
+version, or a custom tool override is refused for this profile. The default
+ROM path does not load or require the RAM flasher.
+
+Both modern compressed and uncompressed transfers are verified against all
+four source ranges and the entire erased-plus-programmed 16 MiB image. The
+validation record, retained legacy failure and subsequent cold boot/reading
+experiment are described in
+[`ram-flasher-validation-2026-10-04.md`](ram-flasher-validation-2026-10-04.md).
 
 SPI0 and SPI1 now have separate register banks connected to the same flash.
 Native tests check register independence and coherent erase, program and read
@@ -100,7 +118,11 @@ operations through both controllers. The stub still fails with those changes:
 the diagnostic run `local/runs/stub-spi0-registers-probe` records a load-access
 exception in the mask ROM at `0x4004d198`, reading `0x3fce0008` (`mcause = 5`).
 Its stack pointer is `0x3fcde530`; execution then enters the ROM panic loop at
-`0x40052b02`. The cause remains unresolved. RAM-stub flashing is not supported.
+`0x40052b02`. This is the legacy v1.8.0 flasher bundled as version 1 in esptool
+5.1.0. A fresh failure on the current backend and a filtered instruction trace
+identify its invalid chip pointer; the original failed receipts remain failed.
+The supported profile uses the unmodified official modern flasher. No native
+RAM extension, guest patch or ROM-function bypass was added.
 
 USB descriptors and the host's Web Serial interface need their own test. This
 experiment establishes the real UART ROM protocol and persistent flash writes.
@@ -109,7 +131,9 @@ SFDP command `0x5a`, and ASSIST_DEBUG instruction PC/SP recording. These remain
 coverage limits even though the programmed bytes and ROM hashes all match.
 
 Unit tests check readback failures, including an erased device, a wrong offset
-and a corrupted byte, plus failure-register capture. An opt-in test runs the
+and a corrupted byte, plus failure-register capture, the pinned uploaded
+segment identities, and refusal before guest startup for invalid profiles.
+An opt-in test runs the
 complete ROM experiment:
 
 ```sh

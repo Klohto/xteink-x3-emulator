@@ -320,9 +320,23 @@ def create_sdcard(path: str | Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default="local/firmware/sdcard.img")
+    parser.add_argument("--file", type=Path, action="append", metavar="HOST_FILE",
+                        help="copy a local file into the card root; repeat for multiple books/files; otherwise create the original test EPUB")
     args = parser.parse_args()
     try:
-        manifest = create_sdcard(args.output)
+        if args.file is None:
+            manifest = create_sdcard(args.output)
+        else:
+            names = set()
+            total = 0
+            for source in args.file:
+                if source.name.casefold() in names:
+                    raise SdCardFormatError(f"duplicate card filename: {source.name}")
+                names.add(source.name.casefold())
+                total += source.stat().st_size
+                if total > CARD_SIZE:
+                    raise SdCardFormatError("input files exceed card capacity")
+            manifest = create_fat16_card(args.output, {source.name: source.read_bytes() for source in args.file})
     except (OSError, SdCardFormatError) as error:
         parser.exit(1, f"SD card preparation failed: {error}\n")
     target = Path(args.output)

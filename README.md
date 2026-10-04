@@ -1,216 +1,155 @@
 # Xteink X3 emulator
 
-Execute CrossInk's ESP32-C3 firmware on an emulated Xteink X3. The backend runs
-the real mask ROM, second-stage bootloader, FreeRTOS application and drivers.
-Firmware can be programmed through the ROM's UART downloader with esptool.
+Run unchanged CrossInk firmware on an emulated ESP32-C3/Xteink X3, with a local
+front panel, real button inputs, writable flash and persistent SD storage. The
+CPU executes the actual mask ROM, bootloader, FreeRTOS application and drivers.
+The panel displays the native grayscale framebuffer.
 
-The repository contains an X3 board patch for pinned Espressif QEMU, a build
-script, flash and SD image tools, a runtime, local front panel, button controls and
-integration experiments. Firmware images and generated storage stay outside
-Git.
+The working emulator and launcher are on `main`. Actual CrossInk v1.6.0 boots,
+indexes an EPUB, turns pages, saves progress and restores the saved page on a
+new CPU. Both the ROM downloader and the pinned official modern RAM flasher
+program its complete bootable flash, with every byte checked afterward.
 
-The current working patch passes 123 native cases across 12 suites. Actual
-unchanged CrossInk passes EPUB reading and saved-page cold restoration,
-authenticated saved-network GTK1 broadcast DHCP, hotspot/join, captive DNS,
-and real ROM programming followed by boot/read on this backend. The previous
-119 backend's password Save/reconnect/Forget and Nearby transfer/read/cold
-proofs retain their exact identity. The encrypted profile is bounded native CCMP.
-See [native encryption validation](docs/native-ccmp-validation.md) and the
-[recovery record](docs/emulator-recovery-2026-10-04.md) for exact source pins,
-original receipts, preserved failures and remaining work. GitHub `main` remains
-the previous RX114 checkpoint while the current source is reviewed on
-`work/ccmp-source-checkpoint`.
+## Download and run
 
-## Current capabilities
+Open the latest successful **main** run of
+[Tests](https://github.com/Klohto/xteink-x3-emulator/actions/workflows/tests.yml)
+and download its `xteink-x3-crossink-linux-x86_64-<commit>` artifact. Unzip the
+artifact, extract the enclosed `.tar.gz`, and run from the extracted directory
+on **Ubuntu 24.04 x86-64**:
 
-| Component | Implemented behavior |
-| --- | --- |
-| CPU and memory | ESP32-C3 RV32 execution, interrupts, ROM, SRAM, RTC RAM, flash mapping and executed stack-bound checks |
-| Firmware storage | Writable 16 MiB SPI flash, ROM serial programming and stock CrossInk SD OTA with executed partition switch |
-| SD card | Guest SPI commands, power control, nested FAT directories and persistent block writes |
-| Buttons | Two ADC resistor ladders, GPIO3 power button and exact virtual-time press/release deadlines |
-| Display | UC8253/UC8279 detection, controller commands, RAM planes, partial updates, BUSY and 792 × 528 digital output |
-| I2C | C3 command/FIFO/interrupt path with BQ27220 gauge, DS3231 RTC and QMI8658 IMU models |
-| USB and console | UART ROM output, bidirectional USB Serial/JTAG FIFO and stock CRC-checked file-transfer commands |
-| Sleep and watchdogs | RTC counter, timer/GPIO wake, retained state, digital CPU sleep/restart and distinct watchdog reset domains |
-| Experimental WiFi | C3 MAC/DMA/TSF, digital reset, raw peers, source-backed RX enable and bounded native CCMP; actual secure Save/reconnect/Forget, scanning, DHCP, hotspot and captive DNS |
+```sh
+sudo apt-get install python3 libglib2.0-0t64 libpixman-1-0 libgcrypt20 zlib1g libslirp0
+python3 launch.py
+```
 
-The official CrossInk v1.6.0 application has been programmed through the ROM;
-every byte of the resulting 16 MiB flash matches the prepared image. Stock
-firmware detects X3 hardware, mounts the generated card and executes the EPUB
-reader. Reading, saved progress and GPIO sleep/wake have separate experiments
-against the same backend. See [`docs/validation.md`](docs/validation.md) for
-their checks, hashes and recorded results.
+Open the printed loopback address. Enter confirms, Backspace goes back, arrows
+navigate and P presses Power. Home → Browse → `test.epub` opens an original
+generated book; wait for indexing before turning pages. Credentials, settings
+and progress are not seeded into the bundled card. Press Back to save progress at Home.
+Ctrl-C stops the CPU and
+preserves its actual flash, SD card, eFuse, native trace and logs in the printed
+run directory. Resume from those written files:
 
-The reading flow passes: page turns restore the same grayscale pixels and the
-book reopens at its saved page. Recent private runs retain complete, linked
-panel traces. Strict acceptance remains false because unsupported model uses
-are still reported; the original receipt's incomplete trace is also preserved.
+```sh
+python3 launch.py --resume /absolute/path/to/previous/run
+```
 
-Expanded stock workflows verify chapter navigation, bookmarks, clipping export,
-font persistence after a cold CPU, motion-sensor page turns, button remapping,
-nested browsing, book actions and custom grayscale sleep/wake. USB file commands
-and SD firmware update also pass, including exact application bytes and actual
-execution from the new OTA partition. Each receipt identifies its backend
-revision; these results do not establish an all-functions pass. The complete
-source inventory and remaining checks are in
-[`docs/function-coverage.md`](docs/function-coverage.md), with archived proofs
-under [`docs/evidence/functions`](docs/evidence/functions).
+To use your own books:
 
-Further receipts in [`docs/evidence/functions-next`](docs/evidence/functions-next)
-verify layout persistence, percent navigation, automatic turns, footnotes,
-screenshots, completion, power shortcuts, library cleanup and image formats.
-The earlier TX-prefix native patch passes 12 suites with 111 cases and zero skips; exact
-build provenance is in [`docs/evidence/native-build-tx-prefix.json`](docs/evidence/native-build-tx-prefix.json).
+```sh
+python3 -m x3emu.sdcard --output /tmp/my-card.img --file /absolute/path/to/book.epub
+python3 launch.py --sd /tmp/my-card.img
+```
 
-The [function ledger](docs/function-coverage.md) records subsequent evidence for
-TXT/Markdown reading, advanced dictionaries and saved items, status settings,
-sleep policies, controls and successful ROM recovery flashing. Published full
-receipts are indexed in
-[`docs/evidence/functions-latest`](docs/evidence/functions-latest), with deferred
-records disclosed by the index. Original protocol failures and incomplete
-strict-model results remain retained; this is not an all-functions acceptance
-claim.
+Launch needs no downloads or third-party Python packages. `--wifi` explicitly
+enables networking. The prebuilt archive requires Python 3.11+ and glibc 2.38+;
+build from source for a different host. See
+[runtime-package.md](docs/runtime-package.md) for integrity checks, custom
+flash, output directories, dependencies and corresponding QEMU source.
 
-Fresh RX114 runs now also verify the [OPDS and KOReader settings editors and
-Binary progress sync](docs/network-settings-validation.md), a [nonempty
-end-of-book menu across three CPUs](docs/end-book-validation-2026-10-04.md), and
-[Nearby format, folder, collision, cancellation and identity checks](docs/nearby-validation-2026-10-04.md).
-Nearby has 16 positive cases, including six transferred file formats and eight
-cold reading resumes. Its two corrupted-transfer cases preserve files and
-refuse CRC failures; the observed stock error-message loop remains a failed
-UI result. Each linked record retains its exact backend and original failures.
+## See CrossInk working
 
-The remaining [Quick Actions](docs/quick-actions-validation-2026-10-04.md),
-[OPDS/font Retry and Back](docs/network-error-controls-2026-10-04.md),
-[Settings Wi-Fi route](docs/wifi-settings-validation-2026-10-04.md), and
-[received statistics charts/streak/cold persistence](docs/stats-peer-validation-2026-10-04.md)
-also have closed actual firmware proofs. The final
-[ROM flashing and post-programming reading](docs/flashing-validation-2026-10-04.md)
-run verifies the selected 123-case binary. The full-flash input is a pinned assembled
-image with the unchanged official app and compatible SDK bootloader, generated
-partitions and official OTA data; it is not a factory dump/full-image release.
+These are lossless captures of the actual emulated panel, rotated for portrait
+viewing. GIF playback is paced for inspection and is not a speed measurement.
 
-This source and metadata checkpoint includes 57 previously approved full records
-from 119 local captures. Two compressed records were blocked by automatic
-upload review; all other nonapproved compressed payloads remain deferred and
-local. The index lists the 62 omitted paths without their payloads. Included
-records retain their original hashes and failure flags.
+![CrossInk page turns, saving and restoration](docs/evidence/handoff/working-crossink-reading.gif)
 
-Automatic review also rejected the plaintext network diagnostic metadata because
-it contains authentication fields. That file is omitted from this checkpoint;
-the original local evidence remains unchanged. Source, native tests and the
-other reviewed metadata remain included.
+[Bookmarks](docs/evidence/handoff/working-crossink-bookmarks.gif),
+[clippings](docs/evidence/handoff/working-crossink-clippings.gif), and
+[fonts](docs/evidence/handoff/working-crossink-fonts.gif) have equivalent native
+demonstrations. [Working emulator](docs/working-emulator.md) links the actual
+functional evidence and exact backend identities.
 
-A fresh reading run on the 111-case backend saves page1 of a22-page chapter and
-restores exact pixels on backward/forward turns and reopening. Its full receipt
-retains strict failure from reported unsupported model uses. The local front
-panel also has a29-check stock-firmware proof for exact screen bytes, real page
-turns, Power actions and saved progress. See [`docs/ui.md`](docs/ui.md) to use it;
-browser rendering is still unverified in this environment.
+## Flash CrossInk
 
-Two unchanged guests also complete hotspot creation, association and DHCP on
-this backend. Source-proven TX prefix handling removes eight metadata bytes
-and the four-byte FCS reservation; its 44 actual AP uses have zero prefix or
-length errors. Receive queue drops remain recorded. See
-[`docs/evidence/canonical-acceptance-tx-prefix.json`](docs/evidence/canonical-acceptance-tx-prefix.json),
-[`docs/nearby-validation.md`](docs/nearby-validation.md), and the
-[observed stock firmware limitations](docs/stock-firmware-limitations.md).
+Build the backend and prepare the pinned firmware inputs first:
 
-Hardware speed calibration is pending. Every run records unsupported accesses
-and sets `speed_selection_allowed: false`. Instruction counting, nominal bus
-rates and configurable display delays support functional experiments. Physical
-CPU/cache costs, SD latency, optical panel behavior, power and analog sensors
-need measured profiles before simulated scores can select faster firmware.
-Several WiFi workflows now have stock guest proofs; remaining transfers and
-online activities are tracked in [`docs/network-validation.md`](docs/network-validation.md).
-BLE, parts of memory protection and debug monitoring, and the optional esptool
-RAM flasher remain unverified. The verified serial
-flashing path uses the ROM. Experimental WiFi implements source-backed digital
-handshakes with explicitly synthetic RF measurements; see
-[`docs/wifi-model.md`](docs/wifi-model.md).
+```sh
+python -m pip install esptool==5.1.0
+python -m x3emu.firmware --download --directory local/firmware
+python scripts/test-serial-flash.py --output /tmp/x3-rom-flash
+python scripts/test-serial-flash.py --stub --output /tmp/x3-modern-ram-flash
+```
 
-## Build and run
+Both paths use the real UART downloader. The modern path uploads the unchanged
+official ESP32-C3 flasher v1.3.0 using esptool's normal stub API. Compressed and
+uncompressed transfers and subsequent CrossInk reading have separate proofs.
+The assembled 16 MiB image contains the unchanged official application, a
+compatible SDK bootloader, generated partitions and official OTA data; it is
+not a factory dump. See [flashing.md](docs/flashing.md) and
+[modern flasher validation](docs/ram-flasher-validation-2026-10-04.md), including
+the preserved legacy-stub failure.
 
-Use Linux and Python 3.11 or later. Install the native dependencies described in
-[`docs/build.md`](docs/build.md), then run:
+## Build from source
+
+Install the native dependencies in [build.md](docs/build.md), then:
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[validation]' 'meson==1.8.5' 'pycotap==1.3.1' 'esptool==5.1.0'
+python -m pip install -e '.[validation]' 'meson==1.8.5' 'pycotap==1.3.1'
 ./scripts/build-qemu.sh --fetch --test --jobs 4
 python -m x3emu.firmware --download --directory local/firmware
-python -m x3emu.sdcard --output local/card.img
-python -m x3emu run \
-  --flash local/firmware/crossink-v1.6.0-x3-full-flash.bin \
-  --sd local/card.img --output local/runs/first
+python -m x3emu.sdcard --output /tmp/x3-card.img
+python -m x3emu run --flash local/firmware/crossink-v1.6.0-x3-full-flash.bin --sd /tmp/x3-card.img --output /tmp/x3-run
 ```
 
-Downloads happen only in the explicit build and firmware preparation steps.
-The firmware helper checks pinned SHA-256 hashes. Each run uses private copies
-of the input flash and card, and saves serial logs, panel output, diagnostics
-and a manifest. Ctrl-C stops the run cleanly.
-
-From another terminal, control the running guest:
+Start the front panel in another terminal:
 
 ```sh
-python -m x3emu monitor --qmp local/runs/first/qmp.sock
-python -m x3emu buttons --qmp local/runs/first/qmp.sock --press confirm
-python -m x3emu buttons --qmp local/runs/first/qmp.sock --release
+python -m x3emu ui --run-dir /tmp/x3-run --port 8080
 ```
 
-The runtime starts with a one-second virtual power-button press. Use
-`--no-power-on` for released-button sleep/wake experiments. The latest visible
-digital target is saved as `panel.pbm` in binary PGM format. Detailed commands,
-outputs and transport behavior are in [`docs/run.md`](docs/run.md).
+Each run uses private writable copies of its inputs. Build and firmware
+preparation make explicit downloads with pinned hashes. Commands and controls
+are in [run.md](docs/run.md) and [ui.md](docs/ui.md).
 
-## Flash CrossInk through the ROM
+## Devices and verified scope
 
-The flashing experiment starts with erased flash and sends the prepared
-compatible SDK bootloader, generated partition table, official OTA data and
-unchanged official application through actual UART ROM commands. It verifies the complete resulting flash file:
+| Component | Digital behavior |
+| --- | --- |
+| CPU and memory | ESP32-C3 RV32 execution, interrupts, mask ROM, SRAM, RTC RAM and flash mapping |
+| Flash and SD | Writable 16 MiB SPI flash, UART programming, OTA partition switching, SPI SD commands and persistent FAT writes |
+| Controls and panel | Two ADC button ladders, GPIO3 Power, native timer pulses, UC8253/UC8279 commands, grayscale planes, BUSY and 792 × 528 output |
+| I2C | C3 command/FIFO/interrupt path, BQ27220 gauge, DS3231 RTC and QMI8658 IMU |
+| Console and sleep | UART, USB Serial/JTAG FIFO, stock CRC file commands, RTC/GPIO wake, retained state and distinct watchdog reset domains |
+| Experimental Wi-Fi | MAC/DMA/TSF, raw peers, source-backed RX and bounded native CCMP; actual secure Save/reconnect/Forget, GTK1 DHCP, hotspot and captive DNS |
 
-```sh
-python scripts/test-serial-flash.py --output local/runs/serial-flash
-```
+The selected board patch passes 123 native cases across 12 suites. The
+[function ledger](docs/function-coverage.md) tracks executed firmware proofs
+for reading formats, navigation, bookmarks, dictionaries, clippings, layout,
+fonts, settings, sleep, controls, USB, SD update, Nearby, OPDS, KOReader,
+statistics and quick actions. Each receipt retains its exact backend identity
+and original verdicts. Original failures and known
+[stock firmware limitations](docs/stock-firmware-limitations.md) are preserved.
 
-The supported path uses esptool 5.1.0 with `--no-stub`. The optional RAM flasher
-has a documented failure. See [`docs/flashing.md`](docs/flashing.md).
+Complete hardware equivalence and exhaustive function coverage are not
+established. Physical CPU/cache costs, SD latency, RF, panel optics, power and
+analog sensors need real X3 measurements. Full online OTA remains blocked by
+the observed TLS trust failure. BLE and parts of protection/debug hardware
+remain incomplete. The bounded encrypted Wi-Fi profile does not cover every
+cipher or radio behavior.
 
-## Check the implementation
+`timing_calibrated`, `speed_selection_allowed`, `all_functions_verified` and
+`complete_machine_verified` remain false. Functional firmware experiments are
+possible; timing scores cannot yet select faster firmware.
+[Native CCMP validation](docs/native-ccmp-validation.md),
+[network validation](docs/network-validation.md) and the
+[recovery record](docs/emulator-recovery-2026-10-04.md) retain exact limits and
+prior source/receipt history.
+
+## Checks
 
 ```sh
 python -m unittest discover -s tests -v
 ./scripts/build-qemu.sh --test --jobs 4
-python scripts/smoke-crossink.py --output local/runs/reading
-python scripts/test-crossink-functions.py --output local/runs/functions
-python scripts/test-usb-transfer.py --output local/runs/usb \
-  --ota-image local/firmware/firmware-x3-x4-v1.6.0.bin
+python scripts/smoke-crossink.py --output /tmp/x3-reading-proof
+python scripts/test-crossink-functions.py --output /tmp/x3-functions-proof
 ```
 
-The first command checks Python image parsing, storage and runtime control.
-The second executes native device protocol tests against the QEMU machine.
-The third executes the pinned CrossInk binary with an original EPUB fixture,
-real button inputs and the actual emulated SD/panel interfaces. Its evidence
-includes frame hashes, saved book metadata, progress and model diagnostics.
-GitHub Actions builds the backend and runs the Python and native checks.
-
-## Project map
-
-| Path | Purpose |
-| --- | --- |
-| `patches/qemu/xteink-x3.patch` | Native X3 board/device implementation and native tests |
-| `scripts/build-qemu.sh` | Pinned backend build and test runner |
-| `x3emu/` | Firmware inspection/preparation, card creation, runtime and QMP controls |
-| `scripts/test-serial-flash.py` | Real ROM programming and full readback experiment |
-| `scripts/smoke-crossink.py` | Stock firmware reading-flow experiment |
-| `boards/xteink-x3.toml` | Board facts, model configuration and evidence pins |
-| `docs/` | Architecture, evidence, commands, validation and remaining work |
-| `third_party/qemu/` | Retained upstream license texts and provenance |
-
-Source pins and firmware hashes are in
-[`docs/firmware-evidence.md`](docs/firmware-evidence.md) and
-[`docs/hardware-evidence.md`](docs/hardware-evidence.md). QEMU's source licenses
-are retained under [`third_party/qemu`](third_party/qemu). CrossInk and its
-firmware retain their upstream terms.
+GitHub Actions runs Python 3.11/3.12 checks and builds/tests the pinned native
+backend. Successful main builds also package the runnable front panel, virgin
+storage, firmware, source and notices. Firmware proofs separately verify
+actual pixels, written media, cold restoration and complete native traces.
+Packaging or unit tests alone do not prove firmware behavior.

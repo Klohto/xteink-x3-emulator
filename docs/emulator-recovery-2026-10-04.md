@@ -89,9 +89,11 @@ skips. Its unchanged official CrossInk guest also passes page turns, saved
 progress and a new-CPU saved-page restore with zero text or tone differences.
 The actual Save/reconnect/Forget lifecycle, hotspot, captive DNS and strong
 Nearby EPUB reading/new-CPU regressions now pass. These gates select the bounded
-119-case predecessor locally and in its working checkpoint. GitHub `main` remains RX114;
-automatic approval review blocked that ref update, and the source checkpoint
-has a separate review branch. The predecessor patch, ELF and complete source tree are bound in
+119-case predecessor locally and in its working checkpoint. At that checkpoint,
+GitHub `main` remained RX114: automatic approval review blocked promotion and
+the source was published on a separate review branch. The user then explicitly
+authorized promotion, and the verified 123 source below is now on `main` at
+`d193dd0a42acfef06aa0a3f67cc11e7a2c45b9c0`. The predecessor patch, ELF and complete source tree are bound in
 [its original 119 metadata](evidence/ccmp-native-reader-2026-10-04.json).
 Its legacy `official_full_flash_sha256` key names the assembled image described
 above, rather than an official full-image release. Its selected-default fields

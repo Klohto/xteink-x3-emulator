@@ -109,8 +109,10 @@ superseded duplicate candidate patch is removed. The installed 119 backend,
 patch and selection record remain preserved for rollback. Compiler/library
 versions can change ELF bytes; source pins define the reproducible build.
 
-GitHub `main` remains RX114 because automatic approval review rejected that
-ref update. Source is published on `work/ccmp-source-checkpoint` for review.
+The verified 123-case source is published on GitHub `main` at
+`d193dd0a42acfef06aa0a3f67cc11e7a2c45b9c0`. Earlier automatic approval review
+blocked promotion; the user subsequently explicitly authorized this default
+branch update. The previous review branch and original checkpoints remain.
 The original strict smoke exit 1 and unrelated unsupported diagnostics remain
 unchanged. Physical RF, entropy, CPU/cache/SD timing and panel optics require
 hardware measurements. Broad encryption, group policy and native replay

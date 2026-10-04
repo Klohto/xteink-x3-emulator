@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-04",
+  "workflow": "Unchanged CrossInk v1.6.0: sealed Linux runtime, native HTTP book reading, save/reopen, SIGINT shutdown and saved-media fresh CPU resume.",
+  "derived_functional_workflow_pass": true,
+  "proof_scope": "Two closed actual v6 native firmware runs; final v7 guest runtime payload is byte-identical. V7 changes only dependency instructions. Original observer failure flags are preserved; this derived record does not replace them.",
+  "final_bundle": {
+    "name": "xteink-x3-crossink-linux-x86_64.tar.gz",
+    "bytes": 72194307,
+    "sha256": "dc20c75d147a974e7b39b728dc136219d40ba45bd93d0fc56d57352d60705efd",
+    "manifest_sha256": "d943dd05edcea04e58eb0167e149defc6f5d97251b5474abdd2a32bf262682e8",
+    "host": "Ubuntu 24.04 x86-64 Linux; Python 3.11+; glibc 2.38+",
+    "launcher_sha256": "3071c3d6bd48835f50fa6fee1e9a9086aab8ae37eb47fc6d37d5a6b6b7a16625",
+    "native_elf_sha256": "504f14e45bfa818889204225827821da56299112645a1e35f66ba9121f854f50",
+    "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "board_patch_sha256": "4d0032fa016713eb7f3d16c3ad3f897a7f90ebddaa523b50afb805ed77d136a8",
+    "native_device_cases_passed": 123,
+    "v7_changed_file_paths": [
+      "README.txt",
+      "source/docs/runtime-package.md"
+    ],
+    "final_runtime_payload_identical_to_executed_v6": true
+  },
+  "crossink": {
+    "version": "1.6.0",
+    "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+    "app_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "app_unchanged_in_flash": true,
+    "assembled_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "assembled_flash_is_factory_dump": false
+  },
+  "virgin_card": {
+    "sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+    "bytes": 67108864,
+    "contains_only_original_generated_book": true,
+    "book_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+  },
+  "actual_reading": {
+    "original_first_phase_guest_checks_passed": 47,
+    "physical_http_controls": true,
+    "native_adc_pulse_ns": 400000000,
+    "flows": [
+      "Home",
+      "Browse",
+      "Open original EPUB",
+      "Down to page 1",
+      "Up restores page 0",
+      "Down restores page 1",
+      "Back saves actual progress",
+      "Reopen restores page 1",
+      "Back to Home",
+      "SIGINT clean shutdown"
+    ],
+    "saved_progress": {
+      "spine_index": 0,
+      "page_number": 1,
+      "page_count": 22,
+      "visible_text_offset": 586
+    },
+    "page0_return_raw_pixel_differences": 0,
+    "page1_return_raw_pixel_differences": 0,
+    "page1_reopen_raw_pixel_differences": 0,
+    "cold_page1_raw_pixel_differences": 0,
+    "new_cpu_uses_actual_written_flash_card_and_efuse": true,
+    "original_saved_media_preserved": true,
+    "fresh_cpu_generation_evidence": [
+      "Separate runtime --resume invocation with raw saved media and no CPU snapshot",
+      "Fresh ROM POWERON boot",
+      "Initial virtual clock zero and native panel refresh count zero",
+      "Physical HTTP Confirm enters true reader before exact pixel comparison"
+    ],
+    "numeric_pid_inequality_required": false,
+    "closed_native_runs": [
+      {
+        "name": "reading",
+        "native_manifest_sha256": "6905ebb7f7d7899fb636543b3f9ae745a226e4a880ecacd94ac70ae8b0755180",
+        "trace_sha256": "cd0bef41bf8dc894bafae26af9137529965f482cfb0e10c059e56e4b65313bd7",
+        "events": 849,
+        "complete_frames": 29,
+        "native_exit_code": 0,
+        "stop_reason": "keyboard_interrupt",
+        "generic_boot_verified": false,
+        "generic_validity": {
+          "unsupported_features_checked": true,
+          "diagnostics_clean": false,
+          "functional_output_checked": false
+        }
+      },
+      {
+        "name": "cold_saved_reader",
+        "native_manifest_sha256": "b00b29858337f64ae8623652909088340ff0e24af6b01723a2c08898f3cbb259",
+        "trace_sha256": "d43be726053390bfd4acd7fb0cba92d3a4b8427f8277bb16984c4c2db7467f12",
+        "events": 242,
+        "complete_frames": 9,
+        "native_exit_code": 0,
+        "stop_reason": "keyboard_interrupt",
+        "generic_boot_verified": false,
+        "generic_validity": {
+          "unsupported_features_checked": true,
+          "diagnostics_clean": false,
+          "functional_output_checked": false
+        }
+      }
+    ],
+    "total_trace_events": 1091,
+    "total_native_refreshes": 38
+  },
+  "independent_review": {
+    "bundle_integrity_source_checks_passed": 26,
+    "focused_host_launcher_checks_passed": 22,
+    "focused_host_checks_are_firmware_execution_evidence": false,
+    "actual_closed_workflow_checks_passed": 20,
+    "corresponding_qemu_source_entries_rehashed": 11446,
+    "private_actual_closure_sha256": "58b80b05da14b5d0e5482a41aa287ea7efabe43f297c7d3a5dde3b9d7d764860",
+    "current_packager_source_sha256": "2181548f893c9599eb18b84f1495575dc70b73f51924a8791c5ea256f5027c04",
+    "current_runtime_documentation_sha256": "c9f728974612243bcb6820503ee323da686f658402a2c7453170aa4b97ac7982"
+  },
+  "original_false_outcomes_retained": [
+    {
+      "name": "v3_recording_field_mismatch",
+      "sha256": "7465427999fdbcbba81acb1b5b9bf1e6c1b155d31fd9133e10c175ffdd71756a",
+      "original_passed": false,
+      "original_error": null,
+      "classification": "Observer queried final_state.epd; native backend uses final_state.panel."
+    },
+    {
+      "name": "v6_host_guard",
+      "sha256": "b8d76be7aed6ff5424a91a164ba47ba21857ba01a2f7c1f8f32e2abfd59cb092",
+      "original_passed": false,
+      "original_error": "QMP launcher request timed out; the run may have stopped",
+      "classification": "Original 180-second host guard ended before the full observer workflow completed."
+    },
+    {
+      "name": "v6b_cold_home_classification",
+      "sha256": "569159df23ddee4ff07b5d746bee3c188d908dfcab6330d311c49c3edbc159f4",
+      "original_passed": false,
+      "original_error": "new_cpu_saved_page1_content_exact",
+      "classification": "Home book cover exceeded a dark-pixel threshold; original observer compared Home with a reader page before pressing Confirm."
+    },
+    {
+      "name": "v6c_numeric_pid_reuse",
+      "sha256": "1524eaecaa531cb2b827ecaea07e8e61e522ceb2bf92cae293d2412e80bc6005",
+      "original_passed": false,
+      "original_error": "new_cpu_pid",
+      "classification": "Numeric PID was reused across separate execution namespaces; independent generation evidence uses a new launch, ROM POWERON and reset initial state."
+    }
+  ],
+  "pre_guest_import_failure_retained": {
+    "cpu_started": false,
+    "classification": "Observer import omission corrected before any native CPU started."
+  },
+  "privacy": {
+    "raw_media_or_books_committed": false,
+    "raw_frames_traces_or_personal_captures_committed": false,
+    "credentials_keys_or_raw_packets_committed": false
+  },
+  "timing_calibrated": false,
+  "physical_speed_verified": false,
+  "speed_selection_allowed": false,
+  "browser_render_verified": false,
+  "all_functions_verified": false,
+  "complete_machine_verified": false
+}
