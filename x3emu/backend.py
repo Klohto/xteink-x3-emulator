@@ -27,6 +27,7 @@ from .efuse import DEFAULT_MAC, EFUSE_IMAGE_SIZE, make_efuse_image
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_BACKEND = PROJECT_ROOT / "local/qemu/install/bin/qemu-system-riscv32"
+DEFAULT_BACKEND_SELECTION = PROJECT_ROOT / "local/qemu/selected-backend.json"
 MIN_SD_SIZE = 256 * 1024  # Native SDSC CSD: 2**(HWBLOCK_SHIFT + CMULT_SHIFT).
 BUTTON_BITS = {"back": 0, "confirm": 1, "left": 2, "right": 3, "up": 4, "down": 5}
 DEVICE_PATHS = {"panel": "/machine/epd", "adc": "/machine/adc",
@@ -83,8 +84,17 @@ WIFI_PEER_OBSERVATIONS = (
 WIFI_PEER_ERROR_COUNTERS = ("peer-dropped-frames", "peer-malformed-inputs", "peer-channel-drops",
                             "peer-unmodelled-frames", "peer-link-errors")
 WIFI_FCS_OBSERVATIONS = ("tx-fcs-stripped-frames", "tx-fcs-unverified-frames", "tx-length-errors")
+WIFI_PREFIX_OBSERVATIONS = ("tx-buffer-prefix-stripped-frames", "tx-buffer-prefix-errors",
+                            "tx-buffer-prefix-modelled", "tx-aggregation-modelled")
+WIFI_RX_OBSERVATIONS = ("rx-interface0-frames", "rx-interface1-frames", "rx-filter-dropped-frames",
+                        "rx-match-unverified-frames", "rx-group-policy-modelled")
+WIFI_RANDOM_OBSERVATIONS = ("random-seed", "random-state", "random-read-count", "random-source-synthetic",
+                            "random-entropy-modelled", "random-timing-calibrated", "random-state-migration-modelled")
 DEVICE_PROPERTIES["wifi"] += WIFI_PEER_OBSERVATIONS
 DEVICE_PROPERTIES["wifi"] += WIFI_FCS_OBSERVATIONS
+DEVICE_PROPERTIES["wifi"] += WIFI_PREFIX_OBSERVATIONS
+DEVICE_PROPERTIES["wifi"] += WIFI_RX_OBSERVATIONS
+DEVICE_PROPERTIES["wifi"] += WIFI_RANDOM_OBSERVATIONS
 MACHINE_STATE_PROPERTIES = MACHINE_PROPERTIES + ("virtual-time-ns", "power-button", "power-button-hold-ns", "unsupported-io-json")
 REQUIRED_COUNTERS = {"machine": MACHINE_PROPERTIES,
                      "panel": ("unsupported-count", "protocol-errors", "output-errors"),
@@ -322,19 +332,59 @@ class RunConfig:
     device_mac: str | None = None
     wifi_peer: str | None = None
     wifi_channel: int | None = None
+    wifi_random_seed: int | None = None
 
     def resolved(self) -> RunConfig:
+        backend, rom_dir = _selected_backend(self.backend, self.rom_dir)
         return RunConfig(
             Path(self.flash).expanduser().resolve(), Path(self.sd).expanduser().resolve(),
-            Path(self.output).expanduser().resolve(), Path(self.backend).expanduser().resolve(),
+            Path(self.output).expanduser().resolve(), backend,
             self.icount, self.seconds, self.in_place, self.qmp_transport,
-            Path(self.rom_dir).expanduser().resolve() if self.rom_dir is not None else None,
+            rom_dir,
             self.icount_shift, self.power_on, self.power_button_hold_ns,
             self.usb_port,
             self.wifi, tuple(self.wifi_hostfwd),
             Path(self.efuse).expanduser().resolve() if self.efuse is not None else None,
             self.device_mac, self.wifi_peer, self.wifi_channel,
+            self.wifi_random_seed,
         )
+
+
+def _selected_backend(requested: Path, rom_dir: Path | None) -> tuple[Path, Path | None]:
+    """Resolve an optional pinned local installation without copying its ELF."""
+    backend = Path(requested).expanduser()
+    rom = Path(rom_dir).expanduser().resolve() if rom_dir is not None else None
+    selection = DEFAULT_BACKEND_SELECTION
+    if backend != DEFAULT_BACKEND or not selection.is_file():
+        return backend.resolve(), rom
+    try:
+        with selection.open('rb') as source:
+            data = source.read(65537)
+        if len(data) > 65536:
+            raise ValueError('selection is too large')
+        info = json.loads(data)
+        if info.get('schema_version') != 1:
+            raise ValueError('selection must use schema1')
+        def pinned_path(name):
+            value = info[name]
+            if not isinstance(value, str) or not value:
+                raise ValueError(f'{name} must be a path')
+            path = Path(value).expanduser()
+            return (path if path.is_absolute() else selection.parent/path).resolve()
+        def verify(path, name):
+            digest = info[name]
+            if not isinstance(digest, str) or not re.fullmatch(r'[0-9a-f]{64}', digest):
+                raise ValueError(f'{name} must be a SHA256')
+            if file_sha256(path) != digest:
+                raise ValueError(f'{path.name} differs from its selected SHA256')
+        backend = pinned_path('binary')
+        verify(backend, 'binary_sha256')
+        if rom is None:
+            rom = pinned_path('bios_directory')
+            verify(rom/'esp32c3-rom.bin', 'rom_sha256')
+        return backend, rom
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+        raise BackendError(f'invalid selected local backend: {error}') from error
 
 
 def _efuse_input(config: RunConfig) -> tuple[bytes, str]:
@@ -419,6 +469,11 @@ def build_command(config: RunConfig) -> list[str]:
     channel = _wifi_channel(config)
     if peer is not None and config.wifi:
         raise BackendError("raw WiFi peer and virtual AP/user networking are separate modes")
+    if config.wifi_random_seed is not None:
+        if (type(config.wifi_random_seed) is not int or not 1 <= config.wifi_random_seed <= 0xffffffff):
+            raise BackendError("WiFi synthetic random seed must be an integer from 1 to 0xffffffff")
+        if not config.wifi and peer is None:
+            raise BackendError("WiFi synthetic random seed requires WiFi or a raw peer")
     if peer is not None and peer[1] == config.usb_port:
         raise BackendError("WiFi peer endpoint and this guest's USB listener must use different ports")
     if config.wifi_hostfwd and not config.wifi:
@@ -467,6 +522,8 @@ def build_command(config: RunConfig) -> list[str]:
                     "-global", "driver=esp32c3.wifi,property=peer-only,value=true", "-nic", "none"]
     if config.wifi or peer is not None:
         command += ["-global", f"driver=esp32c3.wifi,property=channel,value={channel}"]
+    if config.wifi_random_seed is not None:
+        command += ["-global", f"driver=esp32c3.wifi,property=random-seed,value={config.wifi_random_seed}"]
     rom_dir = _rom_directory(config)
     if rom_dir is not None:
         command += ["-L", str(rom_dir)]
@@ -556,6 +613,13 @@ def _record_capabilities(result: dict, state: dict) -> None:
         "wifi_channel_control_modelled": ("wifi", "channel-control-modelled"),
         "wifi_peer_clock_sync_modelled": ("wifi", "peer-clock-sync-modelled"),
         "wifi_peer_link_migration_modelled": ("wifi", "peer-link-migration-modelled"),
+        "wifi_rx_group_policy_modelled": ("wifi", "rx-group-policy-modelled"),
+        "wifi_tx_buffer_prefix_modelled": ("wifi", "tx-buffer-prefix-modelled"),
+        "wifi_tx_aggregation_modelled": ("wifi", "tx-aggregation-modelled"),
+        "wifi_random_source_synthetic": ("wifi", "random-source-synthetic"),
+        "wifi_random_entropy_modelled": ("wifi", "random-entropy-modelled"),
+        "wifi_random_timing_calibrated": ("wifi", "random-timing-calibrated"),
+        "wifi_random_state_migration_modelled": ("wifi", "random-state-migration-modelled"),
     }
     for name, (device, prop) in properties.items():
         if prop in state.get(device, {}):
@@ -625,6 +689,7 @@ def run(config: RunConfig) -> dict:
                         "port": config.usb_port, "guest_device": "/machine/jtag", "serial_index": 2,
                         "log": "serial.log", "usb_enumeration_modelled": False},
         "wifi": {"enabled": config.wifi or peer is not None, "hostfwd": list(config.wifi_hostfwd),
+                 "synthetic_random_seed_requested": config.wifi_random_seed,
                  "backend": "raw MPDU peer" if peer is not None else "QEMU user networking" if config.wifi else None,
                  "guest_model": "esp32c3.wifi" if config.wifi or peer is not None else None,
                  "fixed_channel": _wifi_channel(config),
@@ -729,11 +794,46 @@ def run(config: RunConfig) -> dict:
             required = required and all(prop in state.get("wifi", {}) for prop in WIFI_PEER_OBSERVATIONS)
             required = required and all(prop in state.get("wifi", {}) for prop in WIFI_FCS_OBSERVATIONS)
             required = required and state.get("wifi", {}).get("peer-configured") is True
+        if config.wifi_random_seed is not None:
+            required = required and all(prop in state.get("wifi", {}) for prop in WIFI_RANDOM_OBSERVATIONS)
+            required = required and state.get("wifi", {}).get("random-seed") == config.wifi_random_seed
         unsupported = [state.get(device, {}).get(prop, 0)
                        for device, properties in REQUIRED_COUNTERS.items() for prop in properties]
         unsupported.append(state.get("rtc", {}).get("unsupported-count", 0))
         if config.wifi or peer is not None:
-            unsupported.extend(state.get("wifi", {}).get(prop, 0) for prop in ("unsupported-accesses", "bad-dma", "rx-dropped"))
+            wifi_state = state.get("wifi", {})
+            if any(prop in wifi_state for prop in WIFI_PREFIX_OBSERVATIONS):
+                valid_prefix = all(prop in wifi_state for prop in WIFI_PREFIX_OBSERVATIONS)
+                valid_prefix = valid_prefix and all(type(wifi_state[prop]) is int and wifi_state[prop] >= 0
+                                                   for prop in WIFI_PREFIX_OBSERVATIONS[:2])
+                valid_prefix = valid_prefix and all(type(wifi_state[prop]) is bool
+                                                   for prop in WIFI_PREFIX_OBSERVATIONS[2:])
+                if valid_prefix:
+                    for prop, total in (("tx-buffer-prefix-stripped-frames", "tx-frames"),
+                                        ("tx-buffer-prefix-stripped-frames", "tx-fcs-stripped-frames"),
+                                        ("tx-buffer-prefix-errors", "tx-length-errors")):
+                        valid_prefix = valid_prefix and type(wifi_state.get(total)) is int \
+                            and wifi_state[prop] <= wifi_state[total]
+                required = required and valid_prefix
+                result["wifi"]["tx_buffer_prefix_telemetry_valid"] = valid_prefix
+                unsupported.append(wifi_state.get("tx-buffer-prefix-errors", 0))
+            drops = wifi_state.get("rx-dropped", 0)
+            if any(prop in wifi_state for prop in WIFI_RX_OBSERVATIONS):
+                valid_rx = all(prop in wifi_state for prop in WIFI_RX_OBSERVATIONS)
+                valid_rx = valid_rx and all(type(wifi_state[prop]) is int and wifi_state[prop] >= 0
+                                             for prop in WIFI_RX_OBSERVATIONS[:-1])
+                valid_rx = valid_rx and type(wifi_state["rx-group-policy-modelled"]) is bool
+                valid_rx = valid_rx and type(drops) is int and drops >= wifi_state["rx-filter-dropped-frames"]
+                required = required and valid_rx
+                result["wifi"]["rx_filter_telemetry_valid"] = valid_rx
+                if valid_rx:
+                    # A proved address-comparator miss is normal filtering.
+                    # Other drops and provisional classification remain errors.
+                    drops -= wifi_state["rx-filter-dropped-frames"]
+                unsupported.append(wifi_state.get("rx-match-unverified-frames", 0))
+            result["wifi"]["rx_unexplained_drops"] = drops
+            unsupported.extend(wifi_state.get(prop, 0) for prop in ("unsupported-accesses", "bad-dma"))
+            unsupported.append(drops)
         if peer is not None:
             unsupported.extend(state.get("wifi", {}).get(prop, 0) for prop in WIFI_PEER_ERROR_COUNTERS)
             unsupported.extend(state.get("wifi", {}).get(prop, 0) for prop in WIFI_FCS_OBSERVATIONS[1:])

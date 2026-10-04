@@ -54,6 +54,8 @@ SOURCE_HASHES = {
     "src/activities/network/WifiSelectionActivity.cpp": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
     "src/activities/network/CalibreConnectActivity.cpp": "6cfbe1c9e5df6e940837b87910537efdc3116da350dfcc9cd376fd77b9c91851",
     "src/activities/browser/OpdsBookBrowserActivity.cpp": "466a6f36b958b9984009c260411088ebc19bb4b60ac9b58703b4e815932c4eb5",
+    "src/activities/settings/OpdsServerListActivity.cpp": "0c80d9dc6d0fea30ac4519036355b3900113be210fc3de4328fe6553c0049e48",
+    "src/activities/util/KeyboardEntryActivity.cpp": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
     "lib/OpdsParser/OpdsParser.cpp": "063e08e6ed371a125271881e00051db5b4d96628e943532908012f2a0bfd04d3",
     "src/OpdsServerStore.cpp": "9992342249dcc98682012dfe7fc5249a9c75c69f1e47410b0b44c9dd00a93b81",
     "src/WifiCredentialStore.cpp": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
@@ -81,6 +83,8 @@ SOURCE_HASHES = {
     "lib/KOReaderSync/ProgressMapper.cpp": "2cae6357307b589ce288106d965d614aa26d79d8bb156fdd01a582a89d1244b2",
     "lib/KOReaderSync/ChapterXPathResolver.cpp": "57f992d75fcdc20ab17c303720ea8945243a1736b308f8a972b015b6a376b81a",
     "lib/Epub/Epub/Section.cpp": "717bf74c863d517936550a4576fab45b1220420c6fcd40cc29e167466283d46c",
+    "src/activities/util/ConfirmationActivity.cpp": "267c431c5191e3c69fe09f2564c3683c906bad6d3063f4d15936112df54c475e",
+    "src/activities/util/ConfirmationActivity.h": "dc31e86afe1670f3a6ef8abb5b5fb4d5e9872c9741ed4820823029d0dd9c7578",
 }
 HTTP_ROUTES = tuple((method, path) for method, paths in {
     "GET": ("/", "/files", "/js/jszip.min.js", "/style.css", "/logo.png", "/api/status", "/api/files",
@@ -89,7 +93,8 @@ HTTP_ROUTES = tuple((method, path) for method, paths in {
              "/api/fonts/delete", "/api/opds", "/api/opds/delete", "/api/wifi", "/api/wifi/delete"),
 }.items() for path in paths)
 DAV_METHODS = ("OPTIONS", "PROPFIND", "GET", "HEAD", "PUT", "DELETE", "MKCOL", "MOVE", "COPY", "LOCK", "UNLOCK")
-WORKFLOWS = ("server", "calibre", "opds", "koreader-auth", "koreader-signup", "koreader-sync", "ntp", "fonts", "ota-check", "koreader-apply", "koreader-smart")
+WORKFLOWS = ("server", "calibre", "opds", "koreader-auth", "koreader-signup", "koreader-sync", "ntp", "fonts", "ota-check", "koreader-apply", "koreader-smart", "fonts-tiny", "fonts-xlarge", "fonts-lifecycle", "fonts-update-all", "opds-siblings", "fonts-cancel-resume")
+WORKFLOWS += ("opds-pagination",)
 FIXTURE_USER, FIXTURE_PASSWORD = "synthetic-x3", "public-test-password"
 FIXTURE_UNIX_EPOCH = 1790985600  # 2026-10-03 00:00:00 UTC, original public fixture.
 FONT_HOST = "crossink-fonts.s3.us-east-1.amazonaws.com"
@@ -118,6 +123,16 @@ def clock_policy_matches(host_paced: bool, manifest: dict) -> bool:
             and ("-icount" in manifest.get("argv", [])) is counted
             and timing.get("calibration_status") == "uncalibrated"
             and timing.get("speed_selection_allowed") is False)
+
+
+def scan_callback_observation(serial: str) -> dict:
+    """Count source callback completion, including its later release marker."""
+    raw = serial.count("WiFi scan complete: rawNetworks=")
+    usable = serial.count("WiFi scan usable networks=")
+    released = serial.count("WiFi released before network list mode=0")
+    return {"completed_callbacks": max(raw, min(usable, released)), "raw_completion_lines": raw,
+            "usable_network_lines": usable, "released_before_list_lines": released,
+            "raw_completion_line_missing": min(usable, released) > raw}
 
 
 def nonboundary_remote_progress(uploaded: dict) -> dict:
@@ -559,6 +574,9 @@ class FixtureService:
     def __init__(self, book: bytes, *, redirect_port: int | None = None, sink=False):
         self.book, self.requests, self.progress, self.redirect_port, self.sink = book, [], {}, redirect_port, sink
         self.font = make_cpfont()
+        self.font_family = "Original"
+        self.font_files = {"Original_14.cpfont": self.font}
+        self.font_faults = {}
         self.lock = threading.Lock()
         service = self
 
@@ -583,9 +601,15 @@ class FixtureService:
                     return
                 record = {"method": self.command, "path": self.path, "body_size": len(body), "body_sha256": sha(body),
                           "headers": {key.lower(): value for key, value in self.headers.items()
-                                      if key.lower() in ("authorization", "x-auth-user", "x-auth-key", "accept", "content-type", "host")}}
+                                      if key.lower() in ("authorization", "x-auth-user", "x-auth-key", "accept", "content-type", "host", "range", "if-range")}}
                 status, headers, reply = service.respond(self.command, self.path, body, record["headers"])
                 record.update({"status": status, "response_size": len(reply), "response_sha256": sha(reply)})
+                fault = service.next_font_fault(urlsplit(self.path).path) if status in (200, 206) else None
+                if fault is not None:
+                    prefix = reply[:fault["prefix_bytes"]]
+                    record.update({"declared_content_length": len(reply), "response_size": len(prefix), "response_sha256": sha(prefix),
+                        "original_response_size": len(reply), "original_response_sha256": sha(reply),
+                        "intentional_peer_fault": fault["kind"]})
                 if body:
                     try:
                         record["json"] = json.loads(body)
@@ -599,7 +623,17 @@ class FixtureService:
                 self.send_header("Content-Length", str(len(reply)))
                 self.send_header("Connection", "close")
                 self.end_headers()
-                self.wfile.write(reply)
+                try:
+                    if fault is None:
+                        self.wfile.write(reply)
+                    else:
+                        self.wfile.write(prefix); self.wfile.flush()
+                        if fault["kind"] == "stall":
+                            fault["gate"].wait(30)
+                        self.close_connection = True
+                        self.connection.shutdown(socket.SHUT_WR)
+                except (BrokenPipeError, ConnectionResetError):
+                    record["client_closed_before_fixture_write_complete"] = True
 
             do_GET = do_POST = do_PUT = dispatch
 
@@ -618,11 +652,18 @@ class FixtureService:
         basic = "Basic " + base64.b64encode(f"{FIXTURE_USER}:{FIXTURE_PASSWORD}".encode()).decode()
         if path == FONT_MANIFEST_PATH and method == "GET":
             manifest = {"version": 1, "baseUrl": f"http://{FONT_HOST}/sd-fonts-m1-b4/", "families": [{
-                "name": "Original", "description": "Original synthetic one-glyph fixture", "languages": "Latin",
-                "files": [{"name": "Original_14.cpfont", "size": len(self.font), "crc32": zlib.crc32(self.font)}]}]}
+                "name": self.font_family, "description": "Original synthetic geometric fixture", "languages": "Latin",
+                "files": [{"name": name, "size": len(data), "crc32": zlib.crc32(data)} for name, data in self.font_files.items()]}]}
             return 200, json_headers, json.dumps(manifest).encode()
-        if path == "/sd-fonts-m1-b4/Original_14.cpfont" and method == "GET":
-            return 200, {"Content-Type": "application/octet-stream"}, self.font
+        if path.startswith("/sd-fonts-m1-b4/") and method == "GET" and path.rsplit("/", 1)[-1] in self.font_files:
+            data = self.font_files[path.rsplit("/", 1)[-1]]
+            if headers.get("range"):
+                match = re.fullmatch(r"bytes=(\d+)-", headers["range"])
+                if match is None or int(match[1]) >= len(data):
+                    return 416, {"Content-Range": f"bytes */{len(data)}"}, b""
+                offset = int(match[1])
+                return 206, {"Content-Type": "application/octet-stream", "Content-Range": f"bytes {offset}-{len(data)-1}/{len(data)}", "Accept-Ranges": "bytes"}, data[offset:]
+            return 200, {"Content-Type": "application/octet-stream", "Accept-Ranges": "bytes"}, data
         if self.sink:
             if path == "/public/book.epub":
                 return 200, {"Content-Type": "application/epub+zip"}, self.book
@@ -683,10 +724,70 @@ class FixtureService:
         with self.lock:
             return list(self.requests)
 
+    def configure_fonts(self, family, files):
+        with self.lock:
+            self.font_family, self.font_files, self.font_faults = family, dict(files), {}
+
+    def next_font_fault(self, path):
+        with self.lock:
+            actions = self.font_faults.get(path)
+            return actions.pop(0) if actions else None
+
     def close(self):
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=2)
+
+
+class OPDSFixture(FixtureService):
+    """Additional original catalogs and an explicitly stalled acquisition peer."""
+    def __init__(self, *args, **kwargs):
+        self.opds_faults = {}
+        super().__init__(*args, **kwargs)
+
+    def respond(self, method, raw_path, body, headers):
+        path = urlsplit(raw_path).path
+        if not path.startswith(("/catalog-two/", "/catalog-paged/")):
+            return super().respond(method, raw_path, body, headers)
+        basic = "Basic " + base64.b64encode(f"{FIXTURE_USER}:{FIXTURE_PASSWORD}".encode()).decode()
+        if headers.get("authorization") != basic:
+            return 401, {"WWW-Authenticate": 'Basic realm="original-x3-fixture"'}, b"auth required"
+        if method != "GET":
+            return 405, {}, b"GET required"
+        if path.startswith("/catalog-paged/"):
+            if path not in ("/catalog-paged/", "/catalog-paged/page-two/") or raw_path != path:
+                return 404, {}, b"unknown original page"
+            first = path == "/catalog-paged/"
+            title = "Page One Entry" if first else "Page Two Entry"
+            rel, link = ("next", "page-two/") if first else ("previous", "/catalog-paged/")
+            feed = (f'<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><id>urn:x3:page:{int(not first)}</id>'
+                    '<title>Original Paged Catalog</title><updated>2026-10-03T00:00:00Z</updated>'
+                    f'<link rel="{rel}" type="application/atom+xml;profile=opds-catalog" href="{link}"/>'
+                    f'<entry><id>urn:x3:{title}</id><title>{title}</title><author><name>X3 Emu</name></author>'
+                    '<link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="/catalog-two/result.epub"/>'
+                    '</entry></feed>').encode()
+            return 200, {"Content-Type": "application/atom+xml;profile=opds-catalog"}, feed
+        if path in ("/catalog-two/result.epub", "/catalog-two/cancel.epub"):
+            return 200, {"Content-Type": "application/epub+zip"}, self.book
+        if path not in ("/catalog-two/", "/catalog-two/search.xml"):
+            return 404, {}, b"not found"
+        search = path.endswith("search.xml")
+        if search and raw_path != "/catalog-two/search.xml?q=a%20b":
+            return 400, {}, b"original fixture requires exactly encoded a-space-b"
+        entries = (("Search Result", "result.epub"), ("Cancelled Result", "cancel.epub")) if search else (("Catalog Entry", "result.epub"),)
+        feed = ('<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><id>urn:x3:second-catalog</id>'
+                '<title>Original Search Catalog</title><updated>2026-10-03T00:00:00Z</updated>'
+                '<link rel="search" type="application/atom+xml" href="search.xml?q={searchTerms}"/>'
+                + ''.join(f'<entry><id>urn:x3:{number}</id><title>{title}</title><author><name>X3 Emu</name></author>'
+                          f'<link rel="http://opds-spec.org/acquisition" type="application/epub+zip" href="/catalog-two/{link}"/></entry>'
+                          for number, (title, link) in enumerate(entries)) + '</feed>').encode()
+        return 200, {"Content-Type": "application/atom+xml;profile=opds-catalog"}, feed
+
+    def next_font_fault(self, path):
+        with self.lock:
+            actions = self.opds_faults.get(path)
+            fault = actions.pop(0) if actions else None
+        return fault if fault is not None else super().next_font_fault(path)
 
 
 class Replay:
@@ -736,7 +837,7 @@ class Replay:
                 stream = io.BytesIO()
                 original.rotate(angle, expand=True).save(stream, format="PNG")
                 result = subprocess.run([executable, "stdin", "stdout", "--psm", "6"], input=stream.getvalue(),
-                                        capture_output=True, timeout=15, check=True)
+                                        capture_output=True, timeout=45, check=True)
                 text = result.stdout.decode("utf-8", errors="replace")
                 normalized = " ".join(re.findall(r"[a-z0-9]+", text.lower()))
                 observations.append({"rotation": angle, "text": text})
@@ -770,10 +871,11 @@ class Replay:
     def select_wifi(self):
         # The original callback, not a stable old panel, establishes scan readiness.
         self.experiment.wait("real WiFi scan completion", lambda:
-                             self.experiment.log_text("serial.log").count("WiFi scan complete: rawNetworks=") > self.scan_count)
+                             scan_callback_observation(self.experiment.log_text("serial.log"))["completed_callbacks"] > self.scan_count)
         previous_scan_count = self.scan_count
-        self.scan_count = self.experiment.log_text("serial.log").count("WiFi scan complete: rawNetworks=")
-        self.check("real_wifi_scan_completed", self.scan_count > previous_scan_count, {"count": self.scan_count})
+        observed = scan_callback_observation(self.experiment.log_text("serial.log"))
+        self.scan_count = observed["completed_callbacks"]
+        self.check("real_wifi_scan_completed", self.scan_count > previous_scan_count, observed)
         self.capture("wifi-scan-complete")
         self.experiment.press(self.qmp, "confirm", purpose="select the scanned open X3EMU network")
         self.experiment.wait("real DHCP connection", lambda:
@@ -990,6 +1092,125 @@ def opds_workflow(replay, fixture, sink, book):
                  and all("authorization" in item["headers"] for item in authenticated))
     replay.check("opds_cross_origin_auth_not_forwarded", all("authorization" not in item["headers"] for item in sink.snapshot()))
     replay.capture("opds-download-complete")
+
+
+def opds_siblings_workflow(replay, fixture, book):
+    """Picker, physical English keyboard, search acquisition and mid-body Back."""
+    snapshot = replay.output / "opds-siblings-harness.py"
+    snapshot.write_bytes(Path(__file__).read_bytes())
+    replay.report["opds_harness_sha256"] = file_sha256(snapshot)
+    replay.capture("home")
+    replay.tap("down", "recents-row", "Fresh Home: move to Recent Books")
+    replay.tap("down", "opds-row", "Home: select OPDS Browser with two configured original catalogs")
+    replay.tap("confirm", "two-server-picker", "Open source server picker instead of one-server shortcut")
+    replay.capture_text("two-server-picker-labels", ("Original First Catalog", "Original Search Catalog"))
+    replay.check("two_server_picker_before_network_boot", "Minimal network boot ready:" not in replay.experiment.log_text("serial.log"))
+    replay.tap("down", "second-server-selected", "Select the second original server by physical Down")
+    replay.experiment.press(replay.qmp, "confirm", purpose="Launch OPDS server index 1 through genuine minimal boot")
+    replay.select_wifi()
+    replay.experiment.wait("second original catalog fetched", lambda:
+        any(item["path"] == "/catalog-two/" and item["status"] == 200 for item in fixture.snapshot()))
+    replay.capture_text("selected-second-server-catalog", ("Original Search Catalog", "Catalog Entry"))
+    replay.check("picker_selects_second_server_url", not any(item["path"] == "/catalog/" for item in fixture.snapshot()))
+    replay.tap("left", "opds-search-keyboard", "Left at row0 opens the source Search input on X3")
+    replay.capture_text("opds-search-title", ("Search",))
+    # SDK English number-row keyboard: rows 10,10,9,8,4. Its footer is
+    # Mode,Shift,Space,OK; vertical moves scale the selected column.
+    for number, button in enumerate(("down", "down", "confirm", "down", "down", "right", "right", "confirm",
+                                    "up", "confirm")):
+        replay.tap(button, "query-key-" + str(number), "Physically enter original search query a-space-b")
+    replay.capture_text("typed-original-query", ("Search",))
+    replay.report["typed_query_evidence_policy"] = "Original keyboard pixels retained; exact query bytes are verified by the guest's HTTP URL, since OCR merges the editing caret with the final glyph"
+    replay.tap("down", "query-submit-footer", "From b, vertical mapping reaches footer Space")
+    replay.tap("right", "query-submit-ok", "Move to the actual OK key")
+    replay.experiment.press(replay.qmp, "confirm", purpose="Submit typed search query through stock performSearch")
+    replay.experiment.wait("exact guest percent-encoded search", lambda:
+        any(item["path"] == "/catalog-two/search.xml?q=a%20b" and item["status"] == 200 for item in fixture.snapshot()))
+    replay.capture_text("search-result-catalog", ("Search Result", "Cancelled Result"))
+    replay.check("actual_keyboard_search_query_encoded_exactly", any(
+        item["path"] == "/catalog-two/search.xml?q=a%20b" and item["status"] == 200 for item in fixture.snapshot()))
+    replay.experiment.press(replay.qmp, "confirm", purpose="Acquire the actual first search result EPUB")
+    acquired = "/X3 Emu - Search Result.epub"
+    replay.experiment.wait("search result persisted exactly", lambda: replay.read(acquired) == book)
+    assert_bytes(replay, "typed_search_result_download_persisted_exact", replay.read(acquired), book)
+    replay.capture_text("search-result-after-download", ("Search Result", "Cancelled Result"))
+    replay.tap("down", "cancel-result-selected", "Select distinct cancellable acquisition result")
+    gate = threading.Event()
+    with fixture.lock:
+        fixture.opds_faults["/catalog-two/cancel.epub"] = [{"kind": "stall", "prefix_bytes": 4096, "gate": gate}]
+    replay.experiment.press(replay.qmp, "confirm", purpose="Start declared 8878-byte HTTP acquisition with 4096-byte prefix then stalled peer")
+    replay.experiment.wait("controlled HTTP prefix request", lambda:
+        any(item["path"] == "/catalog-two/cancel.epub" and item.get("intentional_peer_fault") == "stall" for item in fixture.snapshot()))
+    replay.capture_text("cancel-download-progress", ("Downloading", "Cancelled Result", "Cancel"))
+    # Hold Back continuously while the stock client's synchronous socket read
+    # finishes. A short release can be lost inside that source blocking read.
+    replay.qmp.execute("stop")
+    try:
+        replay.qmp.execute("qom-set", {"path": "/machine/adc", "property": "hold-ns", "value": 0})
+        mask = replay.helpers["button_mask"](["back"])
+        replay.qmp.set_buttons(mask)
+        started = replay.experiment.clock(replay.qmp)
+        observed = replay.qmp.execute("qom-get", {"path": "/machine/adc", "property": "buttons"})
+        replay.check("physical_back_continuously_held_for_cancel", observed == mask, {"mask": mask, "press_t_ns": started,
+            "release_transport": "explicit physical release after guest cancellation; no automatic deadline"})
+    finally:
+        replay.qmp.execute("cont")
+    try:
+        replay.experiment.wait("original OPDS cancellation callback", lambda: "Download cancelled" in replay.experiment.log_text("serial.log"))
+        cancelled_at = replay.experiment.clock(replay.qmp)
+    finally:
+        replay.qmp.set_buttons(0)
+        gate.set()
+    replay.report["controlled_cancellation"] = {"press_t_ns": started, "cancel_observed_t_ns": cancelled_at,
+        "declared_response_bytes": len(book), "prefix_bytes": 4096,
+        "policy": "real peer stalls body; physical Back stays held until original guest reports ABORTED"}
+    serial = replay.experiment.log_text("serial.log")
+    aborted = re.findall(r"Transfer failed: error=(\d+) downloaded=(\d+) expected=(\d+) preservePartial=0 resumePartial=0", serial)
+    replay.check("cancel_occurs_after_partial_body_before_completion", any(
+        int(error) == 3 and 0 < int(count) <= 4096 and int(total) == len(book) for error, count, total in aborted), aborted)
+    replay.check("cancel_removes_incomplete_guest_file", replay.absent("/X3 Emu - Cancelled Result.epub"))
+    assert_bytes(replay, "cancel_retains_completed_search_book", replay.read(acquired), book)
+    replay.capture_text("cancel_returns_to_search_results", ("Search Result", "Cancelled Result"))
+    peer = [item for item in fixture.snapshot() if item["path"].startswith("/catalog-two/") and item["status"] == 200]
+    replay.check("search_and_acquisitions_keep_same_origin_auth", len(peer) >= 4 and all("authorization" in item["headers"] for item in peer))
+    replay.check("cancel_peer_sent_only_declared_prefix", any(item["path"] == "/catalog-two/cancel.epub"
+        and item["response_size"] == 4096 and item["original_response_size"] == len(book) for item in peer))
+
+
+def opds_pagination_workflow(replay, fixture):
+    """Observe source-appended Next and prepended Previous navigation rows."""
+    snapshot = replay.output / "opds-pagination-harness.py"
+    snapshot.write_bytes(Path(__file__).read_bytes())
+    replay.report["opds_harness_sha256"] = file_sha256(snapshot)
+    replay.report["pagination_fixture"] = {"first_path": "/catalog-paged/", "next_href": "page-two/",
+        "second_path": "/catalog-paged/page-two/", "previous_href": "/catalog-paged/",
+        "links": "Source-supported directory collection relative next and absolute previous"}
+    replay.capture("home")
+    replay.tap("down", "recents-row", "Fresh Home: move to Recent Books")
+    replay.tap("down", "opds-row", "Select original two-page OPDS catalog")
+    replay.experiment.press(replay.qmp, "confirm", purpose="Launch one configured OPDS catalog through target3 minimal boot")
+    replay.select_wifi()
+    replay.experiment.wait("original first OPDS page fetched", lambda:
+        any(item["path"] == "/catalog-paged/" and item["status"] == 200 for item in fixture.snapshot()))
+    first = replay.capture_text("opds-page-one", ("Original Paged Catalog", "Page One Entry", "Next Page"))
+    replay.check("first_feed_next_row_appended_after_book", bool(first))
+    replay.tap("down", "opds-next-page-selected", "Physical Down selects the source-appended Next Page row1")
+    replay.experiment.press(replay.qmp, "confirm", purpose="Follow actual OPDS rel=next directory link")
+    replay.experiment.wait("original second OPDS page fetched", lambda:
+        any(item["path"] == "/catalog-paged/page-two/" and item["status"] == 200 for item in fixture.snapshot()))
+    second = replay.capture_text("opds-page-two", ("Original Paged Catalog", "Previous Page", "Page Two Entry"))
+    replay.check("physical_next_changes_original_entry_pixels", first["pixel_sha256"] != second["pixel_sha256"])
+    replay.experiment.press(replay.qmp, "confirm", purpose="At default row0 follow source-prepended Previous Page")
+    replay.experiment.wait("original first page fetched again", lambda:
+        sum(item["path"] == "/catalog-paged/" and item["status"] == 200 for item in fixture.snapshot()) == 2)
+    restored = replay.capture_text("opds-page-one-restored", ("Original Paged Catalog", "Page One Entry", "Next Page"))
+    replay.check("physical_previous_restores_exact_original_page_raster", first["pixel_sha256"] == restored["pixel_sha256"],
+        {"first_pixel_sha256": first["pixel_sha256"], "restored_pixel_sha256": restored["pixel_sha256"]})
+    requests = [item for item in fixture.snapshot() if item["path"].startswith("/catalog-paged/")]
+    replay.check("source_next_previous_requests_exact_and_authenticated", [item["path"] for item in requests]
+        == ["/catalog-paged/", "/catalog-paged/page-two/", "/catalog-paged/"]
+        and all(item["status"] == 200 and "authorization" in item["headers"] for item in requests), requests)
+    replay.check("pagination_does_not_start_book_download", not any(item["path"].endswith(".epub") for item in fixture.snapshot()))
 
 
 def koreader_settings_ui(replay, *, signup=False):
@@ -1217,7 +1438,7 @@ def ntp_workflow(replay, ntp_fixture):
                  {"settings_sha256": sha(replay.read("/.crosspoint/crossink-settings.json")), "clockDateHasBeenSynced": settings.get("clockDateHasBeenSynced")})
 
 
-def fonts_workflow(replay, fixture):
+def open_font_catalog(replay, fixture):
     settings_tab_ui(replay, "reader")
     replay.tap("down", "reader-font-options", "Select Reader Font Options submenu row0")
     replay.tap("confirm", "font-options", "Enter original font settings submenu")
@@ -1229,6 +1450,10 @@ def fonts_workflow(replay, fixture):
     replay.experiment.wait("stock fixed-host font manifest fetch", lambda:
                            any(item["path"] == FONT_MANIFEST_PATH and item["status"] == 200 for item in fixture.snapshot()))
     replay.capture("font-family-list")
+
+
+def fonts_workflow(replay, fixture):
+    open_font_catalog(replay, fixture)
     replay.experiment.press(replay.qmp, "confirm", purpose="download original CPFONT through actual CRC-validated stock font installer")
     path = "/.fonts/Original/Original_14.cpfont"
     replay.experiment.wait("complete original font installed after CRC check", lambda: replay.read(path) == fixture.font)
@@ -1240,6 +1465,126 @@ def fonts_workflow(replay, fixture):
                  and all(item["headers"].get("host", "").split(":")[0] == FONT_HOST for item in requests), requests)
     replay.check("font_installer_temporary_file_removed", replay.absent(path + ".tmp"))
     replay.capture_text("font-download-result", ["Font installed"])
+
+
+def fonts_range_workflow(replay, fixture, *, tiny):
+    first_request = len(fixture.snapshot())
+    open_font_catalog(replay, fixture)
+    replay.experiment.press(replay.qmp, "confirm", purpose="download only the source-retained SD font point sizes")
+    sizes = (14,) if tiny else (14, 18)
+    for size in sizes:
+        filename = f"SyntheticASCII_{size}.cpfont"
+        path = "/.fonts/SyntheticASCII/" + filename
+        data = fixture.font_files[filename]
+        replay.experiment.wait("original ASCII font installed: " + filename, lambda path=path, data=data: replay.read(path) == data)
+        assert_bytes(replay, f"range_font_{size}_installed_exact", replay.read(path), data)
+        replay.check(f"range_font_{size}_crc_and_temp_cleanup", zlib.crc32(replay.read(path)) == zlib.crc32(data) and replay.absent(path + ".tmp"))
+    replay.capture_text("font-range-result", ["Font installed"])
+    requests = [row for row in fixture.snapshot()[first_request:] if row["path"].endswith(".cpfont")]
+    requested = {row["path"].rsplit("/", 1)[-1] for row in requests}
+    replay.check("source_manifest_range_requests_exact", requested == {f"SyntheticASCII_{size}.cpfont" for size in sizes}, requests)
+    if tiny:
+        replay.check("tiny_manifest_excludes_18pt_download_and_file", replay.absent("/.fonts/SyntheticASCII/SyntheticASCII_18.cpfont"))
+    replay.report["sd_range_scope"] = {"setting_value": 1 if tiny else 2, "retained_download_sizes": list(sizes),
+        "installed_registry_filter_claimed": False, "source": "FontDownloadActivity.cpp378/446"}
+
+
+def fonts_lifecycle_workflow(replay, fixture, *, cancel=True, delete=True):
+    """Drive original update/cancel/resume/delete code with an HTTP peer fault."""
+    first_request = len(fixture.snapshot())
+    base = "/.fonts/SyntheticASCII/"
+    filename = "SyntheticASCII_14.cpfont"
+    endpoint = "/sd-fonts-m1-b4/" + filename
+    gate = threading.Event()
+    open_font_catalog(replay, fixture)
+    replay.capture_text("font-update-available", ["Update All", "Synthetic", "Update"])
+    old = make_cpfont()
+    replay.check("original_old_version_present_before_update", replay.read(base + filename) == old)
+    if cancel:
+        replay.experiment.press(replay.qmp, "down", purpose="select the individual updatable family after the source Update All row")
+        with fixture.lock:
+            fixture.font_faults[endpoint] = [{"kind": "stall", "prefix_bytes": 512, "gate": gate}]
+        try:
+            replay.experiment.press(replay.qmp, "confirm", purpose="update the selected family against a deliberately stalled original HTTP peer")
+            replay.experiment.wait("peer has sent original font prefix", lambda: any(
+                row.get("intentional_peer_fault") == "stall" for row in fixture.snapshot()[first_request:]))
+            # Keep the physical button asserted while the source synchronous
+            # read returns. Its cancellation callback must observe real Back.
+            replay.qmp.execute("stop")
+            try:
+                replay.qmp.execute("qom-set", {"path": "/machine/adc", "property": "hold-ns", "value": 0})
+                mask = replay.helpers["button_mask"](["back"])
+                replay.qmp.set_buttons(mask)
+                started = replay.experiment.clock(replay.qmp)
+                replay.check("physical_back_continuously_held_for_font_cancel", replay.qmp.execute("qom-get", {
+                    "path": "/machine/adc", "property": "buttons"}) == mask,
+                    {"mask": mask, "press_t_ns": started, "automatic_release": False})
+            finally:
+                replay.qmp.execute("cont")
+            try:
+                replay.experiment.wait("stock font downloader acknowledged cancellation", lambda:
+                                       "Download cancelled: " + filename in replay.experiment.log_text("serial.log"))
+                replay.report["font_cancel_observed_t_ns"] = replay.experiment.clock(replay.qmp)
+            finally:
+                replay.qmp.set_buttons(0)
+        finally:
+            gate.set()
+        replay.check("cancel_preserves_previous_installed_font", replay.read(base + filename) == old)
+        replay.check("cancel_removes_partial_and_does_not_install_next_size", replay.absent(base + filename + ".tmp")
+                     and replay.absent(base + "SyntheticASCII_18.cpfont"))
+        replay.capture_text("font-cancel-returned-to-catalog", ["Font Browser", "Synthetic"])
+    if cancel:
+        replay.experiment.press(replay.qmp, "down", purpose="reselect the individual family after source cancellation resets selection to Update All")
+    with fixture.lock:
+        fixture.font_faults[endpoint] = [{"kind": "truncate", "prefix_bytes": 512}]
+    replay.experiment.press(replay.qmp, "confirm", purpose="update selected family" if cancel else "activate source Update All with preserved partial HTTP Range continuation")
+    for size in (14, 18):
+        name = f"SyntheticASCII_{size}.cpfont"
+        data = fixture.font_files[name]
+        replay.experiment.wait("updated genuine font installed: " + name,
+                               lambda name=name, data=data: replay.read(base + name) == data)
+        assert_bytes(replay, f"updated_font_{size}_exact", replay.read(base + name), data)
+        replay.check(f"updated_font_{size}_crc_and_temp_backup_cleanup", zlib.crc32(replay.read(base + name)) == zlib.crc32(data)
+                     and replay.absent(base + name + ".tmp") and replay.absent(base + name + ".bak"))
+    requests = fixture.snapshot()[first_request:]
+    truncated = [row for row in requests if row.get("intentional_peer_fault") == "truncate"]
+    resumed = [row for row in requests if row["path"] == endpoint and row["status"] == 206]
+    replay.check("actual_range_resume_after_original_peer_eof", len(truncated) == 1 and bool(resumed)
+                 and resumed[0]["headers"].get("range") == "bytes=512-"
+                 and resumed[0]["response_sha256"] == sha(fixture.font_files[filename][512:]),
+                 {"truncated_responses": truncated, "resumed_responses": resumed})
+    replay.capture_text("font-update-completed", ["Font installed"])
+    if not delete:
+        replay.report["font_lifecycle_peer_fault_scope"] = {"original_guest_endpoints_preserved": True,
+            "guest_memory_or_api_modified": False, "stall_prefix_bytes": 512, "retry_eof_prefix_bytes": 512,
+            "cancel_exercised": cancel, "update_all_exercised": False, "delete_exercised": False,
+            "cancellation_back_hold_ns": 0, "cancellation_release": "explicit after original guest cancellation",
+            "cached_catalog_status_asserted": False, "scope": "separate cancel/resume result; original lifecycle cached-label failure retained"}
+        return
+    replay.experiment.press(replay.qmp, "confirm", purpose="return from source Complete panel to installed font catalog")
+    if cancel:
+        replay.experiment.press(replay.qmp, "up", purpose="normalize family selection after the Update All row disappears")
+    replay.capture_text("font-updated-catalog", ["Synthetic", "Installed"])
+    replay.experiment.press(replay.qmp, "confirm", purpose="open original installed-family deletion confirmation")
+    replay.capture_text("font-delete-confirmation", ["Delete", "Synthetic", "Cancel", "Confirm"])
+    replay.experiment.press(replay.qmp, "back", purpose="cancel stock family deletion")
+    replay.check("delete_cancel_preserves_both_original_fonts", all(
+        replay.read(base + name) == data for name, data in fixture.font_files.items()))
+    replay.capture_text("font-delete-cancel-return", ["Synthetic", "Installed"])
+    replay.experiment.press(replay.qmp, "confirm", purpose="reopen original font deletion confirmation")
+    replay.capture_text("font-delete-confirmation-again", ["Delete", "Synthetic", "Cancel", "Confirm"])
+    replay.experiment.press(replay.qmp, "down", purpose="select source confirmation option1")
+    replay.experiment.press(replay.qmp, "confirm", purpose="authorize original font installer family deletion")
+    replay.experiment.wait("genuine font family files removed by guest", lambda: all(
+        replay.absent(base + name) for name in fixture.font_files))
+    replay.check("delete_removes_both_installed_sizes", all(replay.absent(base + name) for name in fixture.font_files))
+    replay.capture_text("font-deleted-catalog", ["Font Browser", "Synthetic"])
+    replay.report["font_lifecycle_peer_fault_scope"] = {"original_guest_endpoints_preserved": True,
+        "guest_memory_or_api_modified": False, "stall_prefix_bytes": 512, "retry_eof_prefix_bytes": 512,
+        "cancel_exercised": cancel, "update_all_exercised": not cancel,
+        "cancellation_back_hold_ns": 0, "cancellation_release": "explicit after original guest cancellation" if cancel else "not exercised",
+        "source_http_read_poll_timeout_ms": 5000,
+        "source_update_detection": "existing file size differs and the second manifest size is absent"}
 
 
 def ota_check_workflow(replay, tls_relay):
@@ -1276,8 +1621,9 @@ def acceptance_outcome(completed, error, checks, strict_launcher_validity):
 
 def network_boot_checks(workflow: str, rom: str, serial: str, fatal_pattern):
     """Permit only the source-defined software resets of this explicit UI flow."""
-    target = {"server": 6, "calibre": 6, "opds": 3, "koreader-auth": 5,
-              "koreader-signup": 5, "koreader-sync": 4, "koreader-apply": 4, "koreader-smart": 4, "ntp": 0, "fonts": 7, "ota-check": 2}[workflow]
+    target = {"server": 6, "calibre": 6, "opds": 3, "opds-siblings": 3, "opds-pagination": 3, "koreader-auth": 5,
+              "koreader-signup": 5, "koreader-sync": 4, "koreader-apply": 4, "koreader-smart": 4, "ntp": 0,
+              "fonts": 7, "fonts-tiny": 7, "fonts-xlarge": 7, "fonts-lifecycle": 7, "fonts-update-all": 7, "fonts-cancel-resume": 7, "ota-check": 2}[workflow]
     sync = workflow in ("koreader-sync", "koreader-apply", "koreader-smart")
     cycles = 4 if workflow == "koreader-smart" else 2
     expected_targets = ([0] + [target, 1] * cycles if sync else [0] if workflow == "ntp" else [0, target])
@@ -1303,9 +1649,32 @@ def run_workflow(args, name, fixture, sink):
     book = make_test_epub()
     payload = bytes(range(256)) * 64 + b"Original guest network fixture.\n"
     files = {"/test.epub": book}
-    if name == "opds":
+    if name == "fonts":
+        fixture.configure_fonts("Original", {"Original_14.cpfont": fixture.font})
+    if name in ("fonts-tiny", "fonts-xlarge", "fonts-lifecycle", "fonts-update-all", "fonts-cancel-resume"):
+        helper = PROJECT / "scripts/test-crossink-functions.py"
+        make_ascii = runpy.run_path(str(helper))["make_ascii_cpfont"]
+        font_files = {f"SyntheticASCII_{size}.cpfont": make_ascii(size) for size in (14, 18)}
+        expected = {14: "543870368a08fdadcc3a19cd041bb9ec9dbefd4862bf5077ef126c66d11ed68f",
+                    18: "9891f51624f4a4e60a4ffbf26c3a552d75f33c2ef28498d56227af9830dd6764"}
+        if any(sha(font_files[f"SyntheticASCII_{size}.cpfont"]) != value for size, value in expected.items()):
+            raise NetworkError("original ASCII fixture differs from independently decoded pinned bytes")
+        fixture.configure_fonts("SyntheticASCII", font_files)
+        files["/.crosspoint/crossink-settings.json"] = json.dumps({"sdFontSizeRange": 1 if name == "fonts-tiny" else 2}).encode()
+        if name in ("fonts-lifecycle", "fonts-update-all", "fonts-cancel-resume"):
+            files["/.fonts/SyntheticASCII/SyntheticASCII_14.cpfont"] = make_cpfont()
+    if name in ("opds", "opds-siblings", "opds-pagination"):
         files["/.crosspoint/opds.json"] = json.dumps({"servers": [{"name": "Original network fixture", "url": fixture.guest_origin + "/catalog/",
                                                                   "username": FIXTURE_USER, "password": FIXTURE_PASSWORD}]}).encode()
+        if name == "opds-siblings":
+            files["/.crosspoint/opds.json"] = json.dumps({"servers": [
+                {"name": "Original First Catalog", "url": fixture.guest_origin + "/catalog/", "username": FIXTURE_USER, "password": FIXTURE_PASSWORD},
+                {"name": "Original Search Catalog", "url": fixture.guest_origin + "/catalog-two/", "username": FIXTURE_USER, "password": FIXTURE_PASSWORD}]}).encode()
+            files["/.crosspoint/crossink-settings.json"] = b'{"keyboardLayouts":1}'
+        elif name == "opds-pagination":
+            files["/.crosspoint/opds.json"] = json.dumps({"servers": [
+                {"name": "Original Paged Catalog", "url": fixture.guest_origin + "/catalog-paged/",
+                 "username": FIXTURE_USER, "password": FIXTURE_PASSWORD}]}).encode()
     if name.startswith("koreader"):
         files["/.crosspoint/koreader.json"] = json.dumps({"cfgVersion": 2, "username": FIXTURE_USER, "password": FIXTURE_PASSWORD,
                                                         "serverUrl": fixture.guest_origin, "matchMethod": 0,
@@ -1318,7 +1687,7 @@ def run_workflow(args, name, fixture, sink):
     forwards = [f"tcp:127.0.0.1:{ports['http']}-:80", f"tcp:127.0.0.1:{ports['websocket']}-:81", f"udp:127.0.0.1:{ports['discovery']}-:8134"]
     command = [sys.executable, "-m", "x3emu", "run", "--flash", str(args.flash.resolve()), "--sd", str(card),
                "--output", str(output / "run"), "--backend", str(args.backend.resolve()), "--wifi",
-               "--seconds", str(args.host_limit)] + clock_arguments(args.host_paced)
+               "--seconds", str(args.host_limit), "--power-button-hold-ns", str(args.startup_power_hold_ns)] + clock_arguments(args.host_paced)
     for forwarding in forwards:
         command += ["--wifi-hostfwd", forwarding]
     if args.rom_dir:
@@ -1336,6 +1705,10 @@ def run_workflow(args, name, fixture, sink):
               "unexercised_fixed_services": {"NTP": "pool.ntp.org UDP123 needs actual guest DNS routing",
                    "fonts": "HTTP crossink-fonts.s3.us-east-1.amazonaws.com needs actual guest DNS routing",
                    "OTA": "HTTPS api.github.com/releases/latest needs verified TLS and newer official release"}}
+    if name in ("fonts-tiny", "fonts-xlarge", "fonts-lifecycle", "fonts-update-all", "fonts-cancel-resume"):
+        report["original_ascii_font_fixture"] = {"helper_sha256": file_sha256(helper), "family": fixture.font_family,
+            "files": {key: {"bytes": len(data), "sha256": sha(data), "crc32": zlib.crc32(data)} for key, data in font_files.items()},
+            "raster_scope": "95 original geometric ASCII code cells; not natural typography"}
     environment = os.environ.copy()
     if args.host_router:
         metadata = json.loads(args.host_router.with_suffix(args.host_router.suffix + ".json").read_text())
@@ -1386,6 +1759,10 @@ def run_workflow(args, name, fixture, sink):
             server_workflow(replay, ports, book, payload, fixture, calibre=name == "calibre")
         elif name == "opds":
             opds_workflow(replay, fixture, sink, book)
+        elif name == "opds-siblings":
+            opds_siblings_workflow(replay, fixture, book)
+        elif name == "opds-pagination":
+            opds_pagination_workflow(replay, fixture)
         elif name in ("koreader-auth", "koreader-signup"):
             koreader_auth_workflow(replay, fixture, signup=name == "koreader-signup")
         elif name in ("koreader-sync", "koreader-apply"):
@@ -1397,6 +1774,12 @@ def run_workflow(args, name, fixture, sink):
             report["unexercised_fixed_services"].pop("NTP")
         elif name == "fonts":
             fonts_workflow(replay, fixture)
+            report["unexercised_fixed_services"].pop("fonts")
+        elif name in ("fonts-tiny", "fonts-xlarge"):
+            fonts_range_workflow(replay, fixture, tiny=name == "fonts-tiny")
+            report["unexercised_fixed_services"].pop("fonts")
+        elif name in ("fonts-lifecycle", "fonts-update-all", "fonts-cancel-resume"):
+            fonts_lifecycle_workflow(replay, fixture, cancel=name != "fonts-update-all", delete=name != "fonts-cancel-resume")
             report["unexercised_fixed_services"].pop("fonts")
         else:
             ota_check_workflow(replay, args.tls_relay)
@@ -1466,6 +1849,8 @@ def main(argv=None):
     parser.add_argument("--workflows", default=",".join(WORKFLOWS[:6]))
     parser.add_argument("--step-timeout", type=float, default=120)
     parser.add_argument("--host-limit", type=float, default=1800)
+    parser.add_argument("--startup-power-hold-ns", type=int, default=1_000_000_000,
+                        help="recorded physical startup GPIO3 pulse; longer diagnostic holds may be needed for host-paced boot")
     parser.add_argument("--host-paced", action="store_true",
                         help="explicit diagnostic native TCG virtual clock without icount, for external services or independently clocked peers; timing stays uncalibrated")
     parser.add_argument("--continue-known-dav-get-defect", action="store_true",
@@ -1476,16 +1861,18 @@ def main(argv=None):
     names = args.workflows.split(",")
     if not names or any(name not in WORKFLOWS for name in names) or len(set(names)) != len(names):
         parser.error("workflows must be unique names from " + ", ".join(WORKFLOWS))
-    if any(name in ("ntp", "fonts", "ota-check") for name in names) and not args.host_router:
+    if any(name in ("ntp", "ota-check") or name.startswith("fonts") for name in names) and not args.host_router:
         parser.error("fixed-endpoint workflows require explicit --host-router; firmware URL overrides are not used")
     if not all(value > 0 and math.isfinite(value) for value in (args.step_timeout, args.host_limit)):
         parser.error("timeouts must be positive and finite")
+    if not 0 < args.startup_power_hold_ns <= 30_000_000_000:
+        parser.error("startup power hold must be in 1..30000000000 virtual ns")
     if args.output.exists() and any(args.output.iterdir()):
         parser.error("output must be new or empty to preserve prior evidence")
     args.output.mkdir(parents=True, exist_ok=True)
     book = make_test_epub()
     sink = FixtureService(book, sink=True)
-    fixture = FixtureService(book, redirect_port=sink.port)
+    fixture = OPDSFixture(book, redirect_port=sink.port) if any(name.startswith("opds-") for name in names) else FixtureService(book, redirect_port=sink.port)
     args.dns_fixture = DatagramFixture("dns") if args.host_router else None
     args.ntp_fixture = DatagramFixture("ntp") if args.host_router else None
     args.tls_relay = TrustedTLSRelay(args.output / "opaque-tls") if args.host_router else None

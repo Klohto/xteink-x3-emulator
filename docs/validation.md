@@ -129,7 +129,7 @@ TAP transcript in [native-peer](evidence/native-peer). The native binary hash is
 `6fccb05f569101889c15a22fe5fb9d9a8f624156bb4dfaa229b51feee95afcb0`;
 patch hash is
 `c847edb98eb8af1c39556e506e08ccc81be233da8957ee2d5ad27648e88a0f2a`.
-The current checkpoint passes **12 suites,102 cases and zero skips**. It adds
+The FCS checkpoint passes **12 suites,102 cases and zero skips**. It adds
 source-backed C3 TX FCS reservation handling: all five hardware queues use
 their programmed PLCP length, payload bytes are preserved when DMA excludes
 the FCS, and absent or inconsistent lengths remain visible in telemetry.
@@ -145,6 +145,30 @@ integration skipped (189 total). The complete unchanged transcript is
 An earlier candidate's genuine port-collision failure was retained. The tested
 POSIX fixture now keeps its listener socket reserved while QEMU allocates its
 test transport; the final gate uses this corrected fixture.
+
+The current RX comparator checkpoint passes **12 suites,105 cases and zero
+skips**. Official C3 library disassembly and byte-identical ROM functions
+establish station/AP receive callback bits, address masks, comparator enables
+and BSSID-check registers. Tests exercise AP-targeted authentication, both
+interface slots, masks, normal filtering without DMA/IRQ changes and explicit
+unverified policy accounting. The full receipt is
+[native-build-rx.json](evidence/native-build-rx.json), with unchanged TAP files in
+[native-rx](evidence/native-rx). Binary SHA256 is
+`a8f7f23d189d09c16e2de62f7da0ceb8bdb1b9d8e033a91651e06940714cca67`;
+patch SHA256 is
+`bd6ca5e91eae089f0a765728cb5fdcbcd4147875866b018e8fe4aa2cca96a820`.
+The primary source evidence and remaining receive-policy limits are in
+[wifi-rx-interface.json](evidence/wifi-rx-interface.json). Stock two-device
+workflows require their own functional receipts.
+
+An optional ignored `local/qemu/selected-backend.json` selects an immutable local
+installation for the default launcher. Schema1 contains `binary`,
+`binary_sha256`, `bios_directory` and `rom_sha256`. Relative paths resolve from
+the selection file. The launcher verifies both hashes before use, fails on
+missing or changed selected inputs, and records the actual binary/ROM identity.
+An explicit different `--backend` bypasses this default selection; an explicit
+`--rom-dir` remains its own recorded input. This avoids executable copies or
+symlinks when several tested installations are kept separately.
 
 Stock reading, menus and network execution proofs remain separate from these
 native MMIO/DMA tests; [function-coverage.md](function-coverage.md) identifies

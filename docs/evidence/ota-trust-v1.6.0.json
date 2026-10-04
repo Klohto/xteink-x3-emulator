@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "scope": "Original stock certificate verification executed; online update is blocked, not passed",
+  "functional_pass": false,
+  "complete_machine_acceptance_passed": false,
+  "backend_sha256": "de8ae3eaebcabcaffb0a84efe524dcfc7cada16b0fb245862f1946cdb0753502",
+  "firmware_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+  "validation_sha256": "52972513be7e6a919d2a513edae8619fdcc38755d83d789e021da64e7595a0b7",
+  "effective_timing": {
+    "clock": "QEMU_CLOCK_VIRTUAL",
+    "instruction_counting": false,
+    "instruction_time_ns": null,
+    "calibration_status": "uncalibrated",
+    "speed_selection_allowed": false
+  },
+  "guest_original_endpoint": "https://api.github.com/repos/uxjulia/CrossInk/releases/latest",
+  "opaque_tls_connections": [
+    {
+      "tls_terminated": false,
+      "payloads_modified": false,
+      "guest_to_origin_bytes": 298,
+      "origin_to_guest_bytes": 1264,
+      "official_origin": "api.github.com",
+      "host_connect_proxy_used": true,
+      "origin_connection_wall_seconds": 3.9426427360012894,
+      "eof_from": "official_origin",
+      "guest_to_origin_sha256": "a4457a4ba912d84327a73e76d8b32d014e44be357f52b9156df5ecc3e1129330",
+      "origin_to_guest_sha256": "4f3d278ea3fb1d22f60e776582eb9601f376838f992271fd82128e03933cf8b2",
+      "connection_wall_seconds": 3.9618520200019702,
+      "private_opaque_wire": [
+        {
+          "file": "connection-001-guest-to-origin.bin",
+          "bytes": 298,
+          "sha256": "a4457a4ba912d84327a73e76d8b32d014e44be357f52b9156df5ecc3e1129330"
+        },
+        {
+          "file": "connection-001-origin-to-guest.bin",
+          "bytes": 1264,
+          "sha256": "4f3d278ea3fb1d22f60e776582eb9601f376838f992271fd82128e03933cf8b2"
+        }
+      ]
+    }
+  ],
+  "guest_tls_alert": {
+    "level": 2,
+    "description": 49,
+    "name": "unknown_ca"
+  },
+  "guest_serial_observations": [
+    "esp-x509-crt-bundle: Failed to verify certificate",
+    "esp-tls-mbedtls: mbedtls_ssl_handshake returned -0x3000"
+  ],
+  "public_leaf": {
+    "subject": "CN=api.github.com",
+    "issuer": "C=US, ST=California, L=San Francisco, O=OpenAI, LLC, CN=openai.com",
+    "der_sha256": "428b86cf125d9f67cc0ee3591f9affe454fb8c90b29741e0207d04940b930540"
+  },
+  "host_original_endpoint_relay_connectivity": {
+    "scope": "independent host opaque relay connectivity, not guest acceptance",
+    "certificate_verified": true,
+    "response_bytes": 12483,
+    "response_sha256": "4d3d3fa89e881cc9a922b24299b6b1a45634b70c42d8a33560d262c51463ec5b",
+    "http_status": "HTTP/1.1 200 OK",
+    "opaque_connections": [
+      {
+        "tls_terminated": false,
+        "payloads_modified": false,
+        "guest_to_origin_bytes": 1763,
+        "origin_to_guest_bytes": 15570,
+        "official_origin": "api.github.com",
+        "host_connect_proxy_used": true,
+        "guest_to_origin_sha256": "2c1ea0e92069df82a41fde4e44e702812ed3f03ba8c06426375bee631852365e",
+        "origin_to_guest_sha256": "e16c0332842806ec01e8da28d29d4fc619235f25eaa58852129d7123a14e39ef"
+      }
+    ]
+  },
+  "direct_original_host_probe": {
+    "scope": "direct official-origin TLS connectivity, not guest acceptance",
+    "proxy_used": false,
+    "certificate_verified": false,
+    "error_type": "gaierror"
+  },
+  "firmware_ca_modified": false,
+  "firmware_endpoint_modified": false,
+  "tls_terminated_by_helper": false,
+  "manifest_substituted": false,
+  "online_firmware_download_or_installation_exercised": false
+}

@@ -14,6 +14,7 @@ import threading
 import tempfile
 import time
 import unittest
+import zlib
 from unittest import mock
 import xml.etree.ElementTree as ET
 
@@ -121,6 +122,19 @@ class WebSocketWireTests(unittest.TestCase):
 
 
 class RemoteFixtureTests(unittest.TestCase):
+    def test_scan_completion_requires_real_source_markers_and_discloses_missing_log_line(self):
+        observe = NETWORK["scan_callback_observation"]
+        self.assertEqual(observe("stale stable panel")['completed_callbacks'], 0)
+        usable = "WiFi scan usable networks=1 hidden=0 duplicates=0\n"
+        released = "WiFi released before network list mode=0\n"
+        self.assertEqual(observe(usable)['completed_callbacks'], 0)
+        actual = observe(usable + released)
+        self.assertEqual(actual['completed_callbacks'], 1)
+        self.assertTrue(actual['raw_completion_line_missing'])
+        complete = observe("WiFi scan complete: rawNetworks=1\n" + usable + released)
+        self.assertEqual(complete['completed_callbacks'], 1)
+        self.assertFalse(complete['raw_completion_line_missing'])
+
     def fixture(self, **options):
         service = FixtureService(b"Original binary EPUB fixture\0\xff", **options)
         self.addCleanup(service.close)
@@ -204,6 +218,54 @@ class RemoteFixtureTests(unittest.TestCase):
         pixels = [(byte >> shift) & 3 for byte in data[92:] for shift in (6, 4, 2, 0)][:width * height]
         self.assertEqual(pixels[:6], [0, 0, 3, 3, 0, 0])
         self.assertEqual(pixels[18:24], [3] * 6)
+
+    def test_font_manifest_crc_range_and_explicit_peer_eof_preserve_original_bytes(self):
+        fixture, client = self.fixture()
+        payload = bytes(range(256)) * 11
+        fixture.configure_fonts("SyntheticASCII", {"SyntheticASCII_14.cpfont": payload})
+        _, _, body = client.request("GET", NETWORK["FONT_MANIFEST_PATH"], expected=200)
+        manifest = json.loads(body)
+        self.assertEqual(manifest["families"][0]["files"][0]["size"], len(payload))
+        self.assertEqual(manifest["families"][0]["files"][0]["crc32"], zlib.crc32(payload))
+        path = "/sd-fonts-m1-b4/SyntheticASCII_14.cpfont"
+        _, headers, resumed = client.request("GET", path, headers={"Range": "bytes=512-"}, expected=206)
+        self.assertEqual(headers["Content-Range"], f"bytes 512-{len(payload)-1}/{len(payload)}")
+        self.assertEqual(resumed, payload[512:])
+        client.request("GET", path, headers={"Range": f"bytes={len(payload)}-"}, expected=416)
+        with fixture.lock:
+            fixture.font_faults[path] = [{"kind": "truncate", "prefix_bytes": 512}]
+        _, headers, short = client.request("GET", path, expected=200)
+        self.assertEqual(int(headers["Content-Length"]), len(payload))
+        self.assertEqual(short, payload[:512])
+        self.assertEqual(fixture.snapshot()[-1]["intentional_peer_fault"], "truncate")
+        _, _, retry = client.request("GET", path, headers={"Range": "bytes=512-"}, expected=206)
+        self.assertEqual(short + retry, payload)
+
+    def test_font_stall_is_an_explicit_remote_peer_fault_until_gate_release(self):
+        fixture, _ = self.fixture()
+        path = "/sd-fonts-m1-b4/Original_14.cpfont"
+        gate = threading.Event()
+        self.addCleanup(gate.set)
+        with fixture.lock:
+            fixture.font_faults[path] = [{"kind": "stall", "prefix_bytes": 17, "gate": gate}]
+        with socket.create_connection(("127.0.0.1", fixture.port), timeout=2) as channel:
+            channel.sendall(f"GET {path} HTTP/1.1\r\nHost: original-host\r\nConnection: close\r\n\r\n".encode())
+            header = bytearray()
+            while not header.endswith(b"\r\n\r\n"):
+                header.extend(exact(channel, 1))
+            self.assertIn(f"Content-Length: {len(fixture.font)}\r\n".encode(), header)
+            self.assertEqual(exact(channel, 17), fixture.font[:17])
+            channel.settimeout(0.05)
+            with self.assertRaises(TimeoutError):
+                channel.recv(1)
+            gate.set()
+            channel.settimeout(2)
+            self.assertEqual(channel.recv(1), b"")
+        record = fixture.snapshot()[-1]
+        self.assertEqual(record["intentional_peer_fault"], "stall")
+        self.assertEqual(record["response_size"], 17)
+        self.assertEqual(record["declared_content_length"], len(fixture.font))
+        self.assertEqual(record["response_sha256"], hashlib.sha256(fixture.font[:17]).hexdigest())
 
 
 class FixedEndpointFixtureTests(unittest.TestCase):

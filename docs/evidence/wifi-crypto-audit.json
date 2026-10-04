@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "status": "Read-only feasibility audit; no Wi-Fi crypto model implemented or validated",
+  "primary_source": {
+    "official_wifi_lib_revision": "01d52d9e69032c486015dc28b08c3bf6aaf348a9",
+    "official_wifi_lib_sha256": "7076ed650bca96025c8fa490495dc8e81a5d9ecb21e02a7b8164cd6a1df39f26",
+    "source": "https://github.com/espressif/esp32-wifi-lib/tree/01d52d9e69032c486015dc28b08c3bf6aaf348a9/esp32c3",
+    "scope": "Read-only feasibility audit; no keys or crypto model implementation"
+  },
+  "artifacts": [
+    {
+      "name": "hal_crypto.o",
+      "sha256": "976d25c6579e0f0f29b84ed6255dd0896b33216a034dc8073d779946fc9fe8aa"
+    },
+    {
+      "name": "wdev.o",
+      "sha256": "9aa2e60a7745850c0fb197eb6ee8e6a6e6ee8c1045c8554126dbb75d54be4a8e"
+    },
+    {
+      "name": "hal_crypto-full-disassembly.txt",
+      "sha256": "58b7c00097dbd49e90460222ff3f7563eae3418a3878e08693316c4222169d0b"
+    },
+    {
+      "name": "wdev-full-disassembly.txt",
+      "sha256": "f70eb642f3f42c17e5548e1ea5c6dfae2a5dd71c86515ab6c42405d34f5d0659"
+    },
+    {
+      "name": "ppProcTxSecFrame-disassembly.txt",
+      "sha256": "a8505e005fa5aeb10dca1d5350d2e10317623da4fcf661b32be87df158951f03"
+    },
+    {
+      "name": "ppTxPkt-disassembly.txt",
+      "sha256": "4cc1c49d4aca03fc30653534c1a58ef2608bbefddca6c8f6694ea0296a7d88cd"
+    }
+  ],
+  "source_proven_registers": {
+    "key_valid_bitmap": {
+      "address": "0x60033814",
+      "functions": [
+        "hal_crypto_set_key_entry",
+        "hal_crypto_clr_key_entry",
+        "hal_crypto_is_key_valid"
+      ],
+      "semantics": "Bit corresponding to key slot is set/cleared/tested; maximum valid slot count has not been established"
+    },
+    "key_table": {
+      "base": "0x60034400",
+      "row_bytes": 40,
+      "metadata_bytes": 8,
+      "key_material_offset": 8,
+      "functions": [
+        "hal_crypto_set_key_entry",
+        "hal_crypto_get_key_entry",
+        "hal_crypto_clr_key_entry"
+      ],
+      "semantics": "Peer address and encoded configuration occupy the first two words; key bytes are copied beginning at +8, rounded up to four bytes; clear writes all ten words zero"
+    },
+    "per_interface_crypto_control": {
+      "interface0_address": "0x60033800",
+      "interface1_address": "0x60033804",
+      "functions": [
+        "hal_crypto_init",
+        "hal_crypto_enable",
+        "hal_crypto_disable",
+        "hal_crypto_mgmt_rx_enabled"
+      ],
+      "proven_field": "hal_crypto_mgmt_rx_enabled selects interface control word and tests bit17; full encryption modes remain unmodelled"
+    },
+    "using_key_index_read": {
+      "address": "0x6003442c",
+      "bits": "31:30",
+      "function": "hal_crypto_get_using_key_idx",
+      "limit": "A raw source getter alone does not establish when this state updates"
+    }
+  },
+  "source_proven_packet_preparation": {
+    "function": "ppProcTxSecFrame",
+    "section": ".wifi0iram.67",
+    "observation": "Software adds cipher-dependent overhead to packet and DMA length, manipulates descriptor EOF/control fields and another packet buffer. Thus key-register latching alone is insufficient to reproduce secure TX. Cipher mapping and hardware input/output transformations need separate proof."
+  },
+  "required_work_not_implemented": [
+    "Confirm exact pinned-stock key-slot/cipher selection and TX/RX crypto metadata against actual register and packet traces",
+    "Implement genuine CCMP/TKIP transformations with packet numbers, replay and authentication-failure handling; validate against independent vectors and wire captures",
+    "Preserve hardware-visible crypto status, RX length and descriptor flags rather than merely passing encrypted bytes as cleartext",
+    "For a secure virtual access point, implement an actual WPA/RSN/EAPOL authenticator that exchanges frames with the stock guest; no fabricated success callback",
+    "Exercise secure, hidden and persisted credential workflows separately; hidden/open scanning and storage are not proof of WPA"
+  ],
+  "limits": [
+    "No guessed enum-to-cipher mapping",
+    "No keys, credentials or user packet captures included",
+    "Existing peer encrypted-frame rejection remains unchanged",
+    "No secure-network acceptance or physical entropy/timing claim"
+  ]
+}

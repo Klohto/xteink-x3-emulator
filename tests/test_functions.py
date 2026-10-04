@@ -46,6 +46,29 @@ class FunctionReceiptTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             functions["make_ascii_cpfont"](16)
 
+    def test_guest_font_catalog_checks_external_record_bounds_and_checksums(self):
+        def fnv(raw):
+            value = 2166136261
+            for byte in raw:
+                value = ((value ^ byte) * 16777619) & 0xffffffff
+            return value
+        path = b"/.fonts/SyntheticASCII/SyntheticASCII_18.cpfont"
+        payload = bytes((18, 0, len(path))) + path
+        entry = bytearray(152)
+        entry[:14] = b"SyntheticASCII"
+        struct.pack_into("<IIIHBB", entry, 128, 176, len(payload), fnv(payload), 1, 18, 18)
+        struct.pack_into("<I", entry, 148, fnv(entry[:148]))
+        data = struct.pack("<IIQII", 0x46434931, 1, 42, 1, 0) + entry + payload
+        result = functions["decode_font_catalog"](data)
+        self.assertEqual(result["families"], [{"name": "SyntheticASCII", "files": [
+            {"point_size": 18, "style": 0, "path": path.decode()}]}])
+        bad_checksum, bad_payload = bytearray(data), bytearray(data)
+        bad_checksum[24 + 128] ^= 1
+        bad_payload[-1] ^= 1
+        for bad in (data[:23], data[:-1], bad_checksum, bad_payload):
+            with self.assertRaises(SmokeError):
+                functions["decode_font_catalog"](bad)
+
     def test_plain_page_words_preserve_utf8_order_and_reject_corrupt_arenas(self):
         words = ["clock", "rivière", "reader"]
         raw = b"".join(word.encode() + b"\0" for word in words)

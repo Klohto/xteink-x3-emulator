@@ -323,6 +323,96 @@ class BackendRunTests(unittest.TestCase):
                 self.assertEqual(result["validity"]["diagnostics_clean"], label == "clean")
                 self.assertFalse(result["timing"]["speed_selection_allowed"])
 
+    def test_normal_rx_filtering_requires_complete_consistent_observations(self):
+        from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_RX_OBSERVATIONS
+        variants = (("filtered", 3, 3, 0, None, True),
+                    ("unexplained", 5, 3, 0, None, False),
+                    ("provisional", 3, 3, 1, None, False),
+                    ("inconsistent", 2, 3, 0, None, False),
+                    ("missing", 3, 3, 0, "rx-interface1-frames", False))
+        for label, drops, filtered, provisional, missing, clean in variants:
+            with self.subTest(label=label):
+                self.output = self.root / label
+                observations = [p for p in WIFI_RX_OBSERVATIONS if p != missing]
+                self.install_fake_backend(extra_properties={
+                    "/machine/wifi": list(WIFI_BASE_OBSERVATIONS) + observations,
+                    "/machine/regi2c": ["phy-handshake-modelled", "synthetic-measurements"],
+                }, counter_overrides={
+                    "/machine/wifi:rx-dropped": drops,
+                    "/machine/wifi:rx-filter-dropped-frames": filtered,
+                    "/machine/wifi:rx-match-unverified-frames": provisional,
+                    "/machine/wifi:rx-group-policy-modelled": False,
+                })
+                result = run(self.config(wifi=True))
+                self.assertEqual(result["validity"]["diagnostics_clean"], clean)
+                self.assertEqual(result["validity"]["unsupported_features_checked"],
+                                 label not in ("inconsistent", "missing"))
+                self.assertFalse(result["model_limits"]["wifi_rx_group_policy_modelled"])
+                self.assertEqual(result["final_state"]["wifi"]["rx-dropped"], drops)
+                self.assertEqual(result["wifi"]["rx_unexplained_drops"],
+                                 drops if label in ("inconsistent", "missing") else drops-filtered)
+
+    def test_tx_prefix_observations_require_consistent_counts_and_preserve_errors(self):
+        from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_FCS_OBSERVATIONS, WIFI_PREFIX_OBSERVATIONS
+        variants = (("valid", None, 2, 0, 2, True, True),
+                    ("errors", None, 2, 1, 2, True, False),
+                    ("missing", "tx-aggregation-modelled", 2, 0, 2, False, False),
+                    ("excess-stripped", None, 3, 0, 2, False, False),
+                    ("negative", None, -1, 0, 2, False, False),
+                    ("boolean-counter", None, True, 0, 2, False, False))
+        for label, missing, stripped, errors, fcs, checked, clean in variants:
+            with self.subTest(label=label):
+                self.output = self.root / label
+                self.install_fake_backend(extra_properties={
+                    "/machine/wifi": list(WIFI_BASE_OBSERVATIONS + WIFI_FCS_OBSERVATIONS)
+                        + [prop for prop in WIFI_PREFIX_OBSERVATIONS if prop != missing],
+                    "/machine/regi2c": ["phy-handshake-modelled", "synthetic-measurements"],
+                }, counter_overrides={
+                    "/machine/wifi:tx-frames": 2,
+                    "/machine/wifi:tx-fcs-stripped-frames": fcs,
+                    "/machine/wifi:tx-length-errors": errors,
+                    "/machine/wifi:tx-buffer-prefix-stripped-frames": stripped,
+                    "/machine/wifi:tx-buffer-prefix-errors": errors,
+                    "/machine/wifi:tx-buffer-prefix-modelled": True,
+                    "/machine/wifi:tx-aggregation-modelled": False,
+                })
+                result = run(self.config(wifi=True))
+                self.assertEqual(result["wifi"]["tx_buffer_prefix_telemetry_valid"], checked)
+                self.assertEqual(result["validity"]["unsupported_features_checked"], checked)
+                self.assertEqual(result["validity"]["diagnostics_clean"], clean)
+                self.assertFalse(result["model_limits"]["wifi_tx_aggregation_modelled"] if not missing else False)
+                self.assertFalse(result["timing"]["speed_selection_allowed"])
+
+    def test_synthetic_mac_random_seed_is_explicit_bounded_and_requires_observation(self):
+        from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_RANDOM_OBSERVATIONS
+        config = self.config(wifi=True, wifi_random_seed=0xffffffff)
+        self.assertIn('driver=esp32c3.wifi,property=random-seed,value=4294967295', build_command(config))
+        self.assertEqual(config.resolved().wifi_random_seed, 0xffffffff)
+        for seed in [0, -1, 1 << 32, True, '1']:
+            with self.subTest(seed=seed), self.assertRaises(BackendError):
+                build_command(self.config(wifi=True, wifi_random_seed=seed))
+        with self.assertRaisesRegex(BackendError, 'requires WiFi'):
+            build_command(self.config(wifi_random_seed=1))
+        for label, observed, actual in [('missing', False, 0), ('different', True, 2), ('matched', True, 7)]:
+            with self.subTest(label=label):
+                self.output = self.root/label
+                self.install_fake_backend(extra_properties={
+                    '/machine/wifi': list(WIFI_BASE_OBSERVATIONS) + (list(WIFI_RANDOM_OBSERVATIONS) if observed else []),
+                    '/machine/regi2c': ['phy-handshake-modelled', 'synthetic-measurements'],
+                }, counter_overrides={'/machine/wifi:random-seed': actual,
+                                      '/machine/wifi:random-source-synthetic': True,
+                                      '/machine/wifi:random-entropy-modelled': False,
+                                      '/machine/wifi:random-timing-calibrated': False,
+                                      '/machine/wifi:random-state-migration-modelled': False})
+                result = run(self.config(wifi=True, wifi_random_seed=7))
+                self.assertEqual(result['validity']['unsupported_features_checked'], label == 'matched')
+                self.assertEqual(result['validity']['diagnostics_clean'], label == 'matched')
+                self.assertEqual(result['wifi']['synthetic_random_seed_requested'], 7)
+                self.assertFalse(result['timing']['speed_selection_allowed'])
+                if observed:
+                    self.assertTrue(result['model_limits']['wifi_random_source_synthetic'])
+                    self.assertFalse(result['model_limits']['wifi_random_entropy_modelled'])
+
     def test_wifi_requires_phy_handshake_observations_and_records_synthetic_limits(self):
         from x3emu.backend import DEVICE_PROPERTIES
         extras = {"/machine/wifi": list(DEVICE_PROPERTIES["wifi"])}

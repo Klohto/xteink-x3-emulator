@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "scope": "ESP32-C3 digital RX interface classification; no RF, airtime or comprehensive receive-policy fidelity claim",
+  "official_wifi_library": {
+    "idf_version": "v5.5.2",
+    "submodule_api": "https://api.github.com/repos/espressif/esp-idf/contents/components/esp_wifi/lib?ref=v5.5.2",
+    "wifi_lib_revision": "01d52d9e69032c486015dc28b08c3bf6aaf348a9",
+    "library_url": "https://raw.githubusercontent.com/espressif/esp32-wifi-lib/01d52d9e69032c486015dc28b08c3bf6aaf348a9/esp32c3/libpp.a",
+    "library_sha256": "7076ed650bca96025c8fa490495dc8e81a5d9ecb21e02a7b8164cd6a1df39f26",
+    "library_bytes": 544534,
+    "read_only": true
+  },
+  "official_rom": {
+    "release": "20241011",
+    "archive_url": "https://github.com/espressif/esp-rom-elfs/releases/download/20241011/esp-rom-elfs-20241011.tar.gz",
+    "archive_sha256": "921f000164a421c7628fbfee55b173384aafaa51883adc65cd27bf9b0af9e9a9",
+    "elf": "esp32c3_rev3_rom.elf",
+    "elf_sha256": "19ac22e08707df926fb0cf4c54795d4067b983fae8635f396ded173a6d78fc3c",
+    "installed_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "matched_functions": [
+      {
+        "name": "ppRxPkt",
+        "address": "0x400414d2",
+        "length_bytes": 276,
+        "machine_code_sha256": "47b41be32b8695fde2f4cabfd9eaeb258b347df156272dcd73baa5e7b7e2b030",
+        "matches_installed_qemu_rom": true
+      },
+      {
+        "name": "wDev_ProcessRxSucData",
+        "address": "0x400436f0",
+        "length_bytes": 834,
+        "machine_code_sha256": "459c9a1c158a43bad4185deeedec58a4029802dcfb165b2235c7b047c44a7fa1",
+        "matches_installed_qemu_rom": true
+      }
+    ]
+  },
+  "function_receipts": [
+    {
+      "function": "wDev_ProcessRxSucData",
+      "object": "wdev.o",
+      "object_sha256": "9aa2e60a7745850c0fb197eb6ee8e6a6e6ee8c1045c8554126dbb75d54be4a8e",
+      "section": ".wifislprxiram.23",
+      "disassembly_sha256": "84daa65e9786c3656b6b513b9bc630abaca006889d246a9df086d9789653586d"
+    },
+    {
+      "function": "wDev_IndicateFrame",
+      "object": "wdev.o",
+      "object_sha256": "9aa2e60a7745850c0fb197eb6ee8e6a6e6ee8c1045c8554126dbb75d54be4a8e",
+      "section": ".wifislprxiram.17",
+      "disassembly_sha256": "a42ba245382e271b6ace9d83b9a8350422587e81388103f520defda61ba3ebf4"
+    },
+    {
+      "function": "ppRxPkt",
+      "object": "pp.o",
+      "object_sha256": "a396eb5f23ef00d4a83fde180986138fca312b7c1ebaf272609f962220897727",
+      "section": ".wifislprxiram.28",
+      "disassembly_sha256": "227ad67221459b8ed43964365d892b49d854b7a6b95b3b5f61db2d95b3b49ea8"
+    },
+    {
+      "function": "ppRxProtoProc",
+      "object": "pp.o",
+      "object_sha256": "a396eb5f23ef00d4a83fde180986138fca312b7c1ebaf272609f962220897727",
+      "section": ".wifislprxiram.23",
+      "disassembly_sha256": "d3808255240af1e7f5e855ebbab9d7c7334c382ff98d2a7691105110927663ac"
+    },
+    {
+      "function": "ppRegisterRxCallback",
+      "object": "pp.o",
+      "object_sha256": "a396eb5f23ef00d4a83fde180986138fca312b7c1ebaf272609f962220897727",
+      "section": ".text.ppRegisterRxCallback",
+      "disassembly_sha256": "8ee58c7bbffa1f881194c0ed6c82cf042b8a07f9ba5579bcf080827dcaeba678"
+    },
+    {
+      "function": "hal_mac_set_addr",
+      "object": "hal_mac.o",
+      "object_sha256": "c356a4a8f77890392ce0db3786f9608e4ed27851464268348642e4fc3549ff98",
+      "section": ".text.hal_mac_set_addr",
+      "disassembly_sha256": "4aa1f56133631c6db592a8513768cdc121e3887b6867b8fcd40cfe26aec028d9"
+    },
+    {
+      "function": "hal_mac_set_bssid",
+      "object": "hal_mac.o",
+      "object_sha256": "c356a4a8f77890392ce0db3786f9608e4ed27851464268348642e4fc3549ff98",
+      "section": ".text.hal_mac_set_bssid",
+      "disassembly_sha256": "a5c7b2b2eaea37d549207585fa864002dd9a363ee6911be64c600fee93409c5a"
+    },
+    {
+      "function": "hal_mac_clr_bssid",
+      "object": "hal_mac.o",
+      "object_sha256": "c356a4a8f77890392ce0db3786f9608e4ed27851464268348642e4fc3549ff98",
+      "section": ".text.hal_mac_clr_bssid",
+      "disassembly_sha256": "579da666dc11afb01cafd95efbffc62ac331185440e336e4d9d08624b002aaa0"
+    },
+    {
+      "function": "hal_rx_enable_bssid_check",
+      "object": "hal_mac.o",
+      "object_sha256": "c356a4a8f77890392ce0db3786f9608e4ed27851464268348642e4fc3549ff98",
+      "section": ".text.hal_rx_enable_bssid_check",
+      "disassembly_sha256": "416732bdc7e50ab331c78ff0060a435c899380013768dff5944fea840a76d141"
+    },
+    {
+      "function": "hal_rx_disable_bssid_check",
+      "object": "hal_mac.o",
+      "object_sha256": "c356a4a8f77890392ce0db3786f9608e4ed27851464268348642e4fc3549ff98",
+      "section": ".text.hal_rx_disable_bssid_check",
+      "disassembly_sha256": "7263639d870174194867659b7aeb82577abfb95f44e9a5a2aafa0e4400263c7d"
+    }
+  ],
+  "callback_mapping": {
+    "header_word_offset": 0,
+    "interface0": {
+      "bit": 28,
+      "callback_offset_in_pTxRx": 936,
+      "role": "WIFI_IF_STA"
+    },
+    "interface1": {
+      "bit": 29,
+      "callback_offset_in_pTxRx": 940,
+      "role": "WIFI_IF_AP"
+    },
+    "precedence": "ppRxPkt selects interface0 first when both bits are set; a missing interface0 callback discards rather than falling through to interface1",
+    "registration": "ppRegisterRxCallback stores callback at pTxRx + 8 + 4*(interface+232)",
+    "enum_source": "https://github.com/espressif/esp-idf/blob/v5.5.2/components/esp_wifi/include/esp_wifi_types_generic.h"
+  },
+  "comparator_registers": {
+    "base": "0x60033000",
+    "slot_stride_bytes": 8,
+    "slots": 2,
+    "receiver_address": {
+      "value_offset": "0x40",
+      "mask_offset": "0x60"
+    },
+    "bssid": {
+      "value_offset": "0x00",
+      "mask_offset": "0x20"
+    },
+    "value": "Low word contains address bytes0..3 little-endian; high word low16 contains bytes4..5",
+    "mask": "One bits compare corresponding address bits; mask high word low16 completes 48-bit mask; bit16 enables comparator",
+    "bssid_check": {
+      "offset": "0xd8",
+      "stride_bytes": 4,
+      "bit": 1
+    },
+    "primary_functions": [
+      "hal_mac_set_addr",
+      "hal_mac_set_bssid",
+      "hal_mac_clr_bssid",
+      "hal_rx_enable_bssid_check",
+      "hal_rx_disable_bssid_check"
+    ],
+    "additional_c3_source": "https://github.com/ESP32C3-Open-MAC/esp32c3-open-mac/blob/00f81c9197021e7a02365df7a4c8b41241a185a1/main/hardware.c",
+    "additional_c3_source_sha256": "0f0feb1db9af9ea9bbf28d280ef5a647d35adb9e1925ec7a05a2a3d5049c7e46"
+  },
+  "observed_stock_failure": {
+    "synthetic_factory_mac": "02:58:33:45:44:01",
+    "ap_mac_and_bssid": "02:58:33:45:44:02",
+    "other_guest_sta_mac": "02:58:33:45:44:03",
+    "receiver_address_slot0": "02:58:33:45:44:01",
+    "receiver_address_slot1": "02:58:33:45:44:02",
+    "auth_mpdu_length_bytes": 30,
+    "auth_mpdu_sha256": "b0e1c180ea11ad8592a99ca732b036bdbac3ccdde6932770b2f9dffd752c1837",
+    "faulty_model_flags": "Both interface bits were set for every unicast, routing AP-targeted auth to the STA callback",
+    "evidence_policy": "Model MMIO diagnostics log only the first read/write per address; those first values are not a complete final register-state trace",
+    "clock_modes_tested": [
+      "independent icount",
+      "host paced without icount"
+    ],
+    "result_before_comparator_fix": "AUTH_EXPIRE; real AP emitted no auth response"
+  },
+  "limits": [
+    "Group scan/policy decisions beyond an exact enabled BSSID match remain unverified; the existing fallback is explicitly counted and group-policy-modelled stays false",
+    "Unconfigured compatibility fallback is counted as unverified and unsupported",
+    "Four-address data BSSID policy remains unsupported when BSSID checking is required",
+    "Unknown upper register fields retain unsupported accounting",
+    "No guest callback interception or manufactured authentication response",
+    "No timing calibration or RF fidelity claim"
+  ],
+  "validation_status": "Official-source and matching-ROM proof plus 105 native cases passed; two actual stock guests authenticate, associate and complete DHCP. The whole peer cohort remains failed because one AP TX-length error is retained for investigation.",
+  "native_validation": {
+    "binary_sha256": "a8f7f23d189d09c16e2de62f7da0ceb8bdb1b9d8e033a91651e06940714cca67",
+    "patch_sha256": "bd6ca5e91eae089f0a765728cb5fdcbcd4147875866b018e8fe4aa2cca96a820",
+    "source_tree": "f7bffe2fa124987d8c5730a4a55dec6f7c17d5a0",
+    "metadata_sha256": "0c84d5dd515ea78e097723fbf7c786f0bffd2696e55aa498e8cb30c3f7fb471b",
+    "full_gate_receipt_sha256": "e0a3e783abc0e94c24e027dedc024ac0638355733567f151800a0760910a431d",
+    "cases_passed": 105,
+    "skips": 0,
+    "suites": 12,
+    "wifi_cases_passed": 14,
+    "source_apply_tree_verified": true,
+    "wrapped_dependency_trees_verified_after_tests": true,
+    "timing_calibrated": false
+  },
+  "actual_stock_replay": {
+    "backend_sha256": "a8f7f23d189d09c16e2de62f7da0ceb8bdb1b9d8e033a91651e06940714cca67",
+    "firmware_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "receipt_sha256": "65e9ba70433bda06739ca75c38e626ea8b1a4b9bf8cad3feac5ca35fadfd88e5",
+    "workflow": "hotspot-join",
+    "completed": true,
+    "cohort_functional_pass": false,
+    "complete_machine_acceptance_passed": false,
+    "unchanged_raw_peer_bytes_forwarded": true,
+    "two_distinct_real_efuse_identities": true,
+    "actual_peer_association_and_dhcp": true,
+    "ssid": "CrossPoint-Reader",
+    "station_ip": "192.168.4.2",
+    "ap_native_fcs_observations": {
+      "tx-fcs-stripped-frames": 960,
+      "tx-fcs-unverified-frames": 0,
+      "tx-length-errors": 1
+    },
+    "ap_native_rx_comparator_observations": {
+      "rx-interface0-frames": 22,
+      "rx-interface1-frames": 19,
+      "rx-filter-dropped-frames": 0,
+      "rx-match-unverified-frames": 22,
+      "rx-group-policy-modelled": false
+    },
+    "station_native_fcs_observations": {
+      "tx-fcs-stripped-frames": 43,
+      "tx-fcs-unverified-frames": 0,
+      "tx-length-errors": 0
+    },
+    "remaining_failure": "AP tx-length-errors=1; exact descriptor and PLCP values were not logged by this candidate, so no cause is inferred."
+  }
+}

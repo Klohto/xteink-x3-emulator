@@ -189,6 +189,6 @@ test_wire_path_length_is_utf8_bytes_and_bounds_fail_before_connect (test_usb_tra
 test_zero_length_upload_still_sends_crc_without_ack (test_usb_transfer.USBWireClientTests.test_zero_length_upload_still_sends_crc_without_ack) ... ok
 
 ----------------------------------------------------------------------
-Ran 189 tests in 58.388s
+Ran 189 tests in 56.694s
 
 OK (skipped=1)

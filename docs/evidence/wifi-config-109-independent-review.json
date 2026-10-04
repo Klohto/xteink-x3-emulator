@@ -1,0 +1,1296 @@
+{
+  "schema_version": 1,
+  "review_type": "independent retained artifact and pinned source audit; no guest rerun",
+  "review_script_sha256": "9014f132387e1f727ccc550a80f51e9941e0c05d37240df9a443651c481c8db2",
+  "receipts_root": "/tmp/x3-wifi-config-prng109",
+  "firmware_source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "sdk_source_commit": "b784446302c076b4b5a622627867f0c80905cc50",
+  "fat_decoder_current_sha256": "dc522481b4817ea26ed899e66b2c1b6c5f5fe5a4c6b01b43b261945236da8510",
+  "fixture_current_sha256": "5f4d437fd31723d8ff05c2189a77dd9984cf4404646c6c79e67fcf14f5a2c1fc",
+  "current_helpers_are_not_claimed_frozen_execution_dependencies": true,
+  "workflows": {
+    "wifi-manual-ssid": {
+      "receipt_sha256": "276046dfda0eba89e055a148e5bdbf52e6556ffa1d0b927e532151223a423f94",
+      "run_manifest_sha256": "f9de7696e7a73ec90823db7bb0b947bd21ab930d15c5911b6cac71c3cb06e2de",
+      "pid": 9,
+      "stopped_cleanly": true,
+      "source_checks": [
+        {
+          "path": "src/activities/network/WifiSelectionActivity.cpp",
+          "recorded_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "pinned_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "checkout_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/WifiCredentialStore.cpp",
+          "recorded_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "pinned_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "checkout_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/activities/util/KeyboardEntryActivity.cpp",
+          "recorded_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "pinned_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "checkout_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/activities/network/CrossPointWebServerActivity.cpp",
+          "recorded_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "pinned_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "checkout_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "matches_pin_and_checkout": true
+        }
+      ],
+      "frame_checks": {
+        "home": {
+          "file_sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e",
+          "pixel_crc32": 1956536157,
+          "native_frame": 4,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1048769292,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "001-settings-row": {
+          "file_sha256": "03a177cbb95d72e405a0e272aa4bc417e3a27a494be7c4fd348b1c8973fa69ab",
+          "pixel_crc32": 3271372298,
+          "native_frame": 5,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1021003840,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "002-file-transfer-row": {
+          "file_sha256": "961e009f58685b6897c1eeb2e26c1f335a9320987b0c92be20d3a0a2a14cfde8",
+          "pixel_crc32": 104202829,
+          "native_frame": 6,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1018207312,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "003-network-mode": {
+          "file_sha256": "8d18c10c43ee51572674afa4c4a7f56c841b406b57a053e13d06cf2809c576c3",
+          "pixel_crc32": 1888884099,
+          "native_frame": 7,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1012130240,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "manual-network-list": {
+          "file_sha256": "786b6ceab7dec2f8c7c9be2d110065c2713a27d4a859647b19d67bceee8a77b2",
+          "pixel_crc32": 2674635838,
+          "native_frame": 10,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1105314480,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "004-hidden-entry-row": {
+          "file_sha256": "11c24f6fabddc0e779eaa9f481cb13b274e553606ab659e0f698269efa7aa984",
+          "pixel_crc32": 3023135103,
+          "native_frame": 11,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1036054592,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "005-ssid-keyboard": {
+          "file_sha256": "bb41fe87416021ea3a33548667bcb79a56018313a3e6588d11475de38e4fc7da",
+          "pixel_crc32": 691465528,
+          "native_frame": 12,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1081495736,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "006-ssid-0-move-0": {
+          "file_sha256": "16cba726b16f0fd31a0a0609cf86494cf63d90e778f6d5f4c39774c750f20124",
+          "pixel_crc32": 3328706643,
+          "native_frame": 13,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1093460900,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "007-ssid-0-move-1": {
+          "file_sha256": "30f6b59a7798e9c52f643c7ca50fbc4e8c592ce53a006c84844ea160261fa84e",
+          "pixel_crc32": 1142391184,
+          "native_frame": 14,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1094825452,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "008-ssid-0-move-2": {
+          "file_sha256": "69264090fd354edafba59ff0e74072d974d0962742879777bf5fbb5736178748",
+          "pixel_crc32": 346027999,
+          "native_frame": 15,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1002556152,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "ssid-character-0": {
+          "file_sha256": "bdea448a10e38865b4954f9dc2c2016a60bdfb083a7a12c9a7fdd59fdf8990c7",
+          "pixel_crc32": 2928378543,
+          "native_frame": 16,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1000210536,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "009-ssid-1-move-0": {
+          "file_sha256": "edff44c4f00c3150007483d7400020e037c347897c0e051d388d4cf2a02fd4dc",
+          "pixel_crc32": 2088533283,
+          "native_frame": 17,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1017654064,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "010-ssid-1-move-1": {
+          "file_sha256": "0ebd8913fd1012dc83fb75e27e8cdb0db4b939776789e214ce959dca0af9eabe",
+          "pixel_crc32": 3886074665,
+          "native_frame": 18,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1044601928,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "011-ssid-1-move-2": {
+          "file_sha256": "f4f1a3fc6598f2aa4e7e7948bbaabe87a37b5b6d966a55c8bd99b498719f8b30",
+          "pixel_crc32": 388443358,
+          "native_frame": 19,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1074099136,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "ssid-character-1": {
+          "file_sha256": "85dfa194f2eb8e755e7bfe369be4a83f725d9b7b496ecbe2faaadde06ba5f842",
+          "pixel_crc32": 4058857435,
+          "native_frame": 20,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1050446328,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "012-ssid-2-move-0": {
+          "file_sha256": "0ec9e7df35a54df64f2e5ce9ec092ef19fb90d5cd514382c2f399d55c57b9446",
+          "pixel_crc32": 679476585,
+          "native_frame": 21,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1020941744,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "ssid-character-2": {
+          "file_sha256": "66e2d89e77fe141dd0c27e882bf191a7459f4d3d8ca8da66d3f7f026c9a0d131",
+          "pixel_crc32": 2121596778,
+          "native_frame": 22,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1055434232,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "013-ssid-3-move-0": {
+          "file_sha256": "e03330bbea240a99fa12b66998290793a8b530edd188e33dd14d2eda379fc903",
+          "pixel_crc32": 2816884184,
+          "native_frame": 23,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1111815884,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "014-ssid-3-move-1": {
+          "file_sha256": "75335188ef7b00b45413c6b524f8ca4d166f77cf31d7877f079ecbb81a5c5178",
+          "pixel_crc32": 3434966053,
+          "native_frame": 24,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1004503444,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "015-ssid-3-move-2": {
+          "file_sha256": "2645ea493785c12d5855ba98d9bff2273c5ab062412fa0b8d32d3743ce740f89",
+          "pixel_crc32": 3888103274,
+          "native_frame": 25,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1091517168,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "016-ssid-3-move-3": {
+          "file_sha256": "59b7ddf7d255486800069cc498474205fd4948923bab3efac97ef1c310f230fb",
+          "pixel_crc32": 2014923758,
+          "native_frame": 26,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1032861860,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "ssid-character-3": {
+          "file_sha256": "ebae99de246007e7af94bab9b42808b11f3607d7565aba421d02f06de8e613b5",
+          "pixel_crc32": 1510458034,
+          "native_frame": 27,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1037000008,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "017-ssid-4-move-0": {
+          "file_sha256": "009fd46a27ec9e7e9e450b462a8ea22bb8f4b4717632c970c8e713e3a110134d",
+          "pixel_crc32": 1673092376,
+          "native_frame": 28,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1078171804,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "018-ssid-4-move-1": {
+          "file_sha256": "b29c437cd8d26403a9e445fe7b0e97760679c48dc13a54e5c31b0075a37d49c6",
+          "pixel_crc32": 3838372790,
+          "native_frame": 29,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1084580220,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "ssid-character-4": {
+          "file_sha256": "efff13a0a1b697b0b885d5a51198f3f815b112b11c060ff10e472eb694f839c1",
+          "pixel_crc32": 113570595,
+          "native_frame": 30,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1035448264,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "ssid-exact-probe1": {
+          "file_sha256": "efff13a0a1b697b0b885d5a51198f3f815b112b11c060ff10e472eb694f839c1",
+          "pixel_crc32": 113570595,
+          "native_frame": 30,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1081310584,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "019-ssid-submit-move-0": {
+          "file_sha256": "d0a09e00018da0ff0bcadf3f161512a41fedcee583b0378fe5bce9985cdf7009",
+          "pixel_crc32": 3914150842,
+          "native_frame": 31,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1042971204,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "020-ssid-submit-move-1": {
+          "file_sha256": "ed5908d4424af4456ccc17f5f5d66b57a2cfa3b9c291a6080a8aadcc8721f8f6",
+          "pixel_crc32": 643266869,
+          "native_frame": 32,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1105757924,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "021-ssid-submit-move-2": {
+          "file_sha256": "7c14ed1aa1a19fa9cc0d64c6ad662d2ab8fbeca6cc6a4a38f1f260d09d10d8ca",
+          "pixel_crc32": 665661091,
+          "native_frame": 33,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1100204040,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "022-ssid-submitted": {
+          "file_sha256": "0d7a6d131c8ae90e1342a59984333db71fe6cd4315ab9c7498c108cde5d0bc86",
+          "pixel_crc32": 2625804135,
+          "native_frame": 34,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1023053192,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "password-entry-probe1": {
+          "file_sha256": "0d7a6d131c8ae90e1342a59984333db71fe6cd4315ab9c7498c108cde5d0bc86",
+          "pixel_crc32": 2625804135,
+          "native_frame": 34,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1003808208,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "023-empty-password-footer": {
+          "file_sha256": "1cc6c0db2ae8705af483045f622dda3b44587163663b6bc07651f3d6e5f2c1e1",
+          "pixel_crc32": 1943826956,
+          "native_frame": 35,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1064444500,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "024-empty-password-ok": {
+          "file_sha256": "4af2a84a8af7bab8a8b07cf1fbae2ced40d2738055c330dc0dfffb9f448ec533",
+          "pixel_crc32": 1490985283,
+          "native_frame": 36,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1125033832,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "connected-serving": {
+          "file_sha256": "7c8e176d128a08f2727c3eb82ad67f7a52a7701d7e67f5f0da78f9b517fd6613",
+          "pixel_crc32": 533514065,
+          "native_frame": 38,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1027930512,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        }
+      },
+      "artifact_checks": {
+        "panel.pbm": true,
+        "panel.jsonl": true,
+        "serial.log": true,
+        "rom.log": true,
+        "diagnostics.log": true,
+        "efuse.bin": true
+      },
+      "cards": {
+        "input": {
+          "sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+          "recorded_sha256_matches": true,
+          "original_epub_unchanged": true,
+          "epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75",
+          "wifi_store": null
+        },
+        "final": {
+          "sha256": "7e8ba80eee566a60f95995ba36c47bca6280ccd35abe48b03c19a77027c6be83",
+          "recorded_sha256_matches": true,
+          "original_epub_unchanged": true,
+          "epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75",
+          "wifi_store": {
+            "lastConnectedSsid": "X3EMU",
+            "credentials": [
+              {
+                "ssid": "X3EMU",
+                "password_obf": ""
+              }
+            ]
+          },
+          "wifi_store_sha256": "158fb3616c0e4793f1aca2008bc47863a17b96cff17684b8a03995e3a9930c85"
+        },
+        "final_flash": {
+          "sha256": "964970e25eed1333c0f6030b204fb4fc5b59244437eb94717843b1295729e2f1",
+          "recorded_sha256_matches": true
+        }
+      },
+      "button_steps": [
+        {
+          "button": "up",
+          "purpose": "Fresh LYRA Home: wrap to Settings",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 523800008
+        },
+        {
+          "button": "up",
+          "purpose": "Select File Transfer",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 601180824
+        },
+        {
+          "button": "confirm",
+          "purpose": "Open actual network mode selector",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 710266040
+        },
+        {
+          "button": "confirm",
+          "purpose": "Join Network through source silent reboot",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 722079944
+        },
+        {
+          "button": "down",
+          "purpose": "Select appended Add Hidden Network row",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 555187764
+        },
+        {
+          "button": "confirm",
+          "purpose": "Open actual manual SSID keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 470171152
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 635584112
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 690415936
+        },
+        {
+          "button": "right",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 640069320
+        },
+        {
+          "button": "confirm",
+          "purpose": "Type X through source long-press case alternate",
+          "hold_ns": 1200000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 689367152
+        },
+        {
+          "button": "down",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 459039704
+        },
+        {
+          "button": "right",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 739453912
+        },
+        {
+          "button": "down",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 570000008
+        },
+        {
+          "button": "confirm",
+          "purpose": "Type 3",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 430449768
+        },
+        {
+          "button": "down",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 601215112
+        },
+        {
+          "button": "confirm",
+          "purpose": "Type E through source long-press case alternate",
+          "hold_ns": 1200000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 640609264
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 635831184
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 839934072
+        },
+        {
+          "button": "left",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 749986688
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 520098456
+        },
+        {
+          "button": "confirm",
+          "purpose": "Type M through source long-press case alternate",
+          "hold_ns": 1200000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 496940976
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 635604120
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual English keyboard",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 680238344
+        },
+        {
+          "button": "confirm",
+          "purpose": "Type U through source long-press case alternate",
+          "hold_ns": 1200000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 580445888
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual OK key",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 489784400
+        },
+        {
+          "button": "up",
+          "purpose": "Navigate actual OK key",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 525278712
+        },
+        {
+          "button": "right",
+          "purpose": "Navigate actual OK key",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 524187736
+        },
+        {
+          "button": "confirm",
+          "purpose": "Submit manual X3EMU SSID",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 594732360
+        },
+        {
+          "button": "up",
+          "purpose": "Wrap fresh password keyboard from digit row to footer",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 519884920
+        },
+        {
+          "button": "left",
+          "purpose": "Wrap footer to OK",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 521341664
+        },
+        {
+          "button": "confirm",
+          "purpose": "Submit empty password for the open fixture AP",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 637189800
+        }
+      ],
+      "harness_snapshot_sha256": "b3a852d2a45501ba3d82a87aa86113171c6da5a0869f296518ce7d705f4705f4",
+      "network_snapshot_sha256": "a6e88a941dc4c7be84385417538b03d440d3d03f65b38ddc5481ca833c571629",
+      "current_harness_matches_snapshot": true,
+      "current_network_matches_snapshot": false,
+      "backend_sha256": "db30ffb3ca120856211e080ee63e7ea894ecf6a812015f73f5b3e04884d6925c",
+      "trace": {
+        "sha256": "f5ab6c7f2fb379b2e71d8d3db6f4010fc50f17d45bf705b05ee1c1ec2aa6d82f",
+        "sequence_complete": true,
+        "virtual_time_monotonic": true,
+        "events": 657,
+        "bytes": 50947,
+        "frame_completions": 38,
+        "frozen_fd_path_linked": true,
+        "output_errors": {
+          "protocol-errors": 0,
+          "output-errors": 0,
+          "trace-write-errors": 0,
+          "trace-flush-errors": 0,
+          "trace-close-errors": 0,
+          "dump-open-errors": 0,
+          "dump-write-errors": 0,
+          "dump-flush-errors": 0,
+          "dump-close-errors": 0
+        },
+        "final_pixel_crc32": 533514065,
+        "final_native_crc_matches_trace_and_dump": true
+      },
+      "connection_attempts": [
+        [
+          "96030",
+          "0",
+          "0",
+          "1",
+          "0"
+        ]
+      ],
+      "dhcp_completions": [
+        [
+          "99559",
+          "10.0.2.15"
+        ]
+      ],
+      "scan_completion_times_ms": [
+        [
+          "14988",
+          "1"
+        ]
+      ],
+      "functional_pass_original": true,
+      "strict_pass_original": false,
+      "unresolved_diagnostics_preserved": true,
+      "fresh_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "boot_sequence": {
+        "targets": [
+          0,
+          6
+        ],
+        "reset_reasons": [
+          "POWERON",
+          "SW"
+        ]
+      }
+    },
+    "wifi-saved-reconnect": {
+      "receipt_sha256": "db227298cef342fdba0f8c57877a2b7b8f8a14d30f718c7eca4a432cf1da84b9",
+      "run_manifest_sha256": "ef59f4f87ca0f749b9393ddf1abacccd633706ea3b8d7332cc7f7c56434d8c00",
+      "pid": 38,
+      "stopped_cleanly": true,
+      "source_checks": [
+        {
+          "path": "src/activities/network/WifiSelectionActivity.cpp",
+          "recorded_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "pinned_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "checkout_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/WifiCredentialStore.cpp",
+          "recorded_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "pinned_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "checkout_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/activities/util/KeyboardEntryActivity.cpp",
+          "recorded_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "pinned_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "checkout_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/activities/network/CrossPointWebServerActivity.cpp",
+          "recorded_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "pinned_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "checkout_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "matches_pin_and_checkout": true
+        }
+      ],
+      "frame_checks": {
+        "home": {
+          "file_sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e",
+          "pixel_crc32": 1956536157,
+          "native_frame": 4,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1025796508,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "001-settings-row": {
+          "file_sha256": "03a177cbb95d72e405a0e272aa4bc417e3a27a494be7c4fd348b1c8973fa69ab",
+          "pixel_crc32": 3271372298,
+          "native_frame": 5,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1040243872,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "002-file-transfer-row": {
+          "file_sha256": "961e009f58685b6897c1eeb2e26c1f335a9320987b0c92be20d3a0a2a14cfde8",
+          "pixel_crc32": 104202829,
+          "native_frame": 6,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1074150968,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "003-network-mode": {
+          "file_sha256": "8d18c10c43ee51572674afa4c4a7f56c841b406b57a053e13d06cf2809c576c3",
+          "pixel_crc32": 1888884099,
+          "native_frame": 7,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1065516408,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "connected-serving": {
+          "file_sha256": "df6ebb09d95f436a38b35f4b63cb74e6fea4f2f57d2b7fa4c21023ac0b9de128",
+          "pixel_crc32": 533514065,
+          "native_frame": 10,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1023457076,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        }
+      },
+      "artifact_checks": {
+        "panel.pbm": true,
+        "panel.jsonl": true,
+        "serial.log": true,
+        "rom.log": true,
+        "diagnostics.log": true,
+        "efuse.bin": true
+      },
+      "cards": {
+        "input": {
+          "sha256": "7e8ba80eee566a60f95995ba36c47bca6280ccd35abe48b03c19a77027c6be83",
+          "recorded_sha256_matches": true,
+          "original_epub_unchanged": true,
+          "epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75",
+          "wifi_store": {
+            "lastConnectedSsid": "X3EMU",
+            "credentials": [
+              {
+                "ssid": "X3EMU",
+                "password_obf": ""
+              }
+            ]
+          },
+          "wifi_store_sha256": "158fb3616c0e4793f1aca2008bc47863a17b96cff17684b8a03995e3a9930c85"
+        },
+        "final": {
+          "sha256": "7e8ba80eee566a60f95995ba36c47bca6280ccd35abe48b03c19a77027c6be83",
+          "recorded_sha256_matches": true,
+          "original_epub_unchanged": true,
+          "epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75",
+          "wifi_store": {
+            "lastConnectedSsid": "X3EMU",
+            "credentials": [
+              {
+                "ssid": "X3EMU",
+                "password_obf": ""
+              }
+            ]
+          },
+          "wifi_store_sha256": "158fb3616c0e4793f1aca2008bc47863a17b96cff17684b8a03995e3a9930c85"
+        },
+        "final_flash": {
+          "sha256": "90ec4efe1487433dc7cb2fee16fd717cc90fa922c517272159b3f074156d901a",
+          "recorded_sha256_matches": true
+        }
+      },
+      "button_steps": [
+        {
+          "button": "up",
+          "purpose": "Fresh LYRA Home: wrap to Settings",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 530007400
+        },
+        {
+          "button": "up",
+          "purpose": "Select File Transfer",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 514447224
+        },
+        {
+          "button": "confirm",
+          "purpose": "Open actual network mode selector",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 761985040
+        },
+        {
+          "button": "confirm",
+          "purpose": "Join Network through source silent reboot",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 755007900
+        }
+      ],
+      "harness_snapshot_sha256": "b3a852d2a45501ba3d82a87aa86113171c6da5a0869f296518ce7d705f4705f4",
+      "network_snapshot_sha256": "80b98aa834f26af409df2780347ca7b8605483aa1063a2f2e2e3253f42ba3a0f",
+      "current_harness_matches_snapshot": true,
+      "current_network_matches_snapshot": false,
+      "backend_sha256": "db30ffb3ca120856211e080ee63e7ea894ecf6a812015f73f5b3e04884d6925c",
+      "trace": {
+        "sha256": "a08d12c3491605887da7a0da2c4d1c9e9f0241cef9d690054e84e35e3b8c26be",
+        "sequence_complete": true,
+        "virtual_time_monotonic": true,
+        "events": 209,
+        "bytes": 15975,
+        "frame_completions": 10,
+        "frozen_fd_path_linked": true,
+        "output_errors": {
+          "protocol-errors": 0,
+          "output-errors": 0,
+          "trace-write-errors": 0,
+          "trace-flush-errors": 0,
+          "trace-close-errors": 0,
+          "dump-open-errors": 0,
+          "dump-write-errors": 0,
+          "dump-flush-errors": 0,
+          "dump-close-errors": 0
+        },
+        "final_pixel_crc32": 533514065,
+        "final_native_crc_matches_trace_and_dump": true
+      },
+      "connection_attempts": [
+        [
+          "13017",
+          "1",
+          "1",
+          "0",
+          "0"
+        ]
+      ],
+      "dhcp_completions": [
+        [
+          "16541",
+          "10.0.2.15"
+        ]
+      ],
+      "scan_completion_times_ms": [],
+      "functional_pass_original": true,
+      "strict_pass_original": false,
+      "unresolved_diagnostics_preserved": true,
+      "fresh_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "boot_sequence": {
+        "targets": [
+          0,
+          6
+        ],
+        "reset_reasons": [
+          "POWERON",
+          "SW"
+        ]
+      }
+    },
+    "wifi-forget": {
+      "receipt_sha256": "800f53e42703cfbb178c93d012de11165b96779b2bc084faa25ddb8675e30594",
+      "run_manifest_sha256": "e6a004392c1d1a4df27541da60c3bafc9fc94ab69b8be05dea82e72e085c4eca",
+      "pid": 50,
+      "stopped_cleanly": true,
+      "source_checks": [
+        {
+          "path": "src/activities/network/WifiSelectionActivity.cpp",
+          "recorded_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "pinned_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "checkout_sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/WifiCredentialStore.cpp",
+          "recorded_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "pinned_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "checkout_sha256": "ab23c16cab7db86fe7c133e16fa59cfde974d0730faed4a7b7c843169735206b",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/activities/util/KeyboardEntryActivity.cpp",
+          "recorded_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "pinned_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "checkout_sha256": "61a5638cb6af1d4c63bbf1743a74c7dc1556da6815d2b8475eb69df49ce2a8ed",
+          "matches_pin_and_checkout": true
+        },
+        {
+          "path": "src/activities/network/CrossPointWebServerActivity.cpp",
+          "recorded_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "pinned_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "checkout_sha256": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "matches_pin_and_checkout": true
+        }
+      ],
+      "frame_checks": {
+        "home": {
+          "file_sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e",
+          "pixel_crc32": 1956536157,
+          "native_frame": 4,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1127077172,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "001-settings-row": {
+          "file_sha256": "03a177cbb95d72e405a0e272aa4bc417e3a27a494be7c4fd348b1c8973fa69ab",
+          "pixel_crc32": 3271372298,
+          "native_frame": 5,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1075962528,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "002-file-transfer-row": {
+          "file_sha256": "961e009f58685b6897c1eeb2e26c1f335a9320987b0c92be20d3a0a2a14cfde8",
+          "pixel_crc32": 104202829,
+          "native_frame": 6,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1024591744,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "003-network-mode": {
+          "file_sha256": "8d18c10c43ee51572674afa4c4a7f56c841b406b57a053e13d06cf2809c576c3",
+          "pixel_crc32": 1888884099,
+          "native_frame": 7,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1102520360,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "saved-manual-network-list": {
+          "file_sha256": "45bc691a156e9e1b7f18f9a4e6b6e84209278a5f7c2bb2f41446bf627fc61c01",
+          "pixel_crc32": 3615656155,
+          "native_frame": 11,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1067988568,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "004-forget-cancel-prompt": {
+          "file_sha256": "b2f13250efe982c4fbbb9a1e64de70b4911a4d3333da08fd378624186b0729fd",
+          "pixel_crc32": 2525619377,
+          "native_frame": 12,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1007752748,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "forget-cancel-panel-probe1": {
+          "file_sha256": "b2f13250efe982c4fbbb9a1e64de70b4911a4d3333da08fd378624186b0729fd",
+          "pixel_crc32": 2525619377,
+          "native_frame": 12,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1084097528,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "005-forget-cancelled": {
+          "file_sha256": "a3777d3411cc4f8e0dcbded4fc874be2a060ce8af6d52b8e718a4070a6aa0747",
+          "pixel_crc32": 2148819023,
+          "native_frame": 13,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1009715984,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "after-forget-cancel": {
+          "file_sha256": "75179b3013f75c64578b2e7c6924bf2d3582e1f43d95615e135be9887d86f35b",
+          "pixel_crc32": 3615656155,
+          "native_frame": 14,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1004361656,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "006-forget-confirm-prompt": {
+          "file_sha256": "5a6a0fe0f4e1cd1665ec3c31b502a60b63fc61f32353256d71a5437275ed60a1",
+          "pixel_crc32": 2525619377,
+          "native_frame": 15,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1120691648,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "007-forget-selected": {
+          "file_sha256": "45bec4161607dd57f97fcad234b9b286f95ea73f25af06dcab9b9918adc7c031",
+          "pixel_crc32": 3567121061,
+          "native_frame": 16,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1114602624,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "after-forget-delete": {
+          "file_sha256": "954537889d19b60d5d555ed49faf4333951331784da1cfd1cd17c5a23ba65ba3",
+          "pixel_crc32": 2674635838,
+          "native_frame": 18,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1099949736,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        },
+        "connected-serving": {
+          "file_sha256": "d851172785f44195deab78f79be7379fafda4e6131c2c3cef710aa6688e44181",
+          "pixel_crc32": 533514065,
+          "native_frame": 20,
+          "trace_crc_matches": true,
+          "quiet_interval_ns": 1054590392,
+          "trace_prefix_bytes_match_frozen_native_accounting": true
+        }
+      },
+      "artifact_checks": {
+        "panel.pbm": true,
+        "panel.jsonl": true,
+        "serial.log": true,
+        "rom.log": true,
+        "diagnostics.log": true,
+        "efuse.bin": true
+      },
+      "cards": {
+        "input": {
+          "sha256": "7e8ba80eee566a60f95995ba36c47bca6280ccd35abe48b03c19a77027c6be83",
+          "recorded_sha256_matches": true,
+          "original_epub_unchanged": true,
+          "epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75",
+          "wifi_store": {
+            "lastConnectedSsid": "X3EMU",
+            "credentials": [
+              {
+                "ssid": "X3EMU",
+                "password_obf": ""
+              }
+            ]
+          },
+          "wifi_store_sha256": "158fb3616c0e4793f1aca2008bc47863a17b96cff17684b8a03995e3a9930c85"
+        },
+        "final": {
+          "sha256": "b757147d22bf86fdafd1a47f1261a0d4d4fab338a719d3add3c58380b67f901d",
+          "recorded_sha256_matches": true,
+          "original_epub_unchanged": true,
+          "epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75",
+          "wifi_store": {
+            "lastConnectedSsid": "X3EMU",
+            "credentials": []
+          },
+          "wifi_store_sha256": "cba33e25c4c220ff20f74e0fd844c74df4d9a305f79ef37277ca0c59120b9f43"
+        },
+        "final_flash": {
+          "sha256": "5d10c0f707daae7c82c98c6be9d9ea3d17d595acfeacdc7edea82efe560c543f",
+          "recorded_sha256_matches": true
+        }
+      },
+      "button_steps": [
+        {
+          "button": "up",
+          "purpose": "Fresh LYRA Home: wrap to Settings",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 561999344
+        },
+        {
+          "button": "up",
+          "purpose": "Select File Transfer",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 514765576
+        },
+        {
+          "button": "confirm",
+          "purpose": "Open actual network mode selector",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 660072320
+        },
+        {
+          "button": "confirm",
+          "purpose": "Join Network through source silent reboot",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 558037488
+        },
+        {
+          "button": "confirm",
+          "purpose": "Source Confirm interrupts saved auto-connect to expose network list",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 352461568
+        },
+        {
+          "button": "left",
+          "purpose": "Saved row Left opens genuine Forget prompt",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 548784456
+        },
+        {
+          "button": "confirm",
+          "purpose": "Confirm default Cancel; preserve credential",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 534811440
+        },
+        {
+          "button": "left",
+          "purpose": "Reopen genuine Forget prompt",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 546813348
+        },
+        {
+          "button": "down",
+          "purpose": "Select Forget instead of default Cancel",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 679860744
+        },
+        {
+          "button": "confirm",
+          "purpose": "Commit original saved-network removal",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 531813364
+        },
+        {
+          "button": "confirm",
+          "purpose": "Reconnect manually to original open AP after forgetting",
+          "hold_ns": 400000000,
+          "exact_native_timer_release": true,
+          "release_observed": true,
+          "neutral_interval_ns": 794186556
+        }
+      ],
+      "harness_snapshot_sha256": "b3a852d2a45501ba3d82a87aa86113171c6da5a0869f296518ce7d705f4705f4",
+      "network_snapshot_sha256": "46eef9606a067107802a2a632efca8d45f85d3bd606da8f8ffe08dc037e212e0",
+      "current_harness_matches_snapshot": true,
+      "current_network_matches_snapshot": false,
+      "backend_sha256": "db30ffb3ca120856211e080ee63e7ea894ecf6a812015f73f5b3e04884d6925c",
+      "trace": {
+        "sha256": "144eddf324208b8948d2286694eb5c42e0a4f55707990ee64e96f8361c4df3ae",
+        "sequence_complete": true,
+        "virtual_time_monotonic": true,
+        "events": 369,
+        "bytes": 28472,
+        "frame_completions": 20,
+        "frozen_fd_path_linked": true,
+        "output_errors": {
+          "protocol-errors": 0,
+          "output-errors": 0,
+          "trace-write-errors": 0,
+          "trace-flush-errors": 0,
+          "trace-close-errors": 0,
+          "dump-open-errors": 0,
+          "dump-write-errors": 0,
+          "dump-flush-errors": 0,
+          "dump-close-errors": 0
+        },
+        "final_pixel_crc32": 533514065,
+        "final_native_crc_matches_trace_and_dump": true
+      },
+      "connection_attempts": [
+        [
+          "13037",
+          "1",
+          "1",
+          "0",
+          "0"
+        ],
+        [
+          "40698",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "dhcp_completions": [
+        [
+          "44220",
+          "10.0.2.15"
+        ]
+      ],
+      "scan_completion_times_ms": [
+        [
+          "16017",
+          "1"
+        ],
+        [
+          "26282",
+          "1"
+        ],
+        [
+          "37857",
+          "1"
+        ]
+      ],
+      "functional_pass_original": true,
+      "strict_pass_original": false,
+      "unresolved_diagnostics_preserved": true,
+      "fresh_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "boot_sequence": {
+        "targets": [
+          0,
+          6
+        ],
+        "reset_reasons": [
+          "POWERON",
+          "SW"
+        ]
+      }
+    }
+  },
+  "continuity": [
+    {
+      "next_workflow": "wifi-saved-reconnect",
+      "actual_previous_final_card_equals_next_input": true,
+      "sha256": "7e8ba80eee566a60f95995ba36c47bca6280ccd35abe48b03c19a77027c6be83"
+    },
+    {
+      "next_workflow": "wifi-forget",
+      "actual_previous_final_card_equals_next_input": true,
+      "sha256": "7e8ba80eee566a60f95995ba36c47bca6280ccd35abe48b03c19a77027c6be83"
+    }
+  ],
+  "same_backend_all_boots": true,
+  "saved_reconnect_does_not_modify_sd": true,
+  "source_dependencies_reviewed": [
+    {
+      "path": "src/activities/util/KeyboardEntryActivity.h",
+      "pin": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "68f03114c6faeed531d3c2c05c23eda2cd2e17ec6abc15dcca48fc2e6fb0fed7",
+      "omitted_from_original_receipt_source_files": true
+    },
+    {
+      "path": "src/activities/util/KeyboardLayoutSet.cpp",
+      "pin": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "57e7d66f8c8187fe877ea1d44f8bb40bff11a4f7818394639cfd144e66f00a7c",
+      "omitted_from_original_receipt_source_files": true
+    },
+    {
+      "path": "src/network/CrossPointWebServer.cpp",
+      "pin": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "8a1b11c31cc7642cb4a46b2f5a7e942dea1e6c6f9edb7709e73e2645ca46d118",
+      "omitted_from_original_receipt_source_files": true
+    },
+    {
+      "path": "src/CrossPointSettings.h",
+      "pin": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "e4776b7ee73e09aaf0bc59929954c5745aff0e461381153814f7170e68d3501e",
+      "omitted_from_original_receipt_source_files": true
+    },
+    {
+      "path": "libs/ui/FreeInkUI/src/FreeInkUI.cpp",
+      "pin": "b784446302c076b4b5a622627867f0c80905cc50",
+      "sha256": "05c16f80e5c81ea15847757c2bdad2afd58d901cbd24e522b6721f833c779ef2",
+      "omitted_from_original_receipt_source_files": true
+    }
+  ],
+  "retained_artifact_checks_pass": true,
+  "limitations": [
+    "The manual Add Hidden Network route targets a broadcast open synthetic AP; hidden beacons and WPA association are unverified.",
+    "Saving uses genuine HTTP POST /api/wifi, not the conditional nonempty-password UI SAVE_PROMPT branch.",
+    "Each reconnect starts fresh pinned full flash and consumes the preceding guest-written SD; it verifies SD credential persistence rather than flash/NVS persistence.",
+    "Cancel asserts the credential remains present, not byte-for-byte preservation of the complete intermediate store; no intermediate store snapshot was retained.",
+    "The execution snapshots freeze the top-level WiFi and network harnesses only; imported smoke/backend/formatter/runtime dependencies are not frozen in these original receipts.",
+    "The --source option records file hashes but does not enforce their relationship to the claimed embedded source commit; this review independently verified all four hashes against git show at that pin.",
+    "Four key source dependencies were omitted from the original source list; this derived review pins them and the SDK keyboard table explicitly.",
+    "The receipt records HTTP response hashes and readiness result without retaining full response bodies; retained artifacts alone cannot independently reconstruct the device/mode JSON.",
+    "The harness searches the full serial log for DHCP rather than a fresh marker; the reviewed Forget receipt has no earlier DHCP success, so the actual recorded flow is sound, but future runs should enforce new attempt/completion counters.",
+    "Strict diagnostic validity, RF/physical behavior, and calibrated speed remain false."
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "validation_status": "Official C3 HAL proof and all109 native cases passed, zero skips; original stock Hotspot/Nearby reruns against the corrected immutable executable pending.",
+  "primary_source": {
+    "repository": "https://github.com/espressif/esp32-wifi-lib",
+    "revision": "01d52d9e69032c486015dc28b08c3bf6aaf348a9",
+    "idf_release": "v5.5.2",
+    "archive_url": "https://raw.githubusercontent.com/espressif/esp32-wifi-lib/01d52d9e69032c486015dc28b08c3bf6aaf348a9/esp32c3/libpp.a",
+    "archive_sha256": "7076ed650bca96025c8fa490495dc8e81a5d9ecb21e02a7b8164cd6a1df39f26"
+  },
+  "functions": [
+    {
+      "name": "hal_random",
+      "object": "hal_mac.o",
+      "object_sha256": "c356a4a8f77890392ce0db3786f9608e4ed27851464268348642e4fc3549ff98",
+      "section": ".wifi0iram.8",
+      "selected_disassembly_sha256": "a1e4573b379a176e6b849dcbc66d8ef3d6a5d139534045fc7ef687272aa950e5"
+    },
+    {
+      "name": "mac_tx_set_plcp1",
+      "object": "hal_mac_tx.o",
+      "object_sha256": "27ba091e51a9ca6482e066019feefdaf4f238f05bf7eca79af0e9df9f514f3b4",
+      "section": ".text.mac_tx_set_plcp1",
+      "selected_disassembly_sha256": "2bc11b233fce09d2248b6a10b6dbfa7454cb6a23625b641fcae0dbbdbd07db3f"
+    }
+  ],
+  "tx_plcp1": {
+    "queue_count": 5,
+    "base": "0x600342f8",
+    "stride_bytes": -76,
+    "offsets_from_mac_base": [
+      "0x12f8",
+      "0x12ac",
+      "0x1260",
+      "0x1214",
+      "0x11c8"
+    ],
+    "length_mask": "0x00000fff",
+    "primary_instructions": "mac_tx_set_plcp1 +0x42 li -76, +0x48 mul queue offset, +0xaa..b4 store base342f8+offset",
+    "actual_failed_input": {
+      "queue": 2,
+      "descriptor_word0": "0xc004204e",
+      "dma_bytes": 66,
+      "frame_control": "0x0288",
+      "correct_plcp1_address": "0x60034260",
+      "correct_plcp1_value": "0x0201f042",
+      "previous_wrong_address": "0x60034280",
+      "previous_wrong_value": "0x002c002c",
+      "prior_error_retained": true
+    },
+    "limits": "Only PSDU low12 length is modelled; unknown rate/control upper bits remain unsupported"
+  },
+  "mac_random": {
+    "address": "0x6003507c",
+    "stock_getter_pc": "0x4229d48c",
+    "stock_loop_caller_pc": "0x4227225a",
+    "primary_instructions": "hal_random reads lw a0,124(0x60035000), then ret; exact stock getter matches",
+    "blocking_observation": "Stock vendor-action preparation loops until hal_random differs from prior word; previously unmodelled register returned constant zero",
+    "model": "Synthetic xorshift32; unsigned shifts13,17,5; no physical entropy or cryptographic source claim",
+    "seed_property": "random-seed",
+    "seed_bits": 32,
+    "seed_nonzero_required": true,
+    "default_seed": 1,
+    "reset_policy": "Preserve stream/read count across MAC and machine resets; new instance starts from configured seed. Hardware entropy/reset relationship unverified.",
+    "telemetry": {
+      "random-state": "readonly uint32",
+      "random-read-count": "readonly uint64",
+      "random-source-synthetic": true,
+      "random-entropy-modelled": false,
+      "random-timing-calibrated": false,
+      "random-state-migration-modelled": false
+    },
+    "write_policy": "MMIO writes remain unsupported and cannot seed the PRNG",
+    "migration_policy": "Wi-Fi has no full MAC/air/link migration support; no new migration claim"
+  },
+  "draft_regressions": [
+    "Actual queue2 QoS DMA66/PLCP66 with old wrong field44 collision",
+    "Deterministic64word same-seed replay and distinct-seed streams",
+    "PRNG reset/held-reset/readonly/lifetime telemetry",
+    "Actual zero-seed realize rejection"
+  ],
+  "expected_wifi_cases": 18,
+  "expected_full_cases": 109,
+  "limits": [
+    "No manufactured air response or guest function interception",
+    "No physical radio, entropy or timing validation",
+    "Stock Nearby and whole Hotspot cohort not passed by this source draft"
+  ],
+  "property_table_safety": {
+    "required_by": "Pinned QEMU hw/core/qdev-properties.c device_class_set_props loops until Property.name=NULL",
+    "corrected_arrays": [
+      "Wi-Fi",
+      "ESP32-C3 GPIO",
+      "REGI2C"
+    ],
+    "evidence": "Unterminated Wi-Fi array caused an actual SIGSEGV in qdev_class_add_legacy_property before any native test passed; explicit sentinels added, failed snapshot retained",
+    "failed_snapshot_binary_sha256": "82106c814c289fc2d31e8081c50c0eb77123fb91a4cb51d375409c3615b8fee2",
+    "failed_wifi_tap_sha256": "1b72b1e67a77d2aae91fe3901aef439ccbee483c8a7a64a27b81ffa1892dd80e",
+    "failed_snapshot_native_pass": false
+  },
+  "native_validation": {
+    "binary_sha256": "db30ffb3ca120856211e080ee63e7ea894ecf6a812015f73f5b3e04884d6925c",
+    "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "patch_sha256": "da53281e98da510abe761fb84d81f5d9749829a13e3cf45e5e06e433722bfdfd",
+    "source_tree": "40211b8b427606f25a6ef2910ad2a5316c81a8f2",
+    "metadata_sha256": "7ec871e91d03204d5dbd0adc7dff4c7311ef7e91b23ba2870fc3e9c3d5151e0e",
+    "full_gate_receipt_sha256": "c4969ce54990ea7e6b462d02e9822273fa0867851772d29b34ce7407007f20cc",
+    "cases_passed": 109,
+    "suites": 12,
+    "wifi_cases_passed": 18,
+    "skips": 0,
+    "source_apply_tree_verified": true,
+    "wrapped_dependency_trees_verified_after_tests": true,
+    "binary_unchanged_after_tests": true,
+    "binary_mode": "0755",
+    "wifi_full_gate_tap_sha256": "9bae91e91fc43f318f0ee723f9b0582cd7deec1420088b2c25e9befecc85f9bf",
+    "timing_calibrated": false
+  }
+}

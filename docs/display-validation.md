@@ -203,3 +203,40 @@ Receipts separate `functional_pass` from `strict_pass`. A stock UI effect can
 be observed while strict validation fails because diagnostics or trace output
 are incomplete. Such a result must retain its failure fields. Timing calibration,
 physical output validation and speed selection remain false.
+
+`hide-widgets` edits both three-value controls through Display's actual
+pickers. Their stored values have these context rules:
+
+| Value | Policy | Home percentage / clock | Reader percentage / clock |
+| --- | --- | --- | --- |
+| 0 | Never | Visible | Visible |
+| 1 | In Reader | Visible | Hidden |
+| 2 | Always | Hidden | Hidden |
+
+Hide Battery affects the percentage text. Its icon remains controlled by the
+separate status-bar battery setting. Captures isolate the percentage and icon
+regions; battery-only changes must preserve the original page body exactly.
+Hide Clock removes the reader's reserved top lane and can reflow the page.
+The original fixture's chapter heading can then overlap the bottom of the
+former clock box, so the absence check uses the clock's exclusive upper glyph
+rows and records the body reflow separately. Home has no such overlap.
+
+After the guest saves both Always policies, the harness stops that process
+and launches a fresh CPU with only its written flash and SD bytes. It records
+the source hashes, requires the same native backend, checks both saved values,
+and reopens the original page. Finally, actual UI selections restore Never.
+Both boots retain independent diagnostics, native frame counts, output-error
+counters and complete trace checks; a successful second boot cannot conceal
+an incomplete first trace.
+
+`sleep-random-folder` sets a preferred folder through its real long-Confirm
+action. Three original BMP patterns identify the guest's actual selection.
+The healthy CSIX index is decoded independently to map its record indices
+to filenames. The first three genuine sleep/wake cycles must choose from
+the decreasing nonrecent pools of three, two and one candidates. A fresh CPU
+then loads the guest-written 16-entry history before the fourth cycle. With
+all three candidates recent, the source's all-candidates fallback must still
+render an original image and append exactly one history entry. The test
+asserts policy and persistence without requiring a particular random order
+or making an entropy/distribution claim. The separate legacy reservoir used
+when index creation fails remains outside this healthy-card workflow.

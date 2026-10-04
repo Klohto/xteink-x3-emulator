@@ -1,0 +1,87 @@
+TAP version 13
+# random seed: R02Secb808cacb9e67dc322750897e73c7ca
+1..20
+# Start of riscv32 tests
+# Start of esp32c3 tests
+# Start of wifi tests
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:48715 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=49855,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=air-enabled,value=true -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3/wifi/tx-rx-dma-events
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:59181 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=51981,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=air-enabled,value=true -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3/wifi/dma-bounds-and-short-buffer
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:37161 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=53925,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3/wifi/tsf-and-reset
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:36689 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=38761,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/esp32c3/wifi/syscon-mac-reset-domain
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:38249 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=35185,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true -drive file=/tmp/esp32c3-wifi-efuse-PNNXW3,if=none,format=raw,id=wifi-efuse -global driver=nvram.esp32c3.efuse,property=drive,value=wifi-efuse -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:47995 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=57993,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,host=127.0.0.1,port=35689,server=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true -drive file=/tmp/esp32c3-wifi-efuse-0GNXW3,if=none,format=raw,id=wifi-efuse -global driver=nvram.esp32c3.efuse,property=drive,value=wifi-efuse -accel qtest
+Not initializing SPI Flash
+ok 5 /riscv32/esp32c3/wifi/peer-two-guest-bidirectional-dma
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:54063 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=52353,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 6 /riscv32/esp32c3/wifi/peer-fragmented-stream-malformed-resync
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:40095 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=37201,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 7 /riscv32/esp32c3/wifi/peer-channel-encryption-queue-bound
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:51981 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=42765,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 8 /riscv32/esp32c3/wifi/peer-disconnect-reconnect-tx-completion
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:45199 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=47775,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:37079 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=44357,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,host=127.0.0.1,port=44663,server=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 9 /riscv32/esp32c3/wifi/peer-fcs-inclusive-frame-kinds
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:59029 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=59905,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:49123 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=52751,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,host=127.0.0.1,port=47919,server=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 10 /riscv32/esp32c3/wifi/peer-fcs-excluded-preserves-payload
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:60393 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=49963,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:50571 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=48597,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,host=127.0.0.1,port=41585,server=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 11 /riscv32/esp32c3/wifi/peer-fcs-unverified-inconsistent-length
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:59591 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=48793,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:46603 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=56971,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,host=127.0.0.1,port=43837,server=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 12 /riscv32/esp32c3/wifi/peer-c3-plcp-stride-qos-collision
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:45045 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=41033,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:40855 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=40647,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,host=127.0.0.1,port=33353,server=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 13 /riscv32/esp32c3/wifi/peer-c3-single-buffer-prefix
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:33059 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=45751,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:38713 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=46453,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,host=127.0.0.1,port=41783,server=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 14 /riscv32/esp32c3/wifi/peer-c3-invalid-buffer-prefix
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:50141 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=45211,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 15 /riscv32/esp32c3/wifi/peer-c3-unicast-interface-masks-enables
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:57449 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=57645,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 16 /riscv32/esp32c3/wifi/peer-c3-bssid-ds-address-selection
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:35315 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=49741,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -chardev socket,id=peer,fd=3,server=on,wait=off -global driver=esp32c3.wifi,property=peer-chardev,value=peer -global driver=esp32c3.wifi,property=channel,value=1 -global driver=esp32c3.wifi,property=air-enabled,value=true  -accel qtest
+Not initializing SPI Flash
+ok 17 /riscv32/esp32c3/wifi/peer-c3-unverified-group-unconfigured-rx
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:41043 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=36581,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=random-seed,value=305419896 -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:41981 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=50853,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=random-seed,value=305419896 -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:55611 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=56247,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=random-seed,value=2271560481 -accel qtest
+Not initializing SPI Flash
+ok 18 /riscv32/esp32c3/wifi/mac-random-seeded-replay
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:41619 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=38447,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=random-seed,value=7 -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:45439 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=37403,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -nic none -global driver=esp32c3.wifi,property=random-seed,value=7 -accel qtest
+Not initializing SPI Flash
+ok 19 /riscv32/esp32c3/wifi/mac-random-reset-continuity-readonly
+ok 20 /riscv32/esp32c3/wifi/mac-random-rejects-zero-seed
+# End of wifi tests
+# End of esp32c3 tests
+# End of riscv32 tests

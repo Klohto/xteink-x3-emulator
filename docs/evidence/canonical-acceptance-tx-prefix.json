@@ -1,0 +1,22 @@
+{
+  "backend_sha256": "55ee8751d67db0f396a0f8d199ea46b8a85af40a1487193557abae99d3931379",
+  "patch_sha256": "b9b1a547e4e75b28417d2ec2012e99ee3e8f14f92c421038f88c48aa6b670753",
+  "source_tree": "f0f5209c67b34ada52153f5dafa7a386efbbef37",
+  "native_cases_passed": 111,
+  "native_skips": 0,
+  "canonical_reading_flow_passed": true,
+  "canonical_reading_strict_hardware_coverage_passed": false,
+  "reading_strict_failure_conditions": [
+    "model_diagnostics_clean"
+  ],
+  "canonical_serial_rom_flash_passed": true,
+  "complete_flash_bytes": 16777216,
+  "complete_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+  "pre_import_source_files_unchanged_after_both_acceptances": true,
+  "reading_validation_sha256": "7a70dc37946abf31f8c9599a49224ce3cf50127e2bed4f4c326ffd1cdfa0a189",
+  "reading_storage_archive_sha256": "4a8441515564c874aaacbc190fd54be0759328e7085e49eb154888971010f386",
+  "serial_result_sha256": "06903e7120857354363561b0c0e53de45d45baf77b12eacb4c6640875c0dcd5c",
+  "serial_storage_archive_sha256": "366cf0d4422eb8dec53ca91ac2380bf261823001a5cd4149434e89628f6af9bb",
+  "all_stopped_storage_original_byte_hashes_and_inodes_preserved": true,
+  "timing_calibrated": false
+}

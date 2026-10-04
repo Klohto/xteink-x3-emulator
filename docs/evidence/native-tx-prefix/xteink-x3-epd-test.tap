@@ -1,0 +1,42 @@
+TAP version 13
+# random seed: R02S5e557096b8b72318a7c258775de2781f
+1..10
+# Start of riscv32 tests
+# Start of xteink-x3-epd tests
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:40095 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=53827,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253   -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:40371 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=37769,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8279   -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/xteink-x3-epd/ver-probe
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:56807 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=47593,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253 -global xteink-x3-epd.dump-file='/tmp/x3-panel-K8DZW3/frame.pgm'  -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/xteink-x3-epd/ram-and-busy
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:48629 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=46771,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253 -global xteink-x3-epd.dump-file='/tmp/x3-gray-Z975W3/frame.pgm'  -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/xteink-x3-epd/gray-and-differential
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:55549 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=58247,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253 -global xteink-x3-epd.dump-file='/tmp/x3-reinforce-4LXPW3/frame.pgm'  -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/xteink-x3-epd/uc8253-gray-base-reinforcement
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:36911 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=35407,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8279 -global xteink-x3-epd.dump-file='/tmp/x3-8279-NKRVW3/frame.pgm'  -accel qtest
+Not initializing SPI Flash
+ok 5 /riscv32/xteink-x3-epd/uc8279-stride
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:42321 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=49769,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253 -global xteink-x3-epd.dump-file='/tmp/x3-output-UGNYW3/frame.pgm' -global xteink-x3-epd.trace-file='/tmp/x3-output-UGNYW3/trace.jsonl' -accel qtest
+Not initializing SPI Flash
+ok 6 /riscv32/xteink-x3-epd/output-accounting
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:57735 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=59349,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253 -global xteink-x3-epd.dump-file='/dev/full' -global xteink-x3-epd.trace-file='/dev/full' -accel qtest
+Not initializing SPI Flash
+qemu-system-riscv32: xteink-x3-epd: incomplete trace output: /dev/full
+qemu-system-riscv32: xteink-x3-epd: incomplete framebuffer dump: /dev/full
+ok 7 /riscv32/xteink-x3-epd/output-full
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:50863 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=34987,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253 -global xteink-x3-epd.dump-file='/tmp/x3-output-open-QNL3W3'  -accel qtest
+Not initializing SPI Flash
+qemu-system-riscv32: xteink-x3-epd: cannot write /tmp/x3-output-open-QNL3W3: Is a directory
+ok 8 /riscv32/xteink-x3-epd/dump-open-failure
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:40109 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=46351,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253 -global xteink-x3-epd.dump-file='/tmp/x3-output-reset-YAH5W3/frame.pgm' -global xteink-x3-epd.trace-file='/tmp/x3-output-reset-YAH5W3/trace.jsonl' -accel qtest
+Not initializing SPI Flash
+ok 9 /riscv32/xteink-x3-epd/reset-output-retention
+# starting QEMU: exec /tmp/x3-native-candidate-b9b1a547e4e75b28/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:55299 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=52245,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global xteink-x3-epd.controller=8253  -global xteink-x3-epd.trace-file='/tmp/x3-output-replace-EHJOW3/trace.jsonl' -accel qtest
+Not initializing SPI Flash
+ok 10 /riscv32/xteink-x3-epd/trace-path-replacement
+# End of xteink-x3-epd tests
+# End of riscv32 tests

@@ -100,6 +100,15 @@ SOURCE_SHA256 = {
     "src/SdCardFontSystem.cpp": "04e203a47b4bee7a2ec64e4549aa8c9c4e3678411955225efc934e91bbdb40dc",
     "src/CrossPointSettings.cpp": "29ea3e2c765370b5fcae0d6b878930c8b3c3df4c357356fcdd3e891d6f7b065f",
     "src/util/DictionaryRegistry.cpp": "e0b09c9ab6d6728a8ecef6ed0205668b8e8731bae067e446b4cd6cfcbfd143f7",
+    "src/activities/home/SavedItemsHomeActivity.cpp": "467a9988300f9922c30b30802da5b288603d5963e32fcb685283d67045ceabd3",
+    "src/CrossPointState.cpp": "ab1316298ec506518fa6278f88f868253ab028dc1b2a9f3efe3933dd686f968c",
+    "src/CrossPointState.h": "0f0f041d6692eeb47dcb34e943eae179cb972faa83cacccf77eca32ad1fec3a6",
+    "src/CrossPointSettings.h": "e4776b7ee73e09aaf0bc59929954c5745aff0e461381153814f7170e68d3501e",
+    "src/QuickActions.h": "d2eeb595d108345ae22ea2fa909672922fdbd433c720d336135781159ce20f3f",
+    "src/main.cpp": "21ee21ddac33088eda7d67f5dc5ae9f0f725fcdf5b2b9a2242ebf378133c3028",
+    "lib/hal/HalGPIO.cpp": "582186a32630b7e522d3c33e65543a3f4809454954ff1d6902c2552cb7b08866",
+    "src/MappedInputManager.cpp": "f3a24a5fe6c4d69b28c77eca9a015bb9926d96fdc1d34f2ba51334787f09ed83",
+    "src/activities/reader/ReaderProgressSaveDebouncer.h": "4c9f51773e7feb90605fda5aa1e8d139e3c1d2c248e12f03d3f366dc242432aa",
 }
 SOURCE_FILES = {
     "lookup": ("src/activities/reader/EpubReaderMenuActivity.cpp", "src/activities/reader/DictionaryWordSelectActivity.cpp",
@@ -150,6 +159,13 @@ SOURCE_FILES["incremental"] = SOURCE_FILES["render-options"] + ("src/activities/
 SOURCE_FILES["bookmark-delete"] = SOURCE_FILES["bookmarks"] + ("src/activities/util/ConfirmationActivity.cpp",)
 SOURCE_FILES["clipping-multipage"] = SOURCE_FILES["clippings"] + ("src/activities/home/FileBrowserActionActivity.cpp",)
 SOURCE_FILES["clipping-table"] = SOURCE_FILES["clippings"] + ("src/activities/reader/EpubReaderActivity.cpp",)
+SOURCE_FILES["saved-clipping-jump"] = SOURCE_FILES["clippings"] + (
+    "src/activities/home/SavedItemsHomeActivity.cpp", "src/activities/home/HomeActivity.cpp",
+    "src/activities/reader/EpubReaderActivity.cpp", "src/CrossPointState.cpp", "src/CrossPointState.h")
+SOURCE_FILES["power-footnotes"] = SOURCE_FILES["footnotes"] + (
+    "src/SettingsList.h", "src/activities/settings/SettingsActivity.cpp", "src/QuickActions.h",
+    "src/CrossPointSettings.h", "src/main.cpp", "lib/hal/HalGPIO.cpp", "src/MappedInputManager.cpp",
+    "src/activities/reader/ReaderProgressSaveDebouncer.h")
 SOURCE_FILES["statusbar"] = SOURCE_FILES["stablepage"] + SOURCE_FILES["layout"] + (
     "src/activities/settings/StatusBarSettingsActivity.cpp",)
 for _variant in ("dictionary-stem", "dictionary-alt", "dictionary-fuzzy", "dictionary-phrase", "dictionary-history"):
@@ -959,6 +975,70 @@ def bookmark_delete_workflow(replay: Replay):
     replay.tap("back", "home-after-bookmark-delete-reboot", "Exit the restarted reader")
 
 
+def saved_clipping_jump_workflow(replay: Replay):
+    # Both types force the real global Bookmarks/Clippings kind chooser. The
+    # clipping is on page1; exiting on page2 makes a successful anchor jump
+    # distinguishable from merely resuming the saved reading position.
+    replay.bookmarks_tab()
+    replay.tap("down", "save-clipping-row-bookmark", "Pass Save Clipping before adding a bookmark")
+    replay.tap("down", "add-bookmark-row", "Select Add Bookmark on the original page0")
+    replay.tap("confirm", "bookmark-created", "Create a genuine bookmark so Saved Items exposes its kind chooser", reader=True)
+    bookmark_data = replay.read_file(bookmark_path())
+    replay.check("global_saved_items_bookmark_exists", decode_bookmarks(bookmark_data)["count"] == 1)
+    replay.tap("down", "page-to-clip", "Advance to page1 for a distinct clipping anchor", reader=True)
+    replay.bookmarks_tab()
+    replay.tap("down", "save-clipping-row", "Select Save Clipping at page1")
+    replay.tap("confirm", "clip-selector", "Open actual page word selection")
+    replay.tap("confirm", "clip-start", "Mark the original selected word as range start")
+    replay.tap("right", "clip-end", "Extend the selected range by one word")
+    replay.tap("confirm", "clip-saved-feedback", "Save the genuine clipping and its text export", reader=True)
+    clipping_data = replay.read_file(clipping_path())
+    clipping = decode_clippings(clipping_data)
+    replay.check("global_saved_items_clipping_has_page1_anchor", clipping["count"] == 1
+                 and clipping["book_path"] == BOOK and clipping["entries"][0]["spine_index"] == 0
+                 and clipping["entries"][0]["start_page"] == clipping["entries"][0]["end_page"] == 1
+                 and bool(clipping["entries"][0]["text"].strip()), clipping)
+    exported = replay.read_file("/My Clippings.txt")
+    replay.check("global_saved_clipping_text_exported", clipping["entries"][0]["text"].encode() in exported,
+                 {"sha256": hashlib.sha256(exported).hexdigest()})
+    replay.tap("down", "page2-after-clip", "Leave saved feedback and read page2", reader=True)
+    reference = replay.tap("up", "clipping-page-reference", "Return to the ordinary stable page1 with its saved highlight", reader=True)
+    replay.tap("down", "resume-position-away-from-clip", "Move to page2 before leaving the reader", reader=True)
+    replay.tap("back", "home-before-saved-clipping-jump", "Exit and flush page2 as the normal resume position")
+    progress = replay.progress()
+    replay.check("normal_resume_position_differs_from_clipping", progress["spine_index"] == 0
+                 and progress["page_number"] == 2, progress)
+    for index, purpose in enumerate(("Wrap from Continue to Settings", "Pass File Transfer", "Select global Saved Items")):
+        replay.tap("up", f"saved-items-row-{index}", purpose)
+    replay.tap("confirm", "global-saved-book-list", "Home: open global Saved Items")
+    replay.tap("confirm", "saved-kind-chooser", "Open the selected original book's Bookmarks/Clippings chooser")
+    replay.tap("down", "saved-kind-clippings", "Choose Clippings after the default Bookmarks row")
+    replay.tap("confirm", "global-clipping-list", "Open the actual saved clipping list")
+    replay.tap("confirm", "global-clipping-detail", "Read the selected clipping's actual text detail")
+    returned = replay.tap("confirm", "global-clipping-anchor", "Open the book through the saved clipping anchor", reader=True)
+    replay.check("global_clipping_anchor_restores_exact_reader_pixels", changed_pixels(
+                 replay.experiment.frames[reference], replay.experiment.frames[returned]) == 0,
+                 {"reference": reference, "returned": returned, "raw_pixel_differences": changed_pixels(
+                     replay.experiment.frames[reference], replay.experiment.frames[returned])})
+    state = json.loads(replay.read_file("/.crosspoint/state.json"))
+    replay.check("global_pending_clipping_anchor_consumed", state["openEpubPath"] == BOOK
+                 and state["pendingClippingIndex"] == 65535 and state["pendingBookmarkSpine"] == 65535,
+                 {key: state[key] for key in ("openEpubPath", "pendingClippingIndex", "pendingBookmarkSpine")})
+    replay.check("global_anchor_jump_preserves_saved_stores", replay.read_file(clipping_path()) == clipping_data
+                 and replay.read_file(bookmark_path()) == bookmark_data)
+    replay.tap("back", "home-after-global-clipping-jump", "Exit the anchored reader and flush page1")
+    progress = replay.progress()
+    replay.check("global_clipping_jump_persisted", progress["spine_index"] == 0 and progress["page_number"] == 1, progress)
+    replay.restart()
+    reopened = replay.tap("back", "clipping-anchor-after-cold-restart", "Fresh CPU uses the real Home Read shortcut for the saved anchor", reader=True)
+    replay.check("global_clipping_anchor_survives_cold_restart", changed_pixels(
+                 replay.experiment.frames[returned], replay.experiment.frames[reopened]) == 0
+                 and replay.read_file(clipping_path()) == clipping_data and replay.read_file(bookmark_path()) == bookmark_data,
+                 {"raw_pixel_differences": changed_pixels(replay.experiment.frames[returned], replay.experiment.frames[reopened])})
+    replay.tap("back", "home-global-clipping-final", "Exit the restarted stock reader")
+    replay.check("global_clipping_anchor_position_retained", replay.progress()["page_number"] == 1, replay.progress())
+
+
 def clipping_multipage_workflow(replay: Replay):
     replay.bookmarks_tab()
     replay.tap("down", "save-clipping-row", "Choose Save Clipping")
@@ -1321,7 +1401,7 @@ def dictionary_global_workflow(replay: Replay):
         replay.tap("confirm", "book-dictionary-picker", "Open Use Global/dictionary picker")
 
     choose_global(True)
-    replay.tap("confirm", "reader-inherited-global", "Home Read reopens the existing book with its newly selected global dictionary", reader=True)
+    replay.tap("back", "reader-inherited-global", "Home's distinct Back/Read shortcut reopens the book; Settings stays selected on return", reader=True)
     replay.check("new_book_inherits_global_path", not replay.file_exists(book_path))
     direct_lookup("inherited-global")
     book_picker()
@@ -1330,7 +1410,7 @@ def dictionary_global_workflow(replay: Replay):
     replay.check("per_book_override_saved", replay.read_file(book_path) == configured)
     replay.tap("back", "home-before-global-none", "Exit reader before changing the global dictionary")
     choose_global(False)
-    replay.tap("confirm", "reader-explicit-after-global-none", "Home Read reopens its explicit dictionary despite global None", reader=True)
+    replay.tap("back", "reader-explicit-after-global-none", "Home Back/Read reopens its explicit dictionary despite global None", reader=True)
     direct_lookup("override-after-global-none")
     book_picker()
     replay.tap("up", "use-global-none", "Select Use Global; per-book picker has no separate None override")
@@ -1342,7 +1422,9 @@ def dictionary_global_workflow(replay: Replay):
     toc = replay.tap("confirm", "toc-after-dictionary-none", "Open actual TOC where Lookup was previously first")
     replay.check("none_removes_lookup_route", replay.receipt["frames"][toc]["dark_pixels"] > 1000,
                  {"expected_screen": "six original TOC entries", "text_ocr_verified": False})
-    replay.tap("back", "reader-after-none-toc", "Cancel TOC to reader", reader=True)
+    replay.tap("back", "menu-after-none-toc", "Cancel TOC to its owning reader menu")
+    replay.tap("back", "menu-tab-after-none-toc", "Focus reader menu tabs after canceled chapter selection")
+    replay.tap("back", "reader-after-none-toc", "Close reader menu to the actual reader", reader=True)
     replay.tap("back", "home-global-none", "Exit reader with inherited None")
     replay.restart()
     replay.tap("confirm", "reader-global-none-after-reboot", "Fresh CPU reopens the saved dictionary configuration", reader=True)
@@ -1500,6 +1582,157 @@ def footnotes_workflow(replay: Replay):
     replay.tap("back", "home-footnotes", "Exit from restored reading origin")
     progress = replay.progress()
     replay.check("footnote_origin_persisted", progress["spine_index"] == 0 and progress["page_number"] == 0, progress)
+
+
+def power_footnotes_workflow(replay: Replay):
+    settings_path = "/.crosspoint/crossink-settings.json"
+
+    def settings():
+        return json.loads(replay.read_file(settings_path))
+
+    def power(label, purpose, *, reader=False, expect_refresh=True):
+        # GPIO3 is a separate physical input. A 200ms pulse is below the
+        # configured400ms Power long-press threshold; it is released by the
+        # native virtual timer, independently of host QMP latency.
+        replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": False})
+        replay.qmp.set_buttons(0)
+        replay.dwell("Neutral physical inputs before Power", 250_000_000)
+        count = replay.experiment.refresh_count(replay.qmp)
+        replay.qmp.execute("stop")
+        try:
+            started = replay.experiment.clock(replay.qmp)
+            before_crc = replay.qmp.execute("qom-get", {"path": "/machine/epd", "property": "framebuffer-crc"})
+            replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button-hold-ns", "value": 200_000_000})
+            replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": True})
+            if not replay.qmp.execute("qom-get", {"path": "/machine", "property": "power-button"}):
+                raise SmokeError("physical GPIO3 Power did not assert")
+        finally:
+            replay.qmp.execute("cont")
+        action = {"button": "power", "gpio": 3, "active_level": 0, "purpose": purpose,
+                  "after_frame_count": count, "boot_index": replay.boot_index, "status": "requested",
+                  "input": {"press_t_ns": started, "scheduled_hold_ns": 200_000_000,
+                            "scheduled_release_t_ns": started + 200_000_000,
+                            "release_transport": "GPIO3 QEMU_CLOCK_VIRTUAL timer", "firmware_hook": False}}
+        replay.receipt["actions"].append(action)
+        replay.save()
+        replay.experiment.wait("native Power GPIO release", lambda: not replay.qmp.execute("qom-get", {
+            "path": "/machine", "property": "power-button"}))
+        action["input"]["release_observed_t_ns"] = replay.experiment.clock(replay.qmp)
+        action["status"] = "released"
+        if not expect_refresh:
+            replay.dwell("Power Footnotes Back off: observe the unchanged note for two virtual seconds", 2_000_000_000)
+            replay.qmp.execute("stop")
+            try:
+                after_count = replay.experiment.refresh_count(replay.qmp)
+                after_crc = replay.qmp.execute("qom-get", {"path": "/machine/epd", "property": "framebuffer-crc"})
+            finally:
+                replay.qmp.execute("cont")
+            replay.check(label + "_has_no_refresh_or_pixel_change", after_count == count and after_crc == before_crc,
+                         {"frame_count_before": count, "frame_count_after": after_count,
+                          "pixel_crc_before": before_crc, "pixel_crc_after": after_crc,
+                          "reason": "executeFootnoteQuickAction: disabled return and no links on final note page"})
+        replay.sequence += 1
+        frame = f"{replay.sequence:03d}-{label}"
+        action["frame"] = replay.capture(frame, count if expect_refresh else count - 1, reader=reader)
+        action["status"] = "captured"
+        replay.save()
+        return frame
+
+    def open_power_settings(label):
+        replay.tap("up", label + "-settings-row", "Home: wrap Continue to Settings")
+        replay.tap("confirm", label + "-settings", "Open global settings")
+        replay.tap("confirm", label + "-reader-tab", "Cycle Display to Reader category")
+        replay.tap("confirm", label + "-controls-tab", "Cycle Reader to Controls category")
+        replay.tap("down", label + "-power-row", "X3 Controls: first row is Power Button")
+        return replay.tap("confirm", label + "-power-settings", "Open actual Power Button settings")
+
+    def close_power_settings(label):
+        replay.tap("back", label + "-controls", "Close Power Button submenu")
+        replay.tap("back", label + "-tabs", "Focus global category tabs")
+        replay.tap("back", label + "-home", "Close global settings; Settings stays selected on Home")
+
+    original = replay.experiment.frames["reader-initial"]
+    replay.tap("back", "home-before-power-footnotes", "Exit the real advanced EPUB before choosing the physical shortcut")
+    absent = open_power_settings("initial")
+    # A fresh card has no namespaced settings file until a guest setter saves
+    # it. Persist the actual picker-selected Ignore baseline first instead of
+    # treating a nonexistent JSON file as an observed default configuration.
+    replay.tap("confirm", "initial-short-power-picker", "Open the real default Short Press picker")
+    replay.tap("confirm", "initial-ignore-binding-saved", "Persist the selected Ignore baseline through the guest UI")
+    replay.check("default_power_footnotes_binding_absent", settings()["shortPwrBtn"] != 16
+                 and settings()["longPwrBtn"] != 16,
+                 {"conditional_row_frame": absent, "source": "buildControlsPowerSettingsList"})
+    replay.tap("confirm", "short-power-picker", "Open actual Short Press shortcut picker from Ignore")
+    for index in range(6):
+        replay.tap("up", f"power-footnotes-option-{index}", "Wrap through Quick Lock, Quick Actions, Lookup, Clipping and Browser to Footnotes")
+    exposed = replay.tap("confirm", "power-footnotes-binding-saved", "Save the Footnotes shortcut; conditional return row becomes available")
+    replay.check("short_power_footnotes_binding_saved", settings()["shortPwrBtn"] == 16,
+                 {"conditional_row_frame": exposed, "raw_shortcut": settings()["shortPwrBtn"]})
+    replay.tap("down", "long-power-row", "Pass Long Press row")
+    replay.tap("down", "power-footnote-back-row", "Select the newly exposed Power Footnote Back toggle")
+    replay.tap("confirm", "power-footnote-back-disabled-first", "Toggle the source default On to Off through the real conditional row")
+    replay.check("conditional_power_return_toggle_off_saved", settings()["pwrBtnFootnoteBack"] == 0)
+    replay.tap("confirm", "power-footnote-back-enabled", "Toggle Power Footnote Back back On for the positive control")
+    replay.check("conditional_power_return_toggle_on_saved", settings()["pwrBtnFootnoteBack"] == 1)
+    close_power_settings("enabled")
+    origin = replay.tap("back", "reader-power-footnotes-enabled", "Home's fresh Back/Read shortcut opens the original noteref page", reader=True)
+    replay.check("power_footnotes_binding_preserves_original_page", changed_pixels(original, replay.experiment.frames[origin]) == 0)
+    note = power("power-footnote-note", "Physical Power opens the page's single #note-1 link")
+    replay.check("power_shortcut_opens_original_note", changed_pixels(original, replay.experiment.frames[note]) > 1000)
+    original_note = replay.tap("down", "power-footnote-final-paragraph", "Read through the footnote context to the original final note paragraph")
+    returned = power("power-footnote-origin-restored", "With return On, Power restores the saved footnote origin", reader=True)
+    replay.check("enabled_power_footnote_back_restores_exact_origin", changed_pixels(original, replay.experiment.frames[returned]) == 0)
+    replay.tap("back", "home-before-disabling-power-return", "Exit the restored reader")
+    note_page = SMOKE["decode_section_cache"](replay.read_file(cache_path() + "/sections/0.bin"))["page_count"] - 1
+    on_progress = replay.progress()
+    replay.check("stock_return_flushes_stale_pending_note_progress", on_progress["spine_index"] == 0
+                 and on_progress["page_number"] == note_page,
+                 {"observed_progress": on_progress, "visible_origin_restored_exactly": True,
+                  "source_quirk": "render skips replacing queued note when origin equals lastSavedPage; exit flushes the pending note"})
+    replay.receipt["guest_origin_persistence_correct"] = False
+    replay.save()
+    open_power_settings("disable")
+    replay.tap("down", "disable-long-power-row", "Pass Long Press")
+    replay.tap("down", "disable-power-return-row", "Select the actual conditional return row")
+    replay.tap("confirm", "power-return-off", "Persist Off for the negative control")
+    replay.check("power_return_disabled_through_ui", settings()["shortPwrBtn"] == 16
+                 and settings()["pwrBtnFootnoteBack"] == 0)
+    close_power_settings("disabled")
+    resumed = replay.tap("back", "reader-power-return-disabled", "Home Read honestly reopens the stock stale-saved note position")
+    replay.check("stock_saved_note_reopened_exactly", changed_pixels(replay.experiment.frames[original_note],
+                 replay.experiment.frames[resumed]) == 0)
+    replay.reader_menu()
+    replay.tap("down", "disabled-select-chapter-row", "Sparse note page: first Main row is Select Chapter")
+    replay.tap("confirm", "disabled-toc", "Open actual TOC to establish a new explicit reading origin")
+    origin = replay.tap("confirm", "disabled-explicit-chapter-origin", "Select the current first chapter's start through its real TOC", reader=True)
+    replay.check("explicit_toc_jump_restores_original_noteref_page", changed_pixels(original, replay.experiment.frames[origin]) == 0)
+    power("disabled-power-note", "Power Footnotes still opens the original link with return Off")
+    note_final = replay.tap("down", "disabled-note-final-paragraph", "Read the note's final paragraph without outgoing footnotes")
+    unchanged = power("disabled-power-keeps-note", "With return Off and no note links, physical Power leaves the note visible", expect_refresh=False)
+    replay.check("disabled_power_retains_exact_note_pixels", changed_pixels(replay.experiment.frames[note_final],
+                 replay.experiment.frames[unchanged]) == 0)
+    returned = replay.tap("back", "mapped-back-still-restores-origin", "The separate mapped Back route still restores the origin", reader=True)
+    replay.check("mapped_back_return_independent_of_power_toggle", changed_pixels(original, replay.experiment.frames[returned]) == 0)
+    replay.tap("back", "home-power-footnotes-before-reboot", "Exit and flush original position")
+    replay.check("power_note_roundtrip_persists_origin", replay.progress()["spine_index"] == 0
+                 and replay.progress()["page_number"] == 0, replay.progress())
+    replay.restart()
+    replay.check("power_footnotes_binding_and_off_toggle_survive_cold_restart", settings()["shortPwrBtn"] == 16
+                 and settings()["pwrBtnFootnoteBack"] == 0)
+    replay.tap("back", "reader-power-footnotes-after-reboot", "Fresh CPU opens the genuine saved reading origin", reader=True)
+    power("cold-disabled-power-note", "Cold CPU executes the persisted physical Footnotes shortcut")
+    cold_note = replay.tap("down", "cold-note-final-paragraph", "Read the original final note paragraph on the cold CPU")
+    cold_unchanged = power("cold-disabled-power-keeps-note", "Persisted Off again keeps the note unchanged", expect_refresh=False)
+    replay.check("cold_disabled_power_retains_exact_note", changed_pixels(replay.experiment.frames[cold_note],
+                 replay.experiment.frames[cold_unchanged]) == 0)
+    returned = replay.tap("back", "cold-mapped-back-origin", "Mapped Back restores the cold CPU's saved origin", reader=True)
+    replay.check("cold_footnote_origin_restores_exact_pixels", changed_pixels(original, replay.experiment.frames[returned]) == 0)
+    replay.tap("back", "home-power-footnotes-final", "Exit the unchanged official reader")
+    cold_progress = replay.progress()
+    replay.check("cold_mapped_back_shares_stock_stale_pending_note_quirk", cold_progress["spine_index"] == 0
+                 and cold_progress["page_number"] == note_page,
+                 {"observed_progress": cold_progress, "visible_origin_restored_exactly": True,
+                  "guest_origin_persistence_correct": False})
 
 
 def stablepage_workflow(replay: Replay):
@@ -1880,6 +2113,8 @@ WORKFLOWS = {"chapter": chapter_workflow, "bookmarks": bookmarks_workflow,
              "bookmark-delete": bookmark_delete_workflow,
              "clipping-multipage": clipping_multipage_workflow,
              "clipping-table": clipping_table_workflow,
+             "saved-clipping-jump": saved_clipping_jump_workflow,
+             "power-footnotes": power_footnotes_workflow,
              "statusbar": statusbar_workflow,
              "dictionary-stem": dictionary_variant_workflow, "dictionary-alt": dictionary_variant_workflow,
              "dictionary-fuzzy": dictionary_variant_workflow, "dictionary-phrase": dictionary_variant_workflow,
@@ -1907,7 +2142,7 @@ def run_workflow(name, args, directory: Path, *, fixture_files=None, open_book=T
         if not receipt["checks"]["pinned_full_flash"]:
             raise SmokeError("flash differs from the pinned full official release")
         sd = directory / "fixture-card.img"
-        if fixture_files is None and name == "footnotes":
+        if fixture_files is None and name in ("footnotes", "power-footnotes"):
             fixture_files = {BOOK: make_advanced_epub()}
         if fixture_files is None and name in ("stablepage", "statusbar"):
             fixture_files = {BOOK: make_stable_epub()}

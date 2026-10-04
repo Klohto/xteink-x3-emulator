@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>X3 front panel</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f1ed;color:#262622;font:15px system-ui,sans-serif}main{max-width:980px;margin:24px auto;padding:0 20px}header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}h1{font-size:22px;margin:0;font-weight:600}#status{color:#666}.layout{display:flex;align-items:center;justify-content:center;gap:28px}.screen{padding:18px;background:#dcd8cf;border:1px solid #bbb6aa;border-radius:12px;box-shadow:0 4px 16px #0001}canvas{display:block;width:min(528px,65vw);height:auto;image-rendering:pixelated;background:#fff;border:1px solid #aaa}.controls{display:flex;flex-direction:column;gap:16px}.front{display:grid;grid-template-columns:1fr 1fr;gap:10px}.side{display:grid;gap:10px}button{min-height:48px;border:1px solid #aaa69d;border-radius:7px;background:#fff;color:#242420;font:inherit;touch-action:none;user-select:none;padding:10px 18px}button:focus-visible{outline:3px solid #455f84;outline-offset:2px}button[aria-pressed=true]{background:#c8d6e7;border-color:#455f84}small{display:block;color:#777;margin-top:3px;font-size:12px}#error{min-height:44px;color:#993d28;margin:16px 0 0}footer{color:#666;font-size:13px;margin-top:12px}kbd{font:inherit;border:1px solid #ccc;border-radius:3px;padding:0 3px;background:#fff}@media(max-width:650px){main{margin:16px auto}.layout{gap:14px;align-items:flex-start}.screen{padding:10px}canvas{width:65vw}.controls{gap:10px}.front{grid-template-columns:1fr;gap:6px}button{padding:8px;min-height:44px}small{display:none}}
+</style>
+<main><header><h1>X3</h1><span id="status" role="status">Connecting…</span></header>
+<div class="layout"><div class="screen"><canvas id="screen" width="528" height="792" aria-label="Live X3 screen"></canvas></div>
+<div class="controls" aria-label="Device buttons"><div class="front">
+<button data-button="back" aria-pressed="false">Back<small>Backspace</small></button>
+<button data-button="confirm" aria-pressed="false">Confirm<small>Enter</small></button>
+<button data-button="left" aria-pressed="false">Left<small>←</small></button>
+<button data-button="right" aria-pressed="false">Right<small>→</small></button></div>
+<div class="side"><button data-button="up" aria-pressed="false">Up<small>↑</small></button><button data-button="down" aria-pressed="false">Down<small>↓</small></button></div>
+<button data-button="power" aria-pressed="false">Power<small>P · hold for long press</small></button></div></div>
+<p id="error" role="alert"></p><footer>Click or hold a button. Keyboard controls work while this page is focused. <kbd>Esc</kbd> releases all buttons.</footer></main>
+<script>
+'use strict';
+const client=crypto.randomUUID(), keys=new Map(), pointers=new Map();
+const names={Backspace:'back',Enter:'confirm',ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',KeyP:'power'};
+const status=document.getElementById('status'), error=document.getElementById('error'), canvas=document.getElementById('screen');
+const native=document.createElement('canvas');native.width=792;native.height=528;
+let busy=false, lastCRC=null, disconnected=false, holdTimer=null, holding=false;
+let queue=[], gesture=new Set();
+function selected(){return [...new Set([...keys.values(),...pointers.values()])].sort()}
+function paintButtons(){const active=selected();document.querySelectorAll('[data-button]').forEach(b=>b.setAttribute('aria-pressed',String(active.includes(b.dataset.button))))}
+async function controls(){
+ if(busy)return;busy=true;
+ while(queue.length){const action=queue.shift();
+  try{const response=await fetch(action.path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(action.path==='/api/release'?{client}:{client,buttons:action.buttons}),signal:AbortSignal.timeout(2500)});
+   const result=await response.json();if(!response.ok)throw new Error(result.error);error.textContent='';disconnected=false;
+  }catch(e){error.textContent=e.message;disconnected=true;keys.clear();pointers.clear();gesture.clear();clearTimeout(holdTimer);holdTimer=null;holding=false;paintButtons();queue=[];
+   // A failed release is retried on the next heartbeat; the server also expires held controls.
+   break;
+  }
+ }busy=false;
+}
+function enqueue(path,buttons=[]){queue.push({path,buttons});controls()}
+function begin(){selected().forEach(name=>gesture.add(name));paintButtons();
+ if(holding){enqueue('/api/input',selected());return}
+ if(holdTimer===null)holdTimer=setTimeout(()=>{holdTimer=null;if(selected().length){holding=true;gesture.clear();enqueue('/api/input',selected())}},450);
+}
+function end(){paintButtons();if(holding){enqueue('/api/input',selected());if(!selected().length)holding=false}
+ else if(!selected().length){clearTimeout(holdTimer);holdTimer=null;if(gesture.size)enqueue('/api/tap',[...gesture].sort());gesture.clear()}}
+function releaseAll(){keys.clear();pointers.clear();gesture.clear();clearTimeout(holdTimer);holdTimer=null;holding=false;paintButtons();queue=[];
+ navigator.sendBeacon('/api/release',new Blob([JSON.stringify({client})],{type:'application/json'}));enqueue('/api/release');}
+document.querySelectorAll('[data-button]').forEach(b=>{
+ b.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();b.setPointerCapture(e.pointerId);pointers.set(e.pointerId,b.dataset.button);begin()});
+ b.addEventListener('pointerup',e=>{if(pointers.delete(e.pointerId))end()});
+ b.addEventListener('pointercancel',releaseAll);
+ b.addEventListener('lostpointercapture',e=>{if(pointers.has(e.pointerId))releaseAll()});
+});
+window.addEventListener('keydown',e=>{if(e.code==='Escape'){e.preventDefault();releaseAll();return}const name=names[e.code];if(!name)return;e.preventDefault();if(!e.repeat){keys.set(e.code,name);begin()}});
+window.addEventListener('keyup',e=>{if(keys.delete(e.code)){e.preventDefault();end()}});
+window.addEventListener('blur',releaseAll);window.addEventListener('pagehide',releaseAll);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseAll()});
+setInterval(()=>{if(disconnected)enqueue('/api/release');else if(holding)enqueue('/api/input',selected())},350);
+function pixels(data){
+ let i=0,tokens=[];while(tokens.length<4){while(i<4096&&i<data.length&&[9,10,11,12,13,32].includes(data[i]))i++;
+  if(i>=4096||i>=data.length)throw new Error('Waiting for screen.');if(data[i]===35){while(i<4096&&i<data.length&&data[i]!==10)i++;continue}
+  const start=i;while(i<4096&&i<data.length&&![9,10,11,12,13,32,35].includes(data[i]))i++;tokens.push(new TextDecoder().decode(data.subarray(start,i)));}
+ if(tokens.join(' ')!=='P5 792 528 255'||![9,10,11,12,13,32].includes(data[i]))throw new Error('Waiting for screen.');
+ i+=(data[i]===13&&data[i+1]===10)?2:1;if(data.length-i!==792*528)throw new Error('Waiting for screen.');return data.subarray(i);
+}
+async function refresh(){
+ try{const response=await fetch('/api/frame',{cache:'no-store',signal:AbortSignal.timeout(2500)});
+  if(!response.ok){status.textContent=response.status===503?'Updating screen…':'Disconnected';return}
+  const data=new Uint8Array(await response.arrayBuffer()), p=pixels(data), crc=response.headers.get('X-Frame-CRC');
+  if(crc!==lastCRC){const image=native.getContext('2d').createImageData(792,528);for(let i=0;i<p.length;i++){const j=i*4;image.data[j]=image.data[j+1]=image.data[j+2]=p[i];image.data[j+3]=255}native.getContext('2d').putImageData(image,0,0);
+   const ctx=canvas.getContext('2d');ctx.save();ctx.translate(528,0);ctx.rotate(Math.PI/2);ctx.drawImage(native,0,0);ctx.restore();lastCRC=crc;}
+  status.textContent='Connected';
+ }catch(e){status.textContent='Disconnected'}
+ finally{setTimeout(refresh,250)}
+}
+refresh();
+</script></html>

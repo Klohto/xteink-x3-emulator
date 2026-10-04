@@ -1,0 +1,16 @@
+TAP version 13
+# random seed: R02S919bb11be417ca7014c1c4ee1575d208
+1..3
+# Start of riscv32 tests
+# Start of esp32c3-gpspi tests
+# starting QEMU: exec /tmp/x3-native-candidate-bd6ca5e91eae089f/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:59051 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=46145,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3-gpspi/polling-completion
+# starting QEMU: exec /tmp/x3-native-candidate-bd6ca5e91eae089f/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:45351 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=60767,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3-gpspi/interrupt-registers
+# starting QEMU: exec /tmp/x3-native-candidate-bd6ca5e91eae089f/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:50789 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=39279,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3-gpspi/fifo-access-widths
+# End of esp32c3-gpspi tests
+# End of riscv32 tests

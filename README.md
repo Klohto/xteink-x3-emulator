@@ -5,7 +5,7 @@ the real mask ROM, second-stage bootloader, FreeRTOS application and drivers.
 Firmware can be programmed through the ROM's UART downloader with esptool.
 
 The repository contains an X3 board patch for pinned Espressif QEMU, a build
-script, flash and SD image tools, a headless runtime, button controls and
+script, flash and SD image tools, a runtime, local front panel, button controls and
 integration experiments. Firmware images and generated storage stay outside
 Git.
 
@@ -21,7 +21,7 @@ Git.
 | I2C | C3 command/FIFO/interrupt path with BQ27220 gauge, DS3231 RTC and QMI8658 IMU models |
 | USB and console | UART ROM output, bidirectional USB Serial/JTAG FIFO and stock CRC-checked file-transfer commands |
 | Sleep and watchdogs | RTC counter, timer/GPIO wake, retained state, digital CPU sleep/restart and distinct watchdog reset domains |
-| Experimental WiFi | C3 MAC/DMA/TSF, digital reset and an open virtual AP; stock CrossInk initialization and scanning pass, further network functions remain under test |
+| Experimental WiFi | C3 MAC/DMA/TSF, digital reset, virtual AP and raw peer frames; stock scanning, DHCP and HTTP protocols have proofs, further network functions remain under test |
 
 The official CrossInk v1.6.0 application has been programmed through the ROM;
 every byte of the resulting 16 MiB flash matches the prepared image. Stock
@@ -48,15 +48,43 @@ under [`docs/evidence/functions`](docs/evidence/functions).
 Further receipts in [`docs/evidence/functions-next`](docs/evidence/functions-next)
 verify layout persistence, percent navigation, automatic turns, footnotes,
 screenshots, completion, power shortcuts, library cleanup and image formats.
-The current native patch passes 12 suites with 102 cases and zero skips; exact
-build provenance is in [`docs/evidence/native-build-fcs.json`](docs/evidence/native-build-fcs.json).
+The current native patch passes 12 suites with 111 cases and zero skips; exact
+build provenance is in [`docs/evidence/native-build-tx-prefix.json`](docs/evidence/native-build-tx-prefix.json).
 
-Full subsequent receipts in
-[`docs/evidence/functions-latest`](docs/evidence/functions-latest) preserve
+The [function ledger](docs/function-coverage.md) records subsequent evidence for
 TXT/Markdown reading, advanced dictionaries and saved items, status settings,
-sleep policies, controls and successful physical recovery flashing. The index
-also retains protocol failures and incomplete strict-model results; it is not
-an all-functions acceptance claim.
+sleep policies, controls and successful ROM recovery flashing. Published full
+receipts are indexed in
+[`docs/evidence/functions-latest`](docs/evidence/functions-latest), with deferred
+records disclosed by the index. Original protocol failures and incomplete
+strict-model results remain retained; this is not an all-functions acceptance
+claim.
+
+This source and metadata checkpoint includes 57 previously approved full records
+from 119 local captures. Two compressed records were blocked by automatic
+upload review; all other nonapproved compressed payloads remain deferred and
+local. The index lists the 62 omitted paths without their payloads. Included
+records retain their original hashes and failure flags.
+
+Automatic review also rejected the plaintext network diagnostic metadata because
+it contains authentication fields. That file is omitted from this checkpoint;
+the original local evidence remains unchanged. Source, native tests and the
+other reviewed metadata remain included.
+
+A fresh reading run on the 111-case backend saves page1 of a22-page chapter and
+restores exact pixels on backward/forward turns and reopening. Its full receipt
+retains strict failure from reported unsupported model uses. The local front
+panel also has a29-check stock-firmware proof for exact screen bytes, real page
+turns, Power actions and saved progress. See [`docs/ui.md`](docs/ui.md) to use it;
+browser rendering is still unverified in this environment.
+
+Two unchanged guests also complete hotspot creation, association and DHCP on
+this backend. Source-proven TX prefix handling removes eight metadata bytes
+and the four-byte FCS reservation; its 44 actual AP uses have zero prefix or
+length errors. Receive queue drops remain recorded. See
+[`docs/evidence/canonical-acceptance-tx-prefix.json`](docs/evidence/canonical-acceptance-tx-prefix.json),
+[`docs/nearby-validation.md`](docs/nearby-validation.md), and the
+[observed stock firmware limitations](docs/stock-firmware-limitations.md).
 
 Hardware speed calibration is pending. Every run records unsupported accesses
 and sets `speed_selection_allowed: false`. Instruction counting, nominal bus

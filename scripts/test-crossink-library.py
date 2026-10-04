@@ -19,7 +19,7 @@ LIBRARY_SOURCE = Path(__file__).read_bytes()
 LIBRARY_SHA256 = hashlib.sha256(LIBRARY_SOURCE).hexdigest()
 sys.path.insert(0, str(PROJECT))
 from x3emu.backend import DEFAULT_BACKEND
-from x3emu.fixtures import make_text_fixture, make_fixed_book_fixture_files
+from x3emu.fixtures import make_text_fixture, make_fixed_book_fixture_files, make_xtc
 from x3emu.sdcard import make_test_epub
 
 SHARED = runpy.run_path(str(PROJECT / "scripts/test-crossink-functions.py"))
@@ -220,6 +220,10 @@ def fixed_menu(replay, row, label):
 def fixed_menus_workflow(replay):
     extension = "xtch" if replay.receipt["workflow"] == "fixed-gray-menus" else "xtc"
     book = "/test." + extension
+    if extension == "xtch":
+        replay.receipt["configuration_input_scope"] = (
+            "Separate original 480x264 XTCH input permits stock thumbnail generation with bounded source-conversion work. "
+            "The full-X3 528x792 input remains unchanged and its real stock bounded-row thumbnail rejection is preserved in the earlier failed receipt.")
     replay.capture("home", 0)
     replay.tap("confirm", "fixed-browser", "Home: Browse Files")
     initial = replay.tap("confirm", "fixed-page0", "Open three-page original fixed-layout book")
@@ -229,6 +233,14 @@ def fixed_menus_workflow(replay):
     replay.tap("down", "fixed-chapter-two-row", "Choose second original chapter")
     chapter = replay.tap("confirm", "fixed-chapter-two", "Jump to second chapter, zero-based page1")
     replay.tap("back", "fixed-chapter-home", "Flush chapter selection to genuine fixed-reader progress")
+    if extension == "xtch":
+        # Home can first paint its loading popup while the source converter is
+        # still reading the original planes. A quiet panel alone does not mean
+        # this CPU/SD task has finished or can accept the next button press.
+        frame_count = replay.receipt["actions"][-1]["frame"]["frame_count"]
+        replay.experiment.wait("guest completes actual XTCH Home thumbnail", lambda:
+                               replay.file_exists(cache + "/thumb_151x226.bmp"))
+        replay.capture("fixed-home-thumbnail-ready", frame_count)
     replay.check("fixed_chapter_jump_persisted", replay.read_file(cache + "/progress.bin") == struct.pack("<I", 1)
                  and changed_pixels(replay.experiment.frames[initial], replay.experiment.frames[chapter]) > 1000)
     replay.tap("confirm", "fixed-chapter-resume", "Resume fixed page1")
@@ -253,7 +265,8 @@ def fixed_menus_workflow(replay):
     # render cache is a size-qualified thumbnail, not EPUB's cover.bmp.
     render_cache = {cache + "/" + entry["name"]: replay.read_file(cache + "/" + entry["name"])
                     for entry in list_directory(replay, cache)
-                    if not entry["directory"] and entry["name"].lower().endswith(".bmp")}
+                    if not entry["directory"] and (entry["name"].lower().endswith(".bmp")
+                       or entry["name"].lower() == "cover_src_xtch_v1.bin")}
     replay.receipt["fixed_render_cache_before_delete"] = {
         path: hashlib.sha256(data).hexdigest() for path, data in render_cache.items()}
     replay.save()
@@ -1138,7 +1151,8 @@ def fixture_files(name):
                 SETTINGS: json.dumps(preferences, separators=(",", ":")).encode()}
     if name in ("fixed-mono-menus", "fixed-gray-menus"):
         extension, original = ("xtch", "/Books/b-gray.xtch") if name == "fixed-gray-menus" else ("xtc", "/Books/a-fixed.xtc")
-        return {"/test." + extension: make_fixed_book_fixture_files()[original]}
+        data = make_xtc(grayscale=True, width=480, height=264) if extension == "xtch" else make_fixed_book_fixture_files()[original]
+        return {"/test." + extension: data}
     files = {BOOK: make_test_epub()}
     if name == "library-layout":
         files["/.hidden.txt"] = b"Original hidden reader file.\n\nThe clock beside the river is visible only after the actual hidden-file setting is enabled.\n"

@@ -62,6 +62,7 @@ def parser() -> argparse.ArgumentParser:
     network.add_argument("--wifi", action="store_true", help="enable the provisional native WiFi MAC/AP model with QEMU user networking")
     network.add_argument("--wifi-peer", metavar="listen:PORT|connect:PORT", help="link real guest WiFi DMA frames to another emulator on localhost")
     execute.add_argument("--wifi-channel", type=_integer, help="fixed digital channel: peer default 1, virtual AP default 6; RF channel control is unmodelled")
+    execute.add_argument("--wifi-random-seed", type=_integer, help="nonzero uint32 seed for the synthetic MAC random source; requires a supporting backend and WiFi/peer mode")
     identity = execute.add_mutually_exclusive_group()
     identity.add_argument("--efuse", type=Path, help="336-byte raw C3 factory blocks; copied per run")
     identity.add_argument("--device-mac", help="synthetic unicast factory MAC stored in genuine eFuse blocks")
@@ -95,6 +96,9 @@ def parser() -> argparse.ArgumentParser:
     download.add_argument("output", type=Path)
     screenshot = operations.add_parser("screenshot", help="capture the stock raw 792x528 MSB-first framebuffer")
     screenshot.add_argument("output", type=Path)
+    ui = commands.add_parser("ui", help="open a local front panel for a running X3 emulator")
+    ui.add_argument("--run-dir", type=Path, required=True)
+    ui.add_argument("--port", type=_integer, default=8080)
     return root
 
 
@@ -119,7 +123,12 @@ def main(argv: list[str] | None = None) -> int:
                 power_on=args.power_on, power_button_hold_ns=args.power_button_hold_ns,
                 usb_port=args.usb_port, wifi=args.wifi, wifi_hostfwd=tuple(args.wifi_hostfwd),
                 efuse=args.efuse, device_mac=args.device_mac, wifi_peer=args.wifi_peer, wifi_channel=args.wifi_channel,
+                wifi_random_seed=args.wifi_random_seed,
             ))
+        elif args.command == "ui":
+            from .ui import serve_ui
+            serve_ui(args.run_dir, args.port)
+            return 0
         elif args.command == "usb":
             with USBSerialClient(args.port, timeout=args.timeout) as client:
                 if args.usb_command == "status":

@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "status": "Source-proven bounded prefix model; all111 native cases and real stock Hotspot authentication/association/DHCP passed.",
+  "primary_provenance": {
+    "official_idf_wifi_library_revision": "01d52d9e69032c486015dc28b08c3bf6aaf348a9",
+    "official_public_libpp_sha256": "7076ed650bca96025c8fa490495dc8e81a5d9ecb21e02a7b8164cd6a1df39f26",
+    "stock_arduino_sdk_version": "3.3.7",
+    "stock_libpp_sha256": "a814df93bc40111e0e1d944785e7c48ce036a8ba1fad69a5312675b50a0bea9f",
+    "stock_pp_object_sha256": "739ae33db06eaedc749e9887c4666047007f5aee540e919be4d37198b4fa9b60",
+    "stock_function_comparison": [
+      {
+        "function": "ppAMPDU2Normal",
+        "stock_section": ".wifiextrairam.39",
+        "public_section": ".wifiextrairam.39",
+        "stock_bytes": 154,
+        "public_bytes": 154,
+        "stock_function_sha256": "5871dc3ca063f44c6da2a1a28a132b85ab1c8f9594bb7c7828de78ee2291a27b",
+        "public_function_sha256": "5871dc3ca063f44c6da2a1a28a132b85ab1c8f9594bb7c7828de78ee2291a27b",
+        "function_bytes_identical": true,
+        "stock_disassembly_sha256": "4a14334b1b633931a68d7a885bcc2f8c105cccd83f7c4887e38af94399490cb3"
+      },
+      {
+        "function": "ppCheckTxAMPDUlength",
+        "stock_section": ".text.ppCheckTxAMPDUlength",
+        "public_section": ".text.ppCheckTxAMPDUlength",
+        "stock_bytes": 190,
+        "public_bytes": 190,
+        "stock_function_sha256": "f3295d4a793ec9428780fa1dc332f5b44ba1bbbc5d9b7cbddc34a8a4d72d4c7c",
+        "public_function_sha256": "f3295d4a793ec9428780fa1dc332f5b44ba1bbbc5d9b7cbddc34a8a4d72d4c7c",
+        "function_bytes_identical": true,
+        "stock_disassembly_sha256": "4f2e5ff1887e3feb46491db3b2b5c4059476bd65bb641a4cdd067247057266d8"
+      },
+      {
+        "function": "ppProcTxSecFrame",
+        "stock_section": ".wifi0iram.67",
+        "public_section": ".wifi0iram.67",
+        "stock_bytes": 306,
+        "public_bytes": 306,
+        "stock_function_sha256": "460c69db5d4aa25d4447c27bf73f7136a30423a92cedb6e8a1354148f6d17f65",
+        "public_function_sha256": "4ca4a506d5802e3a3f407e6c22722ab4f9ce92fed07d371906c4d81b7dd18e2c",
+        "function_bytes_identical": false,
+        "stock_disassembly_sha256": "e2b0aadf239fecfa7f509890828881b8e775a13862524b89bff293a020d03066",
+        "only_instruction_difference": {
+          "offset": "0xba",
+          "public": "addi a5,a1,320",
+          "stock": "addi a5,a1,358",
+          "purpose": "assertion/log source line literal; prefix and length instructions identical"
+        }
+      },
+      {
+        "function": "ppCalTxAMPDULength",
+        "stock_section": ".wifi0iram.40",
+        "public_section": ".wifi0iram.40",
+        "stock_bytes": 750,
+        "public_bytes": 750,
+        "stock_function_sha256": "776b1e17d3ea6c3f3192ba6bbae35d154fc4daac07fd4e35eba55b7304b37a8a",
+        "public_function_sha256": "e046d2f2b80db77d52d312c3b89da2376ee667113599ea914187cb126fdde522",
+        "function_bytes_identical": false,
+        "stock_disassembly_sha256": "b22d49869145b10bbbf21fa09cf86446a27bbf1fa6b5545cc93a758f5fec779b",
+        "only_instruction_difference": {
+          "offset": "0x21e",
+          "public": "addi a5,a1,-1054",
+          "stock": "addi a5,a1,-1021",
+          "purpose": "assertion/log source line literal; aggregation length instructions identical"
+        }
+      }
+    ],
+    "stock_sdk_archive": {
+      "name": "esp32c3-libs-3.3.7.zip",
+      "url": "https://github.com/espressif/arduino-esp32/releases/download/3.3.7/esp32c3-libs-3.3.7.zip",
+      "sha256": "323ccd4a83e634560c22a294a3118c494e6c63133f69586f285187cf431a3939",
+      "size_bytes": 55046535
+    }
+  },
+  "source_instructions": [
+    {
+      "function": "ppAMPDU2Normal",
+      "operations": [
+        "+0x24..0x2e clears DMA descriptor bit29",
+        "+0x30..0x54 subtracts8 from DMA length bits23:12",
+        "+0x58..0x5a advances packet pointer by8"
+      ]
+    },
+    {
+      "function": "ppProcTxSecFrame",
+      "operations": [
+        "Adds default4 to tail22 and final descriptor DMA length",
+        "Sets first descriptor bit29",
+        "Writes (frame20-8+tail22)&0x3fff to prefix low14"
+      ]
+    },
+    {
+      "function": "ppCheckTxAMPDUlength",
+      "operations": [
+        "Rounds low14 FCS-inclusive MPDU length up to4",
+        "Adds4*(prefix[4]+1) for its delimiter and any empty delimiters"
+      ]
+    },
+    {
+      "function": "ppEmptyDelimiterLength",
+      "operations": [
+        "Returns4*prefix[4]+((4-(low14&3))&3)",
+        "The final aggregate length removes that tail padding"
+      ]
+    }
+  ],
+  "actual_diagnostic": {
+    "backend_sha256": "c77e0afc97bff0cb345caea0fce22062378d18d62347110eee179c35e3ae7587",
+    "queue": 2,
+    "descriptor_word0": "0xe006606a",
+    "dma_bytes": 102,
+    "prefix_low14": 94,
+    "prefix_empty_delimiter_count": 0,
+    "plcp1": "0x0201f062",
+    "phy_bytes": 98,
+    "frame_control_at_offset8": "0x0288",
+    "raw_mpdu_bytes_after_prefix_and_fcs_reservation_removal": 90,
+    "raw_memory_bytes_committed": false,
+    "diagnostic_only_flow_passed": false
+  },
+  "supported_contract": {
+    "first_descriptor_owner": true,
+    "bit29": true,
+    "eof": true,
+    "next_zero": true,
+    "prefix_byte4_zero": true,
+    "dma_equals_prefix8_plus_low14": true,
+    "phy_equals_low14_plus_delimiter4": true,
+    "low14_min": 28,
+    "low14_max": 2308,
+    "raw_descriptor_max_with_prefix": 2316,
+    "raw_descriptor_max_without_prefix": 2308,
+    "full_aggregation_modelled": false
+  },
+  "limits": [
+    "Only one complete first/EOF descriptor with next0 and zero extra empty delimiters",
+    "No chained aggregation, aggregation ACK/retry, physical PHY or crypto implementation",
+    "Normal unprefixed DMA remains capped2308 bytes; prefix8+MPDU2304+FCS4 capped2316",
+    "Malformed or unsupported prefix/length contract retains TXerror and no emission",
+    "This does not calibrate real air or CPU timing"
+  ],
+  "telemetry": [
+    "tx-buffer-prefix-stripped-frames",
+    "tx-buffer-prefix-errors",
+    "tx-buffer-prefix-modelled",
+    "tx-aggregation-modelled"
+  ],
+  "expected_native_cases": {
+    "wifi": 20,
+    "all": 111
+  },
+  "native_device_tests_passed": true,
+  "actual_hotspot_corrected_rerun": {
+    "backend_sha256": "55ee8751d67db0f396a0f8d199ea46b8a85af40a1487193557abae99d3931379",
+    "receipt": "local/runs/x3-peer-hotspot-prefix111/hotspot-join/validation.json",
+    "receipt_sha256": "2731b74cfa2672f1d42b81163d3dbb0e8c2a0a80392d9853c8cac207c9f671d4",
+    "functional_pass": true,
+    "complete_machine_acceptance_passed": false,
+    "genuine_stock_ap_and_station_executed": true,
+    "genuine_dhcp_station_ip": "192.168.4.2",
+    "unchanged_raw_peer_bytes_forwarded": true,
+    "ap": {
+      "tx_buffer_prefix_stripped_frames": 44,
+      "tx_buffer_prefix_errors": 0,
+      "tx_fcs_stripped_frames": 920,
+      "tx_fcs_unverified_frames": 0,
+      "tx_length_errors": 0,
+      "bad_dma": 0
+    },
+    "station": {
+      "tx_buffer_prefix_stripped_frames": 0,
+      "tx_buffer_prefix_errors": 0,
+      "tx_fcs_stripped_frames": 44,
+      "tx_fcs_unverified_frames": 0,
+      "tx_length_errors": 0,
+      "bad_dma": 0,
+      "rx_queue_dropped_frames": 444
+    },
+    "remaining_limits": "Bounded RX queue drops, independent peer clocks, unmodelled radio/PHY/crypto and unsupported accesses remain visible."
+  },
+  "native_proof": {
+    "binary_sha256": "55ee8751d67db0f396a0f8d199ea46b8a85af40a1487193557abae99d3931379",
+    "patch_sha256": "b9b1a547e4e75b28417d2ec2012e99ee3e8f14f92c421038f88c48aa6b670753",
+    "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "source_tree": "f0f5209c67b34ada52153f5dafa7a386efbbef37",
+    "native_device_test_cases_passed": 111,
+    "wifi_cases_passed": 20,
+    "native_device_test_skips": 0,
+    "metadata_sha256": "9dc22c48070c659234d213a9f70f84c02355e7dd634ce4aac9bd775b9eb5d8aa",
+    "full_gate_receipt_sha256": "745932409fa6a4397f3eacf32b6c21b5e49e05667ba1f83e96932e00347ce55e",
+    "wifi_tap_sha256": "8d80d8da9ff67fb6f551e759c2b42ffdba217be331f9a1abc6b6663ed4cb5f3a"
+  }
+}

@@ -1,6 +1,6 @@
 # Stock CrossInk X3 function coverage
 
-Inventory date: 2026-10-03. Firmware target: official CrossInk v1.6.0,
+Inventory date: 2026-10-04. Firmware target: official CrossInk v1.6.0,
 `firmware-x3-x4-v1.6.0.bin`, executed release source
 `31ce770487bfa9cb70447a374cdd8aae89d8bfe4`; inspected local source snapshot
 `b25beb13761d5851f98e7eada09aa5e7d430df48`. Board evidence and image hashes are
@@ -230,7 +230,8 @@ text. These are genuine guest storage targets, not an emulator-owned schema.
 
 ## Network, USB and updates
 
-Every active row below is `source_verified_untested`. A network success must
+The original source-inventory status of these rows is `source_verified_untested`;
+the named execution scopes below override that status where receipts exist. A network success must
 execute the stock guest's network stack/protocol and retain packet/output/card
 proof; a host replacement of a firmware function is insufficient. Network
 activities use minimal reboot targets and return through Home/reader reboot.
@@ -306,26 +307,17 @@ guest postconditions.
 
 | Gap / source boundary | Required remaining execution | Current owner / dependency |
 | --- | --- | --- |
-| F02/F03, `TxtReaderActivity` | Actual TXT/MD Send Nearby transfer | Native peer/network phase; E59/E60 prove reading, font/dark shortcuts, return, persistence and its real menu entry |
-| F04, `XtcReaderMenuActivity` | Chapter, Reading Stats, Finished/Unfinished, Delete Stats, Delete Cache; fixed-format Send Nearby | Library phase; sending needs guest peer transport |
-| C01/C02, reader saved-item menus | Table selection and remaining content/entrypoint branches | Reader-functions phase; E70 proves multipage clipping/individual deletion, E72 proves reader Delete All Bookmarks; global Saved Items bulk clearing is distinct |
-| D01–D03 | Global None/dictionary and per-book Use Global/dictionary | Reader-functions phase; E47–E50 prove successful stem/alternate/fuzzy/phrase lookups, E69 proves individual Lookup History deletion, E76 proves chained lookup |
-| S01/S02, `BookStatsActivity` | Genuine statistics distributions/streaks and aggregation from actual peer synchronization | Library/network phase; E61 proves manual dates and three device views, with peer statistics explicitly supplied as input |
-| Display/Files & Cache | UI Scale, Recent Books List/Grid, hidden-file visible selection, two-line browser display | Library phase |
-| System Device | Keyboard-layout enable mask and actual enabled-layout switching | Library phase; E68 separately proves actual Custom Bootscreen/date-format/separator UI and cold persistence |
-| H02, `RecentBooksStore.cpp:191–205` | Genuine legacy `recent.bin` v1/v2/v3 migration to JSON and `.bin.bak`; JSON/temporary/backup recovery paths | Library next phase; source migration only runs when the main JSON is absent |
-| H01/H02, `HomeActivity.cpp` | Multi-book Carousel and three-cover selection/context/cache; Minimal and Dashboard distinct button/menu navigation; Classic/Roundedraff Home routes | Library next phase; E17 proves theme persistence, not these separate interactions |
-| H03, `FileBrowserActivity.cpp:522,1103` | Recursive directory Delete/cancel and resulting metadata/favorite cleanup; long-Back hidden-file toggle | Library next phase; directory Rename is not offered, and browser Settings shortcut requires touch and is excluded on X3 |
-| Controls | Reader remap variant, side layouts/orientation/long presses/chords and conditional Footnote Back | Controls phase; touch/Home/frontlight gates remain excluded |
-| P01–P04 | Remaining sleep trigger/policy or custom-image selection branches beyond the exact named receipts | Display phase; E34–E44 and E62–E67 cover all stored sleep modes, wide-cover Fit/Crop/BW/Inverted, both Cover+Custom origins and Quick Resume-after-timeout; this is not every setting permutation |
+| F02/F03, `TxtReaderActivity` | Actual TXT Send Nearby transfer; Markdown reader's source-visible Send Nearby reaches Unsupported | Native peer/network phase; E59/E60 prove reading, font/dark shortcuts and persistence. Browser `BookActions::canSendNearby` excludes `.md`, while the TXT/MD reader unconditionally offers Send Nearby and its transfer activity rejects Markdown |
+| F04, `XtcReaderMenuActivity` | Fixed-format Send Nearby | Native peer/network phase; E82/E97 prove the named mono/grayscale reader menus. Full-width528 XTCH thumbnail creation reaches a preserved stock bounded-row rejection; the independent480×264 input creates a genuine thumbnail and proves nonempty-cache Cancel/Delete |
+| S01/S02, `BookStatsActivity` | Receiving-reader nonzero aggregate chart/streak UI and cold restoration | Library/network phase; E109 proves empty chart/aggregate scope, E111 actual stock-generated buckets/history/streak and E112 the real CISS resync of that exact record. Receiver chart/streak UI proof is active |
 | N01/N02 | Secure/saved/hidden WiFi, forget/reconnect; Create Hotspot/captive DNS | Native network prerequisite and network harness |
-| N08–N10 | File Transfer Receive File/Sync Stats; Send Nearby and Nearby Position Sync, approvals/collisions/CRC/application | Native ESP-NOW peer transport and new guest workflows |
-| N12/N13/O01 | NTP RTC update; remote font install/update/delete; online update/download/cancel | Actual guest network endpoints; current service fixtures do not cover them |
+| N08–N10 | Remaining file Receive/Send Nearby and Nearby Position Sync, approvals/collisions/CRC/application | Native ESP-NOW peer transport and new guest workflows; E110 already proves the distinct real two-guest CISS statistics exchange with exact peer persistence |
+| N13/O01 | Remote font Update/Delete/Cancel; online update/download/cancel | Actual guest network endpoints; the initial exact font download and NTP RTC update already have named durable proofs below |
 | U02 | USB `CMD:SCREENSHOT` framing and exact framebuffer payload | USB phase; serial file protocol is a distinct proof |
 
 ## Recorded guest execution ledger
 
-This checkpoint records completed receipts as of 2026-10-03. Every listed run
+This checkpoint records completed receipts as of 2026-10-04. Every listed run
 uses the unchanged pinned stock firmware. `F` is the receipt's complete
 functional workflow result; `S` is its complete strict result, including native
 diagnostics and output completeness. A true named postcondition in a later
@@ -367,7 +359,7 @@ All runs still have `speed_selection_allowed=false` and uncalibrated timing.
 | Global Saved Items bulk actions | Real guest creates bookmark and clipping; global type chooser opens Clippings; bookmark deletion cancellation preserves store, confirmed bookmark/clipping actions remove only their stores and keep book/text export | E29 | true / false |
 | Favorite boot image and preferred sleep folder | Actual browser/viewer actions save favorites, completed boot bitmap matches original; Set/Clear preferred sleep folder produces distinct sleep targets and genuine GPIO wakes | E30, E31 | true / false |
 | Quick Actions | Actual five-slot owner Save plus runtime refresh/dark/focus/guide/screenshot; saved overrides reopen, screenshot equals modal-free reader pixels | E32 | true / false |
-| Page overlay | Actual PNG pin and auto-overlay input; native pixels verify alpha threshold/background and original reader return | E33 | true / false |
+| Page overlay | Actual PNG pin and auto-overlay input; native pixels verify alpha threshold/background. Post-exit analysis confirms real GPIO wake restores the same book and all418,176 original reader pixels exactly | E33 | true / false; original receipt unchanged |
 | Blank and Quick Resume sleep modes | Both reach actual deep sleep and GPIO wake; Blank produces all-white pixels, Quick Resume stores its full frame with moon indicator, consumes it on wake and restores reader pixels without the moon | E34, E35 | true / false; sleep preferences recorded as inputs |
 | Genuine crash UI and report | Declared GDB PC=0 negative control causes actual Instruction Access Fault and stock panic/reboot; System Crash UI appears and Back works. Supplementary post-exit analysis verifies guest report MEPC0/MCAUSE1/MTVAL0 and exact Home return | E36 | true / false; intentional guest fault, not a clean no-panic acceptance |
 | Startup recovery rejection path | Actual physical button chord enters stock recovery; Cancel stays in its picker; an original invalid firmware input produces visible validator failure and returns to the picker without flashing/restarting | E37 | true / false; successful recovery flashing remains a separate target |
@@ -405,16 +397,68 @@ All runs still have `speed_selection_allowed=false` and uncalibrated timing.
 | Valid physical-chord firmware recovery | Actual Up+Power recovery writes exact official app1, keeps app0 intact; OTA sequence/state/CRC, actual reset, DROM1→101/IROM51→151 and responsive Home/browser verify executing the new slot | E74 | true / false; Cancel/invalid-input rejection separately E37 |
 | Incremental EPUB indexing | Actual F3 partial cache and page watermark persist; new CPU restores content exactly with a 30-pixel footer difference while source page estimate changes 13→16 | E75 | true / false; partial estimate is explicitly not a fixed page total |
 | Dictionary lookup chain | Real `clock`→`river`→`reader` successful direct chain; each Back restores exact earlier definition/history, long Back restores reader | E76 | true / false; equal-height original definitions are a labelled input precondition |
+| Reader Images/CSS/Publisher Numbers/Balanced rendering | Actual UI covers all three image modes, 44,880 original image pixels, publisher numbers and disabled embedded CSS; Balanced produces its separate cache and a new CPU restores exact page pixels | E77 | true / false; full image completion independently audited after exit |
+| Table clipping | Actual word35–36 same-cell selection records `table_selection=9` and `table cell.`; export/store agree, post-toast reader returns, and cold highlighted pixels match | E78 | true / false |
+| Installed SD font and size range | Original complete 95-character ASCII CPFONT at14/18 is discovered; Preview/Select and size UI produce exact glyph pixels, XLarge range persists with the family/size and cold full-page equality | E79 | true / false; remote download filtering is a separate function |
+| Refresh Frequency and Sunlight/Fading Fix editors | Real UI sets5-page cadence; actual page turns produce FAST×4, full/normal/fast resync, FAST. Enabled Fading gives PON/POF on two turns; disabled gives neither on two turns | E80 | true / false; physical optics and timing remain uncalibrated |
+| Global library layout and keyboard | Actual Small UI Scale, Recent Grid, hidden-file opening, two-line browser and French AZERTY enable/switch; new CPU preserves settings and aligned keyboard pixels | E81 | true / false |
+| Mono fixed-reader menus | Genuine Chapter2 jump/page1, Stats and return, Finished/Unfinished, Delete Stats Cancel/Confirm, nonempty thumbnail Delete Cache Cancel/Confirm, preserved progress and exact reopen | E82 | true / false; XTCH thumbnail boundary is separately recorded as a stock failure |
+| Dictionary SD font and size | Actual dedicated dictionary family/18pt picker renders original `clock` glyphs exactly at14/18; returning restores built-in reader pixels and a new CPU restores definition/settings | E83 | true / false; ordinary reader SD font is separately E79 |
+| Three-book Home Carousel | Guest opens three distinct original books, saves titles/order, applies Carousel through UI, writes version5 snapshot cache; second-cover selection opens matching path and survives new CPU | E84 | true / false |
+| Legacy recent-store v1 migration | Genuine original binary input becomes one title/path JSON entry and `.bin.bak`; Home opens the real book, guest updates metadata and cold restart preserves it | E85 | true / false; input version1 is explicitly supplied |
+| Legacy recent-store v3 migration | Genuine original two-entry input migrates valid metadata while skipping its empty-title entry; backup bytes, actual book navigation/update and cold persistence verified | E86 | true / false; input version3 is explicitly supplied |
+| Recent JSON interrupted-backup recovery | Missing primary with original `.bak` is promoted by guest; actual Continue opens/updates the book and the resulting store survives new CPU | E87 | true / false |
+| Recent JSON corrupt-primary repair | Corrupt primary remains a parse error and does not silently consume original `.bak`/`.tmp`; real browser/open writes repaired JSON, removes temporary state and survives new CPU | E88 | true / false; corrupt inputs are declared negative controls |
+| Recent temporary-only input | Guest does not promote an original uncommitted `.tmp` when primary/backup are absent; real browser/open writes committed JSON, removes temporary state and survives new CPU | E89 | true / false |
+| Recent stale-temporary input | Guest retains original valid primary over stale `.tmp`; actual Continue opens/updates the real book, atomic save cleans the temporary file and cold restart preserves the result | E90 | true / false |
+| Legacy recent-store v2 migration | Original path/title/author input migrates to JSON with exact binary backup; actual coverless EPUB metadata/section caches and reader navigation update it, and new CPU preserves the result | E91 | true / false; supersedes earlier cover-path verifier assumption failure |
+| Three-book Home three-cover view | Guest opens three distinct original books and applies the theme through UI; selecting the second cover opens the matching saved path, and a new CPU preserves theme and reader state | E92 | true / false |
+| Global/per-book dictionary selection | Actual absent→automatic Synthetic→None→Synthetic global selection; inherited lookup, explicit book override with global None, Use Global restoration and new-CPU persistence | E93 | true / false; None is a global option, not a per-book row |
+| Global Saved Items clipping anchor | Normal resume is page2; the actual saved-book→Clippings→detail→Open route restores highlighted page1 with zero pixel differences, consumes the pending index and persists it across new CPU | E94 | true / false; global bulk deletion is separately E29 |
+| Hide Battery Percentage and Hide Clock | Actual UI selects In Reader/Always/Never for both; percentage-only changes preserve icon/body, reader-clock hiding performs source-required reflow, and new CPU preserves Always before exact Never restoration | E95 | true / false; 64 functional checks, native digital effects only |
+| Minimal Home dedicated navigation | Three genuine books, actual Minimal theme UI, front Right Continue, long Back rotates highlighted book, dedicated Recent Books menu, front Confirm Browse and front Left Settings; matching saved paths and new-CPU persistence | E96 | true / false |
+| Grayscale fixed-reader menus | Original480×264 XTCH creates genuine thumbnail/source caches; actual Chapter2 jump, Stats, Finished/Unfinished, Delete Stats Cancel/Confirm and nonempty-cache Delete Cancel/Confirm preserve progress and exact reopen | E97 | true / false; independent valid geometry input, not a fix for stock528-width thumbnail rejection |
+| Reading Stats Idle Threshold | Actual UI saves30seconds; genuine35second page interval adds no time/pace sample while page count advances. Resumed eligible reading adds34seconds with a45second reader-menu pause excluded; new CPU preserves threshold and exact stats bytes | E98 | true / false; virtual intervals are uncalibrated, guest accounting is verified |
+| Global Reader defaults applied to a new book | Actual built-in family Preview/Select,16pt, line/word spacing, AA, margins, alignment, hyphenation, extra spacing and indents UI; new book inherits genuine section profile without custom override, binary page changes and exact fresh-CPU restoration | E99 | true / false; prior host frame-key verifier failure is retained separately |
+| Multi-image random sleep selection | Actual preferred-folder UI, three original BMPs and genuine CSIX3 reuse; four deep sleeps consume non-recent pools3→2→1→0 while the saved recent-image ring grows, with a fresh CPU before the all-recent reuse | E100 | true / false; 67 checks. Exact random sequence, entropy/distribution and the cache-write-failure fallback are not claimed |
+| Dashboard Home dedicated navigation | Three genuine books, actual Dashboard theme UI, front Right Continue, long Back book rotation, dedicated Recent Books menu, front Confirm Browse and front Left Settings; matching real paths and new-CPU persistence | E101 | true / false; distinct entrypoint from Minimal E96 |
+| Recursive browser directory deletion | Guest first creates EPUB cache/bookmark/clipping. Cancel preserves exact files/state; confirmed Delete removes nested files and matching metadata/favorites/preferred folder, retains unrelated TXT, and cleanup survives new CPU | E102 | true / false; favorite/folder paths are labelled inputs. Recent JSON is retained while Home omits its deleted book, matching source |
+| Conditional physical Power Footnote Back | Actual conditional picker and binding; On restores visible origin exactly, Off retains note count/CRC/pixels warm and cold, settings persist, and OCR confirms the original note/conditional label | E103 | true / false for the35 named checks; `guest_origin_persistence_correct=false` explicitly retains the stock stale pending-save quirk, so correct origin persistence is not claimed |
+| Classic Home selection | Three genuine original books, actual Classic theme UI, long Confirm book rotation and short Confirm opening the matching selected path; theme and real reader state survive new CPU | E104 | true / false |
+| Browser long-Back hidden-file toggle | Actual long Back saves Show Hidden, preserves selected visible entry, opens newly exposed hidden TXT; a second toggle hides it, retained visible TXT opens, and new CPU preserves the policy | E105 | true / false; prior incorrect row-navigation attempt is retained separately |
+| OPDS server picker/Search/download cancellation | Actual two-server picker selects server1; genuine typed `a b` produces `%20` query, original EPUB downloads exactly. Actual held Back aborts a controlled partial response, removes it, retains completed book and restores results | E106 | true / false;20 named checks, absolute acquisition paths. File-base relative-acquisition404 defect and untested pagination remain explicit |
+| Roundedraff Home selection | Three genuine original books, actual Roundedraff theme UI, long Confirm book rotation and short Confirm opening the matching selected path; theme and real reader state survive new CPU | E107 | true / false; distinct entrypoint from Classic E104 |
+| OPDS next/previous pagination | Actual Down/Confirm follows the feed-level next link, then Confirm follows prepended previous; exact authenticated request sequence is recorded and return restores all418,176 native pixels | E108 | true / false;15 named checks plus12 separate source-effect checks. Additional acquired formats are not claimed |
+| Genuine received-peer statistics aggregate | Whole saved card/flash/eFuse from the successful real CISS109 exchange are reused byte-identically; This Device17sessions/20minutes/1completed and All Devices48/55/3 are read from native raster. Empty distribution chart blocks match and both full views restore exactly after a new CPU | E109 | true / false;24 checks. Received records and original archived media remain exact; this proves zero-valued distribution state, not nonzero bucket/history effects |
+| Nearby Sync Stats real peer exchange | Two unchanged stock guests with distinct real eFuse identities enter Sync Stats, exchange CISS over the raw802.11 peer transport, show Both Readers Synced and save each peer's exact159-byte record under its actual MAC while preserving local records | E110 | true / false machine acceptance; initial original stats totals are declared inputs. Real generation/nonzero bucket effects remain a separate pending reading/resync proof |
+| Genuine reading generates distribution/history | Copied real guest2 media, declared external DS3231 Friday morning/Saturday afternoon and actual EPUB page turns/exits generate32seconds in each time/weekday bucket, two history days and longest streak2; exact generated record survives a new CPU | E111 | true / false;26 checks,38 verified artifacts. Original stats/media are preserved and no records are inserted; receiving-peer chart effects remain pending real resync |
+| Genuine reading record crosses real CISS | Two stock guests reuse actual stopped media; CISS transfers the reader-generated159-byte record exactly, both show synced, receiver local stats remain exact and remote record preserves both32second time/weekday buckets and history/streak | E112 | true / false machine acceptance;54 verified artifacts. Source media are copied byte-identically and no statistics bytes are inserted |
 
 Source-supported limits remain explicit: older WiFi receipts reached a PHY
-clock prerequisite failure. The newer 95-case candidate now has separate real
-guest scan/join/DHCP/server evidence; this does not imply that every network
-application works. A stock WebDAV GET failure remains visible, and OPDS,
-Calibre, Nearby, KOReader, NTP and OTA downloading need their own receipts.
-Stock on-device statistics
-offers Backup Now and Reset All-Time Stats; no on-device restore/import/export
-entrypoint was found. Recovery of `.tmp`/`.bak` and network stats sync/export
-need their own tests.
+clock prerequisite failure. Newer candidates have real guest scan/join/DHCP
+and named network-service evidence; this does not imply every network
+application works. Stock WebDAV GET remains a genuine failed content check;
+Nearby and online OTA downloading still require their own completed receipts.
+Stock on-device statistics offers Backup Now and Reset All-Time Stats; no
+on-device restore/import/export entrypoint was found. Recent-store `.tmp`/`.bak`
+handling is separately proved by E87–E90, and peer statistics sync is pending.
+
+Additional completed network scopes are retained as full sanitized gzip
+receipts in [the durable index](evidence/functions-latest/index.json). Each
+index row records both compressed and decompressed SHA-256, the original
+private receipt SHA-256, backend and strict-machine result. These functional
+proofs do not waive incomplete-machine diagnostics or claim untested sibling
+branches.
+
+| Named network scope | Durable receipt | Functional result / actual checked effect |
+| --- | --- | --- |
+| OPDS authenticated feed and download | [opds](evidence/functions-latest/opds-d96a1d74.json.gz) | true; relative feed navigation, exact original EPUB on card, cross-origin Authorization not forwarded |
+| KOReader Sign Up | [signup](evidence/functions-latest/koreader-signup-7b3c5998.json.gz) | true; genuine protocol request and stock success panel |
+| KOReader Authenticate | [authenticate](evidence/functions-latest/koreader-auth-67774ca4.json.gz) | true; genuine protocol request and stock success panel |
+| KOReader ask/upload/apply | [nonboundary apply](evidence/functions-latest/koreader-nonboundary-apply-4ff6db63.json.gz) | true; local page1 upload, independent remote advance, actual applied reader geometry and saved progress |
+| KOReader Smart | [smart](evidence/functions-latest/koreader-smart-5e264b48.json.gz) | true; missing/equal/remote-ahead/local-ahead decisions execute their actual upload/return/apply paths |
+| Sync Clock Now | [NTP](evidence/functions-latest/ntp-a3d33323.json.gz) | true; actual client packet/originate echo, guest RTC write/readback and saved sync-date flag |
+| Initial remote font installation | [font download](evidence/functions-latest/fonts-6fc0fb53.json.gz) | true; genuine endpoint requests, exact CPFONT bytes/manifest CRC and guest temporary-file cleanup |
 
 Backend SHA-256 identities used by the receipts:
 
@@ -428,6 +472,8 @@ Backend SHA-256 identities used by the receipts:
 | B6 | `4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91` |
 | B7 | `77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee` |
 | B8 | `1a61f2aaab242120a522428b0eac1b79650a025a7b775a3be10409723c88d5d5` |
+| B9 | `01b806443dff5da98e963acc7cda556ebad35886f06c7af26a13630a894060a0` |
+| B10 | `db30ffb3ca120856211e080ee63e7ea894ecf6a812015f73f5b3e04884d6925c` |
 
 Receipt hashes identify the exact local evidence snapshot, not a source-code
 commit. Runtime cards, images, flash and logs remain outside repository commits.
@@ -502,6 +548,42 @@ commit. Runtime cards, images, flash and logs remain outside repository commits.
 | E74 | `display-recovery-valid-77fa-final/recovery-valid/validation.json` | B7 | `53c7600ec357c6757f874009e8f209b25d03781d19bb09fc16099e26590e6ebd` |
 | E75 | `functions-incremental/incremental/validation.json` | B6 | `9fb9408b4b716e57663b2d95375ed6803a4b3b3a823804d1db8757080e1e84b7` |
 | E76 | `functions-dictionary-chain/dictionary-chain/validation.json` | B6 | `7141739599de9dc2c9f6ef3d6c83615f208a7c96496cc7e5454542ba72743e95` |
+| E77 | `functions-render-balanced/render-options/validation.json` | B6 | `9c5b167de271b122acdfeac6f4965586ce65a76ff346447f8648ba9abacdfaff` |
+| E78 | `functions-clipping-table/clipping-table/validation.json` | B6 | `e6fed339f6220e4b3d249a2c27a44b7230d017e2a95d43aced9b5c2280c6ed7a` |
+| E79 | `functions-ascii-sd-font/sd-font/validation.json` | B6 | `74a20a2b089996b3f8c586443b4a7b6a05b1b9fdac69a26b1b9e2f5b494b23a2` |
+| E80 | `display-refresh-settings-77fa-final/refresh-settings/validation.json` | B7 | `de6ef70f0b93a71ef4d7485f24f401ccc9fbbf0aa63f58cccb9dbf13c769ff24` |
+| E81 | `library-layout-77fa-final/library-layout/validation.json` | B7 | `bcc357a0b45c5ca834069d10fa295766f006bbf195510d4cd94244476532cb97` |
+| E82 | `library-fixed-77fa-first/fixed-mono-menus/validation.json` | B7 | `5aef04d815831af11c3769a4a1e8f46203bdf20d7c4bff0f584a2e51683f2ef2` |
+| E83 | `functions-ascii-dictionary-font/dictionary-font/validation.json` | B6 | `873ae8655af3b5b8e6110785ac670d0b3c26e973320f3c64dd97eccf396e923c` |
+| E84 | `home-layout-77fa-final/home-carousel/validation.json` | B7 | `631723711160b3010a216b5b9b48a3220d4a6c86a6369d2265a3f1ed04ab3e1c` |
+| E85 | `home-recovery-77fa-first/recent-legacy-1/validation.json` | B7 | `0287fede04f721f6638dddad27319e4a27a5f718d9a2947618a82d39d7d17291` |
+| E86 | `home-recovery-77fa-first/recent-legacy-3/validation.json` | B7 | `63afa6db110ad96655142e1d8a1a5f82b2c4e66944a790f35a9ce847cdec0ea3` |
+| E87 | `home-recovery-77fa-first/recent-backup/validation.json` | B7 | `13c854ca91b9e271d5a73355e56b215de0b1b41cdb2d342d1e9fdd8824fad4c4` |
+| E88 | `home-recovery-77fa-first/recent-corrupt/validation.json` | B7 | `a837c62f99da0757209051f8ac791efc05f3d238aa45c9f6a279eb01fce10518` |
+| E89 | `home-recovery-77fa-first/recent-temp-only/validation.json` | B7 | `19643565921a1a12e8fb98f38db05289a5484211030e469333ec84499d3f8d48` |
+| E90 | `home-recovery-77fa-first/recent-stale-temp/validation.json` | B7 | `20862eb9c58d1abe41956788ad3f5368e164c9e8b6b4e4166208d5315926545a` |
+| E91 | `home-recovery-77fa-v2-final/recent-legacy-2/validation.json` | B7 | `ea2d489abd8e6c9216561f4c3ca2754d19384dbab0411d0be255adbcb396e043` |
+| E92 | `home-layout-77fa-final/home-three-covers/validation.json` | B7 | `7391f65ded66f9c714eaad0516b00c84169af84686bad54609544c430ddf605a` |
+| E93 | `functions-dictionary-global/dictionary-global/validation.json` | B6 | `9138b51227126a38992e9f4f3cb5d82cb96e0d51059b95995c1ea0d88ccaebbd` |
+| E94 | `functions-saved-clipping-jump/saved-clipping-jump/validation.json` | B6 | `f7e01546a3c6ba5e2b62e4773a42d31c0bb7f48572554720bd4c226fd372c06c` |
+| E95 | `display-widgets-102-final/hide-widgets/validation.json` | B9 | `41150d527c69428747f897a139c76934d09b6244160b4c7bd53b524a3a7ce1a8` |
+| E96 | `home-layout-77fa-final/home-minimal/validation.json` | B7 | `d7e40a182b805ed9937bd6d8c6711eb8ca75ea1f468ded3f0f44b10fc51efbb7` |
+| E97 | `library-fixed-gray480small-77fa-final/fixed-gray-menus/validation.json` | B7 | `4da7836c94c79cf1daccd508dab05bcb72eff5b4d0aafaf3ec54bd238d870aeb` |
+| E98 | `home-policies-77fa-final/idle-threshold/validation.json` | B7 | `3c838a81879981303aa136f764d04053de748506d46a750f8f177381bf51fcfc` |
+| E99 | `home-defaults-77fa-final/global-defaults/validation.json` | B7 | `59b091c0648d0a03a81a89dd9991e55f55b34e402756c1e2dd4fe24166d43eb9` |
+| E100 | `display-random-folder-102-final/sleep-random-folder/validation.json` | B9 | `b92f13c02d0a14de9e324264520abb56f16af72b9ba49b4214d877e5329cefdb` |
+| E101 | `home-layout-77fa-final/home-dashboard/validation.json` | B7 | `4ac8c94e308792b879d1a9ba87822cd5365ddfe00c79c6fc58ea749e2b8ae0d3` |
+| E102 | `home-policies-77fa-final/directory-delete/validation.json` | B7 | `515594086918ad2ea2da4f2b3f84e97e9f09d1ba0d88efb591928c18c904bfb5` |
+| E103 | `functions-power-footnotes/power-footnotes/validation.json` | B6 | `732b1db1ce2c1d06b3ef85eef9f112f09af4f036c42084d39a8d0851bbb8acea` |
+| E104 | `home-layout-77fa-final/home-classic/validation.json` | B7 | `c16d3997bd1fcbb0869b3245f0c416b9fb29ff6f11780f5169484336731187ac` |
+| E105 | `home-hidden-77fa-final/browser-hidden/validation.json` | B7 | `0d64df5c1cac8f53086794bdd0c971ca500fc2454d91385c58c9161027c36824` |
+| E106 | `opds-siblings-109-final/opds-siblings/validation.json` | B10 | `53bd9e304c2c1f68a746436ef111ece45e33a80ee92b891c7a0d2277839c27d5` |
+| E107 | `home-layout-77fa-final/home-roundedraff/validation.json` | B7 | `60facc817a3a6892310fb655c0ee316891c2bd9ddf54d139a93c8a8de456e462` |
+| E108 | `opds-pagination-109-final/opds-pagination/validation.json` | B10 | `d0beb68b3ce28684c3acb19293c2859e9c6d264a703365ba806d60e6f5c70173` |
+| E109 | `stats-peer-baseline109-final/validation.json` | B10 | `454b92df3d5433b63765922d38c26a6d3b1da7b19aeac0ab83855fbee61d1c2b` |
+| E110 | `x3-nearby-all-prng109/stats/validation.json` | B10 | `9c0dac8cad0d5a4d48cd3de80b92abf02b02a429982a5a2ccde9a2e770923450` |
+| E111 | `stats-peer-genuine-reading109-final/validation.json` | B10 | `bccbae8bf084360e8b409067b52a5c27869a2668b55e5f04daf61df0e431c001` |
+| E112 | `x3-nearby-stats-genuine-reading-resync109/stats/validation.json` | B10 | `71e517d72c91fc8a2e8bd0cadf316c2269e44f3a98f7b71aaac21483dfea8274` |
 
 Durable sanitized receipts use these exact paths relative to the project root.
 Their hashes identify the sanitized receipt bytes rather than the original
@@ -522,6 +604,8 @@ Post-exit analyses supplement their original, unchanged workflow receipts:
 
 | Evidence | Path under `local/runs/` | SHA-256 |
 | --- | --- | --- |
+| E33 exact Page Overlay GPIO wake restoration | `display-private-4eca-quick-overlay/page-overlay-wake-source-effect-analysis.json` | `6dcfc8c65dd4f37515336721c1cab391da09b98a4395c352d4e3a12a7ae21d14` |
+| E103 stock stale-footnote-progress limitation | `functions-power-footnotes-stale-progress/power-footnotes/stock-stale-footnote-progress.json` | `fe66165a3f96cc7d9a10018b7c24e1cce9f263a38142585303c023780d74072f` |
 | E36 report and exact Home return | `display-crash-77fa-final/crash/crash-report-artifact-analysis.json` | `a9e93b6772c77fae09201a00a2f8f4ae523859df0e2875d7daf937f337c25148` |
 | E42 cover thumbnail interior | `display-sleep-generated-77fa-enospc-interrupted/sleep-minimal/sleep-cover-embedding-analysis.json` | `8261097917a8b53a6f18fc819072a46a3c011973564a697fec5694fba077b632` |
 | E43 cover thumbnail interior | `display-sleep-generated-77fa-enospc-interrupted/sleep-minimal-stats/sleep-cover-embedding-analysis.json` | `8261097917a8b53a6f18fc819072a46a3c011973564a697fec5694fba077b632` |

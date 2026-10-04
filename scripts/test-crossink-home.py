@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stock guest tests for recent-store recovery and distinct X3 Home routes.
+"""Stock guest tests for recent stores, Home routes and global defaults.
 
 Synthetic legacy/corrupt stores are explicit inputs. Only actual firmware
 reads, repairs, button routes and persistent writes count as guest proof.
@@ -21,7 +21,7 @@ SOURCE = Path(__file__).read_bytes()
 SOURCE_SHA = hashlib.sha256(SOURCE).hexdigest()
 sys.path.insert(0, str(PROJECT))
 from x3emu.backend import DEFAULT_BACKEND
-from x3emu.fixtures import make_advanced_epub, make_png
+from x3emu.fixtures import make_advanced_epub, make_png, make_bmp
 from x3emu.sdcard import make_test_epub
 
 LIBRARY = runpy.run_path(str(PROJECT / "scripts/test-crossink-library.py"))
@@ -63,13 +63,18 @@ def wait_epub_ready(replay, path, label):
     """Wait for the default full-section guest parser, then settle its panel."""
     replay.experiment.wait("guest publishes actual EPUB metadata", lambda:
                            replay.file_exists(RECENT) and any(book["path"] == path
-                           and book.get("coverBmpPath") for book in read_json(replay, RECENT)["books"]))
+                           and book.get("title") for book in read_json(replay, RECENT)["books"]))
     entry = next(book for book in read_json(replay, RECENT)["books"] if book["path"] == path)
-    cache = entry["coverBmpPath"].rsplit("/", 1)[0]
+    # Original prose-only EPUBs have no cover and legitimately record an empty
+    # coverBmpPath. Their source-compatible path hash is independently checked
+    # against the actual guest-written metadata/section files.
+    cache = entry["coverBmpPath"].rsplit("/", 1)[0] if entry.get("coverBmpPath") else SHARED["cache_path"](path)
+    replay.experiment.wait("guest publishes actual metadata cache", lambda: replay.file_exists(cache + "/book.bin"))
     replay.experiment.wait("guest completes first EPUB section", lambda: replay.file_exists(cache + "/sections/0.bin"))
     # Existing count is permitted: opening may already have captured the
     # completed page. Baseline0 still checks a frozen, quiet, native target.
     replay.capture(label, 0)
+    return cache
 
 
 def recovery_workflow(replay):
@@ -236,17 +241,271 @@ def home_workflow(replay):
                  and read_json(replay, STATE).get("openEpubPath") == before)
 
 
+def open_original_epub(replay, path, index=0, *, from_empty=False, label="original"):
+    if not from_empty:
+        replay.tap("down", label + "-browse-row", "Home Continue0: Browse Files1")
+    replay.tap("confirm", label + "-browser", "Open genuine SD browser")
+    move(replay, "down", index, label + "-file-row")
+    replay.tap("confirm", label + "-reader", "Open actual original " + path)
+    return wait_epub_ready(replay, path, label + "-ready")
+
+
+def global_defaults_workflow(replay):
+    replay.capture("defaults-empty-home", 0)
+    baseline_cache = open_original_epub(replay, "/a.epub", from_empty=True, label="defaults-baseline")
+    before = SHARED["decode_section_render_spec"](replay.read_file(baseline_cache + "/sections/0.bin"))
+    baseline = "defaults-baseline-page"
+    replay.capture(baseline, 0)
+    replay.tap("back", "defaults-home", "Exit first original book before editing global defaults")
+    LIBRARY["settings_open"](replay)
+    replay.tap("confirm", "defaults-reader-tab", "Global Settings: Reader tab")
+    replay.tap("down", "defaults-font-row", "Reader: Font Options")
+    replay.tap("confirm", "defaults-font-options", "Enter actual global Font Options")
+    replay.tap("confirm", "defaults-family-picker", "Global Font Family picker")
+    replay.tap("down", "defaults-bitter-row", "Choose Bitter built-in family")
+    preview = replay.tap("confirm", "defaults-bitter-preview", "Preview Bitter before selecting it")
+    replay.tap("confirm", "defaults-bitter-selected", "Commit global Bitter family")
+    replay.check("global_family_selected_through_preview", read_json(replay, SETTINGS).get("fontFamily") == 1
+                 and replay.receipt["frames"][preview]["dark_pixels"] > 1000)
+    replay.tap("down", "defaults-size-row", "Global Font Size")
+    replay.tap("confirm", "defaults-size-picker", "Open built-in size choices")
+    replay.tap("down", "defaults-size16-row", "Choose16pt from default14pt")
+    replay.tap("confirm", "defaults-size-saved", "Save global16pt size")
+    replay.tap("down", "defaults-line-row", "Global Line Spacing")
+    replay.tap("confirm", "defaults-line-picker", "Open actual line-height interval editor")
+    replay.tap("right", "defaults-line-increase", "Increase global line height by1percent")
+    replay.tap("confirm", "defaults-line-saved", "Save the line-height value")
+    replay.tap("down", "defaults-word-row", "Global Word Spacing")
+    replay.tap("confirm", "defaults-word-picker", "Open word-spacing interval")
+    replay.tap("right", "defaults-word-increase", "Increase global word spacing by1pixel")
+    replay.tap("confirm", "defaults-word-saved", "Save word-spacing value")
+    replay.tap("down", "defaults-aa-row", "Global Text Anti-aliasing")
+    replay.tap("confirm", "defaults-aa-off", "Toggle global anti-aliasing off")
+    replay.tap("back", "defaults-reader-parent", "Return Font Options to Reader parent")
+    replay.tap("down", "defaults-layout-row", "Reader: Page Layout")
+    replay.tap("confirm", "defaults-layout", "Enter global Page Layout")
+    replay.tap("down", "defaults-margin-row", "Select global Screen Margins")
+    replay.tap("confirm", "defaults-margins", "Enter split margin submenu")
+    replay.tap("confirm", "defaults-vertical-picker", "Edit global top/bottom margins")
+    replay.tap("right", "defaults-vertical-increase", "Increase top/bottom margins by1pixel")
+    replay.tap("confirm", "defaults-vertical-saved", "Save top/bottom margin")
+    replay.tap("down", "defaults-horizontal-row", "Select Left/Right margins")
+    replay.tap("confirm", "defaults-horizontal-picker", "Edit global left/right margins")
+    replay.tap("right", "defaults-horizontal-increase", "Increase left/right margins by1pixel")
+    replay.tap("confirm", "defaults-horizontal-saved", "Save left/right margin")
+    replay.tap("back", "defaults-layout-return", "Return margin submenu to Page Layout")
+    move(replay, "down", 2, "defaults-align-row")
+    replay.tap("confirm", "defaults-align-picker", "Open alignment choices")
+    replay.tap("down", "defaults-align-left", "Choose Left instead of Justify")
+    replay.tap("confirm", "defaults-align-saved", "Save global paragraph alignment")
+    for field in ("hyphenation", "extra-spacing", "paragraph-indents"):
+        replay.tap("down", "defaults-" + field + "-row", "Select global " + field)
+        replay.tap("confirm", "defaults-" + field + "-toggle", "Toggle global " + field)
+    saved = read_json(replay, SETTINGS)
+    replay.check("global_font_and_layout_values_saved_by_ui", saved.get("fontSize") == 16
+                 and saved.get("wordSpacing") == 1 and saved.get("textAntiAliasing") == 0
+                 and saved.get("paragraphAlignment") == 1 and saved.get("hyphenationEnabled") == 1
+                 and saved.get("extraParagraphSpacing") == 0 and saved.get("forceParagraphIndents") == 1, saved)
+    replay.tap("back", "defaults-reader-root", "Return Page Layout to Reader parent")
+    LIBRARY["settings_close"](replay)
+    replay.tap("down", "defaults-home-continue-row", "Home remembers Settings: wrap to Continue0")
+    cache = open_original_epub(replay, "/b.epub", 1, label="defaults-new-book")
+    profile = SHARED["decode_section_render_spec"](replay.read_file(cache + "/sections/0.bin"))
+    page = "defaults-new-book-page"
+    replay.capture(page, 0)
+    replay.check("new_book_inherits_global_render_parameters", profile["font_id"] != before["font_id"]
+                 and profile["word_spacing"] == 1 and profile["paragraph_alignment"] == 1
+                 and profile["hyphenation"] == 1 and profile["extra_paragraph_spacing"] == 0
+                 and profile["force_paragraph_indents"] == 1
+                 and abs(profile["line_compression"] - 1.01) < 0.00001
+                 and profile["viewport_width"] == before["viewport_width"] - 2
+                 # The visible footer already reserves more than6pixels, so
+                 # this5→6 margin edit shrinks only the top viewport edge.
+                 and profile["viewport_height"] == before["viewport_height"] - 1,
+                 {"before": before, "new": profile})
+    replay.check("new_book_uses_global_defaults_without_custom_override", not replay.file_exists(cache + "/reader_settings.bin")
+                 or replay.read_file(cache + "/reader_settings.bin")[1] & 1 == 0)
+    replay.check("new_global_defaults_change_actual_reader_pixels", changed_pixels(replay.experiment.frames[baseline],
+                 replay.experiment.frames[page]) > 5000)
+    replay.check("global_antialiasing_off_produces_binary_native_target", set(SHARED["SMOKE"]["read_pgm"](
+                 replay.experiment.frames[page])[2]) <= {0, 255})
+    replay.tap("back", "defaults-persisted-home", "Exit inherited reader and restore global snapshot")
+    replay.check("reader_exit_preserves_global_ui_values", all(read_json(replay, SETTINGS).get(key) == value
+                 for key, value in saved.items()))
+    replay.restart()
+    replay.check("global_defaults_survive_new_cpu", all(read_json(replay, SETTINGS).get(key) == value
+                 for key, value in saved.items()))
+    replay.tap("confirm", "defaults-cold-continue", "Cold Home Continue opens inherited second book")
+    wait_epub_ready(replay, "/b.epub", "defaults-cold-ready")
+    cold = "defaults-cold-page"
+    replay.capture(cold, 0)
+    replay.check("global_default_new_book_cold_pixels_exact", changed_pixels(replay.experiment.frames[page],
+                 replay.experiment.frames[cold]) == 0)
+
+
+def idle_threshold_workflow(replay):
+    replay.receipt["configuration_input_scope"] = "Never auto-sleep is an explicit input; Idle Threshold is edited through actual UI. Virtual dwell timing is uncalibrated."
+    replay.capture("idle-empty-home", 0)
+    cache = open_original_epub(replay, "/a.epub", from_empty=True, label="idle-initial")
+    replay.tap("back", "idle-home", "Leave reader before global statistics threshold edit")
+    LIBRARY["settings_open"](replay)
+    LIBRARY["system_tab"](replay)
+    move(replay, "down", 3, "idle-system-stats-row")
+    replay.tap("confirm", "idle-system-stats", "Enter Reading Stats settings")
+    replay.tap("down", "idle-threshold-row", "Reading Stats: Idle Threshold after All-Time; stock toggle is compile-disabled")
+    replay.tap("confirm", "idle-threshold-picker", "Open actual Idle Time Threshold interval editor")
+    move(replay, "up", 5, "idle-threshold-to-minimum")
+    replay.tap("confirm", "idle-threshold-saved", "Save source minimum30seconds")
+    replay.check("idle_threshold_minimum_saved_through_ui", read_json(replay, SETTINGS).get("readingIdleTimeThresholdUnits") == 3)
+    LIBRARY["settings_close"](replay, submenu=True)
+    # Begin both measurements with fresh CPU/session state and the actual saved
+    # threshold; no host edits are made to card statistics.
+    replay.restart()
+    replay.tap("confirm", "idle-cold-reader", "Continue the genuine original book")
+    wait_epub_ready(replay, "/a.epub", "idle-cold-page")
+    before = LIBRARY["book_stats"](replay.read_file(cache + "/stats_v5.bin"))
+    replay.dwell("An actual page interval exceeds the30second idle threshold", 35_000_000_000)
+    replay.tap("down", "idle-forward-after-idle", "Turn page after the idle interval")
+    replay.tap("back", "idle-discarded-home", "Flush discarded idle interval to genuine stores")
+    discarded = LIBRARY["book_stats"](replay.read_file(cache + "/stats_v5.bin"))
+    replay.check("over_threshold_interval_is_discarded", discarded["seconds"] == before["seconds"]
+                 and discarded["pace_samples"] == before["pace_samples"]
+                 and discarded["pages"] == before["pages"] + 1, {"before": before, "after": discarded})
+    replay.tap("confirm", "idle-active-reader", "Resume eligible reading through Home Continue")
+    wait_epub_ready(replay, "/a.epub", "idle-active-page")
+    replay.dwell("Eligible actual reading interval before opening the reader menu", 12_000_000_000)
+    replay.tap("confirm", "idle-paused-menu", "Open reader menu: source pauses the page-reading timer")
+    replay.dwell("Actual modal menu stays open beyond the reading threshold", 45_000_000_000)
+    replay.tap("back", "idle-menu-resume", "Close menu: source resumes the page-reading timer")
+    replay.dwell("Eligible reading after the actual modal return", 12_000_000_000)
+    replay.tap("down", "idle-forward-active", "Turn after the resumed eligible interval")
+    replay.tap("back", "idle-active-flushed", "Flush genuine eligible reading time")
+    active = LIBRARY["book_stats"](replay.read_file(cache + "/stats_v5.bin"))
+    delta = active["seconds"] - discarded["seconds"]
+    replay.check("reading_resumes_and_menu_time_is_excluded", 24 <= delta < 60
+                 and active["pages"] == discarded["pages"] + 1, {"before": discarded, "after": active, "seconds_added": delta})
+    replay.check("idle_threshold_survives_real_reader_sessions", read_json(replay, SETTINGS).get("readingIdleTimeThresholdUnits") == 3)
+    replay.restart()
+    replay.check("idle_threshold_and_stats_survive_new_cpu", read_json(replay, SETTINGS).get("readingIdleTimeThresholdUnits") == 3
+                 and LIBRARY["book_stats"](replay.read_file(cache + "/stats_v5.bin"))["sha256"] == active["sha256"])
+
+
+def directory_delete_workflow(replay):
+    book = "/Doomed/a.epub"
+    replay.receipt["configuration_input_scope"] = (
+        "Original favorite-image and preferred-folder state are explicit inputs, not UI-selection proofs. "
+        "The book cache, bookmark and clipping are created by the actual reader; directory Cancel/Delete and cleanup are actual UI effects.")
+    replay.capture("directory-input-home", 0)
+    replay.tap("confirm", "directory-browser", "Empty Home: Browse Files")
+    replay.tap("confirm", "directory-enter", "Enter actual Doomed folder")
+    replay.tap("down", "directory-book-row", "Pass Nested directory and select original EPUB")
+    replay.tap("confirm", "directory-original-reader", "Open original EPUB inside deletion target")
+    cache = wait_epub_ready(replay, book, "directory-original-ready")
+    replay.bookmarks_tab()
+    move(replay, "down", 2, "directory-add-bookmark-row")
+    replay.tap("confirm", "directory-bookmark-created", "Create genuine bookmark before deleting its folder")
+    replay.bookmarks_tab()
+    replay.tap("down", "directory-save-clipping-row", "Bookmarks tab: Save Clipping")
+    replay.tap("confirm", "directory-clipping-selector", "Open actual word selector")
+    replay.tap("confirm", "directory-clipping-start", "Select clipping start word")
+    replay.tap("right", "directory-clipping-end", "Extend original selection by one word")
+    replay.tap("confirm", "directory-clipping-created", "Save a genuine clipping from the original book")
+    replay.dwell("Wait for source1000ms saved-clipping toast to close", 1_100_000_000)
+    replay.capture("directory-post-toast-reader", 0)
+    bookmarks, clippings = SHARED["bookmark_path"](book), SHARED["clipping_path"](book)
+    replay.check("directory_metadata_created_by_guest", SHARED["decode_bookmarks"](replay.read_file(bookmarks))["count"] == 1
+                 and SHARED["decode_clippings"](replay.read_file(clippings))["count"] == 1
+                 and replay.file_exists(cache + "/book.bin"))
+    replay.tap("back", "directory-home-with-metadata", "Exit reader and save real progress")
+    replay.tap("down", "directory-home-browser-row", "Home Continue0: Browse Files1")
+    replay.tap("confirm", "directory-root-browser", "Open root browser with Doomed selected")
+    before = {path: replay.read_file(path) for path in (book, "/Doomed/Nested/b.txt", "/Doomed/z.bmp",
+             bookmarks, clippings, cache + "/book.bin", cache + "/progress.bin", STATE)}
+    hold(replay, "confirm", "directory-cancel-actions", "Long Confirm: source directory menu")
+    replay.tap("down", "directory-cancel-delete-row", "Directory actions second row: Delete")
+    replay.tap("confirm", "directory-cancel-warning", "Open real recursive Delete confirmation")
+    replay.tap("confirm", "directory-cancelled", "Default Cancel preserves the folder and metadata")
+    replay.check("directory_cancel_preserves_files_metadata_and_favorites", all(replay.read_file(path) == data
+                 for path, data in before.items()))
+    hold(replay, "confirm", "directory-delete-actions", "Reopen source directory actions")
+    replay.tap("down", "directory-delete-row", "Select Delete again")
+    replay.tap("confirm", "directory-delete-warning", "Open recursive deletion confirmation")
+    replay.tap("down", "directory-delete-confirm-row", "Choose destructive Confirm")
+    replay.tap("confirm", "directory-deleted", "Delete real nested folder and external book metadata")
+    replay.check("recursive_directory_and_nested_files_removed", all(not replay.file_exists(path) for path in
+                 ("/Doomed", book, "/Doomed/Nested/b.txt", "/Doomed/z.bmp"))
+                 and replay.read_file("/keep.txt") == TEXT)
+    replay.check("recursive_delete_clears_actual_book_metadata", not replay.file_exists(bookmarks)
+                 and not replay.file_exists(clippings) and not replay.file_exists(cache + "/book.bin"))
+    state = read_json(replay, STATE)
+    replay.check("recursive_delete_clears_matching_favorite_and_folder_inputs", state.get("favoriteSleepImagePath") == ""
+                 and state.get("favoriteBootImagePath") == "" and state.get("preferredSleepFolderPath") == "", state)
+    # Missing recent files are omitted by Home's loader, not pruned from its
+    # persistent JSON. Record the actual source behavior rather than asserting
+    # a deletion that the firmware never performs.
+    replay.check("delete_does_not_claim_recent_json_pruning", any(entry["path"] == book for entry in read_json(replay, RECENT)["books"]))
+    replay.tap("back", "directory-empty-home", "Return to Home after its only recent book was removed")
+    replay.tap("confirm", "directory-home-omits-missing-book", "Empty Home first row now opens Browse Files")
+    replay.tap("confirm", "directory-kept-file-reader", "Real remaining root file opens normally")
+    replay.check("home_omits_deleted_recent_and_keeps_other_book_usable", read_json(replay, STATE).get("openEpubPath") == "/keep.txt")
+    replay.tap("back", "directory-final-home", "Leave retained original TXT book")
+    replay.restart()
+    replay.check("recursive_delete_and_cleanup_survive_new_cpu", not replay.file_exists(book)
+                 and not replay.file_exists(bookmarks) and not replay.file_exists(clippings)
+                 and read_json(replay, STATE).get("favoriteSleepImagePath") == ""
+                 and read_json(replay, STATE).get("favoriteBootImagePath") == ""
+                 and read_json(replay, STATE).get("preferredSleepFolderPath") == "")
+
+
+def browser_hidden_workflow(replay):
+    replay.capture("hidden-input-home", 0)
+    replay.tap("confirm", "hidden-browser", "Empty Home: Browse Files")
+    hold(replay, "back", "hidden-long-back-show", "Actual Browser long Back toggles hidden files on")
+    replay.check("browser_long_back_saves_hidden_visibility", read_json(replay, SETTINGS).get("showHiddenFiles") == 1)
+    replay.tap("up", "hidden-original-row", "Toggle preserves selected visible.txt; move Up to newly exposed hidden TXT")
+    replay.tap("confirm", "hidden-original-reader", "Open file exposed by the actual long-Back toggle")
+    replay.check("browser_long_back_exposes_hidden_file", read_json(replay, STATE).get("openEpubPath") == "/.hidden.txt")
+    replay.tap("back", "hidden-home-after-reading", "Return hidden reader to Home")
+    replay.tap("down", "hidden-browse-row", "Home Continue0: Browse Files1")
+    replay.tap("confirm", "hidden-browser-reopened", "Reenter root with hidden files enabled")
+    hold(replay, "back", "hidden-long-back-hide", "Actual Browser long Back toggles hidden files off again")
+    replay.check("browser_long_back_hides_and_persists", read_json(replay, SETTINGS).get("showHiddenFiles") == 0)
+    replay.tap("confirm", "hidden-visible-original", "The first visible root item is the retained visible TXT")
+    replay.check("hidden_toggle_roundtrip_preserves_visible_dispatch", read_json(replay, STATE).get("openEpubPath") == "/visible.txt")
+    replay.tap("back", "hidden-final-home", "Exit real visible TXT reader")
+    replay.restart()
+    replay.check("browser_long_back_hidden_policy_cold_persistence", read_json(replay, SETTINGS).get("showHiddenFiles") == 0)
+
+
 WORKFLOWS = {name: recovery_workflow for name in (
     "recent-legacy-1", "recent-legacy-2", "recent-legacy-3", "recent-backup",
     "recent-corrupt", "recent-temp-only", "recent-stale-temp")}
 WORKFLOWS.update({name: home_workflow for name in (
     "home-carousel", "home-three-covers", "home-minimal", "home-dashboard", "home-classic", "home-roundedraff")})
+WORKFLOWS.update({"global-defaults": global_defaults_workflow, "idle-threshold": idle_threshold_workflow})
+WORKFLOWS.update({"directory-delete": directory_delete_workflow, "browser-hidden": browser_hidden_workflow})
 SOURCES = ("src/RecentBooksStore.cpp", "lib/Serialization/Serialization.h", "lib/Serialization/PersistableStore.cpp",
            "src/activities/home/HomeActivity.cpp", "src/activities/ActivityManager.cpp", "src/SettingsList.h",
-           "src/activities/home/FileBrowserActivity.cpp")
+           "src/activities/home/FileBrowserActivity.cpp", "src/activities/settings/SettingsActivity.cpp",
+           "src/activities/settings/FontSelectionActivity.cpp", "src/activities/util/IntervalSelectionActivity.cpp",
+           "src/activities/reader/EpubReaderActivity.cpp", "src/activities/reader/BookReadingStats.cpp",
+           "src/activities/home/BookActions.cpp", "src/BookmarkStore.cpp", "src/ClippingStore.cpp")
 
 
 def fixture_files(name):
+    if name == "directory-delete":
+        state = {"favoriteSleepImagePath": "/Doomed/z.bmp", "favoriteBootImagePath": "/Doomed/z.bmp",
+                 "preferredSleepFolderPath": "/Doomed"}
+        return {"/Doomed/a.epub": make_test_epub(), "/Doomed/Nested/b.txt": TEXT,
+                "/Doomed/z.bmp": make_bmp(264, 396), "/keep.txt": TEXT,
+                STATE: json.dumps(state, separators=(",", ":")).encode(), SETTINGS: b'{"sleepTimeoutMinutes":31}'}
+    if name == "browser-hidden":
+        return {"/.hidden.txt": TEXT, "/visible.txt": TEXT, SETTINGS: b'{"sleepTimeoutMinutes":31}'}
+    if name == "global-defaults":
+        return {"/a.epub": make_test_epub(), "/b.epub": make_test_epub(),
+                SETTINGS: b'{"sleepTimeoutMinutes":31}'}
+    if name == "idle-threshold":
+        return {"/a.epub": make_test_epub(), SETTINGS: b'{"sleepTimeoutMinutes":31}'}
     if name.startswith("home-"):
         return {f"/{letter}.epub": distinct_book(index) for index, letter in enumerate("abc")}
     files = {"/a.txt": TEXT, "/b.txt": b"Original second legacy entry.\n"}
@@ -288,7 +547,13 @@ def main(argv=None):
         def recorded(replay, flow=flow):
             (replay.experiment.output / "home-harness.py").write_bytes(SOURCE)
             replay.receipt.update({"home_harness_sha256": SOURCE_SHA, "home_harness_snapshot": "home-harness.py"})
-            replay.save(); flow(replay)
+            replay.save()
+            try:
+                flow(replay)
+            except (TypeError, KeyError, IndexError, struct.error) as error:
+                # Keep host-verifier failures inside the shared runner's
+                # diagnostic/cleanup path, with an explicit failed receipt.
+                raise ValueError(f"Host workflow verifier {type(error).__name__}: {error}") from error
         SHARED["WORKFLOWS"][name] = recorded
         SHARED["SOURCE_FILES"][name] = SOURCES
     receipts = {}

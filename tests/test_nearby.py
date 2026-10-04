@@ -7,6 +7,7 @@ import struct
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 import zlib
 
 PAIR = runpy.run_path(str(Path(__file__).resolve().parent.parent / "scripts/test-crossink-nearby.py"))
@@ -23,6 +24,74 @@ def wire(frame, channel=1):
 
 
 class PassiveRawPeerTests(unittest.TestCase):
+    def test_saved_media_allows_nvs_persistence_but_rejects_changed_boot_code(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            reference, saved = root / "reference.bin", root / "saved.bin"
+            image = bytearray(PAIR["FLASH_SIZE"])
+            reference.write_bytes(image)
+            image[0x9000:0x9004] = b"NVS!"
+            saved.write_bytes(image)
+            info = {"cold_boot_components_present": True,
+                    "partitions": [{"type": 0, "offset": 0x10000, "size": 0x640000}]}
+            with patch.dict(PAIR["verify_saved_flash"].__globals__, {"inspect_flash": lambda _: info}):
+                result = PAIR["verify_saved_flash"](reference, saved)
+                self.assertTrue(result["original_boot_app_and_ota_regions_identical"])
+                image[0x10020] = 1
+                saved.write_bytes(image)
+                with self.assertRaisesRegex(PAIR["NearbyError"], "original boot/app/OTA"):
+                    PAIR["verify_saved_flash"](reference, saved)
+
+    def test_active_saved_stats_media_is_rejected_before_copy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "run.json").write_text('{"status":"running","exit_code":0}')
+            with self.assertRaisesRegex(PAIR["NearbyError"], "cleanly stopped"):
+                PAIR["copy_saved_stats_media"](root, root / "output", root / "reference", 0)
+            self.assertFalse((root / "output").exists())
+
+    def test_gdb_observation_transport_checks_checksum_and_escaped_reply(self):
+        class Connection:
+            def __init__(self, payload, *, checksum=None):
+                encoded = bytes(value for byte in payload for value in ((125, byte ^ 32) if byte in b"$#}*" else (byte,)))
+                self.incoming = bytearray(b"+$" + encoded + b"#" + f"{sum(encoded) & 255 if checksum is None else checksum:02x}".encode())
+                self.sent = []
+
+            def recv(self, length):
+                result = bytes(self.incoming[:length])
+                del self.incoming[:length]
+                return result
+
+            def sendall(self, data):
+                self.sent.append(data)
+
+        records = []
+        connection = Connection(b"actual#$}*reply")
+        reply = PAIR["RSPReader"](connection, records).packet("m3fc9e604,4")
+        self.assertEqual(reply, "actual#$}*reply")
+        self.assertEqual(records, [{"request": "m3fc9e604,4", "reply": reply}])
+        self.assertEqual(connection.sent[-1], b"+")
+        connection = Connection(b"actual", checksum=0)
+        with self.assertRaisesRegex(PAIR["NearbyError"], "checksum"):
+            PAIR["RSPReader"](connection, []).packet("p20")
+        self.assertEqual(connection.sent[-1], b"-")
+
+    def test_paused_comparator_snapshot_only_reads_native_registers(self):
+        class QMP:
+            def __init__(self):
+                self.commands = []
+
+            def execute(self, name, arguments):
+                self.commands.append((name, arguments))
+                return "actual paused MMIO readback"
+
+        qmp = QMP()
+        result = PAIR["observe_wifi_match_registers"](qmp)
+        self.assertEqual(set(result), {"bssid_values_and_masks", "receiver_values_and_masks", "bssid_check_controls"})
+        self.assertEqual([name for name, _ in qmp.commands], ["human-monitor-command"] * 3)
+        self.assertEqual([args["command-line"] for _, args in qmp.commands],
+                         ["xp /16wx 0x60033000", "xp /12wx 0x60033040", "xp /2wx 0x600330d8"])
+
     def test_fragmented_transport_retains_exact_mpdu_and_stock_complete_crc(self):
         original = bytes(range(256)) * 3
         packet = struct.pack("<4sBBHIIQI", b"CIFT", 1, 8, 12, 0x10203040, 0, len(original), zlib.crc32(original))

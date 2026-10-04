@@ -126,6 +126,7 @@ class DisplayReplay:
     def __init__(self, experiment, qmp, receipt, path):
         self.exp, self.qmp, self.receipt, self.path = experiment, qmp, receipt, path
         self.sequence = 0
+        self.boot_index = 0
 
     def save(self):
         self.receipt["input_events"] = self.exp.steps
@@ -141,18 +142,50 @@ class DisplayReplay:
 
     def capture(self, label, after, *, reader=False):
         info = self.exp.capture(self.qmp, label, after, reader=reader)
+        info["boot_index"] = self.boot_index
         self.receipt["frames"][label] = info
         self.save()
         return label
+
+    def restart(self):
+        """Create a fresh CPU using only the actual guest-written media."""
+        old_run = self.exp.run_dir
+        self.receipt.setdefault("states_before_cold_restart", []).append(self.qmp.state())
+        self.qmp.close()
+        self.exp.process.send_signal(signal.SIGINT)
+        self.exp.process.wait(timeout=15)
+        previous = json.loads((old_run / "run.json").read_text())
+        self.check(f"boot_{self.boot_index}_stopped_cleanly_for_cold_restart",
+                   previous.get("status") == "stopped" and previous.get("exit_code") == 0)
+        self.boot_index += 1
+        new_run = self.exp.output / f"reboot-{self.boot_index}"
+        command = list(self.receipt["launcher_argv"])
+        for flag, value in (("--flash", old_run / "flash.bin"), ("--sd", old_run / "sd.img"), ("--output", new_run)):
+            command[command.index(flag) + 1] = str(value)
+        self.receipt.setdefault("reboots", []).append({"boot_index": self.boot_index, "launcher_argv": command,
+                    "flash_sha256_before_restart": file_sha256(old_run / "flash.bin"),
+                    "sd_sha256_before_restart": file_sha256(old_run / "sd.img"), "cpu_state_preserved": False})
+        self.receipt["run_manifests"].append(str(new_run.relative_to(self.exp.output) / "run.json"))
+        with (self.exp.output / f"reboot-{self.boot_index}-launcher.log").open("wb") as log:
+            self.exp.process = subprocess.Popen(command, cwd=PROJECT, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
+        self.exp.run_dir = new_run
+        self.exp.last_settled_frame_ns = None
+        self.save()
+        self.exp.wait("fresh CPU launcher", lambda: (new_run / "run.json").is_file()
+                      and json.loads((new_run / "run.json").read_text())["status"] == "running")
+        self.qmp = QMPClient(new_run / "qmp.sock")
+        self.exp.wait("fresh stock X3 startup", lambda: "Hardware detect: X3" in self.exp.log_text("serial.log"))
+        return self.capture(f"home-after-cold-restart-{self.boot_index}", 0)
 
     def tap(self, button, label, purpose, *, hold_ms=None, reader=False):
         self.sequence += 1
         label = f"{self.sequence:03d}-{label}"
         count = self.exp.refresh_count(self.qmp)
         self.receipt["actions"].append({"button": button, "purpose": purpose, "after_count": count,
-                                       "hold_ms": hold_ms or self.exp.button_hold_ms})
+                                       "hold_ms": hold_ms or self.exp.button_hold_ms, "boot_index": self.boot_index})
         self.save()
         self.exp.press(self.qmp, button, hold_ms=hold_ms, purpose=purpose)
+        self.exp.steps[-1]["boot_index"] = self.boot_index
         self.receipt["actions"][-1]["input"] = dict(self.exp.steps[-1])
         return self.capture(label, count, reader=reader)
 
@@ -337,6 +370,7 @@ class DisplayReplay:
                                           "value": hold_ms * 1_000_000})
             self.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": True})
             self.receipt["actions"].append({"button": "power", "gpio": 3, "active_level": 0,
+                                           "boot_index": self.boot_index,
                                            "press_t_ns": now, "hold_ns": hold_ms * 1_000_000,
                                            "release_transport": "QEMU_CLOCK_VIRTUAL timer", "purpose": purpose})
             self.save()
@@ -355,6 +389,7 @@ class DisplayReplay:
             _, _, pixels = SMOKE["read_pgm"](data)
             info = SMOKE["frame_info"](data)
             info.update({"path": f"frames/{label}.pgm", "frame_count": state["panel"]["refresh-count"],
+                         "boot_index": self.boot_index,
                          "pixel_crc32": state["panel"]["framebuffer-crc"],
                          "t_ns": state["machine"]["virtual-time-ns"],
                          "settled_with": "firmware deep sleep with inactive panel BUSY"})
@@ -751,6 +786,105 @@ def sleep_folder_workflow(replay):
                  and replay.qmp.state()["rtc"]["watchdog-expiry-count"] == 0)
 
 
+def decode_image_folder_index(data):
+    """Decode the stock packed CSIX file independently of selection logic."""
+    if len(data) < 16:
+        raise SmokeError("truncated image-folder index header")
+    magic, version, flags, path_length, count, stride, offset = struct.unpack_from("<4sBBHHHI", data)
+    if magic != b"CSIX" or version != 1 or stride != 260 or offset != 16 + path_length or len(data) != offset + count * stride:
+        raise SmokeError("invalid stock image-folder index shape")
+    directory = data[16:offset].decode("utf-8")
+    records = []
+    for index in range(count):
+        start = offset + index * stride
+        length, record_flags, reserved = struct.unpack_from("<HBB", data, start)
+        if not 0 < length <= 255 or reserved or data[start + 4 + length] != 0:
+            raise SmokeError("invalid stock image-folder index record")
+        records.append({"index": index, "name": data[start + 4:start + 4 + length].decode("utf-8"),
+                        "flags": record_flags})
+    return {"directory": directory, "version": version, "flags": flags, "record_count": count,
+            "record_size": stride, "records": records, "sha256": hashlib.sha256(data).hexdigest()}
+
+
+def sleep_random_folder_workflow(replay):
+    """Healthy index anti-repeat and all-recent fallback, with real resets."""
+    patterns = {f"/Wallpapers/{name}-gray.bmp": page for page, name in enumerate(("a", "b", "c"))}
+    replay.receipt["wallpaper_patterns"] = patterns
+    replay.receipt["randomness_scope"] = {
+        "policy": "Actual stock ImageFolderIndex selection; no fixed expected random sequence",
+        "recent_capacity": 16, "candidates": 3,
+        "physical_entropy_validated": False, "distribution_validated": False,
+        "legacy_cache_write_failure_reservoir_exercised": False}
+    replay.capture("home", 0)
+    replay.tap("confirm", "random-folder-root", "Home: open the only visible original wallpaper folder")
+    replay.tap("confirm", "random-folder-actions", "Actual long Confirm on Wallpapers opens its folder action menu", hold_ms=1100)
+    replay.tap("confirm", "random-folder-ui-saved", "Directory row zero: Set as Sleep Folder")
+    initial = replay.json_file(STATE_PATH)
+    replay.check("three_image_preferred_folder_set_through_actual_ui", initial.get("preferredSleepFolderPath") == "/Wallpapers"
+                 and not initial.get("favoriteSleepImagePath"))
+    replay.check("wallpaper_history_initially_empty", initial.get("recentSleepFill", 0) == 0 and initial.get("recentSleepPos", 0) == 0)
+    cycles = []
+    cache_sha = None
+    for cycle in range(1, 5):
+        previous = replay.json_file(STATE_PATH)
+        ring = previous.get("recentSleepImages", [0] * 16)
+        position, fill = previous.get("recentSleepPos", 0), previous.get("recentSleepFill", 0)
+        recent = {ring[(position - 1 - age) % 16] for age in range(min(fill, 16)) if 0 <= ring[(position - 1 - age) % 16] < 3}
+        before = replay.exp.refresh_count(replay.qmp)
+        replay.power(200, f"Genuine Custom sleep cycle {cycle} with three original indexed wallpapers")
+        label = replay.sleeping_frame(f"random-folder-sleep-{cycle}", before)
+        selected_paths = re.findall(r"Loading custom sleep image: (/Wallpapers/[^\r\n]+)", replay.exp.log_text("serial.log"))
+        selected = selected_paths[-1] if selected_paths else None
+        replay.check(f"cycle_{cycle}_loads_original_folder_candidate", selected in patterns, selected)
+        replay.check_pattern(label, page=patterns[selected])
+        indexes = [path for path in replay.file_inventory("/.crosspoint/sleep-image-index/") if path.endswith(".idx")]
+        replay.check(f"cycle_{cycle}_guest_creates_one_healthy_index", len(indexes) == 1, indexes)
+        index = decode_image_folder_index(replay.read_file(indexes[0]))
+        replay.check(f"cycle_{cycle}_index_contains_three_original_bmps", index["directory"] == "/Wallpapers"
+                     and index["record_count"] == 3 and all(row["flags"] == 0 for row in index["records"])
+                     and {"/Wallpapers/" + row["name"] for row in index["records"]} == set(patterns), index)
+        if cache_sha is None:
+            cache_sha = index["sha256"]
+        replay.check(f"cycle_{cycle}_reuses_same_guest_index", index["sha256"] == cache_sha)
+        selected_index = next(row["index"] for row in index["records"] if "/Wallpapers/" + row["name"] == selected)
+        after = replay.json_file(STATE_PATH)
+        new_ring = after.get("recentSleepImages", [])
+        replay.check(f"cycle_{cycle}_persists_one_history_entry", len(new_ring) == 16
+                     and after.get("recentSleepPos") == (position + 1) % 16
+                     and after.get("recentSleepFill") == min(fill + 1, 16)
+                     and new_ring[position] == selected_index
+                     and all(new_ring[slot] == ring[slot] for slot in range(16) if slot != position),
+                     {"previous_position": position, "previous_fill": fill, "selected_index": selected_index,
+                      "new_position": after.get("recentSleepPos"), "new_fill": after.get("recentSleepFill"), "new_ring": new_ring})
+        expected_nonrecent = 4 - cycle
+        replay.check(f"cycle_{cycle}_source_nonrecent_pool", 3 - len(recent) == expected_nonrecent,
+                     {"recent_distinct_indices": sorted(recent), "nonrecent_count": 3 - len(recent)})
+        replay.check(f"cycle_{cycle}_anti_repeat_or_all_recent_fallback", selected_index not in recent if expected_nonrecent else selected_index in recent,
+                     {"selected": selected, "selected_index": selected_index,
+                      "policy": "exclude recent" if expected_nonrecent else "all candidates recent; source fallback permits reuse"})
+        sleep = replay.receipt["sleep_state"]
+        cycles.append({"cycle": cycle, "boot_index": replay.boot_index, "selected_path": selected,
+                       "selected_index": selected_index, "nonrecent_count": expected_nonrecent,
+                       "index": index, "state_after_sleep": after, "native_sleep": sleep})
+        replay.receipt["wallpaper_cycles"] = cycles
+        replay.power(1000, f"Actual GPIO3 wake after original wallpaper cycle {cycle}")
+        replay.capture(f"random-folder-home-after-wake-{cycle}", sleep["panel"]["refresh-count"])
+        native = replay.qmp.state()
+        replay.check(f"cycle_{cycle}_real_gpio_wake_and_no_watchdog", native["rtc"]["wake-count"] > sleep["rtc"]["wake-count"]
+                     and native["rtc"]["watchdog-expiry-count"] == 0)
+        awake = replay.json_file(STATE_PATH)
+        replay.check(f"cycle_{cycle}_history_survives_real_wake", all(awake.get(key) == after.get(key)
+                     for key in ("recentSleepImages", "recentSleepPos", "recentSleepFill", "preferredSleepFolderPath")))
+        if cycle == 3:
+            replay.check("first_three_sleep_cycles_visit_all_candidates", len({row["selected_index"] for row in cycles}) == 3)
+            replay.restart()
+            cold = replay.json_file(STATE_PATH)
+            replay.check("fresh_cpu_loads_three_candidate_history_before_fallback", all(cold.get(key) == after.get(key)
+                         for key in ("recentSleepImages", "recentSleepPos", "recentSleepFill", "preferredSleepFolderPath")))
+    replay.check("four_genuine_sleep_cycles_complete_with_all_recent_fallback", len(cycles) == 4 and cycles[-1]["nonrecent_count"] == 0)
+    replay.save()
+
+
 def sleep_policy_workflow(replay):
     name = replay.receipt["workflow"]
     mode, cover_mode, cover_filter = SLEEP_POLICIES[name]
@@ -1099,6 +1233,149 @@ def refresh_settings_workflow(replay):
     replay.save()
 
 
+def logical_region(frame, bounds):
+    """Extract a source-defined portrait widget region from native pixels."""
+    left, top, right, bottom = bounds
+    pixels = logical_pixels(frame)
+    return b"".join(pixels[y * 528 + left:y * 528 + right] for y in range(top, bottom))
+
+
+def hide_widgets_workflow(replay):
+    """Actual three-value editors, context effects and a fresh CPU reopen."""
+    # Lyra top lane and portrait reader footer, from pinned BaseTheme/Lyra
+    # metrics. Percentage is separate from the independent battery icon.
+    # Only the clock's upper glyph rows are exclusive to that widget in this
+    # original fixture. Hiding its lane moves the centered chapter heading
+    # upward; it can occupy the lower part of the old clock bounding box.
+    regions = {"home_clock": (180, 0, 348, 28), "home_percent": (425, 0, 495, 28),
+               "home_icon": (497, 4, 519, 28), "reader_clock": (180, 0, 348, 17),
+               "reader_percent": (25, 754, 95, 790), "reader_icon": (4, 758, 24, 790),
+               "reader_body": (28, 100, 500, 730)}
+    replay.receipt["widget_regions"] = {name: list(bounds) for name, bounds in regions.items()}
+    replay.receipt["widget_source_rules"] = {
+        "hideBatteryPercentage": {"Never": 0, "InReader": 1, "Always": 2},
+        "hideClock": {"Never": 0, "InReader": 1, "Always": 2},
+        "battery_icon_independent": True,
+        "reader_clock_changes_viewport": "ReaderUtils::getTopClockStatusBarReservedHeight + computeReaderViewportLayout",
+        "source": ["CrossPointSettings.cpp::statusBarSpec", "BaseTheme.cpp::drawHeader",
+                   "BaseTheme.cpp::drawStatusBar", "BaseTheme.cpp::drawTopStatusBarClock"]}
+
+    def region(label, name):
+        return logical_region(replay.exp.frames[label], regions[name])
+
+    def visible(label, name):
+        ink = sum(value < 192 for value in region(label, name))
+        replay.check(f"{label}_{name}_visible", ink > 30, {"ink_pixels": ink, "bounds": regions[name]})
+
+    def hidden(label, name):
+        ink = sum(value < 192 for value in region(label, name))
+        replay.check(f"{label}_{name}_hidden", ink == 0, {"ink_pixels": ink, "bounds": regions[name]})
+
+    def preserved(first, second, name):
+        changes = sum(a != b for a, b in zip(region(first, name), region(second, name)))
+        replay.check(f"{second}_{name}_preserved", changes == 0, {"reference": first, "pixel_differences": changes})
+
+    def open_reader(tag, *, first=False, home_selection_settings=False):
+        if home_selection_settings:
+            replay.tap("down", f"{tag}-continue-selected", "Home: wrap Settings to Continue Reading")
+        if first:
+            replay.tap("confirm", f"{tag}-browser", "Home: Browse the original EPUB fixture")
+        label = replay.tap("confirm", f"{tag}-reader", "Open the original saved book under current widget policies", reader=True)
+        replay.complete_original_text_reader(label)
+        return label
+
+    def edit_from_home(field, row, target, tag):
+        replay.tap("up", f"{tag}-settings-selected", "Home: select Settings")
+        replay.tap("confirm", f"{tag}-display-editor", "Open actual global Display controls")
+        for index in range(1, row + 1):
+            replay.tap("down", f"{tag}-row-{index}", f"Display: select actual {field} row")
+        replay.tap("confirm", f"{tag}-picker", f"Open actual three-value {field} picker")
+        replay.tap("down", f"{tag}-next-policy", "Select the next Never/In Reader/Always policy")
+        replay.tap("confirm", f"{tag}-saved", "Save the selected visibility policy through stock UI")
+        settings = replay.json_file(SETTINGS_PATH)
+        replay.check(f"{tag}_ui_setting_saved", settings.get(field) == target, {field: settings.get(field)})
+        replay.tap("back", f"{tag}-category", "Back to the Settings category band")
+        return replay.tap("back", f"{tag}-home", "Close Settings and observe actual Home status widgets")
+
+    home0 = replay.capture("widgets-home-never", 0)
+    visible(home0, "home_clock")
+    visible(home0, "home_percent")
+    visible(home0, "home_icon")
+    reader0 = open_reader("widgets-never", first=True)
+    visible(reader0, "reader_clock")
+    visible(reader0, "reader_percent")
+    visible(reader0, "reader_icon")
+    replay.tap("back", "widgets-never-reader-exit", "Flush page zero and return to Home")
+
+    home_b1 = edit_from_home("hideBatteryPercentage", 2, 1, "battery-in-reader")
+    preserved(home0, home_b1, "home_percent")
+    preserved(home0, home_b1, "home_icon")
+    reader_b1 = open_reader("battery-in-reader", home_selection_settings=True)
+    hidden(reader_b1, "reader_percent")
+    preserved(reader0, reader_b1, "reader_icon")
+    preserved(reader0, reader_b1, "reader_body")
+    replay.tap("back", "battery-in-reader-exit", "Return to Home for the second battery policy")
+    home_b2 = edit_from_home("hideBatteryPercentage", 2, 2, "battery-always")
+    hidden(home_b2, "home_percent")
+    preserved(home0, home_b2, "home_icon")
+    reader_b2 = open_reader("battery-always", home_selection_settings=True)
+    hidden(reader_b2, "reader_percent")
+    preserved(reader0, reader_b2, "reader_icon")
+    preserved(reader0, reader_b2, "reader_body")
+    replay.tap("back", "battery-always-exit", "Return to Home for the clock policies")
+
+    home_c1 = edit_from_home("hideClock", 3, 1, "clock-in-reader")
+    visible(home_c1, "home_clock")
+    hidden(home_c1, "home_percent")
+    reader_c1 = open_reader("clock-in-reader", home_selection_settings=True)
+    hidden(reader_c1, "reader_clock")
+    hidden(reader_c1, "reader_percent")
+    preserved(reader0, reader_c1, "reader_icon")
+    body_changes = sum(a != b for a, b in zip(region(reader_b2, "reader_body"), region(reader_c1, "reader_body")))
+    replay.check("clock_in_reader_changes_source_reserved_viewport", body_changes > 1000,
+                 {"reference": reader_b2, "changed_body_pixels": body_changes,
+                  "reason": "Top clock lane no longer reserves reader viewport height"})
+    replay.tap("back", "clock-in-reader-exit", "Save the reflowed original reader and return to Home")
+    home_c2 = edit_from_home("hideClock", 3, 2, "clock-always")
+    hidden(home_c2, "home_clock")
+    hidden(home_c2, "home_percent")
+    preserved(home0, home_c2, "home_icon")
+    reader_c2 = open_reader("clock-always", home_selection_settings=True)
+    hidden(reader_c2, "reader_clock")
+    hidden(reader_c2, "reader_percent")
+    preserved(reader_c1, reader_c2, "reader_body")
+    replay.tap("back", "widgets-before-cold-home", "Flush all actual visibility edits before stopping the CPU")
+    before = replay.json_file(SETTINGS_PATH)
+    replay.check("both_always_policies_written_by_actual_guest", before.get("hideBatteryPercentage") == 2
+                 and before.get("hideClock") == 2, before)
+    home_cold = replay.restart()
+    after = replay.json_file(SETTINGS_PATH)
+    replay.check("fresh_cpu_loads_both_guest_written_always_policies", after.get("hideBatteryPercentage") == 2
+                 and after.get("hideClock") == 2, {"hideBatteryPercentage": after.get("hideBatteryPercentage"),
+                                                "hideClock": after.get("hideClock")})
+    hidden(home_cold, "home_clock")
+    hidden(home_cold, "home_percent")
+    preserved(home0, home_cold, "home_icon")
+    reader_cold = open_reader("widgets-cold-always")
+    hidden(reader_cold, "reader_clock")
+    hidden(reader_cold, "reader_percent")
+    preserved(reader_c2, reader_cold, "reader_body")
+    preserved(reader0, reader_cold, "reader_icon")
+    replay.tap("back", "widgets-cold-reader-exit", "Return to Home to exercise the actual Never choices")
+    home_b0 = edit_from_home("hideBatteryPercentage", 2, 0, "battery-never-restored")
+    visible(home_b0, "home_percent")
+    preserved(home0, home_b0, "home_percent")
+    replay.tap("down", "battery-restored-continue-selected", "Home: wrap Settings to Continue Reading")
+    home_restored = edit_from_home("hideClock", 3, 0, "clock-never-restored")
+    visible(home_restored, "home_clock")
+    reader_restored = open_reader("widgets-never-restored", home_selection_settings=True)
+    visible(reader_restored, "reader_clock")
+    visible(reader_restored, "reader_percent")
+    preserved(reader0, reader_restored, "reader_icon")
+    preserved(reader0, reader_restored, "reader_body")
+    replay.tap("back", "widgets-restored-final-home", "Save the final actually selected Never settings")
+
+
 def inject_pc_exception(replay):
     """A declared CPU negative control; the guest owns panic capture/reset."""
     replay.qmp.execute("stop")
@@ -1259,6 +1536,8 @@ WORKFLOWS = {"media": media_workflow, "fixed": fixed_workflow, "rotation": rotat
 WORKFLOWS.update({name: sleep_policy_workflow for name in SLEEP_POLICIES})
 WORKFLOWS.update({"recovery": recovery_workflow, "recovery-valid": recovery_valid_workflow, "crash": crash_workflow})
 WORKFLOWS["refresh-settings"] = refresh_settings_workflow
+WORKFLOWS["hide-widgets"] = hide_widgets_workflow
+WORKFLOWS["sleep-random-folder"] = sleep_random_folder_workflow
 
 
 def input_files(name, app_path=None):
@@ -1273,6 +1552,8 @@ def input_files(name, app_path=None):
         settings["textAntiAliasing"] = 0
     if name == "refresh-settings":
         settings.update({"textAntiAliasing": 0, "refreshFrequency": 3, "fadingFix": 0})
+    if name == "hide-widgets":
+        settings.update({"textAntiAliasing": 0, "hideBatteryPercentage": 0, "hideClock": 0})
     if name == "favorites-boot-disabled":
         settings["customBootscreenEnabled"] = 0
     if name in SLEEP_POLICIES:
@@ -1291,10 +1572,12 @@ def input_files(name, app_path=None):
         if len(app) != 6105536 or hashlib.sha256(app).hexdigest() != CROSSINK_V160_SHA256:
             raise SmokeError("valid recovery requires the unchanged pinned official application")
         files = {"/official-crossink.bin": app}
-    elif name in ("rotation", "lock", "quick-actions", "crash", "refresh-settings"):
+    elif name in ("rotation", "lock", "quick-actions", "crash", "refresh-settings", "hide-widgets"):
         files = {"/test.epub": make_test_epub()}
     elif name in ("favorites", "favorites-boot-disabled", "sleep-folder"):
         files = {"/Media/a-mono.bmp": make_bmp(monochrome=True), "/sleep.bmp": make_bmp()}
+    elif name == "sleep-random-folder":
+        files = {f"/Wallpapers/{name}-gray.bmp": make_bmp(page=page) for page, name in enumerate(("a", "b", "c"))}
     elif name == "overlay":
         files = {"/Media/d-alpha.png": make_media_fixture_files()["/Media/d-alpha.png"], "/test.epub": make_test_epub()}
     elif name == "fixed":
@@ -1320,11 +1603,12 @@ def run_workflow(name, args, directory):
                "completed": False, "speed_selection_allowed": False, "timing_calibrated": False,
                "harness_script_sha256": HARNESS_SHA256, "shared_helper_sha256": SHARED_HELPER_SHA256,
                "physical_output_validated": False, "checks": {}, "frames": {}, "actions": [],
+               "run_manifests": ["run/run.json"],
                "limitations": ["Ideal digital targets only; no physical grayscale or ghosting comparison",
                                "QMP input delivery depends on host scheduling; releases use virtual timers",
                                "Seeded CrossInk preferences are explicit fixture inputs, not a settings UI test"]}
     path = directory / "validation.json"
-    process = experiment = usb_client = None
+    process = experiment = usb_client = replay = None
     try:
         receipt["checks"]["pinned_full_flash"] = file_sha256(args.flash) == FULL_FLASH_SHA256
         if not receipt["checks"]["pinned_full_flash"]:
@@ -1383,17 +1667,23 @@ def run_workflow(name, args, directory):
             experiment.wait("actual X3 startup", lambda: "Hardware detect: X3" in experiment.log_text("serial.log"))
             WORKFLOWS[name](replay)
             receipt["completed"] = True
-            receipt["state_before_shutdown"] = qmp.state()
+            receipt["state_before_shutdown"] = replay.qmp.state()
     except (BackendError, SmokeError, OSError, ValueError, ET.ParseError, KeyboardInterrupt) as error:
         receipt["error"] = str(error) or type(error).__name__
-        if process is not None and process.poll() is None:
+        active_process = experiment.process if experiment is not None else process
+        active_run = experiment.run_dir if experiment is not None else directory / "run"
+        if active_process is not None and active_process.poll() is None:
             try:
-                with QMPClient(directory / "run/qmp.sock") as qmp:
+                with QMPClient(active_run / "qmp.sock") as qmp:
                     qmp.execute("stop")
                     receipt["state_at_failure"] = qmp.state()
             except (BackendError, OSError) as snapshot_error:
                 receipt["snapshot_error"] = str(snapshot_error)
     finally:
+        if replay is not None:
+            replay.qmp.close()
+        if experiment is not None:
+            process = experiment.process
         if process is not None and process.poll() is None:
             process.send_signal(signal.SIGINT)
             try:
@@ -1435,26 +1725,55 @@ def run_workflow(name, args, directory):
                 receipt["checks"]["recovery_guest_reset_diagnostics_match_uart_suffix"] = reasons in (
                     ["POWERON", "DEEPSLEEP", "SW"], ["DEEPSLEEP", "SW"])
             else:
-                receipt["checks"].update(boot)
-        manifest = directory / "run/run.json"
-        if manifest.is_file():
+                for boot_index, relative in enumerate(receipt["run_manifests"]):
+                    run = (directory / relative).parent
+                    read_log = lambda name: (run / name).read_text(errors="replace") if (run / name).is_file() else ""
+                    checks = SMOKE["boot_checks"](read_log("rom.log"), read_log("serial.log"))
+                    prefix = f"boot_{boot_index}_" if len(receipt["run_manifests"]) > 1 else ""
+                    receipt["checks"].update({prefix + key: value for key, value in checks.items()})
+        runs = []
+        for boot_index, relative in enumerate(receipt["run_manifests"]):
+            manifest = directory / relative
+            if not manifest.is_file():
+                runs.append({"boot_index": boot_index, "manifest": relative, "manifest_missing": True,
+                             "trace_complete": False, "diagnostics_clean": False, "stopped_cleanly": False})
+                continue
             result = json.loads(manifest.read_text())
-            receipt["backend_sha256"] = result["backend"]["sha256"]
-            receipt["checks"]["backend_stopped_cleanly"] = result.get("status") == "stopped" and result.get("exit_code") == 0
-            receipt["model_diagnostics_clean"] = result.get("validity", {}).get("diagnostics_clean", False)
-            receipt["model_limits"] = result.get("model_limits", {})
-            final_count = result.get("final_state", {}).get("panel", {}).get("refresh-count")
-            events = experiment.frame_events() if experiment else []
-            receipt["panel_trace_complete"] = (len(events) == final_count and bool(receipt["frames"])
-                and all(info.get("trace_complete", False)
-                        for info in receipt["frames"].values()))
-            receipt["panel_trace"] = {"frame_events": len(events), "native_refresh_count": final_count}
             final_panel = result.get("final_state", {}).get("panel", {})
+            final_count = final_panel.get("refresh-count")
+            trace_data = (manifest.parent / "panel.jsonl").read_bytes() if (manifest.parent / "panel.jsonl").is_file() else b""
+            events = []
+            for line in trace_data.splitlines():
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue  # Accounting below retains malformed data as incomplete.
+                if event.get("event") == "frame-complete":
+                    events.append(event)
+            frames = [info for info in receipt["frames"].values() if info.get("boot_index", 0) == boot_index]
+            trace_complete = bool(len(events) == final_count and frames and all(info.get("trace_complete", False) for info in frames))
+            details = {"boot_index": boot_index, "manifest": relative, "backend_sha256": result["backend"]["sha256"],
+                       "stopped_cleanly": result.get("status") == "stopped" and result.get("exit_code") == 0,
+                       "diagnostics_clean": result.get("validity", {}).get("diagnostics_clean", False),
+                       "model_limits": result.get("model_limits", {}),
+                       "panel_trace": {"frame_events": len(events), "native_refresh_count": final_count}}
             if "output-errors" in final_panel:
-                receipt["final_output_accounting"] = SMOKE["assess_trace_accounting"](
-                    (directory / "run/panel.jsonl").read_bytes(), final_panel, final_count)
-                receipt["panel_trace_complete"] = (receipt["panel_trace_complete"]
-                                                    and receipt["final_output_accounting"]["complete"])
+                details["final_output_accounting"] = SMOKE["assess_trace_accounting"](trace_data, final_panel, final_count)
+                trace_complete = bool(trace_complete and details["final_output_accounting"]["complete"])
+            details["trace_complete"] = trace_complete
+            runs.append(details)
+        if runs:
+            receipt["run_results"] = runs
+            receipt["backend_sha256"] = runs[0].get("backend_sha256")
+            receipt["checks"]["backend_stopped_cleanly"] = all(run["stopped_cleanly"] for run in runs)
+            receipt["model_diagnostics_clean"] = all(run["diagnostics_clean"] for run in runs)
+            receipt["panel_trace_complete"] = all(run["trace_complete"] for run in runs)
+            if len(runs) == 1:
+                for field in ("model_limits", "panel_trace", "final_output_accounting"):
+                    if field in runs[0]:
+                        receipt[field] = runs[0][field]
+            else:
+                receipt["checks"]["cold_restart_uses_same_native_backend"] = len({run.get("backend_sha256") for run in runs}) == 1
         receipt["functional_pass"] = bool(receipt["completed"] and receipt["checks"] and all(receipt["checks"].values())
                                           and not receipt.get("error") and not receipt.get("shutdown_error"))
         receipt["strict_pass"] = bool(receipt["functional_pass"] and receipt.get("model_diagnostics_clean")

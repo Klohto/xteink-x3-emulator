@@ -19,6 +19,7 @@ a separately recorded defect in the original application.
 | Modem clocks and reset fields | Espressif ESP-IDF `v5.5.2`, `components/soc/esp32c3/include/soc/syscon_reg.h`; R/W latches at `60026014` and `60026018`, default clock `fffce030`, MAC reset bit 2 |
 | RX flags and TSF implementation reference | `joakimeriksson/esp32sim`, commit `ed34b220cd0e261d369a5eee92ca8f1f33cbb0ad`, `esp32s3/src/periph.rs` and `bus.rs`; S3 observations are provisional on C3, with the original MIT notice retained |
 | PHY digital handshakes | Original CrossInk v1.6.0 app SHA-256 `4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644`; disassembled register accesses below |
+| C3 queue lengths, RX interface dispatch and MAC random read | Official Espressif `esp32-wifi-lib` revision `01d52d9e69032c486015dc28b08c3bf6aaf348a9`, ESP-IDF v5.5.2 C3 `libpp.a`; exact object/function hashes and stock-register observations in [wifi-plcp-random.json](evidence/wifi-plcp-random.json) and [wifi-rx-interface.json](evidence/wifi-rx-interface.json) |
 
 ## Digital protocol
 
@@ -89,9 +90,10 @@ AP defaults to6. Hardware channel control, radio propagation, encryption,
 cross-process clock synchronization and host-link migration remain unmodelled.
 Bounded partial stream reads/writes, malformed framing, disconnect/reconnect,
 protected/channel drops and bidirectional DMA/FCS/IRQ execution are covered
-by eleven WiFi cases within the full102-case native gate. Receipts are in
-[native-build-fcs.json](evidence/native-build-fcs.json) and
-[native-fcs](evidence/native-fcs).
+by twenty WiFi cases within the full111-case native gate. Receipts are in
+[native-build-tx-prefix.json](evidence/native-build-tx-prefix.json) and
+[native-tx-prefix](evidence/native-tx-prefix). Earlier RX and failed stock
+cohorts remain saved separately.
 
 The C3 PLCP length register determines whether each queue's TX DMA bytes
 include the four-byte hardware FCS reservation. The model removes that
@@ -99,6 +101,50 @@ reservation, preserves actual payload bytes when DMA already excludes it,
 and records unverified or inconsistent lengths. It does not identify a
 reservation by a magic byte suffix. These tests establish DMA framing;
 stock-to-stock AP association remains an independent functional gate.
+
+The exact stock C3 library also places an eight-byte prefix before a complete
+MPDU when DMA descriptor bit29 is set. The prefix's low14 length includes the
+four-byte FCS reservation. The supported contract requires owner and EOF,
+next0, no extra empty delimiters, DMA length=8+low14 and PHY length=4+low14.
+For the observed frame, 102 DMA bytes become a90-byte raw MPDU. Independent
+stock instructions explain the98-byte PHY length, including its delimiter
+and removed alignment padding. Malformed or chained aggregates produce an
+error and no emitted frame; full aggregation remains unmodelled. Exact source
+hashes, bounds and actual two-guest AP results are in
+[wifi-tx-buffer-prefix.json](evidence/wifi-tx-buffer-prefix.json).
+
+Runtime records optional prefix telemetry only as a complete, typed and
+consistent group. Stripped counts must not exceed TX or FCS-stripped totals;
+prefix errors must not exceed length errors and remain diagnostic failures.
+Old backends without this group keep their earlier declared scope.
+
+Official C3 `mac_tx_set_plcp1` uses a 76-byte queue stride, giving MAC offsets
+`12f8`, `12ac`, `1260`, `1214`, `11c8`. A real stock AP queue2 frame exposed the
+earlier incorrect stride: DMA contained66 bytes while the wrong register
+reported44. A regression preserves that exact collision. Only the low12 PSDU
+length bits are modelled; unknown rate/control fields remain diagnostic.
+
+Official C3 `hal_random` reads `6003507c`. The original vendor-action caller
+waits for a value different from its preceding read, so a constant-zero model
+blocked discovery before any TX frame. The register now returns a deterministic
+xorshift32 stream. `--wifi-random-seed` accepts a nonzero32-bit seed in WiFi or
+peer mode; distinct paired replays use seeds1 and3. Explicit seed requests
+require matching native telemetry and fail acceptance on older backends that
+cannot report it. Omitting the option preserves compatibility with earlier
+native builds.
+
+Native properties report the seed, state, read count and synthetic source.
+The stream survives MAC/machine resets; a new machine starts from its seed.
+Entropy, random-source timing and WiFi migration remain unmodelled. This source
+is reproducible input for functional tests and is not cryptographic randomness
+or a measurement of the physical X3.
+
+The source-backed RX comparator records station and AP interface counts,
+normal address-filter drops and provisional classification separately. Runtime
+reports accept normal filter drops only with complete, nonnegative and
+consistent native telemetry; other drops and unverified classification remain
+errors. Group-frame policy is explicitly unmodelled. This preserves the
+distinction between an intentional hardware filter and lost receive data.
 
 Each run now supplies genuine C3 eFuse blocks to the model's eFuse drive.
 `--device-mac` generates a synthetic unicast factory identity;

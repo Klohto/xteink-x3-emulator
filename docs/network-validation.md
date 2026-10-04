@@ -63,7 +63,38 @@ Every workflow uses the original 8,878-byte synthetic EPUB with SHA-256
 | `network-fixed-endpoints-sparse/ntp` | 13/13 true: two original NTP requests, actual guest calendar writes, native RTC epoch1790985601 and host time-injection count0 |
 | `network-fixed-endpoints-sparse/fonts` | 14/14 true: original fixed manifest/font URLs, manifest CRC validation, exact installed103-byte CPFONT and genuine success panel |
 | `network-koreader-sync-sparse/koreader-sync` | Failed: actual upload/fetch/apply runs, but page1 returns to page0 at the source-proven reverse-XPath boundary |
+| `network-koreader-nonboundary-99/koreader-apply` | 16/16 true: a distinct authenticated remote reader moves offset34→35; actual apply saves page1/visible586 and matching reader content |
+| `network-koreader-smart-102/koreader-smart` | 15/15 true: automatic upload when no remote progress exists, unchanged return when equal, application of a distinct remote advance, and upload when local progress is ahead |
+| `network-font-range-102/fonts-tiny` | 15/15 true: the source Tiny manifest filter downloads 14 pt and excludes 18 pt; exact original font bytes and CRC persist |
+| `network-font-range-102/fonts-xlarge` | 15/15 true: XLarge downloads both original 14 and 18 pt fonts, with exact bytes, CRC and temporary-file cleanup |
+| `x3-network-font-update-delete109/fonts-update-all` | 19/19 true: actual Update All resumes at byte 512 after an original-peer EOF, installs exact 14/18 fonts with CRC and temporary/backup cleanup, cancels then confirms deletion |
+| `x3-network-font-cancel-resume109/fonts-cancel-resume` | 20/20 true: actual continuous physical Back cancellation preserves the old font, removes partial output, then a separately selected family resumes at byte512 and installs exact14/18 files |
 | `network-fixed-endpoints-sparse/ota-check` | Failed: original guest TLS ClientHello reached the official-origin opaque relay; no successful trusted manifest result |
+
+The separate nonboundary apply uses immutable99 backend
+`6fccb05f569101889c15a22fe5fb9d9a8f624156bb4dfaa229b51feee95afcb0`.
+The original roundtrip remains false. The separate SMART cohort executes all
+four decisions without pressing Confirm or Back on the result panel. It uses
+FCS backend `de8ae3eaebcabcaffb0a84efe524dcfc7cada16b0fb245862f1946cdb0753502`.
+Font range cohorts use full native 102-case backend
+`01b806443dff5da98e963acc7cda556ebad35886f06c7af26a13630a894060a0`.
+The range setting filters the download manifest; it does not filter installed
+font sizes in the registry. Update All, interrupted Range continuation and
+deletion pass separately on full native 109 backend
+`db30ffb3ca120856211e080ee63e7ea894ecf6a812015f73f5b3e04884d6925c`.
+The original full cancellation cohort retains a later cached-status failure:
+continuous physical Back reaches the original “Download cancelled” callback,
+preserves the old font and removes the partial file; the retry installs exact
+14/18 files, but the catalog retains its cached “Update” row while the action
+hint says “Delete”. `downloadFamily` updates family flags without rebuilding
+the cached list items; the separate Update All path refetches its manifest.
+The failed receipt is retained. The separately named cancel/resume workflow
+passes20 checks and ends at the original success panel and exact files; it
+does not claim that the stale catalog label is correct. Both use the original
+512-byte HTTP prefix; the controlled cancellation peer stalls its remaining
+body while native physical Back stays asserted until the guest acknowledges
+cancellation. The retry peer closes after512 bytes, and the real guest emits
+`Range: bytes=512-`, receives206 and verifies the manifest CRC.
 
 The diagnostic continuation is explicit: `--continue-known-dav-get-defect`
 records the known condition as false and permits subsequent independent checks.
@@ -168,7 +199,47 @@ the supported directory-base fixture does not waive that source limitation. A se
 loopback fixture port is a different origin: acquisition redirects there, and
 the received request must omit the first server's Basic Authorization header.
 The downloaded file must match the original EPUB exactly on the guest card.
-OPDS search, pagination and additional feed formats are not exercised yet.
+The focused `opds-siblings` workflow also configures two original catalogs so
+Home opens the real server picker. Physical Down selects the second catalog;
+its distinct URL is fetched after the stock target-3 network restart. Left at
+the catalog's first selected row opens Search on X3. Physical English-keyboard
+input enters `a b`; the actual HTTP request must contain `q=a%20b`, and the
+first search result must persist all 8,878 original EPUB bytes. Editing-caret
+OCR ambiguity is retained as a failed capture attempt; exact query bytes are
+checked from the guest's real request rather than inferred from OCR.
+
+The second result exercises cancellation during a declared remote response:
+the peer advertises the complete body, sends 4,096 original bytes, then stalls.
+Physical Back stays asserted until the unmodified guest reports `ABORTED`
+after exactly that partial count. The guest removes the incomplete file,
+retains the completed book and returns to the search results. Frozen pixels
+show Downloading and Cancel before the action, and both result rows afterward.
+The final 109-backend receipt is
+`local/runs/opds-siblings-109-final/opds-siblings/validation.json`:
+20/20 functional checks and 12/12 independent post-exit checks, complete linked
+panel trace (657 events, 51,027 bytes), no EPD/RTC/watchdog errors and an unchanged
+official application. Strict complete-machine acceptance remains false for
+declared native gaps; RF, optical effects and timing remain unverified.
+
+A failed relative acquisition fixture also remains preserved. From a search
+feed filename, the stock URL builder requests
+`/catalog-two/search.xml/result.epub` for `result.epub`; this is the same
+documented file-base resolution limitation. The successful fixture therefore
+uses absolute acquisition paths.
+
+The focused `opds-pagination` workflow follows feed-level `next` and `previous`
+links through supported directory URLs. Physical Down selects the appended
+Next Page row; Confirm fetches the second feed, whose first row is Previous
+Page. Confirm then fetches the first feed again. The real authenticated request
+sequence is `/catalog-paged/`, `/catalog-paged/page-two/`, `/catalog-paged/`.
+Original labels are checked in frozen panel pixels, and all 418,176 first-page
+pixels match after returning. The 109-backend receipt is
+`local/runs/opds-pagination-109-final/opds-pagination/validation.json`:
+15/15 functional checks and 12/12 independent post-exit checks, eight captures,
+18 completed frames and a complete linked trace (337 events, 26,006 bytes).
+The original application and book remain unchanged, and EPD/RTC/watchdog error
+counters remain zero. Additional feed formats remain unexercised; physical RF,
+optical effects and calibrated timing remain unverified.
 
 KOReader authentication and account creation use public synthetic credentials.
 The fixture requires the original `x-auth-user`, MD5 `x-auth-key` and Basic
@@ -262,6 +333,21 @@ when an actual external server or an independently clocked second guest cannot
 advance with instruction-counted time. The selected policy is recorded in each
 receipt. This mode makes no calibration, hardware-speed or ranking claim, and
 does not change endpoints, protocol data or original failed cohorts.
+
+The actual `--no-icount` OTA diagnostic reached certificate verification:
+the opaque relay forwarded1,264 official-origin TLS bytes, and the guest emitted
+fatal TLS `unknown_ca` (alert49) with
+`esp-x509-crt-bundle: Failed to verify certificate`. Its received leaf identifies
+`api.github.com` but is signed by the environment's HTTPS proxy CA
+(`OpenAI, LLC`, `openai.com`), which the original firmware bundle does not trust.
+An independent host client succeeds because the host trusts that CA. Host
+success cannot validate the stock guest trust decision; no CA is injected and
+no certificate or manifest is substituted. Direct original-host connectivity
+was unavailable at host DNS. Online download/installation remains blocked by
+this environment boundary, although the original guest verification/rejection
+path executed. The diagnostic backend hash is
+`de8ae3eaebcabcaffb0a84efe524dcfc7cada16b0fb245862f1946cdb0753502`;
+its requested/effective clock and raw opaque-wire hashes are retained.
 
 The already verified SD firmware-update path is documented in
 [usb-transfer.md](usb-transfer.md). HTTP fixture tests do not claim trusted TLS,
