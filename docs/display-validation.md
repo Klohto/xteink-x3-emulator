@@ -87,10 +87,27 @@ manual refresh, dark mode, focus, guide dots and screenshot from the actual
 five-slot popup. Per-book option bytes and guest-created screenshot bytes are
 checked separately from visible effects. Seeding the slot values does not
 establish that every slot picker was edited by the UI.
+The archived manual-refresh trace also records UC8253 full bank `e4cba50e`
+followed by the stock fast settle `34191c5b`, with the original reader target
+unchanged. This verifies the actual Quick Actions refresh entrypoint.
 For this original plain-text fixture in portrait light mode, the harness also
 rejects solid modal borders in the page body and waits for the actual later
 refresh. A fully parsed prior section cache and a quiet Indexing popup do not
 prove that reindexing has finished.
+
+`refresh-settings` changes Refresh Frequency from fifteen to five pages through
+the actual Display option popup. Its original plain-text fixture explicitly
+disables text AA to isolate page cadence, rather than claiming another AA
+editor test. Four ordinary turns use fast bank `34191c5b`. At the fifth,
+ReaderUtils requests HALF, but CrossInk's X3 `HalDisplay` wrapper first calls
+`requestResync(1)`: the actual sequence is full `e4cba50e`, normal conditioning
+`8a62b2ae`, then fast settle `34191c5b`. The sixth turn returns to fast. A
+single-half-bank assumption is therefore wrong for this firmware wrapper.
+The workflow then enables and disables Sunlight Fading Fix through its actual
+Display toggle. Acceptance checks physical page-turn responses and panel
+commands `0x04` (power on), `0x12` (refresh), `0x02` (power off) while enabled,
+and no power cycling while disabled. Command delivery establishes that source
+path's digital behavior; it does not validate outdoor fading or power savings.
 
 The favorites workflow uses Browser long Confirm to set a BMP boot favorite
 and X3 image Confirm to set its sleep favorite. It verifies that the pinned
@@ -108,6 +125,79 @@ Browser directory menu, then compares the resulting sleep image before and
 after clearing it. A separate fixture disables the global custom-boot setting
 while retaining both favorites, and verifies the source's splashless-wake
 policy. These seeded global preferences do not prove their settings pickers.
+
+The sleep-policy matrix records the stored mode values from the pinned source:
+
+| Value | Policy | Observable check |
+| --- | --- | --- |
+| 0 / 1 | Dark / Light | Exact native Logo120 bitmap and corner polarity |
+| 2 | Custom | Original BMP geometry and gray selectors |
+| 3 | Cover | Stock-generated cover BMP and completed panel target |
+| 4 | Blank | Every target pixel is white |
+| 5 | Cover + Custom | Cover from a reader; original wallpaper from Home |
+| 6 | Page Overlay | Original image plus the retained reader background |
+| 7 | Reading Stats | Original book, saved stats, generated statistics frame |
+| 8 | Minimal | Stock cover thumbnail, progress and generated frame |
+| 9 | Quick Resume | Reader pixels preserved outside the moon, saved frame consumed on wake |
+| 10 | Minimal Stats | Original book, cover thumbnail and saved stats |
+| 11 | Dashboard | Original book, dashboard cover asset and saved stats |
+
+The separate wide-cover EPUB keeps the already proven advanced EPUB unchanged.
+It makes Fit and Crop visibly different. The artifact decoder handles the
+guest's top-down 2-bit absolute cover BMPs as well as ordinary indexed BMPs.
+Fit images are centered in the portrait viewport; Crop covers the viewport.
+Filtered covers produce binary targets. Their cross-run comparison must
+retain the same original input hashes; a No Filter run does not establish
+the Black and White or Inverted filter's output.
+The completed wide-cover receipts compare Black and White against Inverted
+across all 418,176 target pixels: every pair sums to 255. Independent original
+black/white endpoint and white-margin samples also match. Fit has 264 white
+rows above and below its centered image; Crop puts content in both of those
+regions and changes 310,976 pixels relative to Fit. This is evidence of the
+stock digital rendering policy, with optical response still unvalidated.
+
+Quick Resume after timeout uses a recorded one-minute timeout and no sleep
+Power pulse. The Controls workflow separately owns the actual timeout editor.
+All policies require actual RTC deep sleep, inactive panel BUSY, a matching
+PGM/native CRC, GPIO wake and the stock deep-sleep reset diagnostic. Receipts
+report virtual timestamps as observed samples without treating them as
+calibrated hardware durations. Matrix availability is not a blanket pass;
+each requested policy retains its own checks and failure fields.
+
+The recovery workflow starts with Power released, then holds the physical
+X3 Up key while GPIO3 wakes the device. The unchanged guest must log
+`recovery=1`, reopen its firmware picker after Back, reject an intentionally
+invalid original `.bin`, and return to the picker after failure. This proof
+does not program an application image.
+
+`recovery-valid` separately supplies the unchanged official 6,105,536-byte
+application, SHA256 `4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644`,
+on a disposable card and flash copy. It uses the same physical Up + Power
+entry, the stock validator and the actual confirmation popup. A guest USB
+`ERR:not_on_home` response establishes that synchronous validation returned
+to the real input loop. Acceptance then requires an exact app1 readback at
+`0x650000`, unchanged app0 bytes, valid OTA-selection CRCs, an actual UART ROM
+reboot and DROM/IROM MMU pages selecting app1. A stock Home protocol reply and
+physical Confirm opening its browser verify operation after the switch.
+The independent UART transcript records the complete reset sequence; the USB
+observer may connect after the first cold BOOT diagnostic and retains its
+observed suffix without inventing missing log events.
+
+Crash coverage is a declared negative control on a disposable run. A loopback
+GDB connection reads the advertised target features, verifies a 32-bit PC
+register, writes PC zero, reads it back and closes without detaching. QMP
+then resumes the actual CPU. The guest owns the instruction-access exception,
+panic capture, reset and SD report. The receipt retains GDB packets, paused
+registers, raw logs and the normal no-panic check observations. Only that
+instance permits the one declared panic and PANIC reboot; storage failures,
+watchdogs and secondary panics still fail. IDF mirrors one panic to UART and
+USB Serial/JTAG, so counts are checked separately for each channel.
+The stock report contains MEPC zero, MCAUSE one and MTVAL zero; Back restores
+the original Home target. An unhandled exception leaves the short panic-message
+string empty in this source, so the crash screen uses its "No reason was
+recorded" fallback while the detailed SD report contains the real registers.
+This validates a fault/recovery path, not a normal
+user action or a guarantee that every possible crash is recoverable.
 
 Receipts separate `functional_pass` from `strict_pass`. A stock UI effect can
 be observed while strict validation fails because diagnostics or trace output

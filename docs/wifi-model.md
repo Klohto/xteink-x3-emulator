@@ -4,10 +4,12 @@ The experimental WiFi backend executes the stock firmware's driver and lwIP
 stack. It does not replace an ESP-IDF API, change a firmware instruction or
 substitute Ethernet hardware that the CrossInk image cannot drive.
 
-Stock CrossInk now completes PHY initialization and its network scan detects
-the virtual AP. Joining and the remaining network functions are being tested.
-Native MAC/DMA tests alone do not establish Join Network, Hotspot, WebDAV, OPDS
-or nearby transfers. The function ledger retains that boundary.
+Stock CrossInk completes PHY initialization, scans, associates and acquires a
+DHCP lease through its real station driver. HTTP, WebSocket, discovery, OPDS,
+KOReader authentication and clock synchronization have guest execution
+evidence in [network-validation.md](network-validation.md). Native MAC/DMA
+tests alone do not establish Hotspot or nearby transfers. WebDAV GET retains
+a separately recorded defect in the original application.
 
 ## Sources
 
@@ -71,3 +73,38 @@ loopback. The backend records the exact launcher arguments and binary hash.
 Encrypted air, physical RF/channel behavior, collision/airtime costs and
 modem power transitions are not verified. A functional pass may not authorize
 speed selection; `speed_selection_allowed` stays false.
+
+## Raw peer transport
+
+`--wifi-peer listen:PORT` and `--wifi-peer connect:PORT` link two native WiFi
+devices on `127.0.0.1`. Each frame is the actual guest TX DMA MPDU, with an
+`X3W1` header, little-endian channel and length. The receiver supplies the FCS
+and delivers it through the existing RX DMA descriptors and IRQs. Vendor
+action frames pass unchanged; the native device does not implement CrossInk
+or ESP-NOW application messages. Peer mode disables the local virtual AP and
+user networking, so a missing partner cannot silently receive AP responses.
+
+The fixed digital channel defaults to1 (`--wifi-channel`), while the virtual
+AP defaults to6. Hardware channel control, radio propagation, encryption,
+cross-process clock synchronization and host-link migration remain unmodelled.
+Bounded partial stream reads/writes, malformed framing, disconnect/reconnect,
+protected/channel drops and bidirectional DMA/FCS/IRQ execution are covered
+by eleven WiFi cases within the full102-case native gate. Receipts are in
+[native-build-fcs.json](evidence/native-build-fcs.json) and
+[native-fcs](evidence/native-fcs).
+
+The C3 PLCP length register determines whether each queue's TX DMA bytes
+include the four-byte hardware FCS reservation. The model removes that
+reservation, preserves actual payload bytes when DMA already excludes it,
+and records unverified or inconsistent lengths. It does not identify a
+reservation by a magic byte suffix. These tests establish DMA framing;
+stock-to-stock AP association remains an independent functional gate.
+
+Each run now supplies genuine C3 eFuse blocks to the model's eFuse drive.
+`--device-mac` generates a synthetic unicast factory identity;
+`--efuse` accepts a336-byte raw block image. The default is
+`02:58:33:45:44:01`. The launcher copies these blocks and records their exact
+bytes, hash and factory MAC. Distinct peers require distinct identities;
+AP+STA experiments space base addresses by two because IDF derives the AP
+address from the base address plus one. These inputs do not establish analog
+calibration or a real hardware identity.

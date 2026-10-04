@@ -40,6 +40,11 @@ CONDITIONS = (
     "original_book_unchanged_after_shutdown", "guest_usb_rx_tx_observed",
     "native_usb_diagnostics_clean", "launcher_stopped_cleanly",
 )
+SCREENSHOT_CONDITIONS = ("home_screenshot_exact_native_pixels", "browser_screenshot_allowed_and_exact")
+SOURCE_HASHES = {
+    "src/main.cpp": "21ee21ddac33088eda7d67f5dc5ae9f0f725fcdf5b2b9a2242ebf378133c3028",
+    "src/network/UsbSerialFileTransfer.cpp": "8303473a51d4d29964072a40c65ad43ee40511878d88db423e88bd215a8f69b0",
+}
 
 
 class USBExperimentError(RuntimeError):
@@ -187,12 +192,53 @@ def _check(report: dict, name: str, value: bool) -> None:
         raise USBExperimentError(f"failed acceptance check: {name}")
 
 
+def exercise_screenshot(experiment, qmp, client, report, smoke, label):
+    """Compare every exported framebuffer bit with a stable native panel."""
+    qmp.execute("stop")
+    try:
+        count = experiment.refresh_count(qmp)
+        data = (experiment.run_dir / "panel.pbm").read_bytes()
+        width, height, pixels = smoke.read_pgm(data)
+        if (width, height) != (792, 528):
+            raise USBExperimentError("USB screenshot requires the actual X3 native geometry")
+        crc = qmp.execute("qom-get", {"path": "/machine/epd", "property": "framebuffer-crc"})
+        if zlib.crc32(pixels) != crc:
+            raise USBExperimentError("native panel output does not match frozen digital pixels")
+    finally:
+        qmp.execute("cont")
+    payload = client.screenshot()
+    qmp.execute("stop")
+    try:
+        final_count = experiment.refresh_count(qmp)
+        expected = bytearray(width * height // 8)
+        # The primary framebuffer is an MSB-first BW ink mask. Grayscale
+        # renderer overlays keep every nonwhite pixel in that mask.
+        for index, pixel in enumerate(pixels):
+            if pixel == 255:
+                expected[index // 8] |= 0x80 >> (index % 8)
+        path = experiment.output / f"{label}-screenshot.bin"
+        path.write_bytes(payload)
+        report.setdefault("screenshots", {})[label] = {
+            "path": path.name, "size_bytes": len(payload), "sha256": hashlib.sha256(payload).hexdigest(),
+            "native_pixel_sha256": hashlib.sha256(pixels).hexdigest(), "native_pixel_crc32": crc,
+            "before_refresh": count, "after_refresh": final_count,
+            "compared_bits": width * height, "mismatched_bytes": sum(a != b for a, b in zip(payload, expected)),
+            "framing": client.operations[-1], "frame_stable": final_count == count,
+        }
+        return final_count == count and payload == expected
+    finally:
+        qmp.execute("cont")
+
+
 def run_experiment(output: Path, flash: Path, backend: Path, *, timeout: float = 60,
-                   ota_image: Path | None = None, rom_dir: Path | None = None) -> dict:
+                   ota_image: Path | None = None, rom_dir: Path | None = None,
+                   source_dir: Path | None = None, icount: bool = True,
+                   with_screenshots: bool = False) -> dict:
     output, flash, backend = (path.resolve() for path in (output, flash, backend))
     if output.exists() and any(output.iterdir()):
         raise USBExperimentError("USB output directory must be new or empty")
     output.mkdir(parents=True, exist_ok=True)
+    (output / "source-harness.py").write_bytes(Path(__file__).read_bytes())
     (output / "frames").mkdir()
     book = make_test_epub()
     payload = bytes(range(256)) * 32 + b"Original X3 USB protocol fixture.\n"
@@ -210,15 +256,23 @@ def run_experiment(output: Path, flash: Path, backend: Path, *, timeout: float =
                "--seconds", str(max(600 if ota_image else 180, timeout * 3))]
     if rom_dir is not None:
         command += ["--rom-dir", str(rom_dir.resolve())]
+    if not icount:
+        command += ["--no-icount"]
     report = {"schema_version": 1, "status": "running", "stock_usb_file_transfer_verified": False,
               "source_commit": SOURCE_COMMIT, "source_protocol": "src/network/UsbSerialFileTransfer.cpp",
               "usb_enumeration_modelled": False, "timing_calibrated": False,
-              "pass_conditions": list(CONDITIONS), "checks": {name: False for name in CONDITIONS},
+              "pass_conditions": list(CONDITIONS + (SCREENSHOT_CONDITIONS if with_screenshots else ())),
+              "checks": {name: False for name in CONDITIONS + (SCREENSHOT_CONDITIONS if with_screenshots else ())},
               "launcher_command": command, "usb_port": port,
               "source_payload": {"size_bytes": len(payload), "sha256": hashlib.sha256(payload).hexdigest(),
                                  "crc32": zlib.crc32(payload)},
               "source_book": {"size_bytes": len(book), "sha256": hashlib.sha256(book).hexdigest()},
               "helper_sha256": file_sha256(PROJECT / "scripts/smoke-crossink.py")}
+    source_dir = source_dir or PROJECT.parent / "crossink-harness-src"
+    report["source_hashes"] = {path: file_sha256(source_dir / path) for path in SOURCE_HASHES}
+    if report["source_hashes"] != SOURCE_HASHES:
+        raise USBExperimentError("USB source contracts differ from the pinned original CrossInk source")
+    report["harness_sha256"] = file_sha256(Path(__file__))
     process = client = qmp = experiment = None
     smoke = _helpers()
     try:
@@ -249,6 +303,9 @@ def run_experiment(output: Path, flash: Path, backend: Path, *, timeout: float =
                     return False
             experiment.wait("stock Home USB access", home_status)
             report["home_frame"] = experiment.capture(qmp, "home", 0)
+            if with_screenshots:
+                _check(report, "home_screenshot_exact_native_pixels",
+                       exercise_screenshot(experiment, qmp, client, report, smoke, "home"))
             report["initial_usb_state"] = qmp.execute("qom-get", {"path": "/machine/jtag", "property": "host-connected"})
             entries = client.list("/sdcard")
             report["initial_directory"] = entries
@@ -292,6 +349,9 @@ def run_experiment(output: Path, flash: Path, backend: Path, *, timeout: float =
             count = experiment.refresh_count(qmp)
             experiment.press(qmp, "confirm", purpose="open actual file browser for Home-only negative control")
             report["browser_frame"] = experiment.capture(qmp, "browser", count)
+            if with_screenshots:
+                _check(report, "browser_screenshot_allowed_and_exact",
+                       exercise_screenshot(experiment, qmp, client, report, smoke, "browser"))
             try:
                 client.status()
             except USBTransferError as error:
@@ -362,11 +422,15 @@ def main() -> int:
     parser.add_argument("--backend", type=Path, default=DEFAULT_BACKEND)
     parser.add_argument("--timeout", type=float, default=60)
     parser.add_argument("--rom-dir", type=Path)
+    parser.add_argument("--source-dir", type=Path, default=PROJECT.parent / "crossink-harness-src")
+    parser.add_argument("--no-icount", action="store_true", help="explicit host-paced diagnostic run; still uncalibrated")
+    parser.add_argument("--with-screenshots", action="store_true", help="also verify complete stock CMD:SCREENSHOT frames; short writes remain failures")
     parser.add_argument("--ota-image", type=Path, help="also flash the pinned official app through the stock SD-update menu and verify the guest reboot")
     args = parser.parse_args()
     try:
         result = run_experiment(args.output, args.flash, args.backend, timeout=args.timeout,
-                                ota_image=args.ota_image, rom_dir=args.rom_dir)
+                                ota_image=args.ota_image, rom_dir=args.rom_dir, source_dir=args.source_dir,
+                                icount=not args.no_icount, with_screenshots=args.with_screenshots)
     except (OSError, ValueError, RuntimeError) as error:
         print(f"USB experiment failed: {error}", file=sys.stderr)
         return 1

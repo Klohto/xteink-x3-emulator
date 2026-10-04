@@ -1,0 +1,27 @@
+TAP version 13
+# random seed: R02Sfd760ae037bed4fbb41e0243c3a744b6
+1..6
+# Start of riscv32 tests
+# Start of esp32c3-usb tests
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:58427 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=53797,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=45705,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3-usb/sof-and-flush
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:41957 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=52779,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=35279,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3-usb/full-packet-auto-flush
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:53563 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=43969,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=38275,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3-usb/host-rx-and-irq
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:49115 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=43207,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=35101,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/esp32c3-usb/light-sleep-gates-usb
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:58365 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=57487,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=44459,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 5 /riscv32/esp32c3-usb/bulk-tx-before-next-sof
+# slow test /riscv32/esp32c3-usb/bulk-tx-before-next-sof executed in 0.52 secs
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:54643 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=47947,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -chardev socket,id=usbserial,host=127.0.0.1,port=40047,server=on,wait=off -serial null -serial null -serial chardev:usbserial -accel qtest
+Not initializing SPI Flash
+ok 6 /riscv32/esp32c3-usb/host-rx-packet-backpressure
+# slow test /riscv32/esp32c3-usb/host-rx-packet-backpressure executed in 0.50 secs
+# End of esp32c3-usb tests
+# End of riscv32 tests

@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 import re
 import select
-import shutil
 import socket
 import subprocess
 import time
@@ -23,6 +22,8 @@ from typing import Any
 import uuid
 
 from .flash import inspect_flash
+from .storage import copy_sparse_file
+from .efuse import DEFAULT_MAC, EFUSE_IMAGE_SIZE, make_efuse_image
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_BACKEND = PROJECT_ROOT / "local/qemu/install/bin/qemu-system-riscv32"
@@ -71,6 +72,19 @@ DEVICE_PROPERTIES = {
              "radio-modelled", "timing-calibrated", "encryption-modelled", "air-enabled", "ssid", "channel"),
 }
 MACHINE_PROPERTIES = ("unsupported-io-reads", "unsupported-io-writes")
+WIFI_BASE_OBSERVATIONS = DEVICE_PROPERTIES["wifi"]
+WIFI_PEER_OBSERVATIONS = (
+    "peer-configured", "peer-connected", "channel-control-modelled",
+    "peer-clock-sync-modelled", "peer-link-migration-modelled",
+    "peer-tx-frames", "peer-rx-frames", "peer-queued-packets",
+    "peer-dropped-frames", "peer-malformed-inputs", "peer-channel-drops",
+    "peer-unmodelled-frames", "peer-link-errors",
+)
+WIFI_PEER_ERROR_COUNTERS = ("peer-dropped-frames", "peer-malformed-inputs", "peer-channel-drops",
+                            "peer-unmodelled-frames", "peer-link-errors")
+WIFI_FCS_OBSERVATIONS = ("tx-fcs-stripped-frames", "tx-fcs-unverified-frames", "tx-length-errors")
+DEVICE_PROPERTIES["wifi"] += WIFI_PEER_OBSERVATIONS
+DEVICE_PROPERTIES["wifi"] += WIFI_FCS_OBSERVATIONS
 MACHINE_STATE_PROPERTIES = MACHINE_PROPERTIES + ("virtual-time-ns", "power-button", "power-button-hold-ns", "unsupported-io-json")
 REQUIRED_COUNTERS = {"machine": MACHINE_PROPERTIES,
                      "panel": ("unsupported-count", "protocol-errors", "output-errors"),
@@ -304,6 +318,10 @@ class RunConfig:
     usb_port: int | None = None
     wifi: bool = False
     wifi_hostfwd: tuple[str, ...] = ()
+    efuse: Path | None = None
+    device_mac: str | None = None
+    wifi_peer: str | None = None
+    wifi_channel: int | None = None
 
     def resolved(self) -> RunConfig:
         return RunConfig(
@@ -314,7 +332,42 @@ class RunConfig:
             self.icount_shift, self.power_on, self.power_button_hold_ns,
             self.usb_port,
             self.wifi, tuple(self.wifi_hostfwd),
+            Path(self.efuse).expanduser().resolve() if self.efuse is not None else None,
+            self.device_mac, self.wifi_peer, self.wifi_channel,
         )
+
+
+def _efuse_input(config: RunConfig) -> tuple[bytes, str]:
+    if config.efuse is not None and config.device_mac is not None:
+        raise BackendError("choose an eFuse image or a device MAC, not both")
+    if config.efuse is not None:
+        data = config.efuse.read_bytes()
+        if len(data) != EFUSE_IMAGE_SIZE:
+            raise BackendError(f"eFuse image must contain exactly {EFUSE_IMAGE_SIZE} bytes of C3 blocks")
+        return data, "supplied_image"
+    try:
+        return make_efuse_image(config.device_mac if config.device_mac is not None else DEFAULT_MAC), (
+            "generated_mac" if config.device_mac is not None else "synthetic_default")
+    except (ValueError, TypeError) as error:
+        raise BackendError(str(error)) from error
+
+
+def _wifi_peer(config: RunConfig) -> tuple[str, int] | None:
+    if config.wifi_peer is None:
+        return None
+    match = re.fullmatch(r"(listen|connect):([0-9]+)", config.wifi_peer) if isinstance(config.wifi_peer, str) else None
+    if match is None or not 1 <= int(match[2]) <= 65535:
+        raise BackendError("WiFi peer must be listen:PORT or connect:PORT with a loopback port 1..65535")
+    return match[1], int(match[2])
+
+
+def _wifi_channel(config: RunConfig) -> int:
+    value = config.wifi_channel if config.wifi_channel is not None else (1 if config.wifi_peer is not None else 6)
+    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 14:
+        raise BackendError("WiFi channel must be an integer from 1 to 14")
+    if config.wifi_channel is not None and not (config.wifi or config.wifi_peer is not None):
+        raise BackendError("WiFi channel requires WiFi or a raw peer link")
+    return value
 
 
 def _option_path(path: Path) -> str:
@@ -361,6 +414,13 @@ def build_command(config: RunConfig) -> list[str]:
         raise BackendError("USB loopback port must be an integer from 1 to 65535")
     if not isinstance(config.wifi, bool):
         raise BackendError("WiFi enable must be a boolean")
+    _efuse_input(config)
+    peer = _wifi_peer(config)
+    channel = _wifi_channel(config)
+    if peer is not None and config.wifi:
+        raise BackendError("raw WiFi peer and virtual AP/user networking are separate modes")
+    if peer is not None and peer[1] == config.usb_port:
+        raise BackendError("WiFi peer endpoint and this guest's USB listener must use different ports")
     if config.wifi_hostfwd and not config.wifi:
         raise BackendError("WiFi host forwarding requires WiFi to be enabled")
     listeners = set()
@@ -382,6 +442,8 @@ def build_command(config: RunConfig) -> list[str]:
         str(config.backend), "-machine", f"esp32c3,xteink-x3=true,power-button-hold-ns={config.power_button_hold_ns},power-button={'true' if config.power_on else 'false'}",
         "-drive", f"file={_option_path(flash)},if=mtd,format=raw",
         "-drive", f"file={_option_path(sd)},if=sd,format=raw",
+        "-drive", f"file={_option_path(config.output / 'efuse.bin')},if=none,format=raw,id=efuse0",
+        "-global", "driver=nvram.esp32c3.efuse,property=drive,value=efuse0",
         "-global", f"xteink-x3-epd.dump-file={config.output / 'panel.pbm'}",
         "-global", f"xteink-x3-epd.trace-file={config.output / 'panel.jsonl'}",
         "-serial", f"file:{config.output / 'rom.log'}", "-serial", "null",
@@ -396,6 +458,15 @@ def build_command(config: RunConfig) -> list[str]:
     if config.wifi:
         command += ["-global", "driver=esp32c3.wifi,property=air-enabled,value=true",
                     "-nic", "user,model=esp32c3.wifi" + "".join(f",hostfwd={value}" for value in config.wifi_hostfwd)]
+    if peer is not None:
+        mode, port = peer
+        endpoint = f"socket,id=x3peer,host=127.0.0.1,port={port},server={'on' if mode == 'listen' else 'off'}"
+        endpoint += ",wait=off" if mode == "listen" else ",reconnect-ms=1000"
+        command += ["-chardev", endpoint,
+                    "-global", "driver=esp32c3.wifi,property=peer-chardev,value=x3peer",
+                    "-global", "driver=esp32c3.wifi,property=peer-only,value=true", "-nic", "none"]
+    if config.wifi or peer is not None:
+        command += ["-global", f"driver=esp32c3.wifi,property=channel,value={channel}"]
     rom_dir = _rom_directory(config)
     if rom_dir is not None:
         command += ["-L", str(rom_dir)]
@@ -482,6 +553,9 @@ def _record_capabilities(result: dict, state: dict) -> None:
         "regi2c_power_control_modelled": ("regi2c", "power-control-modelled"),
         "regi2c_timing_calibrated": ("regi2c", "timing-calibrated"),
         "regi2c_phy_handshake_modelled": ("regi2c", "phy-handshake-modelled"),
+        "wifi_channel_control_modelled": ("wifi", "channel-control-modelled"),
+        "wifi_peer_clock_sync_modelled": ("wifi", "peer-clock-sync-modelled"),
+        "wifi_peer_link_migration_modelled": ("wifi", "peer-link-migration-modelled"),
     }
     for name, (device, prop) in properties.items():
         if prop in state.get(device, {}):
@@ -521,12 +595,19 @@ def run(config: RunConfig) -> dict:
         raise BackendError(f"ESP32-C3 ROM file is missing from {rom_dir}")
     version = subprocess.run([str(config.backend), "--version"], capture_output=True, text=True, timeout=10, check=True)
     sd_hash = file_sha256(config.sd)
+    efuse_data, efuse_kind = _efuse_input(config)
+    peer = _wifi_peer(config)
     result: dict[str, Any] = {
         "schema_version": 1, "status": "starting", "boot_verified": False,
         "backend": {"name": "espressif-qemu-x3", "path": str(config.backend),
                     "version": version.stdout.strip(), "sha256": file_sha256(config.backend)},
         "firmware": flash_info,
         "input": {"sd_path": str(config.sd), "sd_sha256": sd_hash, "sd_size_bytes": config.sd.stat().st_size,
+                  "efuse": {"path": str(config.efuse) if config.efuse is not None else None,
+                            "source": efuse_kind, "sha256": hashlib.sha256(efuse_data).hexdigest(),
+                            "size_bytes": len(efuse_data),
+                            "factory_mac": ":".join(f"{byte:02x}" for byte in efuse_data[24:30][::-1]),
+                            "physical_calibration_data_verified": False},
                   "power_on": {"enabled": config.power_on, "gpio": 3, "active_level": 0,
                                "hold_ns": config.power_button_hold_ns if config.power_on else None,
                                "release_clock": "QEMU_CLOCK_VIRTUAL"}},
@@ -543,9 +624,13 @@ def run(config: RunConfig) -> dict:
                         "host": "127.0.0.1" if config.usb_port is not None else None,
                         "port": config.usb_port, "guest_device": "/machine/jtag", "serial_index": 2,
                         "log": "serial.log", "usb_enumeration_modelled": False},
-        "wifi": {"enabled": config.wifi, "hostfwd": list(config.wifi_hostfwd),
-                 "backend": "QEMU user networking" if config.wifi else None,
-                 "guest_model": "esp32c3.wifi" if config.wifi else None,
+        "wifi": {"enabled": config.wifi or peer is not None, "hostfwd": list(config.wifi_hostfwd),
+                 "backend": "raw MPDU peer" if peer is not None else "QEMU user networking" if config.wifi else None,
+                 "guest_model": "esp32c3.wifi" if config.wifi or peer is not None else None,
+                 "fixed_channel": _wifi_channel(config),
+                 "peer": {"mode": peer[0], "host": "127.0.0.1", "port": peer[1],
+                          "framing": "X3W1/channel-u16le/length-u16le/raw-MPDU-without-FCS"} if peer is not None else None,
+                 "peer_clock_sync_modelled": False, "peer_link_migration_modelled": False,
                  "rf_modelled": False, "timing_calibrated": False,
                  "phy_measurement_source": "synthetic ideal-zero digital results",
                  "physical_phy_measurements_modelled": False},
@@ -566,9 +651,11 @@ def run(config: RunConfig) -> dict:
     if board_profile.is_file():
         result["board_profile"] = {"path": str(board_profile), "sha256": file_sha256(board_profile)}
     config.output.mkdir(parents=True, exist_ok=True)
+    with (config.output / "efuse.bin").open("xb") as target:
+        target.write(efuse_data)
     if not config.in_place:
-        shutil.copyfile(config.flash, config.output / "flash.bin")
-        shutil.copyfile(config.sd, config.output / "sd.img")
+        copy_sparse_file(config.flash, config.output / "flash.bin")
+        copy_sparse_file(config.sd, config.output / "sd.img")
     # A QEMU socket chardev accepts one monitor client. Keep that connection
     # owned by the launcher and broker external requests for both transports.
     (config.output / "qmp.sock").mkdir(mode=0o700)
@@ -635,20 +722,27 @@ def run(config: RunConfig) -> dict:
                        for device, properties in REQUIRED_COUNTERS.items() for prop in properties)
         required = required and all(prop in state.get(device, {})
                                     for device, properties in REQUIRED_OBSERVATIONS.items() for prop in properties)
-        if config.wifi:
-            required = required and all(prop in state.get("wifi", {}) for prop in DEVICE_PROPERTIES["wifi"])
+        if config.wifi or peer is not None:
+            required = required and all(prop in state.get("wifi", {}) for prop in WIFI_BASE_OBSERVATIONS)
             required = required and all(prop in state.get("regi2c", {}) for prop in WIFI_PHY_OBSERVATIONS)
+        if peer is not None:
+            required = required and all(prop in state.get("wifi", {}) for prop in WIFI_PEER_OBSERVATIONS)
+            required = required and all(prop in state.get("wifi", {}) for prop in WIFI_FCS_OBSERVATIONS)
+            required = required and state.get("wifi", {}).get("peer-configured") is True
         unsupported = [state.get(device, {}).get(prop, 0)
                        for device, properties in REQUIRED_COUNTERS.items() for prop in properties]
         unsupported.append(state.get("rtc", {}).get("unsupported-count", 0))
-        if config.wifi:
+        if config.wifi or peer is not None:
             unsupported.extend(state.get("wifi", {}).get(prop, 0) for prop in ("unsupported-accesses", "bad-dma", "rx-dropped"))
+        if peer is not None:
+            unsupported.extend(state.get("wifi", {}).get(prop, 0) for prop in WIFI_PEER_ERROR_COUNTERS)
+            unsupported.extend(state.get("wifi", {}).get(prop, 0) for prop in WIFI_FCS_OBSERVATIONS[1:])
         result["validity"]["unsupported_features_checked"] = required
         result["validity"]["diagnostics_clean"] = bool(
             required and result["status"] != "failed" and not result["diagnostics"]["nonempty_lines"]
             and not any(unsupported) and not result["epd_output_diagnostics"]["count"]
         )
-        for artifact in ("panel.pbm", "panel.jsonl", "serial.log", "rom.log", "diagnostics.log"):
+        for artifact in ("panel.pbm", "panel.jsonl", "serial.log", "rom.log", "diagnostics.log", "efuse.bin"):
             path = config.output / artifact
             if path.is_file():
                 result.setdefault("artifact_sha256", {})[artifact] = file_sha256(path)

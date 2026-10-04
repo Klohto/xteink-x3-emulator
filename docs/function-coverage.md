@@ -106,7 +106,7 @@ Default tab is Main. Sources: `EpubReaderMenuActivity.cpp::buildMenuItems`,
 | Bookmarks | Send to Nearby Device | `NearbyBookTransferActivity`; peer discovery/approval/CRC-verified transfer |
 | Bookmarks | Screenshot | `ScreenshotUtil`; real BMP under `/screenshots/` with book/page metadata |
 | Bookmarks | Display QR | `QrDisplayActivity`; encodes concatenated current-page word text, not book/progress metadata; verify payload and displayed QR |
-| Settings | Book Dictionary | Per-book None / Use Global / dictionary choice; cache `dictionary.bin` |
+| Settings | Book Dictionary | Per-book Use Global / installed dictionary choice; cache `dictionary.bin`. None is a global-only choice; an absent/empty book record inherits global |
 | Settings | Delete Cache | Confirm/cancel; rebuild book cache while preserving intended reader/saved-item state |
 | Settings | Delete Book Stats | Confirm/cancel; remove book stats without deleting book |
 | Settings conditional | Reset Reading Pace | Shown when Status Bar Time Left is enabled (not when pace samples merely exist); clear average/sample/time-left state and save v5 statistics |
@@ -198,15 +198,15 @@ RTC; it is not a host-clock substitution.
 
 | ID | Function / source | Persistence and acceptance target | Status |
 | --- | --- | --- | --- |
-| D01 | Global/per-book dictionary selection; `DictionarySelectActivity.cpp`, `src/util/Dictionary.cpp`, `DictionaryRegistry.cpp` | Discover StarDict folders; None/global/book override; `.ifo/.idx/.dict` data and optional accelerators; `dictionary.bin` path record | `source_verified_untested` |
+| D01 | Global/per-book dictionary selection; `DictionarySelectActivity.cpp`, `src/util/Dictionary.cpp`, `DictionaryRegistry.cpp` | Discover StarDict folders; global None/dictionary, book Use Global/dictionary override; `.ifo/.idx/.dict` data and optional accelerators; `dictionary.bin` path record | `source_verified_untested` |
 | D02 | Word/phrase selection and exact/stem/alternate/fuzzy lookup; definitions and suggestion choice; lookup chains | `DictionaryWordSelectActivity.cpp`, `DictionaryDefinitionActivity.cpp`, `DictionarySuggestionsActivity.cpp`, `DictionaryLookupController.cpp` | Visible selected text/definition; source dictionary read and index build; fallback/errors | `source_verified_untested` |
-| D03 | Looked-up Words; reopen definition; clear history | `LookedUpWordsActivity.cpp`, `src/util/LookupHistory.cpp` | `<book cache>/dictionary_history.txt`, `word|status` lines; status D/T/Y/S/other for direct/stem/alternate/suggestion/not found | `source_verified_untested` |
+| D03 | Looked-up Words; reopen definition; selected-entry deletion through long Confirm and popup | `LookedUpWordsActivity.cpp`, `src/util/LookupHistory.cpp` | `<book cache>/dictionary_history.txt`, `word|status` lines; status D/T/Y/S/other for direct/stem/alternate/suggestion/not found. No bulk Clear History action | `source_verified_untested` |
 | C01 | Bookmark add/remove/current-page match/jump/individual delete/all delete | `BookmarkStore.cpp`, `EpubReaderBookmarkListActivity.cpp` | `/.crosspoint/bookmarks/<type>_<decimal CRC32(path)>.bin`; version 5, max 1024; rename/move migration | `source_verified_untested` |
 | C02 | Clipping selection, preview/jump, persistent highlights, individual/all delete | `ClipSelectionActivity.cpp`, `EpubReaderClippingListActivity.cpp`, `ClippingStore.cpp` | `/.crosspoint/clippings/<type>_<decimal CRC32(path)>.bin`; version 4, max 256; layout signature/text anchoring and migration | `source_verified_untested` |
 | C03 | Export selected clipping as Kindle-style text | `src/clippings/ClippingsManager.cpp` | Append `/My Clippings.txt`; export failure rolls back just-added binary clipping; verify text/location/time | `source_verified_untested` |
 | S01 | Session/time/page tracking, pace/time left, completion, dates, time-of-day/day-of-week distributions | `BookReadingStats.cpp`, `BookStatsActivity.cpp`, `BookStatsView.cpp` | `<book cache>/stats_v5.bin`, 73 bytes; counters and dates; reader idle/pause behavior | `source_verified_untested` |
 | S02 | This-device/all-device totals, streaks, completed books; reset | `GlobalReadingStats.cpp`, `BookStatsActivity.cpp` | `/.crosspoint/global_stats.bin` and backup; imported per-MAC `/.crosspoint/synced_stats/` | `source_verified_untested` |
-| S03 | Manual/automatic stats backup and pruning | `StatsBackup.cpp`, `BackupStatsActivity.cpp` | `/.crossink-stats-backup/stats_backup_*`; default retain seven; actual saved payload validation | `source_verified_untested` |
+| S03 | Manual/automatic stats backup and pruning | `StatsBackup.cpp`, `BackupStatsActivity.cpp` | `/.crossink-stats-backup/stats_YYYY-MM-DD.bin` (automatic), dated `_HHMM.bin` (manual), or `stats_backup_NNN.bin` without RTC; default retain seven; actual saved payload validation | `source_verified_untested` |
 | S04 | Font selection/preview/install/update/delete | `FontSelectionActivity.cpp`, `FontDownloadActivity.cpp`, `src/FontInstaller.cpp`, `lib/EpdFont/` | SD `.cpfont` registry; downloaded family/checksum/size validation, retry/cancel/resume and Update All | `source_verified_untested` |
 
 Serialization strings in the bookmark/clipping stores are uint32 little-endian
@@ -306,23 +306,22 @@ guest postconditions.
 
 | Gap / source boundary | Required remaining execution | Current owner / dependency |
 | --- | --- | --- |
-| F02/F03, `TxtReaderActivity` | TXT and literal MD forward/back, resume, font/dark shortcuts, long-Back/browser return and Send Nearby menu | Library phase; network sending needs guest peer transport |
+| F02/F03, `TxtReaderActivity` | Actual TXT/MD Send Nearby transfer | Native peer/network phase; E59/E60 prove reading, font/dark shortcuts, return, persistence and its real menu entry |
 | F04, `XtcReaderMenuActivity` | Chapter, Reading Stats, Finished/Unfinished, Delete Stats, Delete Cache; fixed-format Send Nearby | Library phase; sending needs guest peer transport |
-| C01/C02, reader saved-item menus | Reader Delete All Bookmarks; individual clipping deletion; multipage and table selection | Reader-functions phase; global Saved Items bulk clearing is a distinct proof |
-| D01–D03 | Global dictionary/None override; phrase, stem, alternate, synonym, fuzzy/suggestions; Clear Lookup History | Reader-functions phase; direct lookup/per-book selection does not imply these branches |
-| Reader Customise Status Bar | Chapter Count, Stable Pages, Book Percentage/format, bar/thickness, title, battery, XTC status bar | Reader-functions phase; library Time Left/Reset Pace is separate |
-| S01/S02, `BookStatsActivity` | Manual start/finish dates; aggregate/device/streak/distribution views | Library dates; synced device variants need real peer statistics |
-| S03, `StatsBackup`, `main.cpp` | Automatic backup before actual deep sleep, identical suppression and retain-seven pruning | Library phase; source trigger is before sleep, not boot |
+| C01/C02, reader saved-item menus | Table selection and remaining content/entrypoint branches | Reader-functions phase; E70 proves multipage clipping/individual deletion, E72 proves reader Delete All Bookmarks; global Saved Items bulk clearing is distinct |
+| D01–D03 | Global None/dictionary and per-book Use Global/dictionary | Reader-functions phase; E47–E50 prove successful stem/alternate/fuzzy/phrase lookups, E69 proves individual Lookup History deletion, E76 proves chained lookup |
+| S01/S02, `BookStatsActivity` | Genuine statistics distributions/streaks and aggregation from actual peer synchronization | Library/network phase; E61 proves manual dates and three device views, with peer statistics explicitly supplied as input |
 | Display/Files & Cache | UI Scale, Recent Books List/Grid, hidden-file visible selection, two-line browser display | Library phase |
-| System Device | Keyboard-layout enable mask, date format/separator, Custom Bootscreen UI toggle | Library/controls/display owners; fixture-only values are not UI proof |
+| System Device | Keyboard-layout enable mask and actual enabled-layout switching | Library phase; E68 separately proves actual Custom Bootscreen/date-format/separator UI and cold persistence |
+| H02, `RecentBooksStore.cpp:191–205` | Genuine legacy `recent.bin` v1/v2/v3 migration to JSON and `.bin.bak`; JSON/temporary/backup recovery paths | Library next phase; source migration only runs when the main JSON is absent |
+| H01/H02, `HomeActivity.cpp` | Multi-book Carousel and three-cover selection/context/cache; Minimal and Dashboard distinct button/menu navigation; Classic/Roundedraff Home routes | Library next phase; E17 proves theme persistence, not these separate interactions |
+| H03, `FileBrowserActivity.cpp:522,1103` | Recursive directory Delete/cancel and resulting metadata/favorite cleanup; long-Back hidden-file toggle | Library next phase; directory Rename is not offered, and browser Settings shortcut requires touch and is excluded on X3 |
 | Controls | Reader remap variant, side layouts/orientation/long presses/chords and conditional Footnote Back | Controls phase; touch/Home/frontlight gates remain excluded |
-| P01–P04 | Remaining wallpapers, Cover Fit/Crop/filters, automatic timeout and Quick Resume policy | Display phase; Custom/overlay/favorites proofs do not imply other modes |
-| P05 | Crash/recovery/report entry and boot-update recovery/cancellation | Display/firmware phase; normal OTA reboot is a separate branch |
+| P01–P04 | Remaining sleep trigger/policy or custom-image selection branches beyond the exact named receipts | Display phase; E34–E44 and E62–E67 cover all stored sleep modes, wide-cover Fit/Crop/BW/Inverted, both Cover+Custom origins and Quick Resume-after-timeout; this is not every setting permutation |
 | N01/N02 | Secure/saved/hidden WiFi, forget/reconnect; Create Hotspot/captive DNS | Native network prerequisite and network harness |
 | N08–N10 | File Transfer Receive File/Sync Stats; Send Nearby and Nearby Position Sync, approvals/collisions/CRC/application | Native ESP-NOW peer transport and new guest workflows |
 | N12/N13/O01 | NTP RTC update; remote font install/update/delete; online update/download/cancel | Actual guest network endpoints; current service fixtures do not cover them |
 | U02 | USB `CMD:SCREENSHOT` framing and exact framebuffer payload | USB phase; serial file protocol is a distinct proof |
-| O02 | Invalid image, cancel and non-escapable boot-recovery picker | Firmware phase; successful SD update alone is narrower |
 
 ## Recorded guest execution ledger
 
@@ -364,11 +363,55 @@ All runs still have `speed_selection_allowed=false` and uncalibrated timing.
 | Reader Settings Delete Book Stats and Delete Cache | Stats cancel/delete resets a guest-created completed record; cache cancel preserves exact page, confirmed clear removes render data while retaining page1 progress/stats; Home Continue regenerates the same page | E25 | true / false; distinct reader entrypoints from browser/global clearing |
 | Reader Settings Controls entry | Actual reader menu opens Controls Options and its Power Button submenu; Back closes both and restores identical reader pixels | E26 | true / false; mutation/remapping evidence is E07, not claimed by this entry-only test |
 | Browser render mode, Reset Reader Settings and Delete Stats (H04) | Actual picker saves v9 Balanced override; reset cancellation preserves exact settings bytes, confirmed reset removes them; browser stats deletion preserves book/render/progress data | E27 | true / false |
+| Time Left, reading pace and Reset Reading Pace | Actual status-bar picker enables Chapter time-left; four timed forward reads produce genuine pace samples; Home Stats renders persisted totals; reader Reset Pace clears average/sample/estimate while preserving session/time/page/completion and progress | E28 | true / false |
+| Global Saved Items bulk actions | Real guest creates bookmark and clipping; global type chooser opens Clippings; bookmark deletion cancellation preserves store, confirmed bookmark/clipping actions remove only their stores and keep book/text export | E29 | true / false |
+| Favorite boot image and preferred sleep folder | Actual browser/viewer actions save favorites, completed boot bitmap matches original; Set/Clear preferred sleep folder produces distinct sleep targets and genuine GPIO wakes | E30, E31 | true / false |
+| Quick Actions | Actual five-slot owner Save plus runtime refresh/dark/focus/guide/screenshot; saved overrides reopen, screenshot equals modal-free reader pixels | E32 | true / false |
+| Page overlay | Actual PNG pin and auto-overlay input; native pixels verify alpha threshold/background and original reader return | E33 | true / false |
+| Blank and Quick Resume sleep modes | Both reach actual deep sleep and GPIO wake; Blank produces all-white pixels, Quick Resume stores its full frame with moon indicator, consumes it on wake and restores reader pixels without the moon | E34, E35 | true / false; sleep preferences recorded as inputs |
+| Genuine crash UI and report | Declared GDB PC=0 negative control causes actual Instruction Access Fault and stock panic/reboot; System Crash UI appears and Back works. Supplementary post-exit analysis verifies guest report MEPC0/MCAUSE1/MTVAL0 and exact Home return | E36 | true / false; intentional guest fault, not a clean no-panic acceptance |
+| Startup recovery rejection path | Actual physical button chord enters stock recovery; Cancel stays in its picker; an original invalid firmware input produces visible validator failure and returns to the picker without flashing/restarting | E37 | true / false; successful recovery flashing remains a separate target |
+| Dark, Light and Cover Fit sleep | Actual deep sleep and GPIO wake; uniform Dark/Light targets and every source-cover pixel centered at Fit geometry verified | E38–E40 | true / false; these individual runs completed before their broader cohort hit host ENOSPC |
+| Reading Stats, Minimal and Minimal Stats sleep | Actual generated sleep targets, deep sleep and GPIO wake; both Minimal variants' guest thumbnail interiors independently match 53,106 source pixels, with distinct variant targets | E41–E43 | true / false; later interrupted cases are not included |
+| Cover+Custom from Home | Stored mode5 actually chooses the original default-folder BMP when sleeping from Home; `lastSleepFromReader=false`, deep sleep and GPIO wake verified | E44 | true / false; reader-origin branch remains separate |
+| Reader QR and screenshot | QR decoder recovers 588 payload bytes matching 116 actual cached page words; guest BMP pixels match the source-rotated reader and returning restores its content | E45 | true / false |
+| Customise Status Bar | Actual UI persists Chapter Count, Stable Pages, percentage format, progress bar/thickness, title, battery and XTC preferences; footer changes and a new CPU restores exact reader pixels | E46 | true / false; XTC preference persistence is not a separate fixed-reader pixel proof |
+| Dictionary stem lookup | Selected `clocks` reaches the actual definition and records successful status T | E47 | true / false |
+| Dictionary alternate/synonym lookup | Selected `riverbank` reaches the actual definition and records successful status Y | E48 | true / false |
+| Dictionary fuzzy suggestion | Selected `clok` reaches resolved `clock` definition through the real suggestion flow and records successful status S | E49 | true / false |
+| Dictionary phrase selection/lookup | Long Confirm and Right visibly extend the selection to `clock clock`; real definition and successful status D are recorded | E50 | true / false |
+| Per-book built-in font family and size, cold restart | Real picker saves family and 16-point size; a new CPU restores exact rendered pixels | E51 | true / false; supersedes incomplete E04 |
+| Go to Percent | Actual picker jumps ten percent, changes content and persists the new first-chapter page | E52 | true / false |
+| Auto Turn Page | UI saves interval, real virtual timer turns a page, Confirm stops further timed turns, and the guest saves that position | E53 | true / false; timing is uncalibrated |
+| Dictionary selection/direct/history/cold reopen | An initially unselected dictionary is chosen through UI, genuine quick index and direct history are written; history reopens the definition and a new CPU retains selection | E54 | true / false; global None/inheritance and history deletion remain separate |
+| Reader Reading Stats and completion | Real reader Stats opens; Finished/Unfinished flags persist and survive a new CPU | E55 | true / false |
+| Footnotes | Actual `#note1` content jump and paragraph render change content; return restores exact origin pixels and saved position | E56 | true / false |
+| Reader layout options | Actual per-book layout fields change pixels; disabled AA yields a binary target, and a new CPU restores settings and exact page pixels | E57 | true / false; embedded CSS/image/render/index modes remain separate |
+| End of Book | Real last-chapter cache reaches end prompt, confirms Finished and saves the last visible position | E58 | true / false |
+| TXT reader | Real v4 index, next/previous pixels, six-byte progress, Continue, sole Send Nearby menu, font/dark roundtrip, long-Back/browser reopen and exact new-CPU resume | E59 | true / false; shortcut preferences supplied as labelled input |
+| Literal Markdown reader | Stock `.md` dispatch to TXT reader proves the same index/page/font/dark/browser/cold-resume effects on original literal Markdown | E60 | true / false; shortcut preferences supplied as labelled input |
+| Manual book dates and device statistics views | Actual six-field UI saves start 2024-04-01 and finish 2024-05-02/completed while retaining totals; This Device/All Devices pages differ and a new CPU restores exact saved-date pixels | E61 | true / false; external RTC and original peer-statistics bytes supplied as labelled inputs, not a peer-sync claim |
+| Dashboard sleep | Actual generated Dashboard target, deep sleep, GPIO wake and source-cover interior embedding | E62 | true / false; sleep preference supplied as labelled input |
+| Automatic Quick Resume timeout | Firmware reaches configured Quick Resume sleep without Power input after the recorded virtual dwell; saved moon frame is consumed and waking restores the book | E63 | true / false; timeout preferences supplied as labelled inputs, timing uncalibrated |
+| Cover Crop | Real guest `cover_crop_absolute.bmp` fills 528×792; every target pixel matches the guest bitmap and both Fit margin regions contain original cover content | E64 | true / false |
+| Cover BW and Inverted filters | Both native targets are binary; independent whole-target comparison proves exact complements at all 418,176 pixels, with original endpoints and margins preserved | E65, E66 | true / false |
+| Cover+Custom from reader | Stored mode5 chooses the original book cover when sleeping from reader; correct generated cover pixels, deep sleep and GPIO wake | E67 | true / false; Home-origin branch separately proved by E44 |
+| Device Custom Bootscreen/date format/separator | Real UI disables Custom Bootscreen, saves Year-Month-Day and Hyphen; a new CPU preserves all three keys and aligned Device row pixels | E68 | true / false; this is UI/persistence proof, with custom-boot behavior separately in E23/E24 |
+| Lookup History individual deletion | Two genuine direct records, long-Confirm Cancel preserves exact bytes, two confirmed selected-entry deletions leave a real empty file that survives new CPU | E69 | true / false |
+| Multipage clipping and individual deletion | Actual selection spans pages, exported text matches VERSION4 store; individual long-Confirm Cancel preserves bytes, Delete writes the empty store and retains append-only text export | E70 | true / false |
+| Stable Page selector | Embedded source-compatible XLocations page1→page2 changes content and saves spine1/page0 on a complete coherent trace | E71 | true / false; publisher page markers are a separate input/feature |
+| Reader Delete All Bookmarks | Two actual bookmarks; Cancel preserves exact VERSION5 bytes, confirmed deletion removes the store and its absence survives new CPU | E72 | true / false; global bulk entrypoint is separately E29 |
+| Automatic statistics backup | Real UI off/on and genuine sleep write exact global-statistics bytes, prune eight original old inputs to seven, GPIO wake; second true sleep after external RTC+300s preserves dated bytes and exact FAT metadata | E73 | true / false; old backups and RTC are labelled original inputs, new backup/pruning/suppression are guest effects |
+| Valid physical-chord firmware recovery | Actual Up+Power recovery writes exact official app1, keeps app0 intact; OTA sequence/state/CRC, actual reset, DROM1→101/IROM51→151 and responsive Home/browser verify executing the new slot | E74 | true / false; Cancel/invalid-input rejection separately E37 |
+| Incremental EPUB indexing | Actual F3 partial cache and page watermark persist; new CPU restores content exactly with a 30-pixel footer difference while source page estimate changes 13→16 | E75 | true / false; partial estimate is explicitly not a fixed page total |
+| Dictionary lookup chain | Real `clock`→`river`→`reader` successful direct chain; each Back restores exact earlier definition/history, long Back restores reader | E76 | true / false; equal-height original definitions are a labelled input precondition |
 
-Source-supported limits remain explicit: WiFi currently reaches a genuine PHY
-clock prerequisite failure and network functions are **blocked/unverified**.
-Native WiFi DMA tests alone do not prove scanning, association, web/OPDS,
-Calibre, Nearby, KOReader, NTP or OTA downloading. Stock on-device statistics
+Source-supported limits remain explicit: older WiFi receipts reached a PHY
+clock prerequisite failure. The newer 95-case candidate now has separate real
+guest scan/join/DHCP/server evidence; this does not imply that every network
+application works. A stock WebDAV GET failure remains visible, and OPDS,
+Calibre, Nearby, KOReader, NTP and OTA downloading need their own receipts.
+Stock on-device statistics
 offers Backup Now and Reset All-Time Stats; no on-device restore/import/export
 entrypoint was found. Recovery of `.tmp`/`.bak` and network stats sync/export
 need their own tests.
@@ -383,6 +426,8 @@ Backend SHA-256 identities used by the receipts:
 | B4 | `9d3396daa1a3e246c2041df1bc25f1b6990c16e51602712a8d22bf23935b3b68` |
 | B5 | `ca8937936403a346976fe29f2e361f5ae37f083a51f12d8bf20497cb54b14880` |
 | B6 | `4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91` |
+| B7 | `77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee` |
+| B8 | `1a61f2aaab242120a522428b0eac1b79650a025a7b775a3be10409723c88d5d5` |
 
 Receipt hashes identify the exact local evidence snapshot, not a source-code
 commit. Runtime cards, images, flash and logs remain outside repository commits.
@@ -416,3 +461,68 @@ commit. Runtime cards, images, flash and logs remain outside repository commits.
 | E25 | `library-cleanup-first/reader-cleanup/validation.json` | B1 | `a2f62cb648691797b432536680ab42568c8feb79ae988af3c6644169b9259184` |
 | E26 | `library-reader-controls-first/reader-controls/validation.json` | B1 | `411dbb3aa3430297fa5709fbcebeebbf6e46e122ec7f9dc642a653ddfc47747e` |
 | E27 | `library-cleanup-first/file-options/validation.json` | B1 | `1a3bcf27d62755a358319a9f98a5f8ff0fc0d4308a049536cf1f9192eaf8ada3` |
+| E28 | `library-pace-fourth/reading-pace/validation.json` | B1 | `07d8fb562cad5bb416edac3fc110df06e498ea9ec9d62e02b3c01cc5b27243b3` |
+| E29 | `library-pace-saved-second/saved-bulk/validation.json` | B1 | `d91ebac03e94905e367dba7b85b174d173fe71bf446576868bf0e4decfb2c8e1` |
+| E30 | `display-private-4eca-favorites-folder/favorites/validation.json` | B6 | `dd67714567f02261305ecf94d3238fd27ca7a58c8297bfff9fa61a8792add57c` |
+| E31 | `display-private-4eca-favorites-folder/sleep-folder/validation.json` | B6 | `dd3572112b449eeb97aa7fb539e3c15c33ae3d301e6cfa4e2f7fe638d1b1cfb1` |
+| E32 | `display-private-4eca-quick-overlay/quick-actions/validation.json` | B6 | `f5cb7c4e708c8720f5e4a3053e2da2c8ce094324d81b4c374fcda676d39afb78` |
+| E33 | `display-private-4eca-quick-overlay/overlay/validation.json` | B6 | `016c6832f33f5999b8501944d69de66dc440f467f41f8be5c533943e44606fb4` |
+| E34 | `display-sleep-77fa-initial/sleep-blank/validation.json` | B7 | `2238ec0cf193d2e9ca6699265597b138360565f63cff7a52e8f8576a65558afa` |
+| E35 | `display-sleep-77fa-initial/sleep-quick-resume/validation.json` | B7 | `8a04cedd1f99be2c75f47eef39a9978b0ec2a9bf1c9f3a2bfc1b4023d2a0ba61` |
+| E36 | `display-crash-77fa-final/crash/validation.json` | B7 | `1f160d8fa218984977bc66e1335410f75191eec3670e1ec3eecdf7bb5448ad24` |
+| E37 | `display-recovery-77fa-and-crash-parser-failure/recovery/validation.json` | B7 | `7f878fadbf6b3243a04a4819b9c9c87fe6d5a909e5d582301a63fe3be9e3108a` |
+| E38 | `display-sleep-cover-77fa-enospc-interrupted/sleep-dark/validation.json` | B7 | `4ed66b93dbb8c6325170b3194478fdda227d38cf4bb56ce92fa41b542d999fc5` |
+| E39 | `display-sleep-cover-77fa-enospc-interrupted/sleep-light/validation.json` | B7 | `92faebbd8d599e341a60452a8bb7f7aa9d7c7afa895f32bd7c0a27c2d7ca945b` |
+| E40 | `display-sleep-cover-77fa-enospc-interrupted/sleep-cover-fit/validation.json` | B7 | `b6f70b739ca6748bca5e4f5e48deace31467e1db8ef67607d70b273c8758022f` |
+| E41 | `display-sleep-generated-77fa-enospc-interrupted/sleep-reading-stats/validation.json` | B7 | `53d7fb9466a4b1eebf4fe6b781f9dd5e7e4c73bff70e5f912e969af46275b1e5` |
+| E42 | `display-sleep-generated-77fa-enospc-interrupted/sleep-minimal/validation.json` | B7 | `6285e3a221a6f7320184c96978bad73abee92fa957aeb87313dbb32373bb3167` |
+| E43 | `display-sleep-generated-77fa-enospc-interrupted/sleep-minimal-stats/validation.json` | B7 | `1a427527736e014651107e74a4feaee6758c93ae8881d21bf19741e84892fed6` |
+| E44 | `display-sleep-generated-77fa-initial/sleep-cover-custom-home/validation.json` | B7 | `49279a2bd777198d3e65289385620cc368747a81b07b79b6bca6a0e16ccc386a` |
+| E45 | `functions-qr-payload/qr-screenshot/validation.json` | B6 | `182e87a8e01035bdc2188422323b16bb98de6b5344e8f9e500bd2b439e8416c1` |
+| E46 | `functions-statusbar/statusbar/validation.json` | B6 | `5b8f6dec9ba66ed76606843005a89285befedfc363c496baedb65e2035adb692` |
+| E47 | `functions-dictionary-variants/dictionary-stem/validation.json` | B6 | `ebe861d356baaf5c6527ad12240d14a4cdee03e9262c51e91307989c7b817a50` |
+| E48 | `functions-dictionary-variants/dictionary-alt/validation.json` | B6 | `695edf8629d4101322d8cf8555c516bd13ec36a1e9814aeca066c00950ce3395` |
+| E49 | `functions-dictionary-variants/dictionary-fuzzy/validation.json` | B6 | `c320b0d5b4ee69522ef3dbe04f8b953471d4ed2c784cfe1986846414307d1e4b` |
+| E50 | `functions-dictionary-variants/dictionary-phrase/validation.json` | B6 | `59ac367644a6c71ac469316d3d939dc5b89ad34f270051f6b187c228eec6a43b` |
+| E59 | `library-text-77fa-final/text-txt/validation.json` | B7 | `af6283b449e2ba8cb369121082c1c0e0dfb9768f2298b13ff6c3cd4a94412705` |
+| E60 | `library-text-77fa-final/text-md/validation.json` | B7 | `e2438680bfcfda3962aad3820cd26b40a65c447c9f5a6010387e0c8d49832faf` |
+| E61 | `library-dates-77fa-final/manual-dates/validation.json` | B7 | `db1e949872c0bd958139e1ed825a2cef152d04ddbdb14e7d21c1eae34d83fde7` |
+| E62 | `display-sleep-dashboard-timeout-77fa-final/sleep-dashboard/validation.json` | B7 | `90289b9d1deca35815e5ffb51a8e5413d313e0ec61fd7354068ea8a066a6a702` |
+| E63 | `display-sleep-dashboard-timeout-77fa-final/sleep-quick-timeout/validation.json` | B7 | `99561829fec754c4ea43e7edab65f281bfdb7899366503c1581d8b5ee653eb62` |
+| E64 | `display-sleep-cover-77fa-final/sleep-cover-crop/validation.json` | B7 | `e00675abed400dbd6364cfc837ebf185de3c2bbc5bca91fa1206ea93cac29e16` |
+| E65 | `display-sleep-cover-77fa-final/sleep-cover-bw/validation.json` | B7 | `80227b4af64d36ed7e5d8b25189addd2843e3ed28c6d11bc6b7d932a9e462e00` |
+| E66 | `display-sleep-cover-77fa-final/sleep-cover-inverted/validation.json` | B7 | `94a1699945e150a40361c1e698499534423329e68ad2258fb06b7c7cff616c01` |
+| E67 | `display-sleep-cover-77fa-final/sleep-cover-custom-reader/validation.json` | B7 | `212e55a35c82d8cf23c0709b6c87272e4f6f04ab9e1790ee088f1ec6625f82d4` |
+| E68 | `library-device-77fa-final/device-preferences/validation.json` | B7 | `2061f241eecb39710c25c104f5073040af67c5cd95d30563dc4ed42c51c47880` |
+| E69 | `functions-dictionary-history/dictionary-history/validation.json` | B6 | `c923a163190e21b7abd92cd292ab8141afebceec82592e8547c5adb4f2b2e9fb` |
+| E70 | `functions-clipping-multipage/clipping-multipage/validation.json` | B6 | `1779a493f932fe356a853e1e7e5888859a6c26701acdf8e534ecfb458a75d65e` |
+| E71 | `functions-stablepage-coherent/stablepage/validation.json` | B6 | `6fbaef0d7093f3b6a783504d7584bf4f993e6abab7e7fb83c908b31a5191d8f7` |
+| E72 | `functions-bookmark-delete/bookmark-delete/validation.json` | B6 | `e1716d2db5f77802254b834f6e900cc6cb3d9fc18f72b3d6e0da4dc638ed0025` |
+| E73 | `library-backup-77fa-final/automatic-backup/validation.json` | B7 | `2b472fc5ddfadf3ddfdef46c08ed0bd729ec590d896f9eedc881d553f77c67fd` |
+| E74 | `display-recovery-valid-77fa-final/recovery-valid/validation.json` | B7 | `53c7600ec357c6757f874009e8f209b25d03781d19bb09fc16099e26590e6ebd` |
+| E75 | `functions-incremental/incremental/validation.json` | B6 | `9fb9408b4b716e57663b2d95375ed6803a4b3b3a823804d1db8757080e1e84b7` |
+| E76 | `functions-dictionary-chain/dictionary-chain/validation.json` | B6 | `7141739599de9dc2c9f6ef3d6c83615f208a7c96496cc7e5454542ba72743e95` |
+
+Durable sanitized receipts use these exact paths relative to the project root.
+Their hashes identify the sanitized receipt bytes rather than the original
+private workflow receipt; each receipt retains its original archive provenance.
+
+| Receipt | Project-relative path | Backend | Receipt SHA-256 |
+| --- | --- | --- | --- |
+| E51 | `docs/evidence/functions/fonts-cold.json` | B8 | `e5d86b98b1c9e9c32e896e9b808be4a58ff6b5ac07a986884ed3c06558ea52d6` |
+| E52 | `docs/evidence/functions-next/percent.json` | B5 | `bb4e136cc80fe40649a54009ef3d3511e24a4ca1d9cd2e23091aa61f9301cdf0` |
+| E53 | `docs/evidence/functions-next/autoturn.json` | B5 | `fdb252aea949ca5dd2dc02e37989ed2efa68d7e2f4c028318b5b93743f7a4150` |
+| E54 | `docs/evidence/functions-next/dictionary.json` | B5 | `3d44e5bcac2dace575d4f46acfa13c6c4edc1fb4c6a502d04faeac14a89529da` |
+| E55 | `docs/evidence/functions-next/completion.json` | B5 | `3cb2b4e413e5edff71f03b20b57f5bfbb3c6d92232fd7c4d70cc3c3a1c9d10ae` |
+| E56 | `docs/evidence/functions-next/footnotes.json` | B6 | `c4d770765c6c6b130f0bd2e2988e9ff9220947c789e007abb3e7808b5c91dad0` |
+| E57 | `docs/evidence/functions-next/layout.json` | B6 | `3fa2838976d8f1c404bb8bad443ba2391734b35588c22317ef72ef008f8ee02a` |
+| E58 | `docs/evidence/functions-next/endbook.json` | B6 | `c40e6cfec947569a69f13b9f6d4449ad0bf13922f755570382908c941f80ba0e` |
+
+Post-exit analyses supplement their original, unchanged workflow receipts:
+
+| Evidence | Path under `local/runs/` | SHA-256 |
+| --- | --- | --- |
+| E36 report and exact Home return | `display-crash-77fa-final/crash/crash-report-artifact-analysis.json` | `a9e93b6772c77fae09201a00a2f8f4ae523859df0e2875d7daf937f337c25148` |
+| E42 cover thumbnail interior | `display-sleep-generated-77fa-enospc-interrupted/sleep-minimal/sleep-cover-embedding-analysis.json` | `8261097917a8b53a6f18fc819072a46a3c011973564a697fec5694fba077b632` |
+| E43 cover thumbnail interior | `display-sleep-generated-77fa-enospc-interrupted/sleep-minimal-stats/sleep-cover-embedding-analysis.json` | `8261097917a8b53a6f18fc819072a46a3c011973564a697fec5694fba077b632` |
+| E64–E66 cover geometry/filter effects | `display-sleep-cover-77fa-final/source-effect-analysis.json` | `08069ad5db61fbf58ee6935e2517f51badaecd0548395116dabfbcff9bf48c0c` |

@@ -10,24 +10,29 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from contextlib import nullcontext
 import hashlib
 import json
 from pathlib import Path
 import runpy
 import re
 import signal
+import socket
 import struct
 import subprocess
 import sys
 import time
 import zlib
+import xml.etree.ElementTree as ET
 
 PROJECT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT))
 from x3emu.backend import BackendError, DEFAULT_BACKEND, QMPClient, file_sha256
-from x3emu.firmware import FULL_FLASH_SHA256
+from x3emu.firmware import CROSSINK_V160_SHA256, FULL_FLASH_SHA256
+from x3emu.flash import inspect_esp_image
+from x3emu.usb_transfer import USBSerialClient, USBTransferError
 from x3emu.fixtures import (alpha_sample_points, fixture_hashes, make_bmp, make_fixed_book_fixture_files,
-                            make_media_fixture_files, pattern_level, pattern_sample_points)
+                            make_media_fixture_files, make_wide_cover_epub, pattern_level, pattern_sample_points)
 from x3emu.sdcard import create_fat16_card, make_test_epub
 
 SMOKE = runpy.run_path(str(PROJECT / "scripts/smoke-crossink.py"))
@@ -38,8 +43,83 @@ HARNESS_SOURCE = Path(__file__).read_bytes()
 SHARED_HELPER_SOURCE = (PROJECT / "scripts/smoke-crossink.py").read_bytes()
 HARNESS_SHA256 = hashlib.sha256(HARNESS_SOURCE).hexdigest()
 SHARED_HELPER_SHA256 = hashlib.sha256(SHARED_HELPER_SOURCE).hexdigest()
+OTA_HELPER_SOURCE = (PROJECT / "scripts/test-usb-transfer.py").read_bytes()
+OTA_HELPERS = runpy.run_path(str(PROJECT / "scripts/test-usb-transfer.py"))
 SETTINGS_PATH = "/.crosspoint/crossink-settings.json"
 STATE_PATH = "/.crosspoint/state.json"
+SLEEP_POLICIES = {
+    "sleep-dark": (0, 0, 0), "sleep-light": (1, 0, 0), "sleep-blank": (4, 0, 0),
+    "sleep-cover-fit": (3, 0, 0), "sleep-cover-crop": (3, 1, 0),
+    "sleep-cover-bw": (3, 0, 1), "sleep-cover-inverted": (3, 0, 2),
+    "sleep-cover-custom-reader": (5, 0, 0), "sleep-cover-custom-home": (5, 0, 0),
+    "sleep-reading-stats": (7, 0, 0), "sleep-minimal": (8, 0, 0),
+    "sleep-quick-resume": (9, 0, 0), "sleep-minimal-stats": (10, 0, 0),
+    "sleep-dashboard": (11, 0, 0), "sleep-timeout": (2, 0, 0),
+    "sleep-quick-timeout": (2, 0, 0),
+}
+
+
+def logical_pixels(data):
+    width, height, pixels = SMOKE["read_pgm"](data)
+    if (width, height) != (792, 528):
+        raise SmokeError("unexpected native X3 panel geometry")
+    return bytes(pixels[(527 - x) * 792 + y] for y in range(792) for x in range(528))
+
+
+def decode_palette_bmp(data):
+    """Independently decode the guest's uncompressed cover artifact."""
+    offset = struct.unpack_from("<I", data, 10)[0]
+    dib = struct.unpack_from("<I", data, 14)[0]
+    width, signed_height, planes, bpp, compression = struct.unpack_from("<iiHHI", data, 18)
+    if data[:2] != b"BM" or planes != 1 or bpp not in (1, 2, 4, 8) or compression or width <= 0:
+        raise SmokeError("cover artifact is not an uncompressed indexed BMP")
+    height = abs(signed_height)
+    stride = ((width * bpp + 31) // 32) * 4
+    palette = []
+    for index in range(1 << bpp):
+        blue, green, red, _ = struct.unpack_from("<BBBB", data, 14 + dib + index * 4)
+        palette.append((red * 77 + green * 150 + blue * 29) >> 8)
+    output = bytearray(width * height)
+    for y in range(height):
+        row = offset + (height - 1 - y if signed_height > 0 else y) * stride
+        for x in range(width):
+            value = data[row + x * bpp // 8]
+            index = (value >> (8 - bpp - (x * bpp % 8))) & ((1 << bpp) - 1)
+            output[y * width + x] = palette[index]
+    return width, height, bytes(output)
+
+
+def thumbnail_target_comparison(mode, width, height, decoded, target):
+    """Pinned portrait theme metrics; exclude the drawn rounded border."""
+    if mode in (8, 10):
+        box_width, box_height, left, top = 350, 525, 89, 79
+    elif mode == 11:
+        box_width, box_height, left, top = 296, 444, 35, 70
+    else:
+        return None
+    if width > box_width or height > box_height:
+        return None
+    left += (box_width - width) // 2
+    top += (box_height - height) // 2
+    differences = checked = 0
+    for y in range(8, height - 8):
+        for x in range(8, width - 8):
+            differences += target[(top + y) * 528 + left + x] != decoded[y * width + x]
+            checked += 1
+    return {"left": left, "top": top, "width": width, "height": height,
+            "excluded_border_pixels": 8, "checked_pixels": checked, "pixel_differences": differences}
+
+
+def filtered_wide_cover_comparison(cover_filter, target):
+    """Source-authored black/white endpoints and Fit margins survive dither."""
+    inverted = cover_filter == 2
+    observations = []
+    for x, y, plain in ((20, 20, 255), (507, 771, 255), (66, 396, 0), (462, 396, 255)):
+        expected = 255 - plain if inverted else plain
+        block = [target[py * 528 + px] for py in range(y - 6, y + 7) for px in range(x - 6, x + 7)]
+        observations.append({"logical_x": x, "logical_y": y, "expected": expected,
+                             "pixel_differences": sum(value != expected for value in block)})
+    return {"points": observations, "complete": all(row["pixel_differences"] == 0 for row in observations)}
 
 
 class DisplayReplay:
@@ -671,14 +751,518 @@ def sleep_folder_workflow(replay):
                  and replay.qmp.state()["rtc"]["watchdog-expiry-count"] == 0)
 
 
+def sleep_policy_workflow(replay):
+    name = replay.receipt["workflow"]
+    mode, cover_mode, cover_filter = SLEEP_POLICIES[name]
+    from_reader = name != "sleep-cover-custom-home"
+    if from_reader:
+        open_epub(replay)
+        before_label = replay.tap("down", "reader-page-one", "Original EPUB: advance one page before sleeping", reader=True)
+        replay.wait_virtual(3_000_000_000, "stock reading session accrues virtual seconds")
+    else:
+        before_label = replay.capture("home", 0)
+    before_pixels = logical_pixels(replay.exp.frames[before_label])
+    before_count = replay.exp.refresh_count(replay.qmp)
+    started = replay.exp.clock(replay.qmp)
+    if name in ("sleep-timeout", "sleep-quick-timeout"):
+        replay.receipt["automatic_sleep_observation"] = {"last_observation_t_ns": started,
+            "native_refresh_count": before_count, "physical_input_sent": False, "seeded_timeout_minutes": 1}
+        replay.save()
+    else:
+        replay.power(200, f"Stock short Power action: enter {name} through SleepActivity")
+    label = replay.sleeping_frame(name, before_count)
+    pixels = logical_pixels(replay.exp.frames[label])
+    sleep = replay.receipt["sleep_state"]
+    replay.check("policy_reached_real_deep_sleep", sleep["rtc"]["deep-sleep-active"])
+    replay.check("policy_saved_selected_mode", replay.json_file(SETTINGS_PATH).get("sleepScreen") == mode)
+    replay.check("policy_recorded_reader_origin", replay.json_file(STATE_PATH).get("lastSleepFromReader") == from_reader)
+    replay.receipt["sleep_target_summary"] = {"logical_width": 528, "logical_height": 792,
+        "sha256": hashlib.sha256(pixels).hexdigest(), "pixel_values": dict(Counter(pixels)),
+        "differences_from_outgoing_screen": sum(a != b for a, b in zip(pixels, before_pixels))}
+    replay.save()
+    if mode in (0, 1):
+        # Expanded pinned Logo120.h, independently hashed as black/white pixels.
+        # drawImage stores this pre-rotated asset directly in native RAM;
+        # Portrait adjusts its native origin by height, unlike drawPixel.
+        _, _, native = SMOKE["read_pgm"](replay.exp.frames[label])
+        patch = bytes(native[y * 792 + x] for y in range(203, 323) for x in range(336, 456))
+        expected = ("2e848f945fc1cd9d7459810174fa6b96a237d110526c44c12a343c0dbb3c3bf4" if mode == 0
+                    else "216f569d0edc80b8bbf7cbd21204b277c4c656122684078cfa891e7b1c9f1863")
+        replay.check("default_sleep_pinned_logo_pixels", hashlib.sha256(patch).hexdigest() == expected,
+                     {"patch_sha256": hashlib.sha256(patch).hexdigest(), "expected_sha256": expected})
+        background = 0 if mode == 0 else 255
+        replay.check("default_sleep_polarity", all(pixels[y * 528 + x] == background
+                    for x, y in ((20, 20), (507, 20), (20, 771), (507, 771))))
+    elif mode == 4:
+        replay.check("blank_sleep_all_pixels_white", set(pixels) == {255})
+    elif mode == 9 or name == "sleep-quick-timeout":
+        mismatches = sum(pixels[y * 528 + x] != before_pixels[y * 528 + x]
+                         for y in range(792) for x in range(528) if not (1 <= x <= 48 and y >= 744))
+        moon_changes = sum(pixels[y * 528 + x] != before_pixels[y * 528 + x]
+                           for y in range(744, 792) for x in range(1, 49))
+        replay.check("quick_resume_preserves_reader_outside_moon", mismatches == 0,
+                     {"compared_pixels": 528 * 792 - 48 * 48, "pixel_differences": mismatches})
+        replay.check("quick_resume_draws_moon", moon_changes > 10, {"changed_pixels": moon_changes})
+        frame = replay.read_file("/.crosspoint/sleep_frame.bin")
+        replay.check("quick_resume_guest_saved_full_frame", len(frame) == 792 * 528 // 8,
+                     {"bytes": len(frame), "sha256": hashlib.sha256(frame).hexdigest()})
+        if name == "sleep-quick-timeout":
+            elapsed = sleep["machine"]["virtual-time-ns"] - started
+            replay.check("quick_resume_after_timeout_without_power_input", elapsed >= 50_000_000_000,
+                         {"elapsed_observed_virtual_ns": elapsed, "exact_hardware_timing_claim": False})
+    elif mode == 2 or (mode == 5 and not from_reader):
+        replay.check_pattern(label)
+        replay.check("custom_policy_loaded_original_default_folder_bmp", "Loading custom sleep image: /.sleep/sleep.bmp" in
+                     replay.exp.log_text("serial.log"))
+    else:
+        cache_files = replay.file_inventory(cache_path())
+        bmp_paths = [path for path in cache_files if path.lower().endswith(".bmp")]
+        artifacts = []
+        for path in bmp_paths:
+            data = replay.read_file(path)
+            w, h, decoded = decode_palette_bmp(data)
+            artifacts.append({"path": path, "sha256": hashlib.sha256(data).hexdigest(),
+                              "width": w, "height": h, "decoded_values": dict(Counter(decoded))})
+            if mode in (8, 10, 11):
+                artifacts[-1]["thumbnail_target_comparison"] = thumbnail_target_comparison(mode, w, h, decoded, pixels)
+            if w <= 528 and h <= 792 and mode in (3, 5) and not cover_filter:
+                expected = bytearray([255]) * (528 * 792)
+                left, top = (528 - w) // 2, (792 - h) // 2
+                for y in range(h):
+                    expected[(top + y) * 528 + left:(top + y) * 528 + left + w] = decoded[y * w:(y + 1) * w]
+                artifacts[-1]["native_sleep_pixel_differences"] = sum(a != b for a, b in zip(pixels, expected))
+        replay.receipt["sleep_cover_artifacts"] = artifacts
+        replay.save()
+        if mode != 7:
+            replay.check("sleep_layout_has_original_book_cover_cache", bool(artifacts), artifacts)
+        if mode in (3, 5):
+            if not cover_filter:
+                replay.check("cover_sleep_matches_guest_decoded_bmp", any(row.get("native_sleep_pixel_differences") == 0
+                             for row in artifacts), artifacts)
+            else:
+                comparison = filtered_wide_cover_comparison(cover_filter, pixels)
+                replay.check("filtered_cover_preserves_original_geometry_and_polarity", comparison["complete"], comparison)
+            replay.check("cover_filter_native_palette", set(pixels) <= {0, 255} if cover_filter else
+                         set(pixels) == {0, 85, 170, 255}, dict(Counter(pixels)))
+        else:
+            if mode in (8, 10, 11):
+                replay.check("generated_sleep_embeds_actual_cover_thumbnail", any(
+                    row.get("thumbnail_target_comparison") is not None and
+                    row["thumbnail_target_comparison"]["checked_pixels"] > 10000 and
+                    row["thumbnail_target_comparison"]["pixel_differences"] == 0 for row in artifacts), artifacts)
+            replay.check("generated_stats_sleep_replaces_reader", sum(a != b for a, b in zip(pixels, before_pixels)) > 5000)
+            replay.check("generated_stats_sleep_has_ink_and_paper", 0 in pixels and 255 in pixels)
+            recent = replay.json_file("/.crosspoint/recent.json")
+            books = recent.get("books", []) if isinstance(recent, dict) else recent
+            replay.check("generated_stats_sleep_retains_original_book", any(entry.get("path") == "/test.epub"
+                         and entry.get("title") == "Synthetic Wide Cover Book" for entry in books))
+            stats_paths = [p for p in cache_files if "stats" in p.lower() and p.lower().endswith(".bin")]
+            replay.check("reader_exit_saved_stock_book_stats", bool(stats_paths), stats_paths)
+    if mode != 9 and name != "sleep-quick-timeout":
+        replay.check("nonquick_sleep_has_no_stale_quick_frame", "/.crosspoint/sleep_frame.bin" not in
+                     replay.file_inventory("/.crosspoint/sleep_frame.bin"))
+    replay.power(1000, f"Physical GPIO3 wake after {name}")
+    replay.exp.wait("real RTC GPIO wake", lambda: not replay.qmp.execute("qom-get", {
+        "path": "/machine/rtccntl", "property": "deep-sleep-active"}))
+    wake = replay.capture("policy-after-wake", sleep["panel"]["refresh-count"], reader=from_reader)
+    state = replay.qmp.state()
+    replay.check("policy_gpio_wake_count_incremented", state["rtc"]["wake-count"] > sleep["rtc"]["wake-count"])
+    replay.check("policy_crc_rechecked_on_boot", state["clock"]["rtc-crc-count"] > sleep["clock"]["rtc-crc-count"])
+    replay.check("policy_no_watchdog_expiry", state["rtc"]["watchdog-expiry-count"] == 0)
+    replay.check("policy_boot_has_real_deepsleep_gpio_reason", "reset=8(DEEPSLEEP) sleepWake=7(GPIO)" in
+                 replay.exp.log_text("serial.log"))
+    if from_reader:
+        replay.check("policy_reader_reopened_same_book", replay.exp.book_is_open())
+        if mode == 9 or name == "sleep-quick-timeout":
+            replay.check("quick_resume_frame_consumed_on_wake", "/.crosspoint/sleep_frame.bin" not in
+                         replay.file_inventory("/.crosspoint/sleep_frame.bin"))
+            replay.check("quick_resume_reader_restored_without_moon", logical_pixels(replay.exp.frames[wake]) == before_pixels)
+
+
+def recovery_workflow(replay):
+    picker = replay.capture("recovery-firmware-picker", 0)
+    replay.check("physical_chord_routes_to_stock_recovery", "recovery=1" in replay.exp.log_text("serial.log"))
+    cancelled = replay.tap("back", "recovery-cancel-reopens-picker", "Recovery picker Back must reopen its picker")
+    replay.check("recovery_cancel_does_not_escape_to_home", SMOKE["changed_content_pixels"](
+        replay.exp.frames[picker], replay.exp.frames[cancelled]) == 0)
+    failed = replay.tap("confirm", "recovery-invalid-original-bin", "Choose intentionally invalid original fixture; stock validator rejects it")
+    replay.check("recovery_validator_rejects_invalid_fixture", "image validation failed:" in replay.exp.log_text("serial.log"))
+    replay.check("recovery_failure_is_visible", SMOKE["changed_content_pixels"](
+        replay.exp.frames[failed], replay.exp.frames[picker]) > 500)
+    returned = replay.tap("back", "recovery-back-to-picker", "After validation failure, Recovery Back returns to picker")
+    replay.check("recovery_failure_can_return_to_picker", SMOKE["changed_content_pixels"](
+        replay.exp.frames[returned], replay.exp.frames[picker]) == 0)
+    replay.check("recovery_did_not_flash_or_restart", "SD firmware update complete" not in replay.exp.log_text("serial.log")
+                 and replay.qmp.state()["rtc"]["watchdog-expiry-count"] == 0)
+
+
+def recovery_valid_workflow(replay):
+    """Use the stock recovery picker and verify its real OTA flash switch."""
+    app = replay.read_file("/official-crossink.bin")
+    image = inspect_esp_image(app)
+    replay.check("recovery_official_app_hash_and_size", len(app) == 6105536 and
+                 hashlib.sha256(app).hexdigest() == CROSSINK_V160_SHA256)
+    picker = replay.capture("recovery-valid-firmware-picker", 0)
+    replay.check("physical_chord_routes_to_stock_recovery", "recovery=1" in replay.exp.log_text("serial.log"))
+    mappings = []
+    for segment in image.segments:
+        if segment.memory_region not in ("IROM", "DROM"):
+            continue
+        base = 0x42000000 if segment.memory_region == "IROM" else 0x3C000000
+        index = (segment.address - base) // 65536
+        offset = segment.file_offset - ((segment.address - base) % 65536)
+        mappings.append({"region": segment.memory_region, "register": 0x600C5000 + 4 * index,
+                         "expected_app0_page": (0x10000 + offset) // 65536,
+                         "expected_app1_page": (0x650000 + offset) // 65536})
+    ota = replay.receipt["recovery_ota"] = {"verified": False, "source_app_sha256": image.sha256,
+        "source_app_size": len(app), "destination_offset": 0x650000, "mmu_checks": mappings,
+        "verification_helper_sha256": hashlib.sha256(OTA_HELPER_SOURCE).hexdigest()}
+    replay.qmp.execute("stop")
+    try:
+        initial = (replay.exp.run_dir / "flash.bin").read_bytes()
+        ota["initial_selection"] = OTA_HELPERS["decode_ota_selection"](initial)
+        ota["initial_app0_sha256"] = hashlib.sha256(initial[0x10000:0x10000 + len(app)]).hexdigest()
+        for item in mappings:
+            item["initial_mapping"] = OTA_HELPERS["_monitor_word"](replay.qmp, item["register"])
+    finally:
+        replay.qmp.execute("cont")
+    replay.check("recovery_initial_app0_is_original", initial[0x10000:0x10000 + len(app)] == app)
+    replay.check("recovery_initial_mmu_executes_app0", bool(mappings) and all(
+        item["initial_mapping"] == item["expected_app0_page"] for item in mappings))
+    with nullcontext(replay.usb_client) as client:
+        count = replay.exp.refresh_count(replay.qmp)
+        replay.exp.press(replay.qmp, "confirm", purpose="Recovery: select unchanged official application for stock validation")
+        # Validation is synchronous. Its completion panel alone is not an
+        # input-loop barrier; this real guest response arrives after callback
+        # return and is intentionally rejected outside Home.
+        try:
+            client.status()
+        except USBTransferError as error:
+            if str(error) != "ERR:not_on_home":
+                raise SmokeError(f"recovery validation main-loop barrier: {error}") from error
+            ota["validation_input_loop_barrier"] = str(error)
+        else:
+            raise SmokeError("recovery unexpectedly escaped to Home during validation")
+        confirmation = replay.capture("recovery-official-confirmation", count)
+        replay.check("recovery_official_validation_reaches_confirmation", "image validation failed:" not in
+                     replay.exp.log_text("serial.log") and SMOKE["changed_content_pixels"](
+                         replay.exp.frames[picker], replay.exp.frames[confirmation]) > 500)
+        selected = replay.tap("down", "recovery-update-confirm-selected", "Stock firmware update confirmation: choose Confirm")
+        replay.check("recovery_confirm_selection_changes_popup", SMOKE["changed_content_pixels"](
+                     replay.exp.frames[confirmation], replay.exp.frames[selected]) > 10)
+        previous_boots = replay.exp.log_text("rom.log").count("ESP-ROM:esp32c3")
+        previous_detects = replay.exp.log_text("serial.log").count("Hardware detect: X3")
+        count = replay.exp.refresh_count(replay.qmp)
+        replay.exp.press(replay.qmp, "confirm", purpose="Recovery: authorize stock write to disposable OTA app1 and restart")
+        replay.exp.wait("recovery official flash completion", lambda:
+                        "SD firmware update complete, restarting" in replay.exp.log_text("serial.log"))
+        replay.exp.wait("real ROM boot after recovery OTA switch", lambda:
+                        replay.exp.log_text("rom.log").count("ESP-ROM:esp32c3") > previous_boots and
+                        replay.exp.log_text("serial.log").count("Hardware detect: X3") > previous_detects)
+        def home_after_restart():
+            try:
+                ota["reboot_home_status"] = client.status()
+                return ota["reboot_home_status"].get("firmware") == "1.6.0"
+            except USBTransferError as error:
+                if str(error) == "ERR:not_on_home":
+                    return False
+                raise SmokeError(f"recovery reboot Home protocol: {error}") from error
+        replay.exp.wait("real Home after recovery app1 restart", home_after_restart)
+        home = replay.capture("recovery-app1-home", count)
+        replay.qmp.execute("stop")
+        try:
+            flashed = (replay.exp.run_dir / "flash.bin").read_bytes()
+            ota["selection"] = OTA_HELPERS["decode_ota_selection"](flashed)
+            ota["app1_readback_sha256"] = hashlib.sha256(flashed[0x650000:0x650000 + len(app)]).hexdigest()
+            ota["app0_readback_sha256"] = hashlib.sha256(flashed[0x10000:0x10000 + len(app)]).hexdigest()
+            for item in mappings:
+                item["reboot_mapping"] = OTA_HELPERS["_monitor_word"](replay.qmp, item["register"])
+            ota["state_after_restart"] = replay.qmp.state()
+        finally:
+            replay.qmp.execute("cont")
+        replay.check("recovery_app1_flash_bytes_exact", flashed[0x650000:0x650000 + len(app)] == app)
+        replay.check("recovery_original_app0_unchanged", flashed[0x10000:0x10000 + len(app)] == initial[0x10000:0x10000 + len(app)])
+        replay.check("recovery_ota_crc_selects_app1", ota["selection"]["app_offset"] == 0x650000)
+        replay.check("recovery_reboot_mmu_executes_app1", all(
+            item["reboot_mapping"] == item["expected_app1_page"] for item in mappings))
+        replay.check("recovery_real_rom_reboot_observed", replay.exp.log_text("rom.log").count("ESP-ROM:esp32c3") == previous_boots + 1)
+        replay.check("recovery_no_watchdog_expiry", ota["state_after_restart"]["rtc"]["watchdog-expiry-count"] == 0)
+        browser = replay.tap("confirm", "recovery-app1-browser", "After app1 boot, physical Confirm opens stock file browser")
+        replay.check("recovery_app1_ui_remains_responsive", SMOKE["changed_content_pixels"](
+                     replay.exp.frames[home], replay.exp.frames[browser]) > 500)
+        ota["usb_observed_lines"] = client.observed_lines
+        ota["verified"] = True
+    replay.save()
+
+
+def refresh_protocol_window(replay, start_ns, start_count, label):
+    """Observe guest SPI commands within an actual frozen capture interval."""
+    info = replay.receipt["frames"][label]
+    events = [json.loads(line) for line in (replay.exp.run_dir / "panel.jsonl").read_text().splitlines()]
+    window = [event for event in events if start_ns <= event["t_ns"] <= info["t_ns"]]
+    waves = [event["value"] for event in window if event["event"] == "refresh-waveform"]
+    commands = [event["value"] for event in window if event["event"] == "command"]
+    return {"start_t_ns": start_ns, "end_t_ns": info["t_ns"], "start_frame_count": start_count,
+            "end_frame_count": info["frame_count"], "waveforms": waves,
+            "waveform_crc32_hex": [f"{value:08x}" for value in waves], "commands": commands,
+            "completed_refreshes": sum(event["event"] == "frame-complete" for event in window),
+            "power_on_commands": commands.count(0x04), "power_off_commands": commands.count(0x02)}
+
+
+def refresh_settings_workflow(replay):
+    """Edit actual X3 controls, then observe cadence and power commands."""
+    replay.capture("home", 0)
+    replay.tap("up", "refresh-home-settings", "Home: select Settings")
+    replay.tap("confirm", "refresh-settings-display", "Open actual Display settings")
+    for row in range(1, 5):
+        replay.tap("down", f"refresh-display-row-{row}", "Display: select fourth Refresh Frequency row")
+    replay.tap("confirm", "refresh-frequency-popup", "Open actual Refresh Frequency picker")
+    for index in range(2):
+        replay.tap("up", f"refresh-frequency-up-{index}", "Select five pages instead of the original fifteen")
+    replay.tap("confirm", "refresh-frequency-five-saved", "Save five-page refresh cadence through stock picker")
+    settings = replay.json_file(SETTINGS_PATH)
+    replay.check("refresh_frequency_ui_saves_five_pages", settings.get("refreshFrequency") == 1,
+                 {"stored_refreshFrequency": settings.get("refreshFrequency"), "source_page_interval": 5})
+    replay.tap("back", "refresh-display-category", "Back to Settings category band")
+    replay.tap("back", "refresh-home-after-editor", "Close Settings")
+    replay.tap("down", "refresh-home-browse", "Home: wrap Settings to Browse Files")
+    replay.tap("confirm", "refresh-book-browser", "Browse original plain-text EPUB")
+    count = replay.exp.refresh_count(replay.qmp)
+    replay.exp.press(replay.qmp, "confirm", purpose="Open original book after actual cadence save")
+    replay.exp.wait("original book for cadence test", replay.exp.book_is_open)
+    previous = replay.capture("refresh-reader-initial", count, reader=True)
+    replay.complete_original_text_reader(previous)
+    replay.check("refresh_plain_text_fixture_has_binary_target", set(SMOKE["read_pgm"](
+        replay.exp.frames[previous])[2]) <= {0, 255}, {"textAntiAliasing_fixture_input": 0})
+    cadence = []
+    for turn in range(1, 7):
+        start_ns, count = replay.exp.clock(replay.qmp), replay.exp.refresh_count(replay.qmp)
+        label = replay.tap("down", f"refresh-five-page-turn-{turn}", "Physical page turn under five-page cadence", reader=True)
+        replay.complete_original_text_reader(label)
+        protocol = refresh_protocol_window(replay, start_ns, count, label)
+        cadence.append(protocol)
+        replay.check(f"cadence_turn_{turn}_changes_original_page", SMOKE["changed_content_pixels"](
+                     replay.exp.frames[previous], replay.exp.frames[label]) > 1000)
+        # ReaderUtils requests HALF at the countdown, but CrossInk's X3
+        # HalDisplay wrapper arms requestResync(1) first. The pinned UC8253
+        # driver therefore emits full + one normal conditioning + fast settle.
+        expected = [0xe4cba50e, 0x8a62b2ae, 0x34191c5b] if turn == 5 else [0x34191c5b]
+        protocol["source_expected_waveforms"] = [f"{value:08x}" for value in expected]
+        replay.check(f"cadence_turn_{turn}_uses_source_bank", protocol["waveforms"] == expected, protocol)
+        replay.check(f"cadence_turn_{turn}_keeps_panel_powered", protocol["power_off_commands"] == 0)
+        previous = label
+    replay.receipt["refresh_cadence"] = cadence
+    replay.tap("back", "refresh-cadence-home", "Exit reader to flush the six real page turns")
+    progress = SMOKE["decode_progress"](replay.read_file(cache_path() + "/progress.bin"))
+    replay.check("cadence_six_turns_persist_real_book_progress", progress["spine_index"] == 0
+                 and progress["page_number"] == 6, progress)
+
+    fading = []
+    for enabled in (True, False):
+        tag = "enabled" if enabled else "disabled"
+        replay.tap("up", f"fading-{tag}-home-settings", "Home: select Settings")
+        replay.tap("confirm", f"fading-{tag}-display-settings", "Open actual Display settings")
+        for row in range(1, 10):
+            replay.tap("down", f"fading-{tag}-display-row-{row}", "Select X3 ninth Sunlight Fading Fix row")
+        replay.tap("confirm", f"fading-{tag}-toggle", "Toggle Sunlight Fading Fix through its actual editor")
+        settings = replay.json_file(SETTINGS_PATH)
+        replay.check(f"fading_{tag}_ui_setting_saved", settings.get("fadingFix") == int(enabled),
+                     {"fadingFix": settings.get("fadingFix")})
+        replay.tap("back", f"fading-{tag}-display-category", "Back to Settings category band")
+        replay.tap("back", f"fading-{tag}-home", "Close Settings")
+        replay.tap("down", f"fading-{tag}-continue-selected", "Home: wrap Settings to Continue Reading")
+        count = replay.exp.refresh_count(replay.qmp)
+        replay.exp.press(replay.qmp, "confirm", purpose=f"Reopen actual saved book with Fading Fix {tag}")
+        current = replay.capture(f"fading-{tag}-reader", count, reader=True)
+        replay.complete_original_text_reader(current)
+        for turn in (1, 2):
+            start_ns, count = replay.exp.clock(replay.qmp), replay.exp.refresh_count(replay.qmp)
+            label = replay.tap("down", f"fading-{tag}-page-{turn}", "Physical page turn after the actual Fading Fix toggle", reader=True)
+            replay.complete_original_text_reader(label)
+            protocol = refresh_protocol_window(replay, start_ns, count, label)
+            protocol.update({"fading_fix_enabled": enabled, "turn": turn})
+            fading.append(protocol)
+            replay.check(f"fading_{tag}_page_{turn}_changes_original_page", SMOKE["changed_content_pixels"](
+                         replay.exp.frames[current], replay.exp.frames[label]) > 1000)
+            if enabled:
+                commands = protocol["commands"]
+                ordered = (0x04 in commands and 0x12 in commands and 0x02 in commands
+                           and commands.index(0x04) < commands.index(0x12) < commands.index(0x02))
+                replay.check(f"fading_enabled_page_{turn}_powers_on_refreshes_then_off", ordered, protocol)
+            else:
+                replay.check(f"fading_disabled_page_{turn}_keeps_power_on", protocol["power_off_commands"] == 0
+                             and protocol["power_on_commands"] == 0, protocol)
+            current = label
+        replay.tap("back", f"fading-{tag}-reader-exit", "Flush original book progress after two controlled page turns")
+    replay.receipt["fading_fix_protocol"] = fading
+    replay.check("display_editor_changes_preserve_cadence_setting", replay.json_file(SETTINGS_PATH).get("refreshFrequency") == 1)
+    replay.save()
+
+
+def inject_pc_exception(replay):
+    """A declared CPU negative control; the guest owns panic capture/reset."""
+    replay.qmp.execute("stop")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as reserve:
+        reserve.bind(("127.0.0.1", 0))
+        port = reserve.getsockname()[1]
+    result = replay.qmp.execute("human-monitor-command", {"command-line": f"gdbserver tcp:127.0.0.1:{port}"})
+    observation = {"kind": "explicit negative control", "flash_modified_by_injector": False,
+                   "sd_or_nvs_flags_modified_by_injector": False, "gdbserver_reply": result, "rsp_packets": []}
+    replay.receipt["cpu_fault_injection"] = observation
+    replay.save()
+    with socket.create_connection(("127.0.0.1", port), timeout=10) as connection:
+        connection.settimeout(10)
+
+        def receive_exact(length):
+            output = bytearray()
+            while len(output) < length:
+                data = connection.recv(length - len(output))
+                if not data:
+                    raise SmokeError("GDB closed before the complete packet")
+                output.extend(data)
+            return bytes(output)
+
+        def packet(command):
+            payload = command.encode("ascii")
+            connection.sendall(b"$" + payload + b"#" + f"{sum(payload) & 255:02x}".encode())
+            while receive_exact(1) != b"$":
+                pass  # RSP acknowledgement is separate from the reply packet.
+            encoded = bytearray()
+            while True:
+                byte = receive_exact(1)
+                if byte == b"#":
+                    break
+                encoded.extend(byte)
+                if len(encoded) > 65536:
+                    raise SmokeError("GDB reply exceeded the controlled helper packet bound")
+            checksum = receive_exact(2)
+            if int(checksum, 16) != sum(encoded) & 255:
+                connection.sendall(b"-")
+                raise SmokeError("GDB reply checksum mismatch")
+            connection.sendall(b"+")
+            decoded = bytearray()
+            escape = False
+            for byte in encoded:
+                if escape:
+                    decoded.append(byte ^ 0x20)
+                    escape = False
+                elif byte == 0x7d:
+                    escape = True
+                else:
+                    decoded.append(byte)
+            if escape:
+                raise SmokeError("GDB reply ended with an incomplete escape")
+            text = decoded.decode("ascii")
+            observation["rsp_packets"].append({"request": command, "reply": text})
+            replay.save()
+            return text
+
+        def feature(name):
+            output, offset = "", 0
+            while True:
+                response = packet(f"qXfer:features:read:{name}:{offset:x},fff")
+                if not response or response[0] not in "ml":
+                    raise SmokeError("GDB did not advertise readable target features")
+                output += response[1:]
+                offset += len(response[1:])
+                if response[0] == "l":
+                    return output
+
+        packet("qSupported:qXfer:features:read+")
+        # QEMU emits xi:include without an xmlns declaration; GDB accepts
+        # that vocabulary. Normalize only that known tag for the XML parser.
+        root = ET.fromstring(feature("target.xml").replace("xi:include", "include"))
+        pc = None
+        for include in root.iter():
+            href = include.attrib.get("href")
+            if not href:
+                continue
+            register_number = -1
+            for register in ET.fromstring(feature(href)).iter("reg"):
+                register_number = int(register.attrib.get("regnum", register_number + 1))
+                if register.attrib.get("name") == "pc":
+                    pc = {"regnum": register_number, "bitsize": int(register.attrib["bitsize"])}
+        if pc != {"regnum": 32, "bitsize": 32}:
+            raise SmokeError(f"unexpected advertised RISC-V PC register: {pc}")
+        observation["advertised_pc"] = pc
+        observation["registers_before"] = replay.qmp.execute("human-monitor-command", {"command-line": "info registers"})
+        if packet("P20=00000000") != "OK" or packet("p20") != "00000000":
+            raise SmokeError("GDB did not verify the declared PC fault injection")
+        observation["registers_after"] = replay.qmp.execute("human-monitor-command", {"command-line": "info registers"})
+    # Native GDB client close does not resume; QMP cont is the recorded trigger.
+    observation["resume_t_ns"] = replay.exp.clock(replay.qmp)
+    replay.receipt["cpu_fault_injection"] = observation
+    replay.save()
+    # The shared helper intentionally rejects any panic. Only this disposable
+    # negative-control instance permits the single declared PC exception and
+    # its PANIC reboot; storage failures, watchdogs and secondary panics still
+    # stop the workflow. The full unfiltered logs remain captured.
+    def wait_for_declared_fault(label, predicate):
+        deadline = time.monotonic() + replay.exp.step_timeout
+        last_error = None
+        while time.monotonic() < deadline:
+            channels = [replay.exp.log_text("rom.log"), replay.exp.log_text("serial.log")]
+            log = "\n".join(channels)
+            # IDF emits the same panic to both UART and USB Serial/JTAG.
+            # Count per channel rather than treating that mirror as a reboot.
+            if max(channel.count("Guru Meditation") for channel in channels) > 1:
+                raise SmokeError("secondary panic after the declared CPU fault")
+            for failure in SMOKE["FATAL_LOG"].finditer(log):
+                value = failure.group(0)
+                if value not in ("Guru Meditation Error", "panic'ed") and not re.fullmatch(
+                        r"Reset diagnostic: reset=\d+\(PANIC\)", value):
+                    raise SmokeError(f"unexpected guest failure during declared fault: {value}")
+            if replay.exp.process.poll() is not None:
+                raise SmokeError(f"launcher exited while waiting for {label}")
+            try:
+                result = predicate()
+                if result:
+                    return result
+            except (FileNotFoundError, json.JSONDecodeError, SmokeError) as error:
+                last_error = str(error)
+            time.sleep(0.02)
+        raise SmokeError(f"timed out waiting for {label}" + (f": {last_error}" if last_error else ""))
+
+    replay.exp.wait = wait_for_declared_fault
+    replay.qmp.execute("cont")
+
+
+def crash_workflow(replay):
+    home = replay.capture("home-before-controlled-exception", 0)
+    count = replay.exp.refresh_count(replay.qmp)
+    inject_pc_exception(replay)
+    panic_log = lambda: replay.exp.log_text("rom.log") + replay.exp.log_text("serial.log")
+    replay.exp.wait("real guest exception/panic", lambda: "Guru Meditation" in panic_log())
+    replay.exp.wait("real panic reboot classification", lambda: "(PANIC)" in replay.exp.log_text("serial.log"))
+    crash = replay.capture("stock-crash-report", count)
+    replay.check("cpu_exception_came_from_injected_pc", bool(re.search(r"MEPC\s*:\s*(?:0x)?0+\b", panic_log())))
+    replay.check("stock_panic_reset_and_crash_screen", "(PANIC)" in replay.exp.log_text("serial.log")
+                 and SMOKE["changed_content_pixels"](replay.exp.frames[home], replay.exp.frames[crash]) > 1000)
+    report = replay.read_file("/crash_report.txt")
+    text = report.decode("utf-8")
+    replay.check("stock_saved_real_riscv_exception_report", "MEPC (faulting instruction): 0x00000000" in text
+                 and "MCAUSE: 0x00000001" in text and "MTVAL (fault address/value): 0x00000000" in text)
+    replay.check("stock_panic_report_written_to_sd", "Dumped panic info to SD card" in replay.exp.log_text("serial.log"))
+    (replay.exp.output / "crash_report.txt").write_bytes(report)
+    replay.receipt["crash_report_artifact"] = {"path": "crash_report.txt", "sha256": hashlib.sha256(report).hexdigest()}
+    dismissed = replay.tap("back", "crash-report-dismissed", "Stock CrashActivity Back dismisses its panic report")
+    replay.check("crash_report_back_dismisses", SMOKE["changed_content_pixels"](
+        replay.exp.frames[crash], replay.exp.frames[dismissed]) > 1000)
+    replay.check("crash_report_dismissal_restores_exact_home", replay.exp.frames[home].split(b"\n255\n", 1)[1] ==
+                 replay.exp.frames[dismissed].split(b"\n255\n", 1)[1])
+
+
 WORKFLOWS = {"media": media_workflow, "fixed": fixed_workflow, "rotation": rotation_workflow,
              "sleep": sleep_workflow, "lock": lock_workflow, "quick-actions": quick_actions_workflow,
              "favorites": favorite_workflow, "favorites-boot-disabled": favorite_workflow, "overlay": overlay_workflow,
              "sleep-folder": sleep_folder_workflow}
+WORKFLOWS.update({name: sleep_policy_workflow for name in SLEEP_POLICIES})
+WORKFLOWS.update({"recovery": recovery_workflow, "recovery-valid": recovery_valid_workflow, "crash": crash_workflow})
+WORKFLOWS["refresh-settings"] = refresh_settings_workflow
 
 
-def input_files(name):
-    settings = {"sleepTimeoutMinutes": 60, "shortPwrBtn": 1, "sleepScreen": 2,
+def input_files(name, app_path=None):
+    settings = {"sleepTimeoutMinutes": 31, "shortPwrBtn": 1, "sleepScreen": 2,
                 "sleepScreenCoverFilter": 0, "sideButtonLongPress": 3}
     if name == "lock":
         settings["shortPwrBtn"] = 30
@@ -687,9 +1271,27 @@ def input_files(name):
                          "quickActionSlots": [3, 15, 6, 5, 11], "textAntiAliasing": 0})
     if name == "overlay":
         settings["textAntiAliasing"] = 0
+    if name == "refresh-settings":
+        settings.update({"textAntiAliasing": 0, "refreshFrequency": 3, "fadingFix": 0})
     if name == "favorites-boot-disabled":
         settings["customBootscreenEnabled"] = 0
-    if name in ("rotation", "lock", "quick-actions"):
+    if name in SLEEP_POLICIES:
+        mode, cover_mode, cover_filter = SLEEP_POLICIES[name]
+        settings.update({"sleepScreen": mode, "sleepScreenCoverMode": cover_mode,
+                         "sleepScreenCoverFilter": cover_filter, "textAntiAliasing": 0})
+        if name in ("sleep-timeout", "sleep-quick-timeout"):
+            settings["sleepTimeoutMinutes"] = 1
+        if name == "sleep-quick-timeout":
+            settings["quickResumeSleepScreen"] = 1
+        files = {"/test.epub": make_wide_cover_epub(), "/.sleep/sleep.bmp": make_bmp()}
+    elif name == "recovery":
+        files = {"/invalid-original.bin": b"Original invalid firmware fixture\n" + bytes(range(32))}
+    elif name == "recovery-valid":
+        app = Path(app_path).read_bytes()
+        if len(app) != 6105536 or hashlib.sha256(app).hexdigest() != CROSSINK_V160_SHA256:
+            raise SmokeError("valid recovery requires the unchanged pinned official application")
+        files = {"/official-crossink.bin": app}
+    elif name in ("rotation", "lock", "quick-actions", "crash", "refresh-settings"):
         files = {"/test.epub": make_test_epub()}
     elif name in ("favorites", "favorites-boot-disabled", "sleep-folder"):
         files = {"/Media/a-mono.bmp": make_bmp(monochrome=True), "/sleep.bmp": make_bmp()}
@@ -710,6 +1312,8 @@ def run_workflow(name, args, directory):
     (directory / "frames").mkdir()
     (directory / "harness.py").write_bytes(HARNESS_SOURCE)
     (directory / "shared-smoke.py").write_bytes(SHARED_HELPER_SOURCE)
+    if name == "recovery-valid":
+        (directory / "ota-helpers.py").write_bytes(OTA_HELPER_SOURCE)
     receipt = {"schema_version": 1, "workflow": name, "firmware_source_commit": SOURCE_COMMIT,
                "firmware_release_source_commit": "b25beb13761d5851f98e7eada09aa5e7d430df48",
                "backend_kind": "real ESP32-C3 QEMU guest", "functional_pass": False, "strict_pass": False,
@@ -720,12 +1324,12 @@ def run_workflow(name, args, directory):
                                "QMP input delivery depends on host scheduling; releases use virtual timers",
                                "Seeded CrossInk preferences are explicit fixture inputs, not a settings UI test"]}
     path = directory / "validation.json"
-    process = experiment = None
+    process = experiment = usb_client = None
     try:
         receipt["checks"]["pinned_full_flash"] = file_sha256(args.flash) == FULL_FLASH_SHA256
         if not receipt["checks"]["pinned_full_flash"]:
             raise SmokeError("flash differs from the pinned unchanged release")
-        files, settings = input_files(name)
+        files, settings = input_files(name, args.app)
         receipt["input_settings"] = settings
         receipt["input_file_sha256"] = fixture_hashes(files)
         sd = directory / "fixture-card.img"
@@ -733,7 +1337,13 @@ def run_workflow(name, args, directory):
         receipt["input_card_sha256"] = file_sha256(sd)
         command = [sys.executable, "-m", "x3emu", "run", "--backend", str(args.backend.resolve()),
                    "--flash", str(args.flash.resolve()), "--sd", str(sd), "--output", str(directory / "run"),
-                   "--seconds", str(args.host_limit), "--icount", "--icount-shift", "3", "--power-on"]
+                   "--seconds", str(args.host_limit), "--icount", "--icount-shift", "3",
+                   "--no-power-on" if name in ("recovery", "recovery-valid") else "--power-on"]
+        if name == "recovery-valid":
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as reserve:
+                reserve.bind(("127.0.0.1", 0))
+                receipt["usb_port"] = reserve.getsockname()[1]
+            command += ["--usb-port", str(receipt["usb_port"])]
         if args.rom_dir:
             command += ["--rom-dir", str(args.rom_dir.resolve())]
         receipt["launcher_argv"] = command
@@ -741,16 +1351,40 @@ def run_workflow(name, args, directory):
         with (directory / "launcher.log").open("wb") as log:
             process = subprocess.Popen(command, cwd=PROJECT, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
         experiment = Experiment(directory, process, args.step_timeout, button_hold_ms=400)
+        if name == "recovery-valid":
+            def connect_usb():
+                nonlocal usb_client
+                try:
+                    usb_client = USBSerialClient(receipt["usb_port"], timeout=args.step_timeout,
+                                                 capture=directory / "usb-capture")
+                    return True
+                except ConnectionRefusedError:
+                    return False
+            # The USB chardev must already be connected before setup/wake:
+            # Serial's host-active predicate otherwise suppresses boot logs.
+            experiment.wait("recovery observer USB connection", connect_usb)
         experiment.wait("launcher QMP", lambda: (directory / "run/run.json").is_file()
                         and json.loads((directory / "run/run.json").read_text())["status"] == "running")
         with QMPClient(directory / "run/qmp.sock") as qmp:
             qmp.set_buttons(0)
-            experiment.wait("actual X3 startup", lambda: "Hardware detect: X3" in experiment.log_text("serial.log"))
             replay = DisplayReplay(experiment, qmp, receipt, path)
+            replay.usb_client = usb_client
+            if name in ("recovery", "recovery-valid"):
+                experiment.wait("released-power cold sleep", lambda: qmp.execute("qom-get", {
+                    "path": "/machine/rtccntl", "property": "deep-sleep-active"}))
+                qmp.execute("stop")
+                qmp.set_buttons(16)  # Physical side Up on the source X3 recovery chord.
+                qmp.execute("cont")
+                replay.power(1000, "Hold physical Up while GPIO3 wakes the stock X3 into Recovery")
+                experiment.wait("stock recovery route", lambda: "recovery=1" in experiment.log_text("serial.log"))
+                qmp.set_buttons(0)
+                receipt["actions"].append({"button": "up", "mask": 16, "purpose": "X3 recovery boot chord",
+                                            "release_after_stock_recovery_log": True})
+            experiment.wait("actual X3 startup", lambda: "Hardware detect: X3" in experiment.log_text("serial.log"))
             WORKFLOWS[name](replay)
             receipt["completed"] = True
             receipt["state_before_shutdown"] = qmp.state()
-    except (BackendError, SmokeError, OSError, ValueError, KeyboardInterrupt) as error:
+    except (BackendError, SmokeError, OSError, ValueError, ET.ParseError, KeyboardInterrupt) as error:
         receipt["error"] = str(error) or type(error).__name__
         if process is not None and process.poll() is None:
             try:
@@ -768,9 +1402,40 @@ def run_workflow(name, args, directory):
                 process.terminate()
                 process.wait(timeout=5)
                 receipt["shutdown_error"] = "launcher required termination"
+        if usb_client is not None:
+            usb_client.close()
         if experiment is not None:
             receipt["input_events"] = experiment.steps
-            receipt["checks"].update(SMOKE["boot_checks"](experiment.log_text("rom.log"), experiment.log_text("serial.log")))
+            rom, serial = experiment.log_text("rom.log"), experiment.log_text("serial.log")
+            boot = SMOKE["boot_checks"](rom, serial)
+            if name == "crash":
+                receipt["normal_boot_check_observations"] = boot
+                receipt["checks"].update({key: value for key, value in boot.items()
+                    if key not in ("controlled_cold_boot_reset_sequence", "no_sd_error_or_guest_panic")})
+                reasons = re.findall(r"Reset diagnostic: reset=\d+\((\w+)\)", serial)
+                receipt["checks"]["exact_declared_panic_reset_sequence"] = reasons == ["POWERON", "PANIC"]
+                receipt["panic_channel_counts"] = {"uart": rom.count("Guru Meditation"),
+                                                   "usb_serial_jtag": serial.count("Guru Meditation")}
+                receipt["checks"]["one_declared_guest_panic"] = max(receipt["panic_channel_counts"].values()) == 1
+                receipt.setdefault("limitations", []).append(
+                    "Crash screen is an explicit GDB PC-fault negative control; normal no-panic observations remain recorded")
+            elif name == "recovery-valid":
+                receipt["normal_boot_check_observations"] = boot
+                receipt["checks"].update({key: value for key, value in boot.items()
+                    if key != "controlled_cold_boot_reset_sequence"})
+                reasons = re.findall(r"Reset diagnostic: reset=\d+\((\w+)\)", serial)
+                # USB observes setup after its loopback connection. The cold
+                # auto-detection restart can precede the first BOOT log; the
+                # independently retained UART ROM transcript covers all three
+                # actual resets and remains the complete sequence authority.
+                raw_reasons = [int(value, 16) for value in re.findall(r"^rst:0x([0-9a-fA-F]+)\b", rom, re.MULTILINE)]
+                receipt["recovery_reset_observations"] = {"uart_rom_raw_reasons": raw_reasons,
+                                                          "guest_usb_reason_names": reasons}
+                receipt["checks"]["exact_recovery_deep_wake_and_software_reset_sequence"] = raw_reasons == [1, 5, 12]
+                receipt["checks"]["recovery_guest_reset_diagnostics_match_uart_suffix"] = reasons in (
+                    ["POWERON", "DEEPSLEEP", "SW"], ["DEEPSLEEP", "SW"])
+            else:
+                receipt["checks"].update(boot)
         manifest = directory / "run/run.json"
         if manifest.is_file():
             result = json.loads(manifest.read_text())
@@ -803,6 +1468,7 @@ def main(argv=None):
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--output", type=Path, required=True)
     cli.add_argument("--flash", type=Path, default=PROJECT / "local/firmware/crossink-v1.6.0-x3-full-flash.bin")
+    cli.add_argument("--app", type=Path, default=PROJECT / "local/firmware/firmware-x3-x4-v1.6.0.bin")
     cli.add_argument("--backend", type=Path, default=DEFAULT_BACKEND)
     cli.add_argument("--rom-dir", type=Path)
     cli.add_argument("--workflows", nargs="+", choices=sorted(WORKFLOWS), default=list(WORKFLOWS))

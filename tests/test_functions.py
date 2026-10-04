@@ -1,10 +1,13 @@
 """Integrity checks for actual stock-firmware receipt formats and replay."""
 import json
+from io import BytesIO
 from pathlib import Path
 import runpy
 import struct
 import tempfile
 import unittest
+from zipfile import ZipFile
+import xml.etree.ElementTree as ET
 
 functions = runpy.run_path(str(Path(__file__).resolve().parent.parent / "scripts/test-crossink-functions.py"))
 SmokeError = functions["SmokeError"]
@@ -20,6 +23,110 @@ def header(version, count):
 
 
 class FunctionReceiptTests(unittest.TestCase):
+    def test_original_ascii_font_has_every_bounded_glyph_and_exact_bitmap(self):
+        for size in (14, 18):
+            data = functions["make_ascii_cpfont"](size)
+            self.assertEqual(struct.unpack_from("<8sHHB", data), (b"CPFONT\0\0", 4, 1, 1))
+            self.assertEqual(struct.unpack_from("<III", data, 64), (32, 126, 0))
+            self.assertEqual(struct.unpack_from("<II", data, 36), (1, 95))
+            bitmap_start = 76 + 95 * 16
+            seen = set()
+            for codepoint in range(32, 127):
+                width, height, advance, left, top, length, offset = struct.unpack_from(
+                    "<BBHhhH2xI", data, 76 + (codepoint - 32) * 16)
+                self.assertEqual(advance, (width + 2) * 16)
+                self.assertEqual((left, top, length), (0, height, width * height // 4))
+                bitmap = data[bitmap_start + offset:bitmap_start + offset + length]
+                self.assertEqual(len(bitmap), length)
+                pixels = bytes(3 - ((byte >> shift) & 3) for byte in bitmap for shift in (6, 4, 2, 0))
+                self.assertEqual((width, height, pixels), functions["ascii_font_glyph"](codepoint, size))
+                seen.add(bitmap)
+            self.assertEqual(len(seen), 95)
+            self.assertEqual(bitmap_start + offset + length, len(data))
+        with self.assertRaises(ValueError):
+            functions["make_ascii_cpfont"](16)
+
+    def test_plain_page_words_preserve_utf8_order_and_reject_corrupt_arenas(self):
+        words = ["clock", "rivière", "reader"]
+        raw = b"".join(word.encode() + b"\0" for word in words)
+        offsets = [0, 6, 15]
+        arena = struct.pack("<3H", *offsets) + bytes(6) + bytes(6) + bytes(6) + bytes(3) + bytes(3) + bytes(3) + bytes(1) + raw
+        block = struct.pack("<HBBBBH", 3, 1, 1, 1, 1, len(raw)) + arena + bytes(2 + 23)
+        page = struct.pack("<H", 1) + b"\x01" + bytes(4) + block + bytes(3)
+        header = bytearray(53)
+        struct.pack_into("<IBif", header, 0, 0x535843FF, 77, 3, 1.0)
+        struct.pack_into("<HH", header, 16, 518, 746)
+        struct.pack_into("<H", header, 27, 2)
+        struct.pack_into("<I", header, 33, 53 + 2 * len(page))
+        data = bytes(header) + page + page + struct.pack("<II", 53, 53 + len(page))
+        self.assertEqual(functions["decode_text_page_words"](data), words)
+        self.assertEqual(functions["decode_text_page_words"](data, 1), words)
+        bad_offset, bad_tag, bad_utf8 = bytearray(data), bytearray(data), bytearray(data)
+        bad_offset[53 + 2 + 1 + 4 + 8 + 2] = 7
+        bad_tag[55] = 3
+        bad_utf8[53 + 7 + 8 + 34 + 6] = 0xff
+        for corrupt in (data[:-1], bytes(bad_offset), bytes(bad_tag), bytes(bad_utf8)):
+            with self.assertRaises(SmokeError):
+                functions["decode_text_page_words"](corrupt)
+        with self.assertRaises(SmokeError):
+            functions["decode_text_page_words"](data, 2)
+
+    def test_qr_capacity_preserves_a_multibyte_boundary(self):
+        self.assertEqual(functions["qr_text_payload"](["a" * 2952 + "éx"]), b"a" * 2952)
+        self.assertEqual(functions["qr_text_payload"](["clock", "river"]), b"clock river")
+        self.assertEqual(functions["qr_text_payload"](["", "clock", "", "river"]), b"clock  river")
+
+    def test_incremental_cache_requires_real_partial_trailer_and_bounded_lookup_tables(self):
+        data = bytearray(95)
+        struct.pack_into("<IB", data, 0, 0x535843FF, 0xF3)
+        struct.pack_into("<H", data, 27, 2)
+        struct.pack_into("<5I", data, 33, 59, 67, 69, 75, 79)
+        struct.pack_into("<II", data, 59, 53, 56)
+        struct.pack_into("<H", data, 69, 2)
+        struct.pack_into("<II", data, 87, 150, 2000)
+        result = functions["decode_incremental_section"](data)
+        self.assertEqual((result["page_count"], result["bytes_consumed"], result["total_bytes"]), (2, 150, 2000))
+        bad_watermark, bad_pages, bad_count = bytearray(data), bytearray(data), bytearray(data)
+        struct.pack_into("<I", bad_watermark, 87, 2001)
+        struct.pack_into("<I", bad_pages, 63, 52)
+        struct.pack_into("<H", bad_count, 69, 1)
+        for corrupt in (data[:-1], data + b"x", data[:4] + b"\x4d" + data[5:], bad_watermark, bad_pages, bad_count):
+            with self.assertRaises(SmokeError):
+                functions["decode_incremental_section"](corrupt)
+
+    def test_dictionary_variants_have_real_original_epub_and_correct_stardict_ordinals(self):
+        book = functions["make_dictionary_probe_epub"]("clocks")
+        with ZipFile(BytesIO(book)) as archive:
+            document = ET.fromstring(archive.read("OEBPS/chapter1.xhtml"))
+            self.assertEqual(len(document.findall("{http://www.w3.org/1999/xhtml}body/{http://www.w3.org/1999/xhtml}p")), 8)
+            self.assertIn("clocks clocks", " ".join(document.itertext()))
+        files = functions["make_dictionary_phrase_files"]()
+        base = "/dictionaries/synthetic/synthetic"
+        index, entries, offset = files[base + ".idx"], [], 0
+        while offset < len(index):
+            end = index.index(0, offset)
+            position, length = struct.unpack_from(">II", index, end + 1)
+            self.assertLessEqual(position + length, len(files[base + ".dict"]))
+            entries.append((index[offset:end].decode(), files[base + ".dict"][position:position + length]))
+            offset = end + 9
+        self.assertEqual([word for word, _ in entries], sorted(word for word, _ in entries))
+        self.assertIn(b"two adjacent clock words", dict(entries)["clock clock"])
+        ordinal = struct.unpack_from(">I", files[base + ".syn"], len(b"riverbank\0"))[0]
+        self.assertEqual(entries[ordinal][0], "river")
+
+    def test_table_selection_fixture_has_original_cells_and_preserves_container(self):
+        first, second = functions["make_table_clip_epub"](), functions["make_table_clip_epub"]()
+        self.assertEqual(first, second)
+        with ZipFile(BytesIO(first)) as archive:
+            self.assertEqual(archive.infolist()[0].filename, "mimetype")
+            self.assertEqual(archive.read("mimetype"), b"application/epub+zip")
+            document = ET.fromstring(archive.read("OEBPS/chapter1.xhtml"))
+            ns = "{http://www.w3.org/1999/xhtml}"
+            rows = document.findall(f"{ns}body/{ns}table/{ns}tbody/{ns}tr")
+            self.assertEqual(len(rows), 24)
+            self.assertTrue(all(len(row.findall(ns + "td")) == 3 for row in rows))
+            self.assertIn("Cell 23 2: reader clock river", " ".join(document.itertext()))
+
     def test_file_transfer_boot_requires_source_controlled_software_reset(self):
         rom = "ESP-ROM:esp32c3 SPI_FAST_FLASH_BOOT"
         serial = ("Reset diagnostic: reset=1(POWERON)\nHardware detect: X3\n"

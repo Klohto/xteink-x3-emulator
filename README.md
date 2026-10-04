@@ -48,16 +48,25 @@ under [`docs/evidence/functions`](docs/evidence/functions).
 Further receipts in [`docs/evidence/functions-next`](docs/evidence/functions-next)
 verify layout persistence, percent navigation, automatic turns, footnotes,
 screenshots, completion, power shortcuts, library cleanup and image formats.
-The current native patch passes 12 suites with 95 cases and zero skips; exact
-build provenance is in [`docs/evidence/native-build-iq.json`](docs/evidence/native-build-iq.json).
+The current native patch passes 12 suites with 102 cases and zero skips; exact
+build provenance is in [`docs/evidence/native-build-fcs.json`](docs/evidence/native-build-fcs.json).
+
+Full subsequent receipts in
+[`docs/evidence/functions-latest`](docs/evidence/functions-latest) preserve
+TXT/Markdown reading, advanced dictionaries and saved items, status settings,
+sleep policies, controls and successful physical recovery flashing. The index
+also retains protocol failures and incomplete strict-model results; it is not
+an all-functions acceptance claim.
 
 Hardware speed calibration is pending. Every run records unsupported accesses
 and sets `speed_selection_allowed: false`. Instruction counting, nominal bus
 rates and configurable display delays support functional experiments. Physical
 CPU/cache costs, SD latency, optical panel behavior, power and analog sensors
 need measured profiles before simulated scores can select faster firmware.
-WiFi network functions, BLE, parts of memory protection and debug monitoring,
-and the optional esptool RAM flasher remain unverified. The verified serial
+Several WiFi workflows now have stock guest proofs; remaining transfers and
+online activities are tracked in [`docs/network-validation.md`](docs/network-validation.md).
+BLE, parts of memory protection and debug monitoring, and the optional esptool
+RAM flasher remain unverified. The verified serial
 flashing path uses the ROM. Experimental WiFi implements source-backed digital
 handshakes with explicitly synthetic RF measurements; see
 [`docs/wifi-model.md`](docs/wifi-model.md).

@@ -16,3 +16,6 @@ Repository = "https://github.com/Klohto/xteink-x3-emulator"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["x3emu*"]
+
+[tool.setuptools.package-data]
+x3emu = ["assets/*.html"]

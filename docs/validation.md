@@ -104,7 +104,7 @@ after `Storage.begin()` fails. It waits for mount evidence before pausing.
 Source reasoning and provisional CRC/analog/timing limits are in
 [rtc-sleep.md](rtc-sleep.md).
 
-## Automated checks
+## Original checkpoint checks
 
 The complete native build passes **11 suites and 72 cases, with zero skips**:
 GPSPI 3, ADC 11, I2C 8, panel 5, USB 4, SD 6, flash 9, RTC 16, SoC 2,
@@ -114,17 +114,47 @@ watchdog enable remains functional. [backend.json](evidence/backend.json)
 records patch, binary, ROM, dependency and unmodified TAP hashes. Installation
 requires complete passing transcripts, independent of process exit status.
 
-The final Python suite runs 92 tests: **91 pass**, with one explicitly opt-in
+That checkpoint's Python suite runs 92 tests: **91 pass**, with one explicitly opt-in
 ROM integration skipped. That integration is covered by the separate verified
 serial experiment. [python-tests.txt](evidence/python-tests.txt) contains the
 complete transcript; [smoke-tests.txt](evidence/smoke-tests.txt) records the
 14 capture/input checks. GitHub Actions builds the backend and runs both unit
 suites.
 
+The preceding peer checkpoint passes **12 suites,99 cases and zero skips**.
+It retains the preceding device coverage and adds the timed PHY IQ engine and
+raw peer WiFi stream. Its full receipt is
+[native-build-peer.json](evidence/native-build-peer.json), with each unchanged
+TAP transcript in [native-peer](evidence/native-peer). The native binary hash is
+`6fccb05f569101889c15a22fe5fb9d9a8f624156bb4dfaa229b51feee95afcb0`;
+patch hash is
+`c847edb98eb8af1c39556e506e08ccc81be233da8957ee2d5ad27648e88a0f2a`.
+The current checkpoint passes **12 suites,102 cases and zero skips**. It adds
+source-backed C3 TX FCS reservation handling: all five hardware queues use
+their programmed PLCP length, payload bytes are preserved when DMA excludes
+the FCS, and absent or inconsistent lengths remain visible in telemetry.
+The full receipt is [native-build-fcs.json](evidence/native-build-fcs.json),
+with unchanged transcripts in [native-fcs](evidence/native-fcs). Binary SHA256 is
+`01b806443dff5da98e963acc7cda556ebad35886f06c7af26a13630a894060a0`;
+patch SHA256 is
+`b8ceb00b1c87122dd62e1d596fc6aec1449d2192250deb5d7f4df34beb00e55c`.
+The captured Python source passes 188 tests, with one explicitly opt-in ROM
+integration skipped (189 total). The complete unchanged transcript is
+[python-tests-fcs.txt](evidence/python-tests-fcs.txt).
+
+An earlier candidate's genuine port-collision failure was retained. The tested
+POSIX fixture now keeps its listener socket reserved while QEMU allocates its
+test transport; the final gate uses this corrected fixture.
+
+Stock reading, menus and network execution proofs remain separate from these
+native MMIO/DMA tests; [function-coverage.md](function-coverage.md) identifies
+the source boundaries and exact validated effects.
+
 ## Limits
 
-Wi-Fi/BLE, some memory-protection and debug-monitor functions, physical panel
-effects and analog behavior remain unsupported. Sensor values are synthetic.
+WiFi RF/encryption/channel behavior, BLE, some memory-protection and
+debug-monitor functions, physical panel effects and analog behavior remain
+unsupported. WiFi digital execution has the separate proofs above. Sensor values are synthetic.
 The waveform endpoint is an inferred digital target, not an optical simulation.
 CPU/cache costs, card latency and physical bus/display timing are uncalibrated.
 

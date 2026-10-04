@@ -1,0 +1,59 @@
+TAP version 13
+# random seed: R02S26acb9f7135cbcf26b73de0261da637a
+1..16
+# Start of riscv32 tests
+# Start of esp32c3 tests
+# Start of rtc tests
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:48249 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=60681,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3/rtc/fastmem-crc
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:45951 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=41493,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3/rtc/timer-light-sleep
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:49075 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=45901,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3/rtc/gpio-deep-sleep
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:48163 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=42045,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/esp32c3/rtc/gpio-sleep-reject
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:47233 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=43849,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 5 /riscv32/esp32c3/rtc/expired-timer
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:44871 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=38575,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 6 /riscv32/esp32c3/rtc/timer-phase-and-xtal-latch
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:42713 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=35461,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 7 /riscv32/esp32c3/rtc/watchdog-irq-feed-protection
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:53425 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=43631,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 8 /riscv32/esp32c3/rtc/watchdog-off-stages-loop
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:34819 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=55347,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -device loader,addr=0x40381234,cpu-num=0 -accel qtest
+Not initializing SPI Flash
+ok 9 /riscv32/esp32c3/rtc/watchdog-cpu-reset
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:52925 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=35113,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 10 /riscv32/esp32c3/rtc/watchdog-core-reset
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:59009 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=39375,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 11 /riscv32/esp32c3/rtc/watchdog-rtc-reset
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:57375 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=36753,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 12 /riscv32/esp32c3/rtc/watchdog-sleep-pause
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:50529 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=37537,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 13 /riscv32/esp32c3/rtc/watchdog-flash-boot
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:46833 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=59165,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -drive file=/tmp/esp32c3-rtc-efuse-NSU0W3,if=none,format=raw,id=rtc-efuse -global driver=nvram.esp32c3.efuse,property=drive,value=rtc-efuse -accel qtest
+Not initializing SPI Flash
+ok 14 /riscv32/esp32c3/rtc/watchdog-flash-boot-efuse-delay
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:54857 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=51171,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 15 /riscv32/esp32c3/rtc/watchdog-configuration-does-not-feed
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:54837 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=59627,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -global driver=esp32c3.gpio,property=strap_mode,value=2 -accel qtest
+Not initializing SPI Flash
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:37311 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=47619,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -global driver=esp32c3.gpio,property=strap_mode,value=2 -accel qtest
+Not initializing SPI Flash
+ok 16 /riscv32/esp32c3/rtc/watchdog-uart-download-boot
+# End of rtc tests
+# End of esp32c3 tests
+# End of riscv32 tests

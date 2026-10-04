@@ -1,6 +1,7 @@
 /* Opt-in host gateway routing for unmodified stock firmware endpoint tests.
- * Only socket calls whose immediate caller is the dynamically linked libslirp
- * are eligible. No guest memory, ESP-IDF API, packet payload, certificate,
+ * Only socket calls whose immediate caller is libslirp (a linked DSO or exact
+ * sized ELF function ranges from the selected backend) are eligible.
+ * No guest memory, ESP-IDF API, packet payload, certificate,
  * firmware URL or native device state is changed.
  */
 #define _GNU_SOURCE
@@ -20,6 +21,9 @@ enum { DNS_ROUTE, NTP_ROUTE, HTTP_ROUTE, TLS_ROUTE, ROUTE_COUNT, MAX_FDS = 65536
 static unsigned route_ports[ROUTE_COUNT];
 static unsigned long calls[ROUTE_COUNT], restored, failures;
 static bool enabled;
+static char executable_path[4096];
+static struct { uintptr_t start, end; } static_ranges[3];
+static unsigned static_range_count;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 static struct { bool set; struct sockaddr_in original, routed; } peers[MAX_FDS];
 static int (*next_connect)(int, const struct sockaddr *, socklen_t);
@@ -35,7 +39,38 @@ static bool slirp_caller(void *pc)
     }
     const char *base = strrchr(information.dli_fname, '/');
     base = base ? base + 1 : information.dli_fname;
-    return !strncmp(base, "libslirp.so", strlen("libslirp.so"));
+    if (!strncmp(base, "libslirp.so", strlen("libslirp.so"))) { return true; }
+    if (strcmp(information.dli_fname, executable_path)) { return false; }
+    uintptr_t offset = (uintptr_t)pc - (uintptr_t)information.dli_fbase;
+    for (unsigned index = 0; index < static_range_count; ++index) {
+        if (offset >= static_ranges[index].start && offset < static_ranges[index].end) { return true; }
+    }
+    return false;
+}
+
+static bool parse_static_ranges(void)
+{
+    const char *value = getenv("X3EMU_SLIRP_CALLER_RANGES");
+    if (!value || !*value) { return true; }
+    ssize_t count = readlink("/proc/self/exe", executable_path, sizeof(executable_path) - 1);
+    if (count < 0 || count == sizeof(executable_path) - 1) { return false; }
+    executable_path[count] = 0;
+    while (*value) {
+        if (static_range_count >= 3) { return false; }
+        char *end;
+        errno = 0;
+        unsigned long long start = strtoull(value, &end, 16);
+        if (errno || end == value || *end != ':') { return false; }
+        value = end + 1;
+        unsigned long long size = strtoull(value, &end, 16);
+        if (errno || end == value || !start || !size || start > UINTPTR_MAX - size
+            || (*end != ',' && *end)) { return false; }
+        static_ranges[static_range_count].start = start;
+        static_ranges[static_range_count++].end = start + size;
+        value = *end ? end + 1 : end;
+        if (*end == ',' && !*value) { return false; }
+    }
+    return true;
 }
 
 static unsigned parse_port(const char *name)
@@ -60,6 +95,10 @@ __attribute__((constructor)) static void initialize(void)
     next_close = dlsym(RTLD_NEXT, "close");
     const char *active = getenv("X3EMU_HOST_ROUTER");
     if (!active || strcmp(active, "1")) { return; }
+    if (!parse_static_ranges()) {
+        fprintf(stderr, "x3emu-host-router: invalid explicit SLIRP ELF function ranges\n");
+        return;
+    }
     const char *names[] = { "X3EMU_ROUTE_DNS_PORT", "X3EMU_ROUTE_NTP_PORT",
                            "X3EMU_ROUTE_HTTP_PORT", "X3EMU_ROUTE_TLS_PORT" };
     for (unsigned index = 0; index < ROUTE_COUNT; ++index) {
@@ -69,8 +108,8 @@ __attribute__((constructor)) static void initialize(void)
     enabled = next_connect && next_sendto && next_recvfrom && next_close;
     fprintf(stderr, "x3emu-host-router: {\"active\":%s,\"scope\":\"libslirp-host-egress\","
             "\"dns_original\":\"system-resolver:53\",\"loopback_original_ports\":[123,80,443],"
-            "\"translated_address\":\"127.0.0.1\",\"translated_ports\":[%u,%u,%u,%u]}\n",
-            enabled ? "true" : "false", route_ports[0], route_ports[1], route_ports[2], route_ports[3]);
+            "\"translated_address\":\"127.0.0.1\",\"translated_ports\":[%u,%u,%u,%u],\"static_caller_ranges\":%u}\n",
+            enabled ? "true" : "false", route_ports[0], route_ports[1], route_ports[2], route_ports[3], static_range_count);
 }
 
 static int translation(int fd, const struct sockaddr *address, socklen_t length,

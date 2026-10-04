@@ -12,6 +12,7 @@ import argparse
 import base64
 import hashlib
 import http.client
+import io
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
@@ -21,6 +22,7 @@ import re
 import runpy
 import signal
 import select
+import shutil
 import socket
 import socketserver
 import ssl
@@ -35,7 +37,7 @@ import zlib
 
 PROJECT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT))
-from x3emu.backend import BackendError, DEFAULT_BACKEND, DEVICE_PROPERTIES, QMPClient, file_sha256
+from x3emu.backend import BackendError, DEFAULT_BACKEND, QMPClient, WIFI_BASE_OBSERVATIONS, WIFI_PHY_OBSERVATIONS, file_sha256
 from x3emu.firmware import FULL_FLASH_SHA256
 from x3emu.sdcard import create_fat16_card, make_test_epub
 
@@ -66,6 +68,19 @@ SOURCE_HASHES = {
     "src/SilentRestart.h": "bfcfbb6a6f6dc172e517f6530df9ff9bd50fc4a0afba5ea512aaf59a295e10ea",
     "src/activities/ActivityManager.cpp": "69132ac13c6637f53ba54cdb76fdb735495663150bd2aafb7ea58d1e1cdd3ed7",
     "src/main.cpp": "21ee21ddac33088eda7d67f5dc5ae9f0f725fcdf5b2b9a2242ebf378133c3028",
+    "lib/hal/HalStorage.h": "7ce4f275a173f6998517358557cd9d7b34394076849b0ce6738cd182c0a398da",
+    "lib/hal/HalStorage.cpp": "0d9d58c99add63525b2924bb6c88d987e4cd429fcb692fb3aecdcbefd78ead8c",
+    "src/activities/settings/ClockSyncActivity.cpp": "fca2658083838565f92f84c55d3cea6d40d8e83df8a7c9cbaf570afcd7f7b5a1",
+    "src/SettingsList.h": "95f2b99393a1dfb3523e5ba2e07818833eb777fa9f6b7fba856c14effb820dcc",
+    "src/activities/settings/SettingsActivity.cpp": "57ffa1c8c6b718fdaf231ca83f0fcf57fdb3b7a2d70a2930dd8bb6946ba50c72",
+    "src/FontInstaller.cpp": "d6e64178b47b6520fccfcc82439d4279ccd425a40faf83a86a5feb3a2ac116cb",
+    "src/CrossPointSettings.cpp": "29ea3e2c765370b5fcae0d6b878930c8b3c3df4c357356fcdd3e891d6f7b065f",
+    "src/util/UrlUtils.cpp": "5b8979ae1ebb891e2a5b94178e47d09ba35e24508792371aaa97c5a8c3af1462",
+    "src/activities/settings/OtaUpdateActivity.cpp": "85649258c5a187a2e9b99051db63423399161430cd2fb20687b6b751a73905ee",
+    "lib/I18n/translations/english.yaml": "655005c0a2b5e09d90ba70fd3a0f6d1551c4a83c5322a09515fef56a7636a7fc",
+    "lib/KOReaderSync/ProgressMapper.cpp": "2cae6357307b589ce288106d965d614aa26d79d8bb156fdd01a582a89d1244b2",
+    "lib/KOReaderSync/ChapterXPathResolver.cpp": "57f992d75fcdc20ab17c303720ea8945243a1736b308f8a972b015b6a376b81a",
+    "lib/Epub/Epub/Section.cpp": "717bf74c863d517936550a4576fab45b1220420c6fcd40cc29e167466283d46c",
 }
 HTTP_ROUTES = tuple((method, path) for method, paths in {
     "GET": ("/", "/files", "/js/jszip.min.js", "/style.css", "/logo.png", "/api/status", "/api/files",
@@ -74,7 +89,7 @@ HTTP_ROUTES = tuple((method, path) for method, paths in {
              "/api/fonts/delete", "/api/opds", "/api/opds/delete", "/api/wifi", "/api/wifi/delete"),
 }.items() for path in paths)
 DAV_METHODS = ("OPTIONS", "PROPFIND", "GET", "HEAD", "PUT", "DELETE", "MKCOL", "MOVE", "COPY", "LOCK", "UNLOCK")
-WORKFLOWS = ("server", "calibre", "opds", "koreader-auth", "koreader-signup", "koreader-sync")
+WORKFLOWS = ("server", "calibre", "opds", "koreader-auth", "koreader-signup", "koreader-sync", "ntp", "fonts", "ota-check", "koreader-apply", "koreader-smart")
 FIXTURE_USER, FIXTURE_PASSWORD = "synthetic-x3", "public-test-password"
 FIXTURE_UNIX_EPOCH = 1790985600  # 2026-10-03 00:00:00 UTC, original public fixture.
 FONT_HOST = "crossink-fonts.s3.us-east-1.amazonaws.com"
@@ -88,6 +103,34 @@ class NetworkError(RuntimeError):
 
 def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def clock_arguments(host_paced: bool) -> list[str]:
+    """Select native TCG clock policy explicitly, without a calibrated-speed claim."""
+    return ["--no-icount"] if host_paced else ["--icount", "--icount-shift", "3"]
+
+
+def clock_policy_matches(host_paced: bool, manifest: dict) -> bool:
+    timing = manifest.get("timing", {})
+    counted = not host_paced
+    return (timing.get("clock") == "QEMU_CLOCK_VIRTUAL"
+            and timing.get("instruction_counting") is counted
+            and ("-icount" in manifest.get("argv", [])) is counted
+            and timing.get("calibration_status") == "uncalibrated"
+            and timing.get("speed_selection_allowed") is False)
+
+
+def nonboundary_remote_progress(uploaded: dict) -> dict:
+    """A real remote peer moves one character within the original fixture's p3.
+
+    The original guest upload remains immutable. This separate remote reading
+    action exercises the source-supported XPath syntax away from its known
+    reverse-mapping boundary failure, which the roundtrip workflow retains.
+    """
+    if uploaded.get("progress") != "/body/DocFragment[1]/body/p[3]/text()[1].34":
+        raise NetworkError("nonboundary peer fixture requires the actually uploaded original p3 offset34")
+    return {**uploaded, "progress": "/body/DocFragment[1]/body/p[3]/text()[1].35",
+            "device": "Original remote reading fixture", "device_id": "original-remote-peer"}
 
 
 def write_json(path: Path, value) -> None:
@@ -264,8 +307,11 @@ def client_hello_server_name(handshake: bytes):
 
 class TrustedTLSRelay:
     """Opaque guest TLS to the real official server, optionally via host CONNECT."""
-    def __init__(self):
-        self.records, self.lock = [], threading.Lock()
+    def __init__(self, output: Path | None = None):
+        self.records, self.lock, self.next_connection = [], threading.Lock(), 1
+        self.output = output
+        if output is not None:
+            output.mkdir()
         service = self
         class Handler(socketserver.BaseRequestHandler):
             def handle(self):
@@ -273,6 +319,13 @@ class TrustedTLSRelay:
                 guest.settimeout(120)
                 record = {"tls_terminated": False, "payloads_modified": False, "guest_to_origin_bytes": 0, "origin_to_guest_bytes": 0}
                 digests = [hashlib.sha256(), hashlib.sha256()]
+                started, captures = time.monotonic(), []
+                with service.lock:
+                    number = service.next_connection
+                    service.next_connection += 1
+                if service.output is not None:
+                    captures = [(service.output / f"connection-{number:03d}-{direction}.bin").open("wb")
+                                for direction in ("guest-to-origin", "origin-to-guest")]
                 try:
                     wire, handshake = bytearray(), bytearray()
                     while len(handshake) < 4 or len(handshake) < 4 + int.from_bytes(handshake[1:4], "big"):
@@ -285,6 +338,8 @@ class TrustedTLSRelay:
                         handshake += body
                     origin = client_hello_server_name(bytes(handshake))
                     record["official_origin"] = origin
+                    if captures:
+                        captures[0].write(wire)
                     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
                     if proxy:
                         parsed = urlsplit(proxy)
@@ -312,6 +367,7 @@ class TrustedTLSRelay:
                         remote = socket.create_connection((origin, 443), timeout=30)
                         record["host_connect_proxy_used"] = False
                     remote.sendall(wire)
+                    record["origin_connection_wall_seconds"] = time.monotonic() - started
                     digests[0].update(wire)
                     record["guest_to_origin_bytes"] += len(wire)
                     for channel in (guest, remote):
@@ -323,8 +379,11 @@ class TrustedTLSRelay:
                         for incoming in readable:
                             data = incoming.recv(16384)
                             if not data:
+                                record["eof_from"] = "guest" if incoming is guest else "official_origin"
                                 return
                             index = 0 if incoming is guest else 1
+                            if captures:
+                                captures[index].write(data)
                             (remote if index == 0 else guest).sendall(data)
                             digests[index].update(data)
                             record["guest_to_origin_bytes" if index == 0 else "origin_to_guest_bytes"] += len(data)
@@ -335,6 +394,12 @@ class TrustedTLSRelay:
                     if remote:
                         remote.close()
                     record["guest_to_origin_sha256"], record["origin_to_guest_sha256"] = (digest.hexdigest() for digest in digests)
+                    record["connection_wall_seconds"] = time.monotonic() - started
+                    if captures:
+                        for stream in captures:
+                            stream.close()
+                        record["private_opaque_wire"] = [{"file": Path(stream.name).name,
+                            "bytes": Path(stream.name).stat().st_size, "sha256": file_sha256(Path(stream.name))} for stream in captures]
                     with service.lock:
                         service.records.append(record)
         self.server = socketserver.ThreadingTCPServer(("127.0.0.1", 0), Handler)
@@ -493,6 +558,7 @@ class FixtureService:
     """An original HTTP remote peer for actual OPDS and KOReader requests."""
     def __init__(self, book: bytes, *, redirect_port: int | None = None, sink=False):
         self.book, self.requests, self.progress, self.redirect_port, self.sink = book, [], {}, redirect_port, sink
+        self.font = make_cpfont()
         self.lock = threading.Lock()
         service = self
 
@@ -517,7 +583,7 @@ class FixtureService:
                     return
                 record = {"method": self.command, "path": self.path, "body_size": len(body), "body_sha256": sha(body),
                           "headers": {key.lower(): value for key, value in self.headers.items()
-                                      if key.lower() in ("authorization", "x-auth-user", "x-auth-key", "accept", "content-type")}}
+                                      if key.lower() in ("authorization", "x-auth-user", "x-auth-key", "accept", "content-type", "host")}}
                 status, headers, reply = service.respond(self.command, self.path, body, record["headers"])
                 record.update({"status": status, "response_size": len(reply), "response_sha256": sha(reply)})
                 if body:
@@ -550,6 +616,13 @@ class FixtureService:
         path = urlsplit(raw_path).path
         json_headers = {"Content-Type": "application/json"}
         basic = "Basic " + base64.b64encode(f"{FIXTURE_USER}:{FIXTURE_PASSWORD}".encode()).decode()
+        if path == FONT_MANIFEST_PATH and method == "GET":
+            manifest = {"version": 1, "baseUrl": f"http://{FONT_HOST}/sd-fonts-m1-b4/", "families": [{
+                "name": "Original", "description": "Original synthetic one-glyph fixture", "languages": "Latin",
+                "files": [{"name": "Original_14.cpfont", "size": len(self.font), "crc32": zlib.crc32(self.font)}]}]}
+            return 200, json_headers, json.dumps(manifest).encode()
+        if path == "/sd-fonts-m1-b4/Original_14.cpfont" and method == "GET":
+            return 200, {"Content-Type": "application/octet-stream"}, self.font
         if self.sink:
             if path == "/public/book.epub":
                 return 200, {"Content-Type": "application/epub+zip"}, self.book
@@ -557,10 +630,13 @@ class FixtureService:
         if path.startswith("/catalog") or path.startswith("/redirect"):
             if headers.get("authorization") != basic:
                 return 401, {"WWW-Authenticate": 'Basic realm="original-x3-fixture"'}, b"auth required"
-        if path == "/catalog/feed.xml" or path == "/catalog/child.xml":
-            link = "child.xml" if path.endswith("feed.xml") else "../redirect/book.epub"
-            rel = "subsection" if path.endswith("feed.xml") else "http://opds-spec.org/acquisition"
-            mime = "application/atom+xml;profile=opds-catalog" if path.endswith("feed.xml") else "application/epub+zip"
+        if path in ("/catalog/", "/catalog/child/"):
+            # Stock UrlUtils treats its configured URL as a collection base.
+            # Directory URLs exercise that supported relative-path behavior.
+            root_collection = path == "/catalog/"
+            link = "child/" if root_collection else "/redirect/book.epub"
+            rel = "subsection" if root_collection else "http://opds-spec.org/acquisition"
+            mime = "application/atom+xml;profile=opds-catalog" if root_collection else "application/epub+zip"
             feed = (f'<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><id>urn:x3:fixture</id>'
                     '<title>Original Network Catalog</title><updated>2026-10-03T00:00:00Z</updated>'
                     '<link rel="search" type="application/atom+xml" href="search.xml?q={searchTerms}"/>'
@@ -643,6 +719,40 @@ class Replay:
         self.experiment.press(self.qmp, button, purpose=purpose)
         return self.capture(f"{self.sequence:03d}-{name}", before)
 
+    def capture_text(self, label, expected, *, alternatives=()):
+        """Observe original guest pixels when release builds omit debug logs."""
+        from PIL import Image
+        executable = shutil.which("tesseract")
+        if executable is None:
+            raise NetworkError("Tesseract is required for explicit guest result-panel verification")
+        attempt = 0
+        def rendered():
+            nonlocal attempt
+            attempt += 1
+            frame = self.capture(f"{label}-probe{attempt}")
+            observations = []
+            original = Image.open(self.output / frame["path"])
+            for angle in (90, 270, 0, 180):
+                stream = io.BytesIO()
+                original.rotate(angle, expand=True).save(stream, format="PNG")
+                result = subprocess.run([executable, "stdin", "stdout", "--psm", "6"], input=stream.getvalue(),
+                                        capture_output=True, timeout=15, check=True)
+                text = result.stdout.decode("utf-8", errors="replace")
+                normalized = " ".join(re.findall(r"[a-z0-9]+", text.lower()))
+                observations.append({"rotation": angle, "text": text})
+                choices = (expected, *alternatives)
+                matched = next((choice for choice in choices if all(
+                    " ".join(re.findall(r"[a-z0-9]+", value.lower())) in normalized for value in choice)), None)
+                if matched is not None:
+                    self.report.setdefault("result_panel_ocr", {})[label] = {"frame": frame["path"], "pixel_sha256": frame["pixel_sha256"],
+                        "expected_original_labels": list(matched), "observations": observations, "ocr_executable_sha256": file_sha256(executable)}
+                    self.save()
+                    return frame
+            self.report.setdefault("result_panel_ocr", {})[label] = {"latest_frame": frame["path"], "observations": observations}
+            self.save()
+            return False
+        return self.experiment.wait("original guest result labels: " + ", ".join(expected), rendered)
+
     def read(self, path):
         self.qmp.execute("stop")
         try:
@@ -684,8 +794,18 @@ def webdav_acceptance(replay, client, payload):
     client.request("MKCOL", "/dav-fixture/missing/child", expected=409)
     client.request("PUT", "/dav-fixture/original.bin", body=payload, expected=201)
     assert_bytes(replay, "dav_put_persisted_exact", replay.read("/dav-fixture/original.bin"), payload)
-    _, _, data = client.request("GET", "/dav-fixture/original.bin", expected=200)
-    assert_bytes(replay, "dav_get_exact", data, payload)
+    _, get_headers, data = client.request("GET", "/dav-fixture/original.bin", expected=200)
+    if (replay.report.get("continue_known_dav_get_defect") and data == b"\x01"
+            and get_headers.get("Content-Length") == str(len(payload))):
+        replay.report["checks"]["dav_get_exact"] = False
+        replay.report.setdefault("known_stock_firmware_defects", {})["dav_get_exact"] = {
+            "observed_body_hex": data.hex(), "advertised_size": int(get_headers["Content-Length"]),
+            "expected_sha256": sha(payload), "actual_sha256": sha(data),
+            "source": "WebDAVHandler.cpp353 client.write(file); HalFile derives Print with implicit bool, so write(uint8_t) sends01",
+            "continued_for_diagnostics_only": True, "overall_pass_waived": False}
+        replay.save()
+    else:
+        assert_bytes(replay, "dav_get_exact", data, payload)
     _, headers, data = client.request("HEAD", "/dav-fixture/original.bin", expected=200)
     replay.check("dav_head_length", headers.get("Content-Length") == str(len(payload)) and not data)
     _, _, body = client.request("PROPFIND", "/dav-fixture", headers={"Depth": "1"}, expected=207)
@@ -817,8 +937,7 @@ def launch_server_ui(replay, *, calibre=False):
     replay.tap("up", "file-transfer-row", "Select preceding File Transfer row")
     replay.tap("confirm", "network-mode", "Open the real file-transfer mode selector")
     if calibre:
-        replay.tap("down", "hotspot-row", "Network modes: move from Join Network to Create Hotspot")
-        replay.tap("down", "calibre-row", "Network modes: select Calibre Wireless")
+        replay.tap("down", "calibre-row", "Network modes: move from Join Network0 to Calibre Wireless1")
     replay.experiment.press(replay.qmp, "confirm", purpose="launch actual Calibre or Join Network activity via silent reboot")
     replay.select_wifi()
 
@@ -854,11 +973,11 @@ def opds_workflow(replay, fixture, sink, book):
     replay.experiment.press(replay.qmp, "confirm", purpose="launch actual OPDS minimal network boot")
     replay.select_wifi()
     replay.experiment.wait("guest OPDS root fetch", lambda:
-                           any(item["path"] == "/catalog/feed.xml" and item["status"] == 200 for item in fixture.snapshot()))
+                           any(item["path"] == "/catalog/" and item["status"] == 200 for item in fixture.snapshot()))
     replay.capture("opds-root-catalog")
     replay.tap("confirm", "opds-child", "Follow genuine relative OPDS subsection link")
     replay.experiment.wait("guest OPDS child fetch", lambda:
-                           any(item["path"] == "/catalog/child.xml" and item["status"] == 200 for item in fixture.snapshot()))
+                           any(item["path"] == "/catalog/child/" and item["status"] == 200 for item in fixture.snapshot()))
     replay.capture("opds-acquisition-entry")
     replay.experiment.press(replay.qmp, "confirm", purpose="download the original synthetic EPUB through guest HttpDownloader")
     replay.experiment.wait("guest acquisition follows cross-origin redirect", lambda:
@@ -897,11 +1016,9 @@ def koreader_auth_workflow(replay, fixture, *, signup=False):
                            any(item["path"] == path and item["method"] == method for item in fixture.snapshot()))
     records = [item for item in fixture.snapshot() if item["path"] == path and item["method"] == method]
     replay.check("koreader_original_protocol_request", records[-1]["status"] == status, records[-1])
-    marker = f"Create user response: {status}" if signup else f"Auth response: {status}"
-    replay.experiment.wait("stock KOReader client receives response", lambda:
-                           marker in replay.experiment.log_text("serial.log"))
-    replay.check("koreader_guest_received_http_response", marker in replay.experiment.log_text("serial.log"))
-    replay.capture("koreader-signup-result" if signup else "koreader-auth-result")
+    frame = replay.capture_text("koreader-signup-result" if signup else "koreader-auth-result",
+                        ["Account created" if signup else "Successfully authenticated", "KOReader sync is ready to use"])
+    replay.check("koreader_original_guest_success_panel", bool(frame), frame)
     # This is a narrow protocol proof. The reply/result panel is captured;
     # no credentials from a user account enter the fixture or repository.
 
@@ -915,7 +1032,12 @@ def reader_sync_ui(replay):
     replay.select_wifi()
 
 
-def koreader_sync_workflow(replay, fixture):
+def koreader_sync_workflow(replay, fixture, *, remote_advance=False):
+    # Each named cohort starts with an empty independent remote reading state.
+    # Old HTTP observations are retained and excluded from this flow's waits.
+    with fixture.lock:
+        fixture.progress.clear()
+    first_request = len(fixture.snapshot())
     replay.capture("home")
     replay.tap("confirm", "browser", "Fresh Home: Browse the original test EPUB")
     replay.experiment.press(replay.qmp, "confirm", purpose="open the original synthetic test EPUB")
@@ -931,17 +1053,27 @@ def koreader_sync_workflow(replay, fixture):
     replay.check("koreader_upload_local_page1", uploaded_position["spine_index"] == 0 and uploaded_position["page_number"] == 1,
                  uploaded_position)
     replay.experiment.wait("guest empty remote progress response", lambda:
-                           any(item["path"].startswith("/syncs/progress/") and item["status"] == 204 for item in fixture.snapshot()))
-    replay.capture("koreader-no-remote-progress")
+                           any(item["path"].startswith("/syncs/progress/") and item["status"] == 204 for item in fixture.snapshot()[first_request:]))
+    replay.capture_text("koreader-no-remote-progress", ["No remote progress found"])
     replay.experiment.press(replay.qmp, "confirm", purpose="authorize stock Upload Local Progress option")
     replay.experiment.wait("actual guest PUT progress", lambda:
-                           any(item["method"] == "PUT" and item["path"] == "/syncs/progress" for item in fixture.snapshot()))
-    uploads = [item for item in fixture.snapshot() if item["method"] == "PUT" and item["path"] == "/syncs/progress"]
+                           any(item["method"] == "PUT" and item["path"] == "/syncs/progress" for item in fixture.snapshot()[first_request:]))
+    uploads = [item for item in fixture.snapshot()[first_request:] if item["method"] == "PUT" and item["path"] == "/syncs/progress"]
     replay.check("koreader_valid_progress_uploaded", uploads[-1]["status"] == 204, uploads[-1])
-    replay.experiment.wait("stock KOReader upload response", lambda:
-                           "Update progress response: 204" in replay.experiment.log_text("serial.log"))
-    replay.capture("koreader-upload-result")
+    replay.capture_text("koreader-upload-result", ["Progress uploaded"])
     replay.report["uploaded_remote_progress"] = uploads[-1].get("json")
+    if remote_advance:
+        advanced = nonboundary_remote_progress(uploads[-1]["json"])
+        authorization = "Basic " + base64.b64encode(f"{FIXTURE_USER}:{FIXTURE_PASSWORD}".encode()).decode()
+        peer_records = []
+        GuestHTTP(fixture.port, 10, peer_records).request("PUT", "/syncs/progress", body=json.dumps(advanced).encode(),
+            headers={"Content-Type": "application/json", "Authorization": authorization,
+                     "x-auth-user": FIXTURE_USER, "x-auth-key": hashlib.md5(FIXTURE_PASSWORD.encode()).hexdigest()}, expected=204)
+        replay.report["separate_remote_reading_action"] = {"original_guest_upload": uploads[-1]["json"],
+            "remote_peer_upload": advanced, "remote_peer_http": peer_records,
+            "fixture_xpath": "p3 begins at visible offset552; offset35 maps to586 on the real page1 boundary",
+            "original_boundary_roundtrip_waived": False}
+        replay.check("distinct_remote_peer_advanced_one_character", advanced["progress"] != uploads[-1]["json"]["progress"])
     # The actual reader resumes via software reset. Require new entry/reader
     # evidence rather than treating its prior saved state as a completed return.
     replay.experiment.press(replay.qmp, "confirm", purpose="return from KOReader upload result to the real reader")
@@ -959,7 +1091,7 @@ def koreader_sync_workflow(replay, fixture):
     local_position = replay.helpers["decode_progress"](replay.read(cache + "/progress.bin"))
     replay.check("koreader_new_local_page2", local_position["spine_index"] == 0 and local_position["page_number"] == 2,
                  local_position)
-    replay.capture("koreader-remote-progress-choice")
+    replay.capture_text("koreader-remote-progress-choice", ["Apply remote progress", "Upload local progress"])
     replay.tap("up", "apply-remote-option", "Local page2 is ahead, so switch the default Upload option to Apply Remote")
     replay.experiment.press(replay.qmp, "confirm", purpose="apply the remotely stored page1 through stock ProgressMapper")
     replay.experiment.wait("reader returns after real remote progress apply", lambda:
@@ -976,6 +1108,159 @@ def koreader_sync_workflow(replay, fixture):
                   "exact_tone_differences": sum(a != b for a, b in zip(first_pixels, restored_pixels))})
 
 
+def koreader_smart_workflow(replay, fixture):
+    """Exercise all four original SMART decisions using real remote state."""
+    with fixture.lock:
+        fixture.progress.clear()
+    replay.capture("home")
+    replay.tap("confirm", "browser", "Fresh Home: browse original EPUB for Smart Sync")
+    replay.experiment.press(replay.qmp, "confirm", purpose="open the original synthetic EPUB")
+    cache = replay.helpers["cache_path"]("/test.epub")
+    replay.experiment.wait("original indexed reader", lambda:
+        replay.experiment.book_is_open() and not replay.absent(cache + "/sections/0.bin"))
+    replay.capture("smart-reader-first", reader=True)
+    replay.tap("down", "smart-initial-page1", "Move to actual page1 before empty-remote Smart Sync")
+    first_page = replay.capture("smart-page1-reference", reader=True)
+
+    def sync_and_return(label):
+        before = replay.experiment.log_text("serial.log").count("reader enter:")
+        first = len(fixture.snapshot())
+        reader_sync_ui(replay)
+        # No Confirm/Back is sent to a result panel: the original SMART policy
+        # must authorize its decision and return automatically.
+        replay.experiment.wait("automatic Smart Sync reader return: " + label, lambda:
+            replay.experiment.log_text("serial.log").count("reader enter:") > before)
+        frame = replay.capture("smart-return-" + label, reader=True)
+        progress = replay.helpers["decode_progress"](replay.read(cache + "/progress.bin"))
+        rows = fixture.snapshot()[first:]
+        replay.report.setdefault("smart_decisions", {})[label] = {"requests": rows, "saved_progress": progress,
+            "reader_frame": frame, "result_panel_confirmation_sent": False}
+        return rows, progress, frame
+
+    rows, position, _ = sync_and_return("empty-remote-auto-upload")
+    uploads = [row for row in rows if row["method"] == "PUT" and row["path"] == "/syncs/progress"]
+    replay.check("smart_missing_remote_auto_upload", len(uploads) == 1 and uploads[0]["status"] == 204
+                 and position["page_number"] == 1, {"requests": rows, "position": position})
+    original_upload = uploads[0]["json"]
+    replay.report["uploaded_remote_progress"] = original_upload
+
+    rows, position, _ = sync_and_return("equal-no-upload")
+    replay.check("smart_equal_auto_return_without_upload", any(row["method"] == "GET" and row["status"] == 200 for row in rows)
+                 and not any(row["method"] == "PUT" for row in rows) and position["page_number"] == 1,
+                 {"requests": rows, "position": position})
+
+    advanced = nonboundary_remote_progress(original_upload)
+    peer_records = []
+    GuestHTTP(fixture.port, 10, peer_records).request("PUT", "/syncs/progress", body=json.dumps(advanced).encode(),
+        headers={"Content-Type": "application/json", "Authorization": "Basic " + base64.b64encode(f"{FIXTURE_USER}:{FIXTURE_PASSWORD}".encode()).decode(),
+                 "x-auth-user": FIXTURE_USER, "x-auth-key": hashlib.md5(FIXTURE_PASSWORD.encode()).hexdigest()}, expected=204)
+    replay.report["separate_remote_reading_action"] = {"original_guest_upload": original_upload,
+        "remote_peer_upload": advanced, "remote_peer_http": peer_records, "original_boundary_roundtrip_waived": False}
+    replay.tap("up", "smart-local-page0", "Move locally behind the remote reader's source-justified nonboundary page1")
+    rows, position, restored = sync_and_return("remote-ahead-auto-apply")
+    replay.check("smart_remote_ahead_auto_apply", any(row["method"] == "GET" and row["status"] == 200 for row in rows)
+                 and not any(row["method"] == "PUT" for row in rows) and position["page_number"] == 1
+                 and position["visible_text_offset"] == 586, {"requests": rows, "position": position})
+    before_pixels = replay.helpers["read_pgm"]((replay.output / first_page["path"]).read_bytes())[2]
+    after_pixels = replay.helpers["read_pgm"]((replay.output / restored["path"]).read_bytes())[2]
+    different = sum((a < 192) != (b < 192) for a, b in zip(before_pixels, after_pixels))
+    replay.check("smart_auto_applied_reader_content_geometry", len(before_pixels) == len(after_pixels) and different == 0,
+                 {"different_content_pixels": different, "binary_threshold": 192,
+                  "exact_tone_differences": sum(a != b for a, b in zip(before_pixels, after_pixels))})
+
+    replay.tap("down", "smart-local-page2", "Move locally ahead of the remote page1 before Smart Sync")
+    rows, position, _ = sync_and_return("local-ahead-auto-upload")
+    uploads = [row for row in rows if row["method"] == "PUT" and row["path"] == "/syncs/progress"]
+    replay.check("smart_local_ahead_auto_upload", len(uploads) == 1 and uploads[0]["status"] == 204
+                 and uploads[0]["json"]["percentage"] > original_upload["percentage"] and position["page_number"] == 2,
+                 {"requests": rows, "position": position})
+
+
+def settings_tab_ui(replay, category):
+    replay.capture("home")
+    replay.tap("up", "settings-row", "Fresh Home: select Settings")
+    replay.tap("confirm", "settings", "Open Settings with Display tab band focused")
+    for name in ("reader", "controls", "system"):
+        replay.tap("confirm", "tab-" + name, "Cycle the original Settings tab band")
+        if name == category:
+            break
+
+
+def ntp_workflow(replay, ntp_fixture):
+    settings_tab_ui(replay, "system")
+    replay.tap("down", "device-row", "Select System Device submenu row0")
+    replay.tap("confirm", "device-settings", "Enter actual System Device settings")
+    replay.tap("up", "device-header", "Move from initial DeviceName row1 to submenu band0")
+    replay.tap("up", "clock-sync-row", "Wrap submenu band0 to final Sync Date/Time Now action")
+    replay.experiment.press(replay.qmp, "confirm", purpose="launch actual ClockSyncActivity without firmware endpoint overrides")
+    replay.select_wifi()
+    replay.experiment.wait("stock manual and connection NTP sync complete", lambda:
+                           replay.experiment.log_text("serial.log").count("RTC set to 2026-10-03 00:00:") >= 2)
+    replay.capture("clock-sync-result")
+    replies = [item for item in ntp_fixture.snapshot() if "response_sha256" in item]
+    replay.check("ntp_original_client_packets_and_originate_echo", len(replies) >= 2
+                 and all(item["client_transmit_hex"] == item["originate_hex"] for item in replies), replies)
+    replay.qmp.execute("stop")
+    try:
+        now = replay.experiment.clock(replay.qmp)
+        native_epoch = replay.qmp.execute("qom-get", {"path": "/machine/i2c/rtc", "property": "epoch-seconds"})
+        injections = replay.qmp.execute("qom-get", {"path": "/machine/i2c/rtc", "property": "injection-count"})
+    finally:
+        replay.qmp.execute("cont")
+    matches = re.findall(r"\[(\d+)\] \[INF\] \[CLK\] RTC set to 2026-10-03 00:00:\d+ UTC", replay.experiment.log_text("serial.log"))
+    elapsed = max(0, (now - int(matches[-1]) * 1000000) // 1000000000)
+    replay.check("ntp_real_guest_rtc_write_readback", injections == 0 and abs(native_epoch - FIXTURE_UNIX_EPOCH - elapsed) <= 2,
+                 {"fixture_epoch": FIXTURE_UNIX_EPOCH, "native_rtc_epoch": native_epoch,
+                  "elapsed_virtual_seconds_since_log": elapsed, "host_injection_count": injections})
+    settings = json.loads(replay.read("/.crosspoint/crossink-settings.json"))
+    replay.check("ntp_guest_sync_date_flag_persisted", settings.get("clockDateHasBeenSynced") == 1,
+                 {"settings_sha256": sha(replay.read("/.crosspoint/crossink-settings.json")), "clockDateHasBeenSynced": settings.get("clockDateHasBeenSynced")})
+
+
+def fonts_workflow(replay, fixture):
+    settings_tab_ui(replay, "reader")
+    replay.tap("down", "reader-font-options", "Select Reader Font Options submenu row0")
+    replay.tap("confirm", "font-options", "Enter original font settings submenu")
+    replay.tap("up", "font-header", "Move from initial FontFamily row1 to submenu band0")
+    replay.tap("up", "font-size-range", "Wrap submenu band0 to final SD Font Size Range")
+    replay.tap("up", "download-fonts", "Select preceding Download Fonts action")
+    replay.experiment.press(replay.qmp, "confirm", purpose="launch stock Manage Fonts with original S3 URL and software target7")
+    replay.select_wifi()
+    replay.experiment.wait("stock fixed-host font manifest fetch", lambda:
+                           any(item["path"] == FONT_MANIFEST_PATH and item["status"] == 200 for item in fixture.snapshot()))
+    replay.capture("font-family-list")
+    replay.experiment.press(replay.qmp, "confirm", purpose="download original CPFONT through actual CRC-validated stock font installer")
+    path = "/.fonts/Original/Original_14.cpfont"
+    replay.experiment.wait("complete original font installed after CRC check", lambda: replay.read(path) == fixture.font)
+    assert_bytes(replay, "font_download_persisted_exact", replay.read(path), fixture.font)
+    replay.check("font_original_crc32_matches_manifest", zlib.crc32(replay.read(path)) == zlib.crc32(fixture.font),
+                 {"crc32": zlib.crc32(fixture.font), "size": len(fixture.font)})
+    requests = [item for item in fixture.snapshot() if item["path"] in (FONT_MANIFEST_PATH, "/sd-fonts-m1-b4/Original_14.cpfont")]
+    replay.check("font_original_endpoint_requests", len(requests) >= 2
+                 and all(item["headers"].get("host", "").split(":")[0] == FONT_HOST for item in requests), requests)
+    replay.check("font_installer_temporary_file_removed", replay.absent(path + ".tmp"))
+    replay.capture_text("font-download-result", ["Font installed"])
+
+
+def ota_check_workflow(replay, tls_relay):
+    settings_tab_ui(replay, "system")
+    replay.tap("up", "sd-update-row", "Wrap System band0 to SD Firmware Update")
+    replay.tap("up", "check-updates-row", "Select preceding Check for Updates action")
+    replay.experiment.press(replay.qmp, "confirm", purpose="launch real trusted HTTPS updater at original api.github.com URL")
+    replay.select_wifi()
+    # The official release image omits LOG_DBG strings. Its original result
+    # panel is the observable completion signal, never a forged log marker.
+    frame = replay.capture_text("official-ota-check-result", ["No update available"],
+                               alternatives=(["New update available", "Current Version", "New Version"],))
+    rows = tls_relay.snapshot()
+    replay.check("ota_original_tls_origin_relayed_opaque", any(item.get("official_origin") == "api.github.com"
+                 and not item.get("error") and item["origin_to_guest_bytes"] > 0 and item["tls_terminated"] is False
+                 and item["payloads_modified"] is False for item in rows), rows)
+    replay.check("ota_original_guest_release_result_panel", bool(frame), frame)
+    replay.report["online_ota_installation_exercised"] = False
+    replay.report["online_ota_installation_boundary"] = "This workflow checks real trusted official release metadata; it does not invent a newer release or press Install."
+
+
 def verify_sources(source: Path):
     actual = {name: file_sha256(source / name) for name in SOURCE_HASHES}
     changed = [name for name in actual if actual[name] != SOURCE_HASHES[name]]
@@ -984,18 +1269,25 @@ def verify_sources(source: Path):
     return actual
 
 
+def acceptance_outcome(completed, error, checks, strict_launcher_validity):
+    functional = bool(completed and not error and all(checks.values()))
+    return functional, bool(functional and strict_launcher_validity.get("diagnostics_clean"))
+
+
 def network_boot_checks(workflow: str, rom: str, serial: str, fatal_pattern):
     """Permit only the source-defined software resets of this explicit UI flow."""
     target = {"server": 6, "calibre": 6, "opds": 3, "koreader-auth": 5,
-              "koreader-signup": 5, "koreader-sync": 4}[workflow]
-    expected_targets = [0, target, 1, target, 1] if workflow == "koreader-sync" else [0, target]
+              "koreader-signup": 5, "koreader-sync": 4, "koreader-apply": 4, "koreader-smart": 4, "ntp": 0, "fonts": 7, "ota-check": 2}[workflow]
+    sync = workflow in ("koreader-sync", "koreader-apply", "koreader-smart")
+    cycles = 4 if workflow == "koreader-smart" else 2
+    expected_targets = ([0] + [target, 1] * cycles if sync else [0] if workflow == "ntp" else [0, target])
     targets = [int(value) for value in re.findall(r"Post-GPIO diagnostic: device=X3[^\n]*silentTarget=(\d+)", serial)]
     reasons = re.findall(r"Reset diagnostic: reset=\d+\((\w+)\)", serial)
     ready = [int(value) for value in re.findall(r"Minimal network boot ready: target=(\d+)", serial)]
     return {
         "rom_cold_boot": "ESP-ROM:esp32c3" in rom and "SPI_FAST_FLASH_BOOT" in rom,
         "source_controlled_network_software_reset_sequence": reasons == ["POWERON"] + ["SW"] * (len(expected_targets) - 1),
-        "source_controlled_network_boot_targets": targets == expected_targets and ready == ([target] * 2 if workflow == "koreader-sync" else [target]),
+        "source_controlled_network_boot_targets": targets == expected_targets and ready == ([target] * cycles if sync else [] if workflow == "ntp" else [target]),
         "no_sd_error_or_guest_panic": fatal_pattern.search(rom + "\n" + serial) is None,
     }, {"reset_reasons": reasons, "post_gpio_targets": targets, "expected_targets": expected_targets,
         "minimal_network_ready_targets": ready}
@@ -1012,12 +1304,12 @@ def run_workflow(args, name, fixture, sink):
     payload = bytes(range(256)) * 64 + b"Original guest network fixture.\n"
     files = {"/test.epub": book}
     if name == "opds":
-        files["/.crosspoint/opds.json"] = json.dumps({"servers": [{"name": "Original network fixture", "url": fixture.guest_origin + "/catalog/feed.xml",
+        files["/.crosspoint/opds.json"] = json.dumps({"servers": [{"name": "Original network fixture", "url": fixture.guest_origin + "/catalog/",
                                                                   "username": FIXTURE_USER, "password": FIXTURE_PASSWORD}]}).encode()
     if name.startswith("koreader"):
         files["/.crosspoint/koreader.json"] = json.dumps({"cfgVersion": 2, "username": FIXTURE_USER, "password": FIXTURE_PASSWORD,
                                                         "serverUrl": fixture.guest_origin, "matchMethod": 0,
-                                                        "sendMetadata": True, "syncBehavior": 0}).encode()
+                                                        "sendMetadata": True, "syncBehavior": 1 if name == "koreader-smart" else 0}).encode()
     card = output / "fixture-card.img"
     create_fat16_card(card, files)
     ports = {"http": free_port(), "websocket": free_port(), "discovery": free_port(socket.SOCK_DGRAM)}
@@ -1026,7 +1318,7 @@ def run_workflow(args, name, fixture, sink):
     forwards = [f"tcp:127.0.0.1:{ports['http']}-:80", f"tcp:127.0.0.1:{ports['websocket']}-:81", f"udp:127.0.0.1:{ports['discovery']}-:8134"]
     command = [sys.executable, "-m", "x3emu", "run", "--flash", str(args.flash.resolve()), "--sd", str(card),
                "--output", str(output / "run"), "--backend", str(args.backend.resolve()), "--wifi",
-               "--seconds", str(args.host_limit), "--icount", "--icount-shift", "3"]
+               "--seconds", str(args.host_limit)] + clock_arguments(args.host_paced)
     for forwarding in forwards:
         command += ["--wifi-hostfwd", forwarding]
     if args.rom_dir:
@@ -1037,19 +1329,49 @@ def run_workflow(args, name, fixture, sink):
               "fixture_inputs": {path: {"size": len(data), "sha256": sha(data)} for path, data in files.items()},
               "input_card_sha256": file_sha256(card), "input_payload_sha256": sha(payload),
               "checks": {}, "frames": {}, "http_requests": [], "websocket_frames": [],
+              "continue_known_dav_get_defect": args.continue_known_dav_get_defect,
+              "clock_policy": "native host-paced TCG virtual clock" if args.host_paced else "native instruction-counted TCG virtual clock shift3",
               "limits": {"physical_rf_modelled": False, "timing_calibrated": False, "phy_measurements": "synthetic ideal-zero",
                          "encrypted_air_modelled": False, "speed_selection_allowed": False},
               "unexercised_fixed_services": {"NTP": "pool.ntp.org UDP123 needs actual guest DNS routing",
                    "fonts": "HTTP crossink-fonts.s3.us-east-1.amazonaws.com needs actual guest DNS routing",
                    "OTA": "HTTPS api.github.com/releases/latest needs verified TLS and newer official release"}}
+    environment = os.environ.copy()
+    if args.host_router:
+        metadata = json.loads(args.host_router.with_suffix(args.host_router.suffix + ".json").read_text())
+        router_hash = file_sha256(args.host_router)
+        if metadata.get("library_sha256") != router_hash or metadata.get("source_sha256") != file_sha256(PROJECT / "scripts/host-socket-router.c"):
+            raise NetworkError("host router binary/source differs from explicit build metadata")
+        copied_router = output / "host-socket-router.so"
+        copied_router.write_bytes(args.host_router.read_bytes())
+        if file_sha256(copied_router) != router_hash:
+            raise NetworkError("private host router copy differs")
+        old_preload = environment.get("LD_PRELOAD", "")
+        caller_ranges = runpy.run_path(str(PROJECT / "scripts/build-host-router.py"))["slirp_static_ranges"](args.backend)
+        environment.update({"LD_PRELOAD": str(copied_router) + (":" + old_preload if old_preload else ""),
+                            "X3EMU_HOST_ROUTER": "1", "X3EMU_ROUTE_DNS_PORT": str(args.dns_fixture.port),
+                            "X3EMU_ROUTE_NTP_PORT": str(args.ntp_fixture.port), "X3EMU_ROUTE_HTTP_PORT": str(fixture.port),
+                            "X3EMU_ROUTE_TLS_PORT": str(args.tls_relay.port),
+                            "X3EMU_SLIRP_CALLER_RANGES": caller_ranges["environment_value"]})
+        report["host_router"] = {"build": metadata, "private_library_sha256": router_hash,
+                                  "static_libslirp_callers": caller_ranges,
+                                  "scope": "explicit libslirp host socket egress only", "existing_preload_preserved": bool(old_preload),
+                                  "routes": {"system DNS UDP53": f"127.0.0.1:{args.dns_fixture.port}",
+                                             "pool.ntp.org UDP123": f"127.0.0.1:{args.ntp_fixture.port}",
+                                             FONT_HOST + " TCP80": f"127.0.0.1:{fixture.port}",
+                                             "official SNI origins TCP443": f"127.0.0.1:{args.tls_relay.port}"},
+                                  "guest_endpoint_overrides": False, "tls_terminated": False}
     helpers = runpy.run_path(str(PROJECT / "scripts/smoke-crossink.py"))
     process = experiment = replay = qmp = None
     first_fixture_request, first_sink_request = len(fixture.snapshot()), len(sink.snapshot())
+    first_dns_request = len(args.dns_fixture.snapshot()) if args.host_router else 0
+    first_ntp_request = len(args.ntp_fixture.snapshot()) if args.host_router else 0
+    first_tls_request = len(args.tls_relay.snapshot()) if args.host_router else 0
     try:
         if file_sha256(args.flash) != FULL_FLASH_SHA256:
             raise NetworkError("network acceptance requires pinned full CrossInk v1.6.0 flash")
         with (output / "launcher.log").open("wb") as log:
-            process = subprocess.Popen(command, cwd=PROJECT, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
+            process = subprocess.Popen(command, cwd=PROJECT, stdin=subprocess.DEVNULL, stdout=log, stderr=log, env=environment)
         experiment = helpers["Experiment"](output, process, args.step_timeout, button_hold_ms=400)
         experiment.wait("launcher QMP broker", lambda:
                         (output / "run/run.json").is_file() and json.loads((output / "run/run.json").read_text())["status"] == "running")
@@ -1058,16 +1380,27 @@ def run_workflow(args, name, fixture, sink):
         qmp.set_buttons(0)
         experiment.wait("stock X3 boot", lambda: "Hardware detect: X3" in experiment.log_text("serial.log"))
         state = qmp.state()
-        replay.check("wifi_and_phy_diagnostics_available", all(prop in state.get("wifi", {}) for prop in DEVICE_PROPERTIES["wifi"])
-                     and all(prop in state.get("regi2c", {}) for prop in ("phy-handshake-modelled", "synthetic-measurements")))
+        replay.check("wifi_and_phy_diagnostics_available", all(prop in state.get("wifi", {}) for prop in WIFI_BASE_OBSERVATIONS)
+                     and all(prop in state.get("regi2c", {}) for prop in WIFI_PHY_OBSERVATIONS))
         if name in ("server", "calibre"):
             server_workflow(replay, ports, book, payload, fixture, calibre=name == "calibre")
         elif name == "opds":
             opds_workflow(replay, fixture, sink, book)
         elif name in ("koreader-auth", "koreader-signup"):
             koreader_auth_workflow(replay, fixture, signup=name == "koreader-signup")
+        elif name in ("koreader-sync", "koreader-apply"):
+            koreader_sync_workflow(replay, fixture, remote_advance=name == "koreader-apply")
+        elif name == "koreader-smart":
+            koreader_smart_workflow(replay, fixture)
+        elif name == "ntp":
+            ntp_workflow(replay, args.ntp_fixture)
+            report["unexercised_fixed_services"].pop("NTP")
+        elif name == "fonts":
+            fonts_workflow(replay, fixture)
+            report["unexercised_fixed_services"].pop("fonts")
         else:
-            koreader_sync_workflow(replay, fixture)
+            ota_check_workflow(replay, args.tls_relay)
+            report["unexercised_fixed_services"]["OTA"] = "Trusted metadata check exercised; online firmware installation not exercised"
         assert_bytes(replay, "original_book_unchanged", replay.read("/test.epub"), book)
         report["state_before_shutdown"] = qmp.state()
         report["completed"] = True
@@ -1098,14 +1431,26 @@ def run_workflow(args, name, fixture, sink):
             boot, observations = network_boot_checks(name, experiment.log_text("rom.log"), experiment.log_text("serial.log"), helpers["FATAL_LOG"])
             report["checks"].update(boot)
             report["network_boot_observations"] = observations
+        if args.host_router:
+            report["dns_peer_requests"] = args.dns_fixture.snapshot()[first_dns_request:]
+            report["ntp_peer_requests"] = args.ntp_fixture.snapshot()[first_ntp_request:]
+            report["opaque_tls_connections"] = args.tls_relay.snapshot()[first_tls_request:]
+            rows = []
+            if experiment:
+                for line in experiment.log_text("backend.log").splitlines():
+                    if line.startswith("x3emu-host-router: {"):
+                        rows.append(json.loads(line.removeprefix("x3emu-host-router: ")))
+            report["host_router"]["telemetry"] = rows
+            report["checks"]["explicit_host_router_active_and_finalized"] = any(row.get("active") for row in rows) and any(row.get("finished") for row in rows)
         manifest = output / "run/run.json"
         if manifest.is_file():
             run = json.loads(manifest.read_text())
             report["run_manifest"] = run
             report["strict_launcher_validity"] = run["validity"]
             report["checks"]["launcher_stopped_cleanly"] = run.get("status") == "stopped" and not run.get("error")
-            report["complete_machine_acceptance_passed"] = bool(report.get("completed") and run["validity"].get("diagnostics_clean"))
-        report["functional_pass"] = bool(report.get("completed") and not report.get("error") and all(report["checks"].values()))
+            report["checks"]["requested_clock_policy_matches_effective_native_clock"] = clock_policy_matches(args.host_paced, run)
+        report["functional_pass"], report["complete_machine_acceptance_passed"] = acceptance_outcome(
+            report.get("completed"), report.get("error"), report["checks"], report.get("strict_launcher_validity", {}))
         report["status"] = "passed" if report["functional_pass"] else "failed"
         write_json(output / "validation.json", report)
     return report
@@ -1118,13 +1463,21 @@ def main(argv=None):
     parser.add_argument("--rom-dir", type=Path)
     parser.add_argument("--flash", type=Path, default=PROJECT / "local/firmware/crossink-v1.6.0-x3-full-flash.bin")
     parser.add_argument("--source", type=Path, default=PROJECT.parent / "crossink-harness-src")
-    parser.add_argument("--workflows", default=",".join(WORKFLOWS))
+    parser.add_argument("--workflows", default=",".join(WORKFLOWS[:6]))
     parser.add_argument("--step-timeout", type=float, default=120)
     parser.add_argument("--host-limit", type=float, default=1800)
+    parser.add_argument("--host-paced", action="store_true",
+                        help="explicit diagnostic native TCG virtual clock without icount, for external services or independently clocked peers; timing stays uncalibrated")
+    parser.add_argument("--continue-known-dav-get-defect", action="store_true",
+                        help="diagnostic cohort only: retain confirmed one-byte stock DAV GET failure and inspect subsequent routes; overall pass stays false")
+    parser.add_argument("--host-router", type=Path,
+                        help="explicit compiled libslirp host egress helper from build-host-router.py; enables original fixed DNS/NTP/HTTP/TLS routes")
     args = parser.parse_args(argv)
     names = args.workflows.split(",")
     if not names or any(name not in WORKFLOWS for name in names) or len(set(names)) != len(names):
         parser.error("workflows must be unique names from " + ", ".join(WORKFLOWS))
+    if any(name in ("ntp", "fonts", "ota-check") for name in names) and not args.host_router:
+        parser.error("fixed-endpoint workflows require explicit --host-router; firmware URL overrides are not used")
     if not all(value > 0 and math.isfinite(value) for value in (args.step_timeout, args.host_limit)):
         parser.error("timeouts must be positive and finite")
     if args.output.exists() and any(args.output.iterdir()):
@@ -1133,6 +1486,9 @@ def main(argv=None):
     book = make_test_epub()
     sink = FixtureService(book, sink=True)
     fixture = FixtureService(book, redirect_port=sink.port)
+    args.dns_fixture = DatagramFixture("dns") if args.host_router else None
+    args.ntp_fixture = DatagramFixture("ntp") if args.host_router else None
+    args.tls_relay = TrustedTLSRelay(args.output / "opaque-tls") if args.host_router else None
     try:
         reports = [run_workflow(args, name, fixture, sink) for name in names]
         summary = {"schema_version": 1, "requested_workflows": names,
@@ -1146,6 +1502,9 @@ def main(argv=None):
     finally:
         fixture.close()
         sink.close()
+        for service in (args.dns_fixture, args.ntp_fixture, args.tls_relay):
+            if service:
+                service.close()
 
 
 if __name__ == "__main__":

@@ -5425,10 +5425,10 @@ index 0000000..6626e7d
 +type_init(xteink_x3_adc_register_types)
 diff --git a/hw/net/esp32c3_wifi.c b/hw/net/esp32c3_wifi.c
 new file mode 100644
-index 0000000..2495eea
+index 0000000..f76d28a
 --- /dev/null
 +++ b/hw/net/esp32c3_wifi.c
-@@ -0,0 +1,516 @@
+@@ -0,0 +1,822 @@
 +/*
 + * ESP32-C3 Wi-Fi MAC and an open virtual 802.11 access point.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -5455,7 +5455,9 @@ index 0000000..2495eea
 +#include "qapi/error.h"
 +#include "hw/irq.h"
 +#include "hw/qdev-properties.h"
++#include "hw/qdev-properties-system.h"
 +#include "hw/net/esp32c3_wifi.h"
++#include "chardev/char-socket.h"
 +#include "exec/address-spaces.h"
 +#include "zlib.h"
 +#include "trace.h"
@@ -5467,6 +5469,14 @@ index 0000000..2495eea
 +#define RX_DONE (BIT(14) | BIT(24))
 +#define AIR_POLL_NS 1000000
 +#define BEACON_NS 102400000
++#define PEER_HEADER_SIZE 8
++#define PEER_MAX_QUEUED 128
++
++static bool wifi_local_air_enabled(ESP32C3WifiState *s)
++{
++    return s->air_enabled &&
++           !(qemu_chr_fe_backend_connected(&s->peer_chr) && s->peer_only);
++}
 +
 +static void wifi_irq(ESP32C3WifiState *s)
 +{
@@ -5499,12 +5509,12 @@ index 0000000..2495eea
 +                MEMTXATTRS_UNSPECIFIED, data, len)) == MEMTX_OK;
 +}
 +
-+static void wifi_queue(ESP32C3WifiState *s, const uint8_t *data, size_t len)
++static bool wifi_queue(ESP32C3WifiState *s, const uint8_t *data, size_t len)
 +{
 +    ESP32C3AirFrame *f;
 +    if (len > sizeof(f->data) || s->queued >= 128) {
 +        s->rx_dropped++;
-+        return;
++        return false;
 +    }
 +    f = g_new0(ESP32C3AirFrame, 1);
 +    f->deadline = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + AIR_POLL_NS;
@@ -5512,7 +5522,200 @@ index 0000000..2495eea
 +    memcpy(f->data, data, len);
 +    QTAILQ_INSERT_TAIL(&s->frames, f, link);
 +    s->queued++;
-+    timer_mod(s->air_timer, f->deadline);
++    if (!timer_pending(s->air_timer) ||
++        timer_expire_time_ns(s->air_timer) > f->deadline) {
++        timer_mod(s->air_timer, f->deadline);
++    }
++    return true;
++}
++
++/*
++ * Host-only raw MPDU transport, not an ESP-NOW/application protocol:
++ * X3W1 | little-endian u16 channel | little-endian u16 MPDU length | MPDU.
++ * The MPDU excludes FCS; the existing RX DMA path appends it. Both endpoints
++ * must explicitly select the same fixed channel. Arrival is scheduled on the
++ * receiving QEMU's virtual clock; RF propagation, ACK/retry and synchronized
++ * clocks across two host processes are not modelled.
++ * MAC reset clears guest registers and queued RX air frames. The connection,
++ * partial stream decoder and pending host output remain intact to avoid
++ * splitting a wire packet. Disconnect drops output and resets the decoder.
++ * Host link state is not migrated; its read-only capability flag says so.
++ */
++static bool wifi_peer_supported(const uint8_t *frame, size_t length)
++{
++    uint16_t fc;
++    unsigned type;
++
++    if (length < 24 || length > 2304) {
++        return false;
++    }
++    fc = lduw_le_p(frame);
++    type = (fc >> 2) & 3;
++    return !(fc & (3 | BIT(14))) && (type == 0 || type == 2);
++}
++
++static void wifi_peer_drop_output(ESP32C3WifiState *s)
++{
++    ESP32C3PeerPacket *packet;
++
++    if (s->peer_watch) {
++        g_source_remove(s->peer_watch);
++        s->peer_watch = 0;
++    }
++    while ((packet = QTAILQ_FIRST(&s->peer_packets))) {
++        QTAILQ_REMOVE(&s->peer_packets, packet, link);
++        g_free(packet);
++        s->peer_dropped++;
++    }
++    s->peer_queued = 0;
++}
++
++static void wifi_peer_flush(ESP32C3WifiState *s);
++
++static gboolean wifi_peer_writable(void *unused, GIOCondition condition,
++                                   void *opaque)
++{
++    ESP32C3WifiState *s = opaque;
++
++    s->peer_watch = 0;
++    if (condition & (G_IO_HUP | G_IO_ERR)) {
++        s->peer_errors++;
++        qemu_chr_fe_disconnect(&s->peer_chr);
++        wifi_peer_drop_output(s);
++    } else {
++        wifi_peer_flush(s);
++    }
++    return G_SOURCE_REMOVE;
++}
++
++static void wifi_peer_flush(ESP32C3WifiState *s)
++{
++    ESP32C3PeerPacket *packet;
++
++    while (s->peer_connected &&
++           (packet = QTAILQ_FIRST(&s->peer_packets))) {
++        int consumed = qemu_chr_fe_write(&s->peer_chr,
++            packet->data + packet->offset, packet->length - packet->offset);
++
++        /* A socket write error can synchronously issue CHR_EVENT_CLOSED. */
++        if (!s->peer_connected || QTAILQ_FIRST(&s->peer_packets) != packet) {
++            return;
++        }
++        if (consumed > 0) {
++            packet->offset += consumed;
++        }
++        if (packet->offset < packet->length) {
++            if (!s->peer_watch) {
++                s->peer_watch = qemu_chr_fe_add_watch(&s->peer_chr,
++                    G_IO_OUT | G_IO_HUP | G_IO_ERR, wifi_peer_writable, s);
++            }
++            if (!s->peer_watch) {
++                s->peer_errors++;
++                qemu_chr_fe_disconnect(&s->peer_chr);
++                wifi_peer_drop_output(s);
++            }
++            return;
++        }
++        QTAILQ_REMOVE(&s->peer_packets, packet, link);
++        g_free(packet);
++        s->peer_queued--;
++        s->peer_tx_frames++;
++    }
++    if (s->peer_watch && QTAILQ_EMPTY(&s->peer_packets)) {
++        g_source_remove(s->peer_watch);
++        s->peer_watch = 0;
++    }
++}
++
++static void wifi_peer_transmit(ESP32C3WifiState *s, const uint8_t *frame,
++                                size_t length)
++{
++    ESP32C3PeerPacket *packet;
++
++    if (!wifi_peer_supported(frame, length)) {
++        s->peer_unmodelled++;
++        s->unsupported++;
++        return;
++    }
++    if (!s->peer_connected || s->peer_queued >= PEER_MAX_QUEUED) {
++        s->peer_dropped++;
++        return;
++    }
++    packet = g_new0(ESP32C3PeerPacket, 1);
++    memcpy(packet->data, "X3W1", 4);
++    stw_le_p(packet->data + 4, s->channel);
++    stw_le_p(packet->data + 6, length);
++    memcpy(packet->data + PEER_HEADER_SIZE, frame, length);
++    packet->length = PEER_HEADER_SIZE + length;
++    QTAILQ_INSERT_TAIL(&s->peer_packets, packet, link);
++    s->peer_queued++;
++    wifi_peer_flush(s);
++}
++
++static int wifi_peer_can_read(void *opaque)
++{
++    return 4096;
++}
++
++static void wifi_peer_receive(void *opaque, const uint8_t *data, int size)
++{
++    ESP32C3WifiState *s = opaque;
++
++    while (size > 0) {
++        uint32_t take = MIN(size, s->peer_rx_needed - s->peer_rx_used);
++
++        memcpy(s->peer_rx + s->peer_rx_used, data, take);
++        s->peer_rx_used += take;
++        data += take;
++        size -= take;
++        if (s->peer_rx_used < s->peer_rx_needed) {
++            continue;
++        }
++        if (s->peer_rx_needed == PEER_HEADER_SIZE) {
++            uint32_t length = lduw_le_p(s->peer_rx + 6);
++            uint32_t channel = lduw_le_p(s->peer_rx + 4);
++
++            if (memcmp(s->peer_rx, "X3W1", 4) || length < 24 ||
++                length > 2304 || channel < 1 || channel > 14) {
++                s->peer_malformed++;
++                memmove(s->peer_rx, s->peer_rx + 1, PEER_HEADER_SIZE - 1);
++                s->peer_rx_used--;
++                continue;
++            }
++            s->peer_rx_needed += length;
++            continue;
++        }
++        if (lduw_le_p(s->peer_rx + 4) != s->channel) {
++            s->peer_channel_drops++;
++        } else if (!wifi_peer_supported(s->peer_rx + PEER_HEADER_SIZE,
++                    s->peer_rx_needed - PEER_HEADER_SIZE)) {
++            s->peer_unmodelled++;
++            s->unsupported++;
++        } else {
++            s->peer_rx_frames++;
++            if (s->reset_held || !wifi_queue(s,
++                    s->peer_rx + PEER_HEADER_SIZE,
++                    s->peer_rx_needed - PEER_HEADER_SIZE)) {
++                s->peer_dropped++;
++            }
++        }
++        s->peer_rx_used = 0;
++        s->peer_rx_needed = PEER_HEADER_SIZE;
++    }
++}
++
++static void wifi_peer_event(void *opaque, QEMUChrEvent event)
++{
++    ESP32C3WifiState *s = opaque;
++
++    if (event == CHR_EVENT_OPENED || event == CHR_EVENT_CLOSED) {
++        s->peer_connected = event == CHR_EVENT_OPENED;
++        s->peer_rx_used = 0;
++        s->peer_rx_needed = PEER_HEADER_SIZE;
++        if (!s->peer_connected) {
++            wifi_peer_drop_output(s);
++        }
++    }
 +}
 +
 +static size_t wifi_management(ESP32C3WifiState *s, uint8_t *f, uint8_t subtype,
@@ -5634,8 +5837,9 @@ index 0000000..2495eea
 +
 +static void wifi_transmit(ESP32C3WifiState *s, unsigned queue, uint32_t value)
 +{
-+    uint8_t descriptor[12], frame[2304];
++    uint8_t descriptor[12], frame[2304 + 4];
 +    uint32_t desc = DMA_HIGH | (value & 0xfffff), packet, d0;
++    uint32_t phy_length = s->regs[(0x12f8 - queue * 60) / 4] & 0xfff;
 +    size_t len;
 +    if (!wifi_dma(desc, descriptor, sizeof(descriptor), false)) {
 +        s->bad_dma++;
@@ -5651,9 +5855,35 @@ index 0000000..2495eea
 +        s->tx_errors |= BIT(queue);
 +        goto done;
 +    }
++    /*
++     * C3 Open-MAC hardware.c programs PLCP1 at 0x12f8-slot*60 with the
++     * FCS-inclusive PSDU length. Its Rust transmit_hardware_frame uses
++     * measure_with(true), reserving four FCS bytes in the DMA descriptor.
++     * The stock guest likewise programs 0xab for its 171-byte AP beacon;
++     * the final four DMA bytes are a MAC-owned FCS reservation, not IEs.
++     * Peer framing excludes FCS; the receiving MAC constructs exactly one.
++     * The descriptor may instead omit FCS when PHY length is DMA length+4.
++     * Unprogrammed PHY length is an explicitly unverified legacy fallback.
++     */
++    if (!phy_length) {
++        s->tx_fcs_unverified++;
++        s->unsupported++;
++    } else if (phy_length == len && len >= 4) {
++        len -= 4;
++        s->tx_fcs_stripped++;
++    } else if (phy_length != len + 4) {
++        s->tx_length_errors++;
++        s->unsupported++;
++        s->tx_errors |= BIT(queue);
++        goto done;
++    }
 +    s->tx_frames++;
-+    trace_esp32c3_wifi_tx(queue, desc, len, lduw_le_p(frame));
-+    if (s->air_enabled) {
++    trace_esp32c3_wifi_tx(queue, desc, len,
++                         len >= 2 ? lduw_le_p(frame) : 0);
++    if (qemu_chr_fe_backend_connected(&s->peer_chr)) {
++        wifi_peer_transmit(s, frame, len);
++    }
++    if (wifi_local_air_enabled(s)) {
 +        wifi_station_frame(s, frame, len);
 +    }
 +    s->tx_complete |= BIT(queue);
@@ -5723,7 +5953,7 @@ index 0000000..2495eea
 +    if (s->reset_held) {
 +        return;
 +    }
-+    if (s->air_enabled && now >= s->next_beacon) {
++    if (wifi_local_air_enabled(s) && now >= s->next_beacon) {
 +        if (!s->associated) {
 +            wifi_beacon(s, (uint8_t[]){255, 255, 255, 255, 255, 255}, false);
 +        }
@@ -5732,7 +5962,7 @@ index 0000000..2495eea
 +    if (f && f->deadline <= now && wifi_receive_frame(s, f)) {
 +        QTAILQ_REMOVE(&s->frames, f, link); g_free(f); s->queued--;
 +    }
-+    if (s->air_enabled || s->queued) {
++    if (wifi_local_air_enabled(s) || s->queued) {
 +        timer_mod(s->air_timer, now + AIR_POLL_NS);
 +    }
 +}
@@ -5754,6 +5984,15 @@ index 0000000..2495eea
 +    case 0x2118: return s->power_events;
 +    case 0x2018: return s->tsf_latched;
 +    case 0x201c: return s->tsf_latched >> 32;
++    case 0x12f8:
++    case 0x12bc:
++    case 0x1280:
++    case 0x1244:
++    case 0x1208:
++        if (s->regs[addr / 4] & ~0xfffu) {
++            wifi_unsupported(s, addr, false, s->regs[addr / 4]);
++        }
++        return s->regs[addr / 4]; /* PLCP1 PSDU length; upper PHY unmodelled. */
 +    default:
 +        wifi_unsupported(s, addr, false, s->regs[addr / 4]);
 +        return s->regs[addr / 4];
@@ -5781,6 +6020,15 @@ index 0000000..2495eea
 +        s->regs[addr / 4] &= ~1u;
 +        break;
 +    case 0x211c: s->power_events &= ~v; break;
++    case 0x12f8:
++    case 0x12bc:
++    case 0x1280:
++    case 0x1244:
++    case 0x1208:
++        if (v & ~0xfffu) {
++            wifi_unsupported(s, addr, true, v);
++        }
++        break;
 +    case 0x200c:
 +        if (v & 3) {
 +            s->tsf_latched = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) / 1000 +
@@ -5850,7 +6098,9 @@ index 0000000..2495eea
 +    s->reset_held = false;
 +    s->next_beacon = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + BEACON_NS;
 +    timer_del(s->air_timer);
-+    if (s->air_enabled) { timer_mod(s->air_timer, s->next_beacon); }
++    if (wifi_local_air_enabled(s)) {
++        timer_mod(s->air_timer, s->next_beacon);
++    }
 +    wifi_irq(s);
 +}
 +
@@ -5863,18 +6113,30 @@ index 0000000..2495eea
 +        timer_del(s->air_timer);
 +    }
 +    s->reset_held = !!level;
-+    if (!level && s->air_enabled) {
++    if (!level && wifi_local_air_enabled(s)) {
 +        timer_mod(s->air_timer, s->next_beacon);
 +    }
 +}
 +
 +static bool wifi_false(Object *obj, Error **errp) { return false; }
 +
++static bool wifi_peer_configured(Object *obj, Error **errp)
++{
++    return qemu_chr_fe_backend_connected(&ESP32C3_WIFI(obj)->peer_chr);
++}
++
++static bool wifi_peer_is_connected(Object *obj, Error **errp)
++{
++    return ESP32C3_WIFI(obj)->peer_connected;
++}
++
 +static void wifi_init(Object *obj)
 +{
 +    ESP32C3WifiState *s = ESP32C3_WIFI(obj);
 +    SysBusDevice *dev = SYS_BUS_DEVICE(obj);
 +    QTAILQ_INIT(&s->frames);
++    QTAILQ_INIT(&s->peer_packets);
++    s->peer_rx_needed = PEER_HEADER_SIZE;
 +    memory_region_init_io(&s->iomem, obj, &wifi_ops, s, TYPE_ESP32C3_WIFI, 0x3000);
 +    sysbus_init_mmio(dev, &s->iomem);
 +    sysbus_init_irq(dev, &s->irq); sysbus_init_irq(dev, &s->power_irq);
@@ -5883,6 +6145,12 @@ index 0000000..2495eea
 +    memcpy(s->bssid, (uint8_t[]){2, 0x58, 0x33, 0x45, 0x4d, 1}, 6);
 +    object_property_add_uint64_ptr(obj, "unsupported-accesses", &s->unsupported, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "tx-frames", &s->tx_frames, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "tx-fcs-stripped-frames",
++                                   &s->tx_fcs_stripped, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "tx-fcs-unverified-frames",
++                                   &s->tx_fcs_unverified, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "tx-length-errors",
++                                   &s->tx_length_errors, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "rx-frames", &s->rx_frames, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "rx-dropped", &s->rx_dropped, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "bad-dma", &s->bad_dma, OBJ_PROP_FLAG_READ);
@@ -5895,6 +6163,30 @@ index 0000000..2495eea
 +    object_property_add_bool(obj, "radio-modelled", wifi_false, NULL);
 +    object_property_add_bool(obj, "timing-calibrated", wifi_false, NULL);
 +    object_property_add_bool(obj, "encryption-modelled", wifi_false, NULL);
++    object_property_add_bool(obj, "peer-configured",
++                             wifi_peer_configured, NULL);
++    object_property_add_bool(obj, "peer-connected",
++                             wifi_peer_is_connected, NULL);
++    object_property_add_bool(obj, "channel-control-modelled", wifi_false, NULL);
++    object_property_add_bool(obj, "peer-clock-sync-modelled", wifi_false, NULL);
++    object_property_add_bool(obj, "peer-link-migration-modelled",
++                             wifi_false, NULL);
++    object_property_add_uint64_ptr(obj, "peer-tx-frames",
++                                   &s->peer_tx_frames, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "peer-rx-frames",
++                                   &s->peer_rx_frames, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "peer-queued-packets",
++                                   &s->peer_queued, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "peer-dropped-frames",
++                                   &s->peer_dropped, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "peer-malformed-inputs",
++                                   &s->peer_malformed, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "peer-channel-drops",
++                                   &s->peer_channel_drops, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "peer-unmodelled-frames",
++                                   &s->peer_unmodelled, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "peer-link-errors",
++                                   &s->peer_errors, OBJ_PROP_FLAG_READ);
 +}
 +
 +static void wifi_realize(DeviceState *dev, Error **errp)
@@ -5909,12 +6201,24 @@ index 0000000..2495eea
 +                          object_get_typename(OBJECT(dev)), dev->id,
 +                          &dev->mem_reentrancy_guard, s);
 +    qemu_format_nic_info_str(qemu_get_queue(s->nic), s->conf.macaddr.a);
++    if (qemu_chr_fe_backend_connected(&s->peer_chr)) {
++        if (!object_dynamic_cast(OBJECT(qemu_chr_fe_get_driver(&s->peer_chr)),
++                                 TYPE_CHARDEV_SOCKET)) {
++            error_setg(errp, "Wi-Fi peer-chardev requires a socket chardev");
++            return;
++        }
++        qemu_chr_fe_set_handlers(&s->peer_chr, wifi_peer_can_read,
++                                wifi_peer_receive, wifi_peer_event,
++                                NULL, s, NULL, true);
++    }
 +}
 +
 +static void wifi_finalize(Object *obj)
 +{
 +    ESP32C3WifiState *s = ESP32C3_WIFI(obj);
 +    ESP32C3AirFrame *f;
++    qemu_chr_fe_deinit(&s->peer_chr, false);
++    wifi_peer_drop_output(s);
 +    timer_free(s->air_timer);
 +    while ((f = QTAILQ_FIRST(&s->frames))) {
 +        QTAILQ_REMOVE(&s->frames, f, link); g_free(f);
@@ -5926,6 +6230,8 @@ index 0000000..2495eea
 +    DEFINE_PROP_STRING("ssid", ESP32C3WifiState, ssid),
 +    DEFINE_PROP_UINT32("channel", ESP32C3WifiState, channel, 6),
 +    DEFINE_PROP_BOOL("air-enabled", ESP32C3WifiState, air_enabled, false),
++    DEFINE_PROP_CHR("peer-chardev", ESP32C3WifiState, peer_chr),
++    DEFINE_PROP_BOOL("peer-only", ESP32C3WifiState, peer_only, true),
 +};
 +
 +static void wifi_class_init(ObjectClass *klass, void *data)
@@ -8168,16 +8474,17 @@ index 0000000..949ed54
 +#endif
 diff --git a/include/hw/net/esp32c3_wifi.h b/include/hw/net/esp32c3_wifi.h
 new file mode 100644
-index 0000000..42efbbc
+index 0000000..c0f9217
 --- /dev/null
 +++ b/include/hw/net/esp32c3_wifi.h
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,59 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#ifndef HW_ESP32C3_WIFI_H
 +#define HW_ESP32C3_WIFI_H
 +#include "hw/sysbus.h"
 +#include "net/net.h"
 +#include "qemu/timer.h"
++#include "chardev/char-fe.h"
 +
 +#define TYPE_ESP32C3_WIFI "esp32c3.wifi"
 +OBJECT_DECLARE_SIMPLE_TYPE(ESP32C3WifiState, ESP32C3_WIFI)
@@ -8188,6 +8495,12 @@ index 0000000..42efbbc
 +    size_t length;
 +    uint8_t data[2304];
 +} ESP32C3AirFrame;
++
++typedef struct ESP32C3PeerPacket {
++    QTAILQ_ENTRY(ESP32C3PeerPacket) link;
++    uint32_t length, offset;
++    uint8_t data[8 + 2304];
++} ESP32C3PeerPacket;
 +
 +struct ESP32C3WifiState {
 +    SysBusDevice parent_obj;
@@ -8212,7 +8525,16 @@ index 0000000..42efbbc
 +    bool air_enabled, associated, reset_held;
 +    uint64_t reset_count;
 +    uint64_t tx_frames, rx_frames, rx_dropped, eth_tx, eth_rx;
++    uint64_t tx_fcs_stripped, tx_fcs_unverified, tx_length_errors;
 +    uint64_t unsupported, bad_dma, beacons, auth_requests, assoc_requests;
++    CharBackend peer_chr;
++    bool peer_only, peer_connected;
++    guint peer_watch;
++    QTAILQ_HEAD(, ESP32C3PeerPacket) peer_packets;
++    uint64_t peer_queued, peer_tx_frames, peer_rx_frames, peer_dropped;
++    uint64_t peer_malformed, peer_channel_drops, peer_unmodelled, peer_errors;
++    uint8_t peer_rx[8 + 2304];
++    uint32_t peer_rx_used, peer_rx_needed;
 +};
 +#endif
 diff --git a/include/hw/riscv/esp32c3_clk.h b/include/hw/riscv/esp32c3_clk.h
@@ -11094,16 +11416,18 @@ index 0000000..475b32f
 +}
 diff --git a/tests/qtest/esp32c3-wifi-test.c b/tests/qtest/esp32c3-wifi-test.c
 new file mode 100644
-index 0000000..cda7d32
+index 0000000..52fb135
 --- /dev/null
 +++ b/tests/qtest/esp32c3-wifi-test.c
-@@ -0,0 +1,159 @@
+@@ -0,0 +1,677 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
 +#include "qemu/bswap.h"
 +#include "libqtest.h"
 +#include "qapi/qmp/qdict.h"
 +#include "qapi/qmp/qnum.h"
++#include "qemu/sockets.h"
++#include <glib/gstdio.h>
 +
 +#define MAC 0x60033000
 +#define RX_DESC 0x3fc90000
@@ -11130,6 +11454,227 @@ index 0000000..cda7d32
 +    return value;
 +}
 +
++static bool flag(QTestState *qts, const char *property)
++{
++    QDict *reply = qtest_qmp(qts,
++        "{ 'execute': 'qom-get', 'arguments': { 'path': '/machine/wifi',"
++        " 'property': %s } }", property);
++    bool value = qdict_get_bool(reply, "return");
++
++    qobject_unref(reply);
++    return value;
++}
++
++static void close_socket(int fd)
++{
++#ifdef _WIN32
++    closesocket(fd);
++#else
++    close(fd);
++#endif
++}
++
++typedef struct PeerListener {
++    unsigned port;
++    int fd;
++} PeerListener;
++
++static PeerListener reserve_listener(void)
++{
++    struct sockaddr_in address = { .sin_family = AF_INET };
++    socklen_t size = sizeof(address);
++    int fd = socket(AF_INET, SOCK_STREAM, 0);
++    PeerListener listener;
++
++    g_assert_cmpint(fd, >=, 0);
++    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
++    g_assert_cmpint(bind(fd, (struct sockaddr *)&address, size), ==, 0);
++    g_assert_cmpint(getsockname(fd, (struct sockaddr *)&address, &size), ==, 0);
++    listener.port = ntohs(address.sin_port);
++    listener.fd = fd;
++    return listener;
++}
++
++static QTestState *start_peer_with_efuse(PeerListener *listener, bool server,
++                                        const char *efuse)
++{
++    g_autofree char *drive = efuse ? g_strdup_printf(
++        "-drive file=%s,if=none,format=raw,id=wifi-efuse "
++        "-global driver=nvram.esp32c3.efuse,property=drive,value=wifi-efuse",
++        efuse) : g_strdup("");
++
++    g_autofree char *socket_args = NULL;
++    QTestState *qts;
++
++#ifndef _WIN32
++    if (server) {
++        /* Keep the bound port owned while libqtest reserves its transports. */
++        g_assert_cmpint(listener->fd, >=, 0);
++        socket_args = g_strdup_printf("fd=%d,server=on,wait=off", listener->fd);
++    }
++#else
++    /* libqtest's Windows CreateProcess path does not inherit socket handles. */
++    if (server) {
++        close_socket(listener->fd);
++        listener->fd = -1;
++    }
++#endif
++    if (!socket_args) {
++        socket_args = g_strdup_printf("host=127.0.0.1,port=%u,server=%s%s",
++            listener->port, server ? "on" : "off", server ? ",wait=off" : "");
++    }
++    qts = qtest_initf("-machine esp32c3,xteink-x3=true -nodefaults -nic none "
++        "-chardev socket,id=peer,%s "
++        "-global driver=esp32c3.wifi,property=peer-chardev,value=peer "
++        "-global driver=esp32c3.wifi,property=channel,value=1 "
++        "-global driver=esp32c3.wifi,property=air-enabled,value=true %s",
++        socket_args, drive);
++    if (server && listener->fd >= 0) {
++        close_socket(listener->fd);
++        listener->fd = -1;
++    }
++    return qts;
++}
++
++static QTestState *start_peer(PeerListener *listener, bool server)
++{
++    return start_peer_with_efuse(listener, server, NULL);
++}
++
++static char *peer_efuse(unsigned last_mac_byte)
++{
++    uint8_t bytes[336] = {0};
++    char *path = NULL;
++    int fd = g_file_open_tmp("esp32c3-wifi-efuse-XXXXXX", &path, NULL);
++
++    g_assert_cmpint(fd, >=, 0);
++    g_assert_true(g_close(fd, NULL));
++    /* BLK1 bit40..0 is the factory MAC: 02:00:00:00:00:<last>. */
++    bytes[24] = last_mac_byte;
++    bytes[29] = 2;
++    stl_le_p(bytes + 36, (3u << 18) | (3u << 24)); /* Default C3 revision. */
++    stl_le_p(bytes + 64, 1); /* Default eFuse block version1.3. */
++    g_assert_true(g_file_set_contents(path, (char *)bytes,
++                                      sizeof(bytes), NULL));
++    return path;
++}
++
++static void wait_connected(QTestState *qts, bool connected)
++{
++    int64_t deadline = g_get_monotonic_time() + G_TIME_SPAN_SECOND;
++
++    while (flag(qts, "peer-connected") != connected) {
++        g_assert_cmpint(g_get_monotonic_time(), <, deadline);
++    }
++}
++
++static void wait_count(QTestState *qts, const char *property, uint64_t target)
++{
++    int64_t deadline = g_get_monotonic_time() + G_TIME_SPAN_SECOND;
++
++    while (count(qts, property) < target) {
++        g_assert_cmpint(g_get_monotonic_time(), <, deadline);
++    }
++}
++
++static int connect_peer(unsigned port)
++{
++    struct sockaddr_in address = { .sin_family = AF_INET };
++    int fd = socket(AF_INET, SOCK_STREAM, 0);
++
++    g_assert_cmpint(fd, >=, 0);
++    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
++    address.sin_port = htons(port);
++    g_assert_cmpint(connect(fd, (struct sockaddr *)&address,
++                            sizeof(address)), ==, 0);
++    return fd;
++}
++
++static void host_send(int fd, const uint8_t *data, size_t length)
++{
++    while (length) {
++        int consumed = send(fd, data, length, 0);
++
++        g_assert_cmpint(consumed, >, 0);
++        data += consumed;
++        length -= consumed;
++    }
++}
++
++static void action_frame(uint8_t frame[40], uint8_t source, uint8_t destination)
++{
++    memset(frame, 0, 40);
++    frame[0] = 0xd0; /* Unprotected management/action MPDU. */
++    frame[4] = frame[10] = 2;
++    frame[9] = destination;
++    frame[15] = source;
++    memset(frame + 16, 0xff, 6);
++    frame[24] = 127; /* Vendor action category; body is not interpreted. */
++    memcpy(frame + 25, (uint8_t[]){0x18, 0xfe, 0x34, 0, 1, 2, 3}, 7);
++    memcpy(frame + 32, (uint8_t[]){0, 0xff, 0x7f, 0x80, 4, 3, 2, 1}, 8);
++}
++
++static void wire_packet(uint8_t wire[48], const uint8_t frame[40],
++                         unsigned channel)
++{
++    memcpy(wire, "X3W1", 4);
++    stw_le_p(wire + 4, channel);
++    stw_le_p(wire + 6, 40);
++    memcpy(wire + 8, frame, 40);
++}
++
++static void send_dma_frame(QTestState *qts, const uint8_t *frame, size_t length,
++                           unsigned phy_length, unsigned queue)
++{
++    qtest_memwrite(qts, TX_BUFFER, frame, length);
++    qtest_writel(qts, MAC + 0x12f8 - queue * 60, phy_length);
++    qtest_writel(qts, TX_DESC, (1u << 31) | length << 12 | length);
++    qtest_writel(qts, TX_DESC + 4, TX_BUFFER);
++    qtest_writel(qts, TX_DESC + 8, 0);
++    qtest_writel(qts, MAC + 0xd08 - queue * 8,
++                  (TX_DESC & 0xfffff) | 0xc0600000);
++}
++
++static void send_frame(QTestState *qts, const uint8_t *frame, size_t length)
++{
++    static const uint8_t reservation[4] = {0xcc, 0x3f, 0xef, 0xbe};
++    uint8_t dma[2304 + 4];
++
++    g_assert_cmpuint(length, <=, 2304);
++    memcpy(dma, frame, length);
++    memcpy(dma + length, reservation, sizeof(reservation));
++    send_dma_frame(qts, dma, length + 4, length + 4, 0);
++}
++
++static void assert_rx_mpdu(QTestState *qts, const uint8_t *frame, size_t length)
++{
++    uint8_t received[48 + 2304 + 4];
++    uint32_t crc = UINT32_MAX;
++    unsigned byte, bit;
++
++    /* Independent bitwise IEEE802.11 FCS reference; device uses zlib. */
++    for (byte = 0; byte < length; byte++) {
++        crc ^= frame[byte];
++        for (bit = 0; bit < 8; bit++) {
++            crc = (crc >> 1) ^ ((crc & 1) ? 0xedb88320u : 0);
++        }
++    }
++
++    g_assert_cmpuint(length, <=, 2304);
++    qtest_memread(qts, RX_BUFFER, received, 48 + length + 4);
++    g_assert_cmpuint(ldl_le_p(received + 44), ==, length + 4);
++    g_assert_cmpmem(received + 48, length, frame, length);
++    g_assert_cmphex((uint32_t)ldl_le_p(received + 48 + length),
++                    ==, (uint32_t)~crc);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c) & ((1u << 14) | (1u << 24)),
++                    ==, (1u << 14) | (1u << 24));
++}
++
++static void assert_rx_frame(QTestState *qts, const uint8_t frame[40])
++{
++    assert_rx_mpdu(qts, frame, 40);
++}
++
 +static void arm_rx(QTestState *qts, uint32_t buffer, unsigned size)
 +{
 +    qtest_writel(qts, RX_DESC, (1u << 31) | size);
@@ -11146,7 +11691,10 @@ index 0000000..cda7d32
 +    memcpy(auth + 16, auth + 4, 6);
 +    stw_le_p(auth + 26, 1);
 +    qtest_memwrite(qts, TX_BUFFER, auth, sizeof(auth));
-+    qtest_writel(qts, TX_DESC, (1u << 31) | sizeof(auth) << 12 | sizeof(auth));
++    qtest_writel(qts, TX_BUFFER + sizeof(auth), 0xdeadbeef);
++    qtest_writel(qts, MAC + 0x12f8 - queue * 60, sizeof(auth) + 4);
++    qtest_writel(qts, TX_DESC, (1u << 31) | (sizeof(auth) + 4) << 12 |
++                              (sizeof(auth) + 4));
 +    qtest_writel(qts, TX_DESC + 4, TX_BUFFER);
 +    qtest_writel(qts, TX_DESC + 8, 0);
 +    qtest_writel(qts, MAC + 0xd08 - queue * 8, (TX_DESC & 0xfffff) | 0xc0600000);
@@ -11248,6 +11796,284 @@ index 0000000..cda7d32
 +    qtest_quit(qts);
 +}
 +
++static void test_peer_two_guest_bidirectional_raw_dma(void)
++{
++    PeerListener listener = reserve_listener();
++    g_autofree char *efuse_a = peer_efuse(1);
++    g_autofree char *efuse_b = peer_efuse(2);
++    QTestState *a = start_peer_with_efuse(&listener, true, efuse_a);
++    QTestState *b = start_peer_with_efuse(&listener, false, efuse_b);
++    uint8_t frame[40];
++
++    wait_connected(a, true);
++    wait_connected(b, true);
++    /* Separate drive-backed hardware MAC words, not a host NIC override. */
++    g_assert_cmphex(qtest_readl(a, 0x60008844), ==, 1);
++    g_assert_cmphex(qtest_readl(b, 0x60008844), ==, 2);
++    g_assert_cmphex(qtest_readl(a, 0x60008848) & 0xffff, ==, 0x0200);
++    g_assert_cmphex(qtest_readl(b, 0x60008848) & 0xffff, ==, 0x0200);
++    g_assert_cmphex(qtest_readl(a, 0x60008850), ==, (3u << 18) | (3u << 24));
++    g_assert_true(flag(a, "peer-configured"));
++    g_assert_false(flag(a, "peer-clock-sync-modelled"));
++    g_assert_false(flag(a, "peer-link-migration-modelled"));
++    g_assert_false(flag(a, "channel-control-modelled"));
++    arm_rx(b, RX_BUFFER, 2048);
++    action_frame(frame, 1, 2);
++    send_frame(a, frame, sizeof(frame));
++    wait_count(b, "peer-rx-frames", 1);
++    qtest_clock_step(b, 2000000);
++    assert_rx_frame(b, frame);
++    g_assert_cmpuint(count(a, "peer-tx-frames"), ==, 1);
++    g_assert_cmphex(qtest_readl(a, MAC + 0xcb0), ==, 1);
++    g_assert_cmphex(qtest_readl(a, MAC + 0xca8), ==, 0);
++
++    arm_rx(a, RX_BUFFER, 2048);
++    action_frame(frame, 2, 1);
++    frame[0] = 8; /* Raw data frame also passes without LLC/app translation. */
++    send_frame(b, frame, sizeof(frame));
++    wait_count(a, "peer-rx-frames", 1);
++    qtest_clock_step(a, 2000000);
++    assert_rx_frame(a, frame);
++    qtest_clock_step(a, 250000000);
++    qtest_clock_step(b, 250000000);
++    g_assert_cmpuint(count(a, "beacons"), ==, 0);
++    g_assert_cmpuint(count(b, "beacons"), ==, 0);
++    g_assert_cmpuint(count(a, "auth-requests"), ==, 0);
++    g_assert_cmpuint(count(a, "bad-dma"), ==, 0);
++    g_assert_cmpuint(count(b, "bad-dma"), ==, 0);
++    qtest_quit(b);
++    qtest_quit(a);
++    g_assert_cmpint(g_unlink(efuse_a), ==, 0);
++    g_assert_cmpint(g_unlink(efuse_b), ==, 0);
++}
++
++static void test_peer_stream_fragmentation_and_malformed_resync(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t frame[40], wire[48], invalid[8] = {'X', '3', 'W', '1'};
++
++    wait_connected(qts, true);
++    arm_rx(qts, RX_BUFFER, 2048);
++    action_frame(frame, 1, 2);
++    wire_packet(wire, frame, 1);
++    host_send(fd, wire, 3);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "peer-rx-frames"), ==, 0);
++    host_send(fd, wire + 3, 12);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "peer-rx-frames"), ==, 0);
++    host_send(fd, wire + 15, sizeof(wire) - 15);
++    wait_count(qts, "peer-rx-frames", 1);
++    qtest_clock_step(qts, 2000000);
++    assert_rx_frame(qts, frame);
++
++    /* An oversized envelope never allocates its advertised payload. */
++    stw_le_p(invalid + 4, 1);
++    stw_le_p(invalid + 6, 65535);
++    host_send(fd, invalid, sizeof(invalid));
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 2);
++    g_assert_cmpuint(count(qts, "peer-malformed-inputs"), >, 0);
++    qtest_writel(qts, RX_DESC, (1u << 31) | 2048);
++    qtest_writel(qts, MAC + 0x084, 1);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 2);
++    assert_rx_frame(qts, frame);
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_peer_channel_encryption_and_queue_bound(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t frame[40], wire[48];
++    unsigned index;
++
++    wait_connected(qts, true);
++    action_frame(frame, 1, 2);
++    wire_packet(wire, frame, 6);
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-channel-drops", 1);
++    g_assert_cmpuint(count(qts, "peer-rx-frames"), ==, 0);
++    frame[1] = 0x40; /* Protected frames require an unmodelled crypto path. */
++    wire_packet(wire, frame, 1);
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-unmodelled-frames", 1);
++    g_assert_cmpuint(count(qts, "unsupported-accesses"), ==, 1);
++    frame[1] = 0;
++    wire_packet(wire, frame, 1);
++    for (index = 0; index < 129; index++) {
++        host_send(fd, wire, sizeof(wire));
++    }
++    wait_count(qts, "peer-rx-frames", 129);
++    g_assert_cmpuint(count(qts, "peer-dropped-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "rx-dropped"), ==, 1);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 0);
++    arm_rx(qts, RX_BUFFER, 2048);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 1);
++    assert_rx_frame(qts, frame);
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_peer_disconnect_reconnect_and_tx_completion(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t frame[40], wire[48];
++
++    wait_connected(qts, true);
++    action_frame(frame, 1, 2);
++    wire_packet(wire, frame, 1);
++    host_send(fd, wire, 7); /* Connection-local partial header. */
++    close_socket(fd);
++    wait_connected(qts, false);
++    send_frame(qts, frame, sizeof(frame));
++    g_assert_cmpuint(count(qts, "peer-dropped-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "peer-tx-frames"), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xcb0), ==, 1);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xca8), ==, 0);
++    fd = connect_peer(listener.port);
++    wait_connected(qts, true);
++    arm_rx(qts, RX_BUFFER, 2048);
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 1);
++    qtest_clock_step(qts, 2000000);
++    assert_rx_frame(qts, frame);
++    g_assert_cmpuint(count(qts, "peer-malformed-inputs"), ==, 0);
++    g_assert_cmpuint(count(qts, "peer-queued-packets"), ==, 0);
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_peer_fcs_inclusive_frame_kinds(void)
++{
++    /* Original stock guests with synthetic factory MACs, no private data. */
++    static const char *vectors[] = {
++        /* Open authentication: 30-byte MPDU, 34-byte DMA/PLCP. */
++        "sAAAAAJYM0VEAgJYM0VEAwJYM0VEAlAHAAABAAAA",
++        /* Guest's first default-SSID beacon: 167+4 == PLCP 0xab. */
++        "gAAAAP///////wJYM0VEAgJYM0VEAjAAAAAAAAAAAABkACEEAApFU1BfNDU0NDAy"
++        "AQiLloKEDBgwYAMBAQUGAAEAAAAAKgEAMgRsEiRILRpuEQD/AAAAAAAAAAAAAAAB"
++        "AAAAAAAAAAAAAD0WAQUAAAAAAAAAAAAAAAAAAAAAAAAAAH8JAQAAAAAAAAAA3RgA"
++        "UPICAQEEAAOkAAAnpAAAQkNeAGIyLwA=",
++        /* Guest's IPv4 multicast report: 64-byte MPDU, 68-byte DMA. */
++        "CAIAAAEAXgAA+wJYM0VEAgJYM0VEAgAAqqoDAAAACABGAAAgAAAAAAECfzPA"
++        "qAQB4AAA+5QEAAAWAAkE4AAA+w==",
++    };
++    PeerListener listener = reserve_listener();
++    unsigned index;
++    QTestState *a = start_peer(&listener, true);
++    QTestState *b = start_peer(&listener, false);
++    uint8_t action[40], largest[2304];
++
++    wait_connected(a, true);
++    wait_connected(b, true);
++    for (index = 0; index < ARRAY_SIZE(vectors); index++) {
++        gsize length;
++        g_autofree uint8_t *frame = g_base64_decode(vectors[index], &length);
++
++        arm_rx(b, RX_BUFFER, 4095);
++        send_frame(a, frame, length);
++        wait_count(b, "peer-rx-frames", index + 1);
++        qtest_clock_step(b, 2000000);
++        assert_rx_mpdu(b, frame, length);
++    }
++    action_frame(action, 1, 2);
++    stl_le_p(action + 36, 0xdeadbeef); /* Real payload must remain intact. */
++    arm_rx(b, RX_BUFFER, 4095);
++    send_frame(a, action, sizeof(action));
++    wait_count(b, "peer-rx-frames", 4);
++    qtest_clock_step(b, 2000000);
++    assert_rx_mpdu(b, action, sizeof(action));
++
++    memset(largest, 0xa5, sizeof(largest));
++    memcpy(largest, action, sizeof(action));
++    arm_rx(b, RX_BUFFER, 4095);
++    send_frame(a, largest, sizeof(largest)); /* Maximum modelled MPDU + FCS. */
++    wait_count(b, "peer-rx-frames", 5);
++    qtest_clock_step(b, 2000000);
++    assert_rx_mpdu(b, largest, sizeof(largest));
++    g_assert_cmpuint(count(a, "tx-fcs-stripped-frames"), ==, 5);
++    g_assert_cmpuint(count(a, "tx-fcs-unverified-frames"), ==, 0);
++    g_assert_cmpuint(count(a, "tx-length-errors"), ==, 0);
++    qtest_quit(b);
++    qtest_quit(a);
++}
++
++static void test_peer_fcs_excluded_preserves_payload(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *a = start_peer(&listener, true);
++    QTestState *b = start_peer(&listener, false);
++    uint8_t frame[40];
++
++    wait_connected(a, true);
++    wait_connected(b, true);
++    arm_rx(b, RX_BUFFER, 2048);
++    action_frame(frame, 1, 2);
++    stl_le_p(frame + 36, 0xdeadbeef);
++    /* The programmed PSDU is four bytes longer than this DMA body. */
++    send_dma_frame(a, frame, sizeof(frame), sizeof(frame) + 4, 4);
++    wait_count(b, "peer-rx-frames", 1);
++    qtest_clock_step(b, 2000000);
++    assert_rx_frame(b, frame);
++    g_assert_cmpuint(count(a, "tx-fcs-stripped-frames"), ==, 0);
++    g_assert_cmpuint(count(a, "tx-fcs-unverified-frames"), ==, 0);
++    g_assert_cmpuint(count(a, "tx-length-errors"), ==, 0);
++    g_assert_cmphex(qtest_readl(a, MAC + 0xcb0), ==, 1u << 4);
++    qtest_quit(b);
++    qtest_quit(a);
++}
++
++static void test_peer_fcs_unverified_and_inconsistent_length(void)
++{
++    PeerListener listener = reserve_listener();
++    unsigned queue;
++    QTestState *a = start_peer(&listener, true);
++    QTestState *b = start_peer(&listener, false);
++    uint8_t frame[40];
++
++    wait_connected(a, true);
++    wait_connected(b, true);
++    for (queue = 0; queue < 5; queue++) {
++        qtest_writel(a, MAC + 0x12f8 - queue * 60, 44 + queue);
++        g_assert_cmphex(qtest_readl(a, MAC + 0x12f8 - queue * 60),
++                        ==, 44 + queue);
++    }
++    g_assert_cmpuint(count(a, "unsupported-accesses"), ==, 0);
++    qtest_writel(a, MAC + 0x12f8, (1u << 28) | 44);
++    g_assert_cmpuint(count(a, "unsupported-accesses"), ==, 1);
++    g_assert_cmphex(qtest_readl(a, MAC + 0x12f8), ==, (1u << 28) | 44);
++    g_assert_cmpuint(count(a, "unsupported-accesses"), ==, 2);
++    arm_rx(b, RX_BUFFER, 2048);
++    action_frame(frame, 1, 2);
++    send_dma_frame(a, frame, sizeof(frame), 0, 0);
++    wait_count(b, "peer-rx-frames", 1);
++    qtest_clock_step(b, 2000000);
++    assert_rx_frame(b, frame);
++    g_assert_cmpuint(count(a, "tx-fcs-unverified-frames"), ==, 1);
++    g_assert_cmpuint(count(a, "unsupported-accesses"), >, 0);
++
++    qtest_writel(a, MAC + 0xcac, 1);
++    send_dma_frame(a, frame, sizeof(frame), sizeof(frame) - 1, 0);
++    g_assert_cmpuint(count(a, "tx-length-errors"), ==, 1);
++    g_assert_cmpuint(count(a, "tx-fcs-unverified-frames"), ==, 1);
++    g_assert_cmpuint(count(a, "peer-tx-frames"), ==, 1);
++    g_assert_cmpuint(count(a, "bad-dma"), ==, 0);
++    g_assert_cmphex(qtest_readl(a, MAC + 0xca8), ==, 1);
++    g_assert_cmphex(qtest_readl(a, MAC + 0xcb0), ==, 0);
++    g_assert_cmphex(qtest_readl(a, MAC + 0xc3c) & (1u << 7), ==, 1u << 7);
++    qtest_quit(b);
++    qtest_quit(a);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -11255,6 +12081,20 @@ index 0000000..cda7d32
 +    qtest_add_func("/esp32c3/wifi/dma-bounds-and-short-buffer", test_dma_validation_and_short_buffer);
 +    qtest_add_func("/esp32c3/wifi/tsf-and-reset", test_tsf_latch_load_and_reset);
 +    qtest_add_func("/esp32c3/wifi/syscon-mac-reset-domain", test_syscon_mac_reset_domain);
++    qtest_add_func("/esp32c3/wifi/peer-two-guest-bidirectional-dma",
++                   test_peer_two_guest_bidirectional_raw_dma);
++    qtest_add_func("/esp32c3/wifi/peer-fragmented-stream-malformed-resync",
++                   test_peer_stream_fragmentation_and_malformed_resync);
++    qtest_add_func("/esp32c3/wifi/peer-channel-encryption-queue-bound",
++                   test_peer_channel_encryption_and_queue_bound);
++    qtest_add_func("/esp32c3/wifi/peer-disconnect-reconnect-tx-completion",
++                   test_peer_disconnect_reconnect_and_tx_completion);
++    qtest_add_func("/esp32c3/wifi/peer-fcs-inclusive-frame-kinds",
++                   test_peer_fcs_inclusive_frame_kinds);
++    qtest_add_func("/esp32c3/wifi/peer-fcs-excluded-preserves-payload",
++                   test_peer_fcs_excluded_preserves_payload);
++    qtest_add_func("/esp32c3/wifi/peer-fcs-unverified-inconsistent-length",
++                   test_peer_fcs_unverified_and_inconsistent_length);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/libqtest.c b/tests/qtest/libqtest.c

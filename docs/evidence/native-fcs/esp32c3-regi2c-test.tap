@@ -1,0 +1,37 @@
+TAP version 13
+# random seed: R02S1047208464e7219401b576e8a7313396
+1..10
+# Start of riscv32 tests
+# Start of esp32c3-regi2c tests
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:56661 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=48251,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 1 /riscv32/esp32c3-regi2c/rom-read-write
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:45923 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=34981,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 2 /riscv32/esp32c3-regi2c/masked-calibration-register
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:37741 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=55487,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 3 /riscv32/esp32c3-regi2c/power-gate
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:46159 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=38935,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 4 /riscv32/esp32c3-regi2c/unknown-and-busy
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:38619 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=43815,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 5 /riscv32/esp32c3-regi2c/phy-measurement-handshake
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:32951 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=40863,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 6 /riscv32/esp32c3-regi2c/phy-reset-pending
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:60897 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=57559,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 7 /riscv32/esp32c3-regi2c/phy-ungated-retrigger
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:47299 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=38813,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 8 /riscv32/esp32c3-regi2c/dc-comparator-handshake
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:35851 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=41507,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 9 /riscv32/esp32c3-regi2c/iq-pulse-handshake
+# starting QEMU: exec /tmp/x3-native-candidate-b8ceb00b1c87122d/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:54937 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=39097,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3,xteink-x3=true -nodefaults -accel qtest
+Not initializing SPI Flash
+ok 10 /riscv32/esp32c3-regi2c/iq-repeat-cancel-reset
+# End of esp32c3-regi2c tests
+# End of riscv32 tests

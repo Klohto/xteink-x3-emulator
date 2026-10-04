@@ -22,6 +22,7 @@ python -m x3emu usb --port 5555 status
 python -m x3emu usb --port 5555 list /
 python -m x3emu usb --port 5555 upload local-book.epub /local-book.epub
 python -m x3emu usb --port 5555 download /local-book.epub downloaded.epub
+python -m x3emu usb --port 5555 screenshot framebuffer.bin
 ```
 
 The CLI also supports `mkdir PATH`, `rename SOURCE DESTINATION` and
@@ -50,6 +51,24 @@ CRC separately. Zero-length uploads still send a CRC. The host ignores text
 logs and `BUSY` lines before replies, but never removes bytes from a binary
 download or accepts a short payload. Off Home, stock firmware returns
 `ERR:not_on_home`.
+
+`CMD:SCREENSHOT` is a separate text command accepted outside Home. The stock
+main loop emits `SCREENSHOT_START:52272`, then its MSB-first792×528 primary
+bitmap, then `SCREENSHOT_END`. There is no firmware CRC. The host client
+requires the exact advertised length and end marker; acceptance separately
+compares all418,176 bits against a stable native framebuffer.
+
+The initial real99-case-backend probe failed: only896 bitmap bytes appeared
+before the end marker. The full wire capture matched the native transmitted
+byte counter; native stalls, overruns and unsupported counts were zero. Stock
+`main.cpp` ignores the return from its single52,272-byte `write`. Arduino's
+`HWCDC::write` can return partial data after its1ms no-progress counter expires,
+including when the ISR frees space during the delay. This is a source-backed
+short-write hazard; uncalibrated timing does not prove the same outcome on
+physical X3 hardware. The failed receipt is preserved, and no native timing
+or payload is changed to manufacture a full export. Run `--with-screenshots`
+for this separate failing capability check; ordinary file acceptance retains
+its15 conditions.
 
 ## Guest acceptance
 

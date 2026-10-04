@@ -1,0 +1,40 @@
+TAP version 13
+# random seed: R02Se199cad8574ef6c61dfeaf4ab8bcc175
+1..11
+# Start of riscv32 tests
+# Start of esp32c3-flash tests
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:35809 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=33067,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-6GYUW3 -accel qtest
+Adding SPI flash device
+ok 1 /riscv32/esp32c3-flash/independent-register-banks
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:50675 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=39909,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-DVYYW3 -accel qtest
+Adding SPI flash device
+ok 2 /riscv32/esp32c3-flash/shared-chip-id
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:57943 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=53387,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-8ZH1W3 -accel qtest
+Adding SPI flash device
+ok 3 /riscv32/esp32c3-flash/shared-storage
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:55565 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=59331,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-4LX3W3 -accel qtest
+Adding SPI flash device
+ok 4 /riscv32/esp32c3-flash/asymmetric-user-transfer
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:55781 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=45839,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-II81W3 -accel qtest
+Adding SPI flash device
+ok 5 /riscv32/esp32c3-flash/legacy-manufacturer-id
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:38523 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=51503,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-FGINW3 -accel qtest
+Adding SPI flash device
+ok 6 /riscv32/esp32c3-flash/legacy-electronic-signature
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:60001 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=41173,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-S22PW3 -accel qtest
+Adding SPI flash device
+ok 7 /riscv32/esp32c3-flash/control-registers
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:56501 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=58185,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-YIBOW3 -accel qtest
+Adding SPI flash device
+ok 8 /riscv32/esp32c3-flash/chip-select-disable
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:40257 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=34319,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-G7ZVW3 -accel qtest
+Adding SPI flash device
+ok 9 /riscv32/esp32c3-flash/suspend-request-coverage
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:59501 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=51331,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-5OHYW3 -accel qtest
+Adding SPI flash device
+ok 10 /riscv32/esp32c3-flash/oversized-transfer
+# starting QEMU: exec /tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32 -qtest tcp:127.0.0.1:52989 -qtest-log /dev/null -chardev socket,host=127.0.0.1,port=49189,id=char0 -mon chardev=char0,mode=control -display none -audio none -machine esp32c3 -nodefaults -drive if=mtd,format=raw,file=/tmp/esp32c3-flash-7KQWW3 -accel qtest
+Adding SPI flash device
+ok 11 /riscv32/esp32c3-flash/unsupported-coverage
+# End of esp32c3-flash tests
+# End of riscv32 tests

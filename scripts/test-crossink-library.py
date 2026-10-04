@@ -15,9 +15,11 @@ import struct
 import sys
 
 PROJECT = Path(__file__).resolve().parent.parent
+LIBRARY_SOURCE = Path(__file__).read_bytes()
+LIBRARY_SHA256 = hashlib.sha256(LIBRARY_SOURCE).hexdigest()
 sys.path.insert(0, str(PROJECT))
 from x3emu.backend import DEFAULT_BACKEND
-from x3emu.fixtures import make_text_fixture
+from x3emu.fixtures import make_text_fixture, make_fixed_book_fixture_files
 from x3emu.sdcard import make_test_epub
 
 SHARED = runpy.run_path(str(PROJECT / "scripts/test-crossink-functions.py"))
@@ -53,6 +55,25 @@ def list_directory(replay, path):
         replay.qmp.execute("cont")
 
 
+def backup_directory_record(replay, name):
+    """Read the actual FAT short entry, including guest RTC write timestamps."""
+    replay.qmp.execute("stop")
+    try:
+        card = Fat16Card(replay.experiment.run_dir / "sd.img")
+        folder = next(item for item in card.directory() if item["name"] == ".crossink-stats-backup")
+        target = next(item for item in card.directory(folder["cluster"]) if item["name"] == name)
+        data = card.chain(folder["cluster"])
+        matches = [data[offset:offset + 32] for offset in range(0, len(data), 32)
+                   if data[offset] not in (0, 0xE5) and data[offset + 11] != 0x0F
+                   and struct.unpack_from("<H", data, offset + 26)[0] == target["cluster"]
+                   and struct.unpack_from("<I", data, offset + 28)[0] == target["size"]]
+        if len(matches) != 1:
+            raise SmokeError("backup FAT metadata is not uniquely identifiable")
+        return matches[0]
+    finally:
+        replay.qmp.execute("cont")
+
+
 def move(replay, button, count, label):
     for index in range(count):
         replay.tap(button, f"{label}-{index + 1}", f"{label}: {button} {index + 1}/{count}")
@@ -73,6 +94,186 @@ def hold(replay, button, label, purpose, milliseconds=1200):
     action.update({"frame": replay.capture(key, before), "status": "captured"})
     replay.save()
     return key
+
+
+def power(replay, label, purpose, *, milliseconds=200, capture=True):
+    """Inject the actual active-low GPIO3, with a native virtual deadline."""
+    before = replay.experiment.refresh_count(replay.qmp)
+    replay.qmp.execute("stop")
+    try:
+        now = replay.experiment.clock(replay.qmp)
+        replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button-hold-ns",
+                                      "value": milliseconds * 1_000_000})
+        replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": True})
+        replay.receipt["actions"].append({"button": "power", "gpio": 3, "active_level": 0,
+            "press_t_ns": now, "hold_ns": milliseconds * 1_000_000,
+            "release_transport": "QEMU_CLOCK_VIRTUAL timer", "purpose": purpose})
+        replay.save()
+    finally:
+        replay.qmp.execute("cont")
+    replay.experiment.wait("GPIO3 power release", lambda: not replay.qmp.execute("qom-get", {
+        "path": "/machine", "property": "power-button"}))
+    if capture:
+        replay.sequence += 1
+        key = f"{replay.sequence:03d}-{label}"
+        replay.receipt["actions"][-1]["frame"] = replay.capture(key, before)
+        replay.save()
+        return key
+
+
+def guest_cache(replay, book, prefix):
+    recent = read_json(replay, "/.crosspoint/recent.json")
+    entry = next((item for item in recent.get("books", []) if item.get("path") == book), None)
+    cache = (entry or {}).get("coverBmpPath", "").rsplit("/", 1)[0]
+    # TXT without an external cover intentionally records an empty cover path.
+    # A fresh one-book input lets us discover its sole actual guest cache rather
+    # than reproducing the target libstdc++ hash on the host.
+    if not cache and prefix == "txt_":
+        candidates = [item["name"] for item in list_directory(replay, "/.crosspoint")
+                      if item["directory"] and item["name"].startswith(prefix)]
+        if len(candidates) == 1:
+            cache = "/.crosspoint/" + candidates[0]
+    replay.check("guest_cache_mapping_" + book.rsplit(".", 1)[-1], cache.startswith("/.crosspoint/" + prefix)
+                 and cache.rsplit("_", 1)[-1].isdigit(), {"cache": cache, "recent": entry})
+    return cache
+
+
+def text_index(data):
+    if len(data) < 34:
+        raise SmokeError("short TXT index")
+    magic, version, size, width, lines, font, vertical, horizontal, alignment, count = struct.unpack_from("<IBI5iBI", data)
+    offsets = struct.unpack_from(f"<{count}I", data, 34) if count else ()
+    if magic != 0x54585449 or version != 4 or len(data) != 34 + count * 4:
+        raise SmokeError("invalid stock TXT v4 index")
+    return {"file_size": size, "width": width, "lines": lines, "font_id": font,
+            "vertical_margin": vertical, "horizontal_margin": horizontal,
+            "alignment": alignment, "pages": count, "offsets": offsets}
+
+
+def text_workflow(replay):
+    extension = replay.receipt["workflow"].removeprefix("text-")
+    book = "/test." + extension
+    replay.receipt["configuration_input_scope"] = "Shortcut preferences supplied as inputs; no UI assignment proof. Actual reader actions execute in the guest."
+    replay.capture("home", 0)
+    replay.tap("confirm", "text-browser", "Home: open Browse Files")
+    initial = replay.tap("confirm", "text-page0", "Open original " + extension.upper() + " through stock file dispatch")
+    replay.check("text_opened", read_json(replay, STATE).get("openEpubPath") == book)
+    cache = guest_cache(replay, book, "txt_")
+    # Opening TXT first paints an indexing/loading screen. Panel quietness
+    # alone cannot prove that the parser has finished its CPU/SD work.
+    replay.experiment.wait("guest completes TXT page index", lambda: replay.file_exists(cache + "/index.bin"))
+    replay.capture("text-indexed-initial", replay.receipt["frames"][initial]["frame_count"])
+    initial = "text-indexed-initial"
+    first_index = text_index(replay.read_file(cache + "/index.bin"))
+    replay.check("text_index_created_by_guest", first_index["pages"] > 2 and first_index["offsets"][0] == 0
+                 and first_index["file_size"] == len(replay.read_file(book)), first_index)
+    page1 = replay.tap("down", "text-page1", "TXT/MD reader: forward page")
+    replay.check("text_forward_changes_pixels", changed_pixels(replay.experiment.frames[initial], replay.experiment.frames[page1]) > 1000)
+    returned = replay.tap("up", "text-page0-return", "TXT/MD reader: previous page")
+    replay.check("text_backward_restores_page", changed_pixels(replay.experiment.frames[initial], replay.experiment.frames[returned]) == 0)
+    page1 = replay.tap("down", "text-page1-saved", "Leave a nonzero original page to test persistence")
+    replay.tap("back", "text-home", "Short Back: Home and flush six-byte TXT progress")
+    progress = replay.read_file(cache + "/progress.bin")
+    position = struct.unpack("<HI", progress) if len(progress) == 6 else (-1, -1)
+    replay.check("text_progress_six_byte_format", position == (1, first_index["offsets"][1]), {"page": position[0], "offset": position[1]})
+    resumed = replay.tap("confirm", "text-resumed", "Home Continue: reopen persisted TXT/MD page")
+    replay.check("text_resume_exact_pixels", changed_pixels(replay.experiment.frames[page1], replay.experiment.frames[resumed]) == 0)
+    menu = replay.tap("confirm", "text-reader-menu", "Short Confirm: TXT/MD single-row Send Nearby menu")
+    replay.check("text_menu_reachable", changed_pixels(replay.experiment.frames[resumed], replay.experiment.frames[menu]) > 1000)
+    after_menu = replay.tap("back", "text-menu-cancel", "Cancel the menu and resume the actual page")
+    replay.check("text_menu_cancel_preserves_page", changed_pixels(replay.experiment.frames[resumed], replay.experiment.frames[after_menu]) == 0)
+    before_font = read_json(replay, SETTINGS).get("fontFamily", 0)
+    font = hold(replay, "confirm", "text-font-cycle", "Configured long Confirm cycles actual TXT/MD font", milliseconds=900)
+    replay.experiment.wait("guest completes changed-font TXT index", lambda: text_index(replay.read_file(cache + "/index.bin"))["font_id"] != first_index["font_id"])
+    replay.capture("text-font-indexed", replay.receipt["frames"][font]["frame_count"])
+    font = "text-font-indexed"
+    new_index = text_index(replay.read_file(cache + "/index.bin"))
+    replay.check("text_font_cycle_updates_layout", read_json(replay, SETTINGS).get("fontFamily") != before_font
+                 and new_index["font_id"] != first_index["font_id"]
+                 and changed_pixels(replay.experiment.frames[after_menu], replay.experiment.frames[font]) > 1000, new_index)
+    dark = power(replay, "text-dark", "Configured short Power toggles actual TXT/MD dark mode")
+    replay.check("text_dark_saved_and_rendered", read_json(replay, SETTINGS).get("screenInverted") == 1
+                 and changed_pixels(replay.experiment.frames[font], replay.experiment.frames[dark]) > 300000)
+    light = power(replay, "text-light", "Second actual Power shortcut restores light mode")
+    replay.check("text_dark_roundtrip_exact_pixels", read_json(replay, SETTINGS).get("screenInverted") == 0
+                 and changed_pixels(replay.experiment.frames[font], replay.experiment.frames[light]) == 0)
+    browser = hold(replay, "back", "text-long-back-browser", "Configured/default long Back returns to current file browser", milliseconds=1100)
+    reopened = replay.tap("confirm", "text-browser-reopened", "Browser selected original file: reopen it")
+    replay.check("text_long_back_browser_and_reopen", changed_pixels(replay.experiment.frames[light], replay.experiment.frames[browser]) > 1000
+                 and changed_pixels(replay.experiment.frames[light], replay.experiment.frames[reopened]) == 0)
+    replay.tap("back", "text-cold-home", "Flush current TXT/MD position before a new CPU")
+    before_restart = replay.read_file(cache + "/progress.bin")
+    replay.restart()
+    cold = replay.tap("confirm", "text-cold-resume", "Cold Home Continue reads only guest-written SD state")
+    replay.check("text_cold_resume_and_font", replay.read_file(cache + "/progress.bin") == before_restart
+                 and changed_pixels(replay.experiment.frames[reopened], replay.experiment.frames[cold]) == 0
+                 and text_index(replay.read_file(cache + "/index.bin"))["font_id"] == new_index["font_id"])
+    replay.tap("back", "text-final-home", "Exit the verified text reader")
+
+
+def fixed_menu(replay, row, label):
+    replay.tap("confirm", label + "-menu", "Open fixed-page reader menu")
+    move(replay, "down", row, label + "-row")
+    return replay.tap("confirm", label, "Select the source-ordered fixed-reader menu row")
+
+
+def fixed_menus_workflow(replay):
+    extension = "xtch" if replay.receipt["workflow"] == "fixed-gray-menus" else "xtc"
+    book = "/test." + extension
+    replay.capture("home", 0)
+    replay.tap("confirm", "fixed-browser", "Home: Browse Files")
+    initial = replay.tap("confirm", "fixed-page0", "Open three-page original fixed-layout book")
+    cache = guest_cache(replay, book, "xtc_")
+    replay.check("fixed_reader_opened", read_json(replay, STATE).get("openEpubPath") == book)
+    fixed_menu(replay, 0, "fixed-chapters")
+    replay.tap("down", "fixed-chapter-two-row", "Choose second original chapter")
+    chapter = replay.tap("confirm", "fixed-chapter-two", "Jump to second chapter, zero-based page1")
+    replay.tap("back", "fixed-chapter-home", "Flush chapter selection to genuine fixed-reader progress")
+    replay.check("fixed_chapter_jump_persisted", replay.read_file(cache + "/progress.bin") == struct.pack("<I", 1)
+                 and changed_pixels(replay.experiment.frames[initial], replay.experiment.frames[chapter]) > 1000)
+    replay.tap("confirm", "fixed-chapter-resume", "Resume fixed page1")
+    stats_frame = fixed_menu(replay, 1, "fixed-reading-stats")
+    replay.check("fixed_stats_screen_reachable", changed_pixels(replay.experiment.frames[chapter], replay.experiment.frames[stats_frame]) > 1000)
+    stats_return = replay.tap("back", "fixed-stats-return", "Back from Book Stats returns to fixed reader")
+    replay.check("fixed_stats_return_same_page", changed_pixels(replay.experiment.frames[chapter], replay.experiment.frames[stats_return]) <= 500)
+    fixed_menu(replay, 2, "fixed-mark-finished")
+    replay.check("fixed_mark_finished", book_stats(replay.read_file(cache + "/stats_v5.bin"))["completed"])
+    fixed_menu(replay, 2, "fixed-mark-unfinished")
+    replay.check("fixed_mark_unfinished", not book_stats(replay.read_file(cache + "/stats_v5.bin"))["completed"])
+    stats = replay.read_file(cache + "/stats_v5.bin")
+    fixed_menu(replay, 3, "fixed-delete-stats-cancel")
+    replay.tap("confirm", "fixed-stats-cancelled", "Default Cancel preserves the genuine fixed-book record")
+    replay.check("fixed_delete_stats_cancel", replay.read_file(cache + "/stats_v5.bin") == stats)
+    fixed_menu(replay, 3, "fixed-delete-stats")
+    replay.tap("down", "fixed-stats-confirm-row", "Choose destructive Confirm")
+    replay.tap("confirm", "fixed-stats-deleted", "Delete fixed-book statistics through real menu")
+    replay.check("fixed_delete_stats", not replay.file_exists(cache + "/stats_v5.bin"))
+    progress = replay.read_file(cache + "/progress.bin")
+    # XTC renders directly from the original file. Its genuine browser/Home
+    # render cache is a size-qualified thumbnail, not EPUB's cover.bmp.
+    render_cache = {cache + "/" + entry["name"]: replay.read_file(cache + "/" + entry["name"])
+                    for entry in list_directory(replay, cache)
+                    if not entry["directory"] and entry["name"].lower().endswith(".bmp")}
+    replay.receipt["fixed_render_cache_before_delete"] = {
+        path: hashlib.sha256(data).hexdigest() for path, data in render_cache.items()}
+    replay.save()
+    fixed_menu(replay, 4, "fixed-delete-cache-cancel")
+    replay.tap("confirm", "fixed-cache-cancelled", "Cancel fixed-reader cache deletion")
+    replay.check("fixed_delete_cache_cancel", bool(render_cache)
+                 and all(replay.read_file(path) == data for path, data in render_cache.items())
+                 and replay.read_file(cache + "/progress.bin") == progress)
+    fixed_menu(replay, 4, "fixed-delete-cache")
+    replay.tap("down", "fixed-cache-confirm-row", "Choose destructive Confirm")
+    cleared = replay.tap("confirm", "fixed-cache-deleted", "Clear fixed-book render cache while preserving user state")
+    replay.check("fixed_delete_cache", all(not replay.file_exists(path) for path in render_cache)
+                 and replay.read_file(cache + "/progress.bin") == progress
+                 and replay.file_exists(cache + "/stats_v5.bin"))
+    replay.check("fixed_cache_clear_returns_same_page", changed_pixels(replay.experiment.frames[chapter], replay.experiment.frames[cleared]) <= 500)
+    replay.tap("back", "fixed-final-home", "Exit fixed reader after all menu actions")
+    resumed = replay.tap("confirm", "fixed-after-cache-resume", "Reopen fixed book from preserved original page")
+    replay.check("fixed_cache_clear_resume", changed_pixels(replay.experiment.frames[chapter], replay.experiment.frames[resumed]) <= 500
+                 and replay.read_file(cache + "/progress.bin") == struct.pack("<I", 1))
+    replay.tap("back", "fixed-complete-home", "Exit fixed reader")
 
 
 def settings_open(replay):
@@ -593,12 +794,232 @@ def reader_controls_workflow(replay):
     replay.tap("back", "home-after-reader-controls", "Exit original reader")
 
 
+def library_layout_workflow(replay):
+    replay.open_book()
+    replay.tap("back", "layout-home", "Create real recent-book metadata, then leave reader")
+    move(replay, "down", 2, "layout-recent-list-row")
+    listed = replay.tap("confirm", "layout-recent-list", "Open stock Recent Books in default List view")
+    replay.tap("back", "layout-home-list", "Recent Books returns Home with Recent Books selected")
+    move(replay, "up", 2, "layout-continue-from-recents")
+    settings_open(replay)
+    move(replay, "down", 7, "layout-ui-scale-row")
+    small = replay.receipt["actions"][-1]["frame"]["path"].rsplit("/", 1)[-1].removesuffix(".pgm")
+    # SettingsActivity cycles enums with at most two values directly; no
+    # option popup exists for UI Scale, Recent View or Browser Display.
+    large = replay.tap("confirm", "layout-scale-saved", "Cycle UI Scale from Small to Large and apply it immediately")
+    replay.check("ui_scale_ui_and_pixels", read_json(replay, SETTINGS).get("uiScale") == 1
+                 and changed_pixels(replay.experiment.frames[small], replay.experiment.frames[large]) > 1000)
+    replay.tap("down", "layout-recent-grid-row", "Display: select Recent Books View")
+    replay.tap("confirm", "layout-grid-saved", "Cycle Recent Books View from List to Grid through stock UI")
+    settings_close(replay)
+    move(replay, "down", 3, "layout-home-recents")
+    grid = replay.tap("confirm", "layout-recent-grid", "Home: render the guest-written recent book in Grid view")
+    replay.check("recent_grid_ui_and_pixels", read_json(replay, SETTINGS).get("recentBooksView") == 1
+                 and changed_pixels(replay.experiment.frames[listed], replay.experiment.frames[grid]) > 1000)
+    replay.tap("back", "layout-home-grid", "Close Recent Books")
+    # ActivityManager recognizes the List activity name "RecentBooks" and
+    # returns to its menu row; "RecentBooksGrid" falls through to Continue0.
+    settings_open(replay)
+    system_tab(replay)
+    move(replay, "down", 2, "layout-files-cache-row")
+    replay.tap("confirm", "layout-files-cache", "Open Files & Cache at Show Hidden Files")
+    replay.tap("confirm", "layout-hidden-saved", "Enable hidden-file visibility through UI")
+    move(replay, "down", 2, "layout-two-line-row")
+    replay.tap("confirm", "layout-two-line-saved", "Cycle browser display mode from One Line to Two Lines through UI")
+    settings_close(replay, submenu=True)
+    move(replay, "down", 2, "layout-browse-hidden-row")
+    hidden_browser = replay.tap("confirm", "layout-hidden-browser", "Browse with genuine hidden-file visibility and two-line layout")
+    replay.tap("down", "layout-hidden-text-row", "Pass the hidden .crosspoint directory to .hidden.txt")
+    replay.tap("confirm", "layout-hidden-text-opened", "Open the previously hidden original file")
+    saved = read_json(replay, SETTINGS)
+    replay.check("hidden_file_reachable_by_ui", saved.get("showHiddenFiles") == 1
+                 and read_json(replay, STATE).get("openEpubPath") == "/.hidden.txt")
+    replay.check("two_line_browser_saved_and_rendered", saved.get("fileBrowserDisplay") == 1
+                 and replay.receipt["frames"][hidden_browser]["dark_pixels"] > 1000)
+    hidden_cache = guest_cache(replay, "/.hidden.txt", "txt_")
+    replay.experiment.wait("guest finishes original hidden TXT index", lambda: replay.file_exists(hidden_cache + "/index.bin"))
+    replay.tap("back", "layout-home-hidden", "Short Back returns from original hidden TXT to Home")
+    settings_open(replay)
+    system_tab(replay)
+    replay.tap("down", "layout-device-row", "System: Device")
+    replay.tap("confirm", "layout-device", "Open Device at Device Name")
+    move(replay, "down", 4, "layout-keyboard-row")
+    replay.tap("confirm", "layout-keyboards", "Open actual Keyboard Layouts selector")
+    replay.tap("down", "layout-french-keyboard-row", "Select second source layout, French AZERTY")
+    keyboard_saved = replay.tap("confirm", "layout-french-keyboard-enabled", "Enable French alongside required Latin English")
+    replay.tap("back", "layout-keyboards-applied", "Close selector: guest saves the bit mask on exit")
+    replay.check("keyboard_layout_mask_saved_by_ui", read_json(replay, SETTINGS).get("keyboardLayouts") == 3)
+    move(replay, "up", 4, "layout-device-name-row")
+    replay.tap("confirm", "layout-keyboard-entry", "Open Device Name keyboard with two enabled layouts")
+    replay.tap("up", "layout-keyboard-footer", "Wrap number row to keyboard footer")
+    english = replay.tap("right", "layout-keyboard-lang", "Footer: select actual language key")
+    french = replay.tap("confirm", "layout-keyboard-azerty", "Activate language key: actual stock keyboard switches to AZERTY")
+    replay.check("keyboard_layout_switch_visible", changed_pixels(replay.experiment.frames[english], replay.experiment.frames[french]) > 1000)
+    replay.tap("back", "layout-keyboard-cancel", "Cancel Device Name editing without changing the name")
+    settings_close(replay, submenu=True)
+    saved = read_json(replay, SETTINGS)
+    replay.restart()
+    restored = read_json(replay, SETTINGS)
+    fields = ("uiScale", "recentBooksView", "showHiddenFiles", "fileBrowserDisplay", "keyboardLayouts")
+    replay.check("library_layout_settings_cold_persistence", all(restored.get(key) == saved.get(key) for key in fields), restored)
+    settings_open(replay)
+    system_tab(replay)
+    replay.tap("down", "layout-cold-device-row", "System: Device after cold boot")
+    replay.tap("confirm", "layout-cold-device", "Reopen Device")
+    move(replay, "down", 4, "layout-cold-keyboard-row")
+    replay.tap("confirm", "layout-cold-keyboards", "Render persisted enabled layouts")
+    cold = replay.tap("down", "layout-cold-french-row", "Align selected French row with original enabled selector")
+    replay.check("keyboard_layout_cold_render", changed_pixels(replay.experiment.frames[keyboard_saved], replay.experiment.frames[cold]) < 1200)
+    replay.tap("back", "layout-cold-device-return", "Close persisted layout selector")
+    settings_close(replay, submenu=True)
+
+
+def set_rtc(replay, epoch_seconds, purpose):
+    replay.qmp.execute("qom-set", {"path": "/machine/i2c/rtc", "property": "epoch-seconds", "value": epoch_seconds})
+    replay.receipt.setdefault("external_device_inputs", []).append({"device": "DS3231", "property": "epoch-seconds",
+        "value": epoch_seconds, "purpose": purpose, "source": "synthetic native RTC input; not an on-device date-edit claim"})
+    replay.save()
+
+
+def manual_dates_workflow(replay):
+    replay.open_book()
+    set_rtc(replay, 1709251500, "Original external RTC fixture: 2024-03-01 00:05 UTC")
+    replay.tap("back", "dates-home", "Flush guest stats and open Home's book-statistics route")
+    before = book_stats(replay.read_file(cache_path() + "/stats_v5.bin"))
+    move(replay, "up", 3, "dates-home-stats-row")
+    per_book = replay.tap("confirm", "dates-book-stats", "Open actual per-book Reading Stats")
+    device = replay.tap("right", "dates-this-device", "Stats: show This Device totals")
+    all_devices = replay.tap("right", "dates-all-devices", "Stats: show All Devices from explicitly supplied original peer stats")
+    replay.check("stats_device_and_all_device_pages", changed_pixels(replay.experiment.frames[per_book], replay.experiment.frames[device]) > 1000
+                 and changed_pixels(replay.experiment.frames[device], replay.experiment.frames[all_devices]) > 1000)
+    move(replay, "left", 2, "dates-per-book-return")
+    replay.tap("confirm", "dates-editor", "Per-book Stats: enter genuine six-field manual date editor")
+    replay.tap("right", "dates-start-april", "Initial Start Month: increment March to April")
+    move(replay, "confirm", 3, "dates-finish-month-field")
+    replay.tap("right", "dates-finish-may", "Initial finish date inherits April start: increment to May and mark completed")
+    replay.tap("confirm", "dates-finish-day-field", "Select Finish Day")
+    replay.tap("right", "dates-finish-day-two", "Increment Finish Day to 2")
+    edited_frame = replay.tap("back", "dates-saved-book-stats", "Back applies actual date edits and saves book/global stats")
+    data = replay.read_file(cache_path() + "/stats_v5.bin")
+    dates = {"flags": data[16], "start": (struct.unpack_from("<H", data, 17)[0], data[19], data[20]),
+             "finish": (struct.unpack_from("<H", data, 21)[0], data[23], data[24])}
+    after = book_stats(data)
+    replay.check("manual_dates_saved_by_ui", dates == {"flags": 3, "start": (2024, 4, 1), "finish": (2024, 5, 2)}
+                 and after["completed"], dates)
+    replay.check("manual_dates_preserve_reading_totals", all(before[key] == after[key] for key in ("sessions", "seconds", "pages"))
+                 and global_stats(replay.read_file(GLOBAL_STATS))["completed"] == 1)
+    replay.tap("back", "dates-home-after-save", "Close Home Stats, keeping manual dates")
+    replay.restart()
+    replay.check("manual_dates_cold_persistence", replay.read_file(cache_path() + "/stats_v5.bin") == data)
+    move(replay, "up", 3, "dates-cold-home-stats-row")
+    cold = replay.tap("confirm", "dates-cold-book-stats", "Render persisted manual dates on a new CPU")
+    replay.check("manual_dates_cold_render", changed_pixels(replay.experiment.frames[edited_frame], replay.experiment.frames[cold]) < 1200)
+    replay.tap("back", "dates-final-home", "Exit date/statistics verification")
+
+
+def automatic_backup_workflow(replay):
+    replay.open_book()
+    set_rtc(replay, 1709251500, "Deterministic original backup date, 2024-03-01 UTC")
+    replay.tap("back", "auto-home", "Exit reader before enabling automatic backup in UI")
+    replay.tap("down", "auto-browser-row", "Home: Browse Files")
+    replay.tap("confirm", "auto-browser", "Open original book directory")
+    hold(replay, "confirm", "auto-file-actions", "Long Confirm: genuine book actions")
+    move(replay, "down", 6, "auto-mark-finished-row")
+    replay.tap("confirm", "auto-book-completed", "Mark Finished: create nonzero genuine global stats")
+    original = replay.read_file(GLOBAL_STATS)
+    replay.check("automatic_backup_has_real_guest_stats", global_stats(original)["completed"] == 1, global_stats(original))
+    replay.tap("back", "auto-home-after-actions", "Return file browser to Home")
+    replay.tap("up", "auto-home-continue", "File Browser exit selects Browse1; move to Continue0 before Settings wrap")
+    settings_open(replay)
+    system_tab(replay)
+    move(replay, "down", 3, "auto-reading-stats-row")
+    replay.tap("confirm", "auto-reading-stats", "System: Reading Stats")
+    replay.tap("confirm", "auto-all-time", "Open All-Time Stats at RTC Auto Backup toggle")
+    replay.tap("confirm", "auto-backup-off", "Toggle default automatic backup off through UI")
+    replay.check("automatic_backup_disabled_by_ui", read_json(replay, SETTINGS).get("autoBackupStats") == 0)
+    replay.tap("confirm", "auto-backup-on", "Enable automatic backup through actual UI")
+    replay.check("automatic_backup_enabled_by_ui", read_json(replay, SETTINGS).get("autoBackupStats") == 1)
+    replay.tap("back", "auto-reading-stats-parent", "Close All-Time Stats")
+    settings_close(replay, submenu=True)
+    replay.receipt["pruning_input_scope"] = "Eight original source-compatible old backup files are supplied as inputs; the new automatic backup, pruning and statistics payload are real guest effects."
+    before_count = replay.experiment.refresh_count(replay.qmp)
+    power(replay, "auto-sleep", "Actual Home short Power enters firmware deep sleep and runs automatic stats backup", capture=False)
+    replay.experiment.wait("firmware deep sleep after automatic backup", lambda: replay.qmp.execute("qom-get", {
+        "path": "/machine/rtccntl", "property": "deep-sleep-active"}))
+    state = replay.qmp.state()
+    replay.receipt["automatic_backup_sleep_state"] = state
+    names = sorted(entry["name"] for entry in list_directory(replay, "/.crossink-stats-backup") if entry["name"].endswith(".bin"))
+    target = "stats_2024-03-01.bin"
+    expected = [f"stats_2020-01-{day:02d}.bin" for day in range(3, 9)] + [target]
+    replay.check("automatic_backup_before_genuine_deep_sleep", state["panel"]["refresh-count"] > before_count
+                 and target in names and replay.read_file("/.crossink-stats-backup/" + target) == original,
+                 {"files": names, "native_state": state})
+    replay.check("automatic_backup_prunes_oldest_to_seven", names == expected, {"actual": names, "expected": expected})
+    replay.check("automatic_backup_preserves_current_stats", replay.read_file(GLOBAL_STATS) == original)
+    first_metadata = backup_directory_record(replay, target)
+    power(replay, "auto-wake", "Actual GPIO3 wake returns the Home-origin sleep to Home")
+    replay.check("automatic_backup_gpio_wake", not replay.qmp.execute("qom-get", {
+        "path": "/machine/rtccntl", "property": "deep-sleep-active"}))
+    set_rtc(replay, 1709251800, "Advance synthetic RTC by five minutes on the same date to distinguish an unnecessary rewrite")
+    replay.check("automatic_backup_stats_unchanged_before_second_sleep", replay.read_file(GLOBAL_STATS) == original)
+    power(replay, "auto-identical-sleep", "Sleep again with identical guest statistics and the same dated backup filename", capture=False)
+    replay.experiment.wait("second genuine firmware deep sleep", lambda: replay.qmp.execute("qom-get", {
+        "path": "/machine/rtccntl", "property": "deep-sleep-active"}))
+    second_names = sorted(entry["name"] for entry in list_directory(replay, "/.crossink-stats-backup") if entry["name"].endswith(".bin"))
+    second_metadata = backup_directory_record(replay, target)
+    replay.check("automatic_backup_identical_suppression", second_names == expected
+                 and replay.read_file("/.crossink-stats-backup/" + target) == original
+                 and second_metadata == first_metadata,
+                 {"first_fat_entry_hex": first_metadata.hex(), "second_fat_entry_hex": second_metadata.hex(),
+                  "external_rtc_advanced_seconds": 300, "same_dated_filename": target})
+
+
+def device_preferences_workflow(replay):
+    replay.capture("home", 0)
+    settings_open(replay)
+    system_tab(replay)
+    replay.tap("down", "device-preferences-row", "System: select Device")
+    replay.tap("confirm", "device-preferences", "Open actual Device settings")
+    move(replay, "down", 2, "device-custom-boot-row")
+    replay.tap("confirm", "device-custom-boot-disabled", "Toggle default Custom Bootscreen off through real UI")
+    replay.check("custom_boot_disabled_by_ui", read_json(replay, SETTINGS).get("customBootscreenEnabled") == 0)
+    move(replay, "down", 5, "device-date-format-row")
+    replay.tap("confirm", "device-date-format-picker", "Open all source date-format options")
+    move(replay, "down", 4, "device-date-format-iso")
+    formatted = replay.tap("confirm", "device-date-format-saved", "Save numeric Year Month Day through stock UI")
+    replay.tap("down", "device-date-separator-row", "Select Date Separator")
+    replay.tap("confirm", "device-date-separator-picker", "Open separator choices")
+    replay.tap("up", "device-date-separator-hyphen", "Default Slash2: select Hyphen1")
+    replay.tap("confirm", "device-date-separator-saved", "Save actual Date Separator")
+    saved = read_json(replay, SETTINGS)
+    replay.check("date_format_and_separator_saved_by_ui", saved.get("dateFormat") == 4 and saved.get("dateSeparator") == 1, saved)
+    settings_close(replay, submenu=True)
+    replay.restart()
+    restored = read_json(replay, SETTINGS)
+    replay.check("device_preferences_cold_persistence", all(restored.get(key) == saved.get(key) for key in
+                 ("customBootscreenEnabled", "dateFormat", "dateSeparator")), restored)
+    settings_open(replay)
+    system_tab(replay)
+    replay.tap("down", "device-preferences-cold-row", "System: Device after a new CPU")
+    replay.tap("confirm", "device-preferences-cold", "Render actual persisted Device values")
+    move(replay, "down", 7, "device-date-format-cold-row")
+    cold = replay.receipt["actions"][-1]["frame"]["path"].rsplit("/", 1)[-1].removesuffix(".pgm")
+    replay.check("device_preferences_cold_render", changed_pixels(replay.experiment.frames[formatted], replay.experiment.frames[cold]) < 1200)
+    settings_close(replay, submenu=True)
+
+
+
+
 WORKFLOWS = {"settings": settings_workflow, "browser": browser_workflow,
              "book-actions": actions_workflow, "statistics": stats_workflow,
              "home-saved": home_saved_workflow, "completion-policies": policies_workflow,
              "reader-cleanup": reader_cleanup_workflow, "file-options": file_options_workflow,
              "reading-pace": pace_workflow, "saved-bulk": saved_bulk_workflow,
-             "reader-controls": reader_controls_workflow}
+             "reader-controls": reader_controls_workflow,
+             "text-txt": text_workflow, "text-md": text_workflow,
+             "fixed-mono-menus": fixed_menus_workflow, "fixed-gray-menus": fixed_menus_workflow,
+             "library-layout": library_layout_workflow, "manual-dates": manual_dates_workflow,
+             "automatic-backup": automatic_backup_workflow, "device-preferences": device_preferences_workflow}
 COMMON_SOURCES = ("src/activities/home/HomeActivity.cpp", "src/activities/home/FileBrowserActivity.cpp",
                   "src/activities/settings/SettingsActivity.cpp", "src/SettingsList.h", "src/CrossPointSettings.cpp")
 SOURCES = {"settings": COMMON_SOURCES + ("src/activities/util/KeyboardEntryActivity.cpp",),
@@ -618,6 +1039,18 @@ SOURCES = {"settings": COMMON_SOURCES + ("src/activities/util/KeyboardEntryActiv
            "reader-controls": COMMON_SOURCES + ("src/activities/reader/EpubReaderMenuActivity.cpp", "src/activities/reader/ControlsOptionsActivity.cpp"),
            "statistics": COMMON_SOURCES + ("src/activities/settings/BackupStatsActivity.cpp", "src/activities/settings/ClearCacheActivity.cpp",
                                           "src/activities/reader/GlobalReadingStats.cpp", "src/activities/reader/StatsBackup.cpp")}
+for name in ("text-txt", "text-md"):
+    SOURCES[name] = COMMON_SOURCES + ("src/activities/reader/TxtReaderActivity.cpp", "lib/Txt/Txt.cpp",
+                                      "src/activities/home/FileBrowserActionActivity.cpp")
+for name in ("fixed-mono-menus", "fixed-gray-menus"):
+    SOURCES[name] = COMMON_SOURCES + ("src/activities/reader/XtcReaderActivity.cpp", "src/activities/reader/XtcReaderMenuActivity.cpp",
+                                      "src/activities/reader/XtcReaderChapterSelectionActivity.cpp", "src/util/BookCacheUtils.cpp")
+SOURCES["library-layout"] = COMMON_SOURCES + ("src/activities/home/RecentBooksActivity.cpp", "src/activities/settings/KeyboardLayoutsActivity.cpp",
+    "src/activities/util/KeyboardLayoutSet.cpp", "src/activities/util/KeyboardEntryActivity.cpp")
+SOURCES["manual-dates"] = COMMON_SOURCES + ("src/activities/reader/BookStatsActivity.cpp", "src/activities/reader/BookReadingStats.cpp",
+    "src/activities/reader/GlobalReadingStats.cpp")
+SOURCES["automatic-backup"] = COMMON_SOURCES + ("src/main.cpp", "src/activities/reader/StatsBackup.cpp", "src/activities/home/BookActions.cpp")
+SOURCES["device-preferences"] = COMMON_SOURCES
 
 # These are output postconditions, not aliases for completion of an entire
 # workflow. A later failure retains narrow proof and remains visible alongside it.
@@ -666,10 +1099,57 @@ FUNCTION_CHECKS = {
     "reader-controls": {"reader_controls_entry_and_return": ("reader_controls_entry_rendered", "reader_controls_submenu_rendered",
                                                             "reader_controls_returns_same_reader")},
 }
+for name in ("text-txt", "text-md"):
+    FUNCTION_CHECKS[name] = {"open_and_guest_index": ("text_opened", "text_index_created_by_guest"),
+        "forward_backward": ("text_forward_changes_pixels", "text_backward_restores_page"),
+        "progress_and_resume": ("text_progress_six_byte_format", "text_resume_exact_pixels"),
+        "reader_menu_cancel": ("text_menu_reachable", "text_menu_cancel_preserves_page"),
+        "font_cycle_shortcut": ("text_font_cycle_updates_layout",),
+        "dark_shortcut": ("text_dark_saved_and_rendered", "text_dark_roundtrip_exact_pixels"),
+        "long_back_browser": ("text_long_back_browser_and_reopen",),
+        "cold_resume": ("text_cold_resume_and_font",)}
+for name in ("fixed-mono-menus", "fixed-gray-menus"):
+    FUNCTION_CHECKS[name] = {"chapter_selection": ("fixed_reader_opened", "fixed_chapter_jump_persisted"),
+        "reading_statistics": ("fixed_stats_screen_reachable", "fixed_stats_return_same_page"),
+        "completion_toggle": ("fixed_mark_finished", "fixed_mark_unfinished"),
+        "delete_statistics": ("fixed_delete_stats_cancel", "fixed_delete_stats"),
+        "delete_cache": ("fixed_delete_cache_cancel", "fixed_delete_cache", "fixed_cache_clear_returns_same_page", "fixed_cache_clear_resume")}
+FUNCTION_CHECKS["library-layout"] = {"ui_scale": ("ui_scale_ui_and_pixels",), "recent_grid_view": ("recent_grid_ui_and_pixels",),
+    "show_hidden_files": ("hidden_file_reachable_by_ui",), "two_line_browser": ("two_line_browser_saved_and_rendered",),
+    "keyboard_layout": ("keyboard_layout_mask_saved_by_ui", "keyboard_layout_switch_visible", "keyboard_layout_cold_render"),
+    "cold_persistence": ("library_layout_settings_cold_persistence",)}
+FUNCTION_CHECKS["manual-dates"] = {"device_and_all_device_statistics": ("stats_device_and_all_device_pages",),
+    "manual_book_dates": ("manual_dates_saved_by_ui", "manual_dates_preserve_reading_totals", "manual_dates_cold_persistence", "manual_dates_cold_render")}
+FUNCTION_CHECKS["automatic-backup"] = {"automatic_backup_toggle": ("automatic_backup_disabled_by_ui", "automatic_backup_enabled_by_ui"),
+    "backup_on_actual_sleep": ("automatic_backup_has_real_guest_stats", "automatic_backup_before_genuine_deep_sleep", "automatic_backup_preserves_current_stats"),
+    "pruning": ("automatic_backup_prunes_oldest_to_seven",),
+    "identical_backup_suppression": ("automatic_backup_gpio_wake", "automatic_backup_stats_unchanged_before_second_sleep", "automatic_backup_identical_suppression")}
+FUNCTION_CHECKS["device-preferences"] = {"custom_boot_setting": ("custom_boot_disabled_by_ui",),
+    "date_format_and_separator": ("date_format_and_separator_saved_by_ui",),
+    "cold_persistence": ("device_preferences_cold_persistence", "device_preferences_cold_render")}
 
 
 def fixture_files(name):
+    if name in ("text-txt", "text-md"):
+        extension = name.removeprefix("text-")
+        preferences = {"sleepTimeoutMinutes": 31, "shortPwrBtn": 15,
+                       "longPressMenuAction": 2, "longPressBackAction": 16}
+        return {"/test." + extension: make_text_fixture(markdown=extension == "md"),
+                SETTINGS: json.dumps(preferences, separators=(",", ":")).encode()}
+    if name in ("fixed-mono-menus", "fixed-gray-menus"):
+        extension, original = ("xtch", "/Books/b-gray.xtch") if name == "fixed-gray-menus" else ("xtc", "/Books/a-fixed.xtc")
+        return {"/test." + extension: make_fixed_book_fixture_files()[original]}
     files = {BOOK: make_test_epub()}
+    if name == "library-layout":
+        files["/.hidden.txt"] = b"Original hidden reader file.\n\nThe clock beside the river is visible only after the actual hidden-file setting is enabled.\n"
+    if name == "manual-dates":
+        peer = bytearray(159)
+        peer[0] = 3
+        struct.pack_into("<4I", peer, 1, 2, 1234, 11, 3)
+        files["/.crosspoint/synced_stats/025833454402.bin"] = bytes(peer)
+    if name == "automatic-backup":
+        old = bytes([3]) + bytes(158)
+        files.update({f"/.crossink-stats-backup/stats_2020-01-{day:02d}.bin": old for day in range(1, 9)})
     if name == "browser":
         text = make_text_fixture()
         files.update({f"/Library/{number}.txt": f"Original file {number}\n\n".encode() + text for number in range(24, 0, -1)})
@@ -695,7 +1175,13 @@ def main(argv=None):
         cli.error("time limits must be positive")
     args.output.mkdir(parents=True, exist_ok=True)
     for name, flow in WORKFLOWS.items():
-        SHARED["WORKFLOWS"][name] = flow
+        def recorded_flow(replay, flow=flow):
+            replay.receipt["library_harness_sha256"] = LIBRARY_SHA256
+            replay.receipt["library_harness_snapshot"] = "library-harness.py"
+            (replay.experiment.output / "library-harness.py").write_bytes(LIBRARY_SOURCE)
+            replay.save()
+            flow(replay)
+        SHARED["WORKFLOWS"][name] = recorded_flow
         SHARED["SOURCE_FILES"][name] = SOURCES[name]
     receipts = {}
     for name in args.workflows:

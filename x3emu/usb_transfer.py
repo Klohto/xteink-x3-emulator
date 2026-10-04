@@ -145,6 +145,27 @@ class USBSerialClient:
         self.operations.append({"command": "status", "result": result})
         return result
 
+    def screenshot(self, *, expected_size: int = 792 * 528 // 8) -> bytes:
+        """Read stock CMD:SCREENSHOT's exact uncompressed MSB-first bitmap.
+
+        This text command is allowed outside Home. It has length and end
+        framing but no firmware CRC; callers must independently verify pixels.
+        """
+        if isinstance(expected_size, bool) or not isinstance(expected_size, int) or not 0 < expected_size <= 1024 * 1024:
+            raise ValueError("expected screenshot size must be an integer from 1 to 1048576")
+        self._send(b"CMD:SCREENSHOT\n")
+        deadline = self._deadline()
+        line = self._reply(("SCREENSHOT_START:",), deadline)
+        size = line.removeprefix("SCREENSHOT_START:")
+        if not size.isascii() or not size.isdecimal() or int(size) != expected_size:
+            raise USBTransferError("CrossInk screenshot length differs from the expected framebuffer size")
+        data = self._exact(expected_size, deadline)
+        self._reply(("SCREENSHOT_END",), deadline)
+        self.operations.append({"command": "screenshot", "size_bytes": len(data),
+                                "sha256": hashlib.sha256(data).hexdigest(), "framing_verified": True,
+                                "firmware_crc_available": False})
+        return data
+
     def list(self, path: str = "/") -> list[dict]:
         deadline = self._command(b"A", path)
         header = self._reply(("DIR:",), deadline)

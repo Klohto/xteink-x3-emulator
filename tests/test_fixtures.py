@@ -12,7 +12,8 @@ from x3emu.fixtures import (
     DICTIONARY_BASE, DICTIONARY_NAME, alpha_sample_points, fixture_hashes,
     make_advanced_epub, make_bmp, make_dictionary_files,
     make_fixed_book_fixture_files, make_function_fixture_files,
-    make_media_fixture_files, make_png, make_reader_options_epub, make_stable_epub, make_text_fixture, make_xtc,
+    make_media_fixture_files, make_png, make_reader_options_epub, make_stable_epub, make_text_fixture,
+    make_wide_cover_epub, make_xtc,
     pattern_sample_points,
 )
 
@@ -221,6 +222,20 @@ class FixedBookFixtureTests(unittest.TestCase):
 
 
 class EpubFixtureTests(unittest.TestCase):
+    def test_wide_cover_epub_has_original_asymmetric_landscape_asset(self):
+        payload = make_wide_cover_epub()
+        self.assertEqual(payload, make_wide_cover_epub())
+        with ZipFile(BytesIO(payload)) as archive, ZipFile(BytesIO(make_advanced_epub())) as original:
+            self.assertEqual(archive.namelist(), original.namelist())
+            for name in original.namelist():
+                if name not in ("OEBPS/cover.png", "OEBPS/content.opf"):
+                    self.assertEqual(archive.read(name), original.read(name))
+            header, raw = png_data(archive.read("OEBPS/cover.png"))
+            self.assertEqual(header, (400, 200, 8, 0, 0, 0, 0))
+            for sample in pattern_sample_points(400, 200):
+                self.assertEqual(raw[sample["y"] * 401 + 1 + sample["x"]], sample["luminance"])
+            self.assertIn(b"Synthetic Wide Cover Book", archive.read("OEBPS/content.opf"))
+
     def test_reader_options_epub_first_image_css_and_publisher_markers(self):
         payload = make_reader_options_epub()
         self.assertEqual(payload, make_reader_options_epub())

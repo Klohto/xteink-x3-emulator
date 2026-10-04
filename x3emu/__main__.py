@@ -58,7 +58,13 @@ def parser() -> argparse.ArgumentParser:
     execute.add_argument("--in-place", action="store_true", help="allow QEMU to write the original flash and SD; default uses copies")
     execute.add_argument("--qmp-transport", choices=("auto", "unix", "pipe"), default="auto", help="auto uses named pipes if Unix sockets are blocked")
     execute.add_argument("--usb-port", type=_integer, help="serve bidirectional USB Serial/JTAG bytes on this localhost TCP port; default logs output only")
-    execute.add_argument("--wifi", action="store_true", help="enable the provisional native WiFi MAC/AP model with QEMU user networking")
+    network = execute.add_mutually_exclusive_group()
+    network.add_argument("--wifi", action="store_true", help="enable the provisional native WiFi MAC/AP model with QEMU user networking")
+    network.add_argument("--wifi-peer", metavar="listen:PORT|connect:PORT", help="link real guest WiFi DMA frames to another emulator on localhost")
+    execute.add_argument("--wifi-channel", type=_integer, help="fixed digital channel: peer default 1, virtual AP default 6; RF channel control is unmodelled")
+    identity = execute.add_mutually_exclusive_group()
+    identity.add_argument("--efuse", type=Path, help="336-byte raw C3 factory blocks; copied per run")
+    identity.add_argument("--device-mac", help="synthetic unicast factory MAC stored in genuine eFuse blocks")
     execute.add_argument("--wifi-hostfwd", action="append", default=[], metavar="tcp:127.0.0.1:HOSTPORT-:GUESTPORT", help="explicit loopback host forwarding; requires --wifi; may be repeated")
     buttons = commands.add_parser("buttons", help="set held buttons through a running backend's QMP socket")
     buttons.add_argument("--qmp", type=Path, required=True)
@@ -87,6 +93,8 @@ def parser() -> argparse.ArgumentParser:
     download = operations.add_parser("download")
     download.add_argument("path")
     download.add_argument("output", type=Path)
+    screenshot = operations.add_parser("screenshot", help="capture the stock raw 792x528 MSB-first framebuffer")
+    screenshot.add_argument("output", type=Path)
     return root
 
 
@@ -104,7 +112,14 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "flash":
             result = assemble_flash(args.part, args.output)
         elif args.command == "run":
-            result = run(RunConfig(args.flash, args.sd, args.output, args.backend, args.icount, args.seconds, args.in_place, args.qmp_transport, args.rom_dir, args.icount_shift, args.power_on, args.power_button_hold_ns, args.usb_port, args.wifi, tuple(args.wifi_hostfwd)))
+            result = run(RunConfig(
+                flash=args.flash, sd=args.sd, output=args.output, backend=args.backend,
+                icount=args.icount, seconds=args.seconds, in_place=args.in_place,
+                qmp_transport=args.qmp_transport, rom_dir=args.rom_dir, icount_shift=args.icount_shift,
+                power_on=args.power_on, power_button_hold_ns=args.power_button_hold_ns,
+                usb_port=args.usb_port, wifi=args.wifi, wifi_hostfwd=tuple(args.wifi_hostfwd),
+                efuse=args.efuse, device_mac=args.device_mac, wifi_peer=args.wifi_peer, wifi_channel=args.wifi_channel,
+            ))
         elif args.command == "usb":
             with USBSerialClient(args.port, timeout=args.timeout) as client:
                 if args.usb_command == "status":
@@ -113,10 +128,10 @@ def main(argv: list[str] | None = None) -> int:
                     result = client.list(args.path)
                 elif args.usb_command == "upload":
                     result = client.upload(args.path, args.input.read_bytes())
-                elif args.usb_command == "download":
+                elif args.usb_command in ("download", "screenshot"):
                     if args.output.exists():
                         raise ValueError("USB download output already exists")
-                    data = client.download(args.path)
+                    data = client.download(args.path) if args.usb_command == "download" else client.screenshot()
                     with args.output.open("xb") as output:
                         output.write(data)
                     result = client.operations[-1] | {"output": str(args.output)}

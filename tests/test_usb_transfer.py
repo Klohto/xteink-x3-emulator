@@ -95,6 +95,35 @@ class USBWireClientTests(unittest.TestCase):
                 client.download("/")
         checked()
 
+    def test_screenshot_is_length_framed_and_binary_never_parsed_as_text(self):
+        payload = bytes(range(256)) + b"SCREENSHOT_END\nERR:not_on_home\n"
+        def handler(connection):
+            self.assertEqual(exact(connection, 15), b"CMD:SCREENSHOT\n")
+            response = b"[log] before screenshot\nSCREENSHOT_START:" + str(len(payload)).encode() + b"\n" + payload + b"SCREENSHOT_END\n"
+            for offset in range(0, len(response), 7):
+                connection.sendall(response[offset:offset + 7])
+        port, checked = self.serve(handler)
+        with USBSerialClient(port, timeout=2) as client:
+            self.assertEqual(client.screenshot(expected_size=len(payload)), payload)
+            self.assertTrue(client.operations[-1]["framing_verified"])
+            self.assertFalse(client.operations[-1]["firmware_crc_available"])
+        checked()
+
+    def test_screenshot_invalid_length_short_payload_and_missing_end_fail(self):
+        for response, error in ((b"SCREENSHOT_START:huge\n", "length"),
+                                (b"SCREENSHOT_START:99999999\n", "length"),
+                                (b"SCREENSHOT_START:3\na", "disconnected"),
+                                (b"SCREENSHOT_START:3\nabc", "disconnected")):
+            with self.subTest(response=response):
+                def handler(connection):
+                    self.assertEqual(exact(connection, 15), b"CMD:SCREENSHOT\n")
+                    connection.sendall(response)
+                port, checked = self.serve(handler)
+                with USBSerialClient(port, timeout=2) as client:
+                    with self.assertRaisesRegex(USBTransferError, error):
+                        client.screenshot(expected_size=3)
+                checked()
+
     def test_advertised_payload_that_disconnects_cannot_pass(self):
         def handler(connection):
             self.assertEqual(exact(connection, 8), b"CMNDT\x01\0/")

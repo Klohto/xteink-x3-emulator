@@ -447,6 +447,27 @@ def make_reader_options_epub() -> bytes:
     return output.getvalue()
 
 
+def make_wide_cover_epub() -> bytes:
+    """Return a separate original EPUB with an asymmetric 400x200 cover.
+
+    The landscape cover distinguishes portrait fit from crop. Its source
+    pixels follow pattern_level/pattern_sample_points(400, 200); actual
+    firmware scaling/filter output must be observed independently.
+    """
+    output = BytesIO()
+    with ZipFile(BytesIO(make_advanced_epub())) as original, ZipFile(output, "w") as archive:
+        for name in original.namelist():
+            data = original.read(name)
+            if name == "OEBPS/cover.png":
+                data = make_png(400, 200)
+            elif name == "OEBPS/content.opf":
+                data = data.replace(b"Synthetic Feature Book", b"Synthetic Wide Cover Book")
+            info = ZipInfo(name, FIXTURE_TIMESTAMP)
+            info.compress_type = ZIP_STORED if name == "mimetype" else ZIP_DEFLATED
+            archive.writestr(info, data)
+    return output.getvalue()
+
+
 def fixture_hashes(files: Mapping[str, bytes]) -> dict[str, str]:
     """Return sorted path/SHA256 provenance without writing files."""
     return {path: hashlib.sha256(data).hexdigest() for path, data in sorted(files.items())}

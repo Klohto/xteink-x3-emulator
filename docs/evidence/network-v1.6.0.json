@@ -1,0 +1,577 @@
+{
+  "schema_version": 1,
+  "firmware_version": "CrossInk1.6.0 official X3",
+  "app_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+  "full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+  "complete_machine_acceptance_passed": false,
+  "timing_calibrated": false,
+  "physical_rf_modelled": false,
+  "encrypted_air_modelled": false,
+  "phy_measurements": "synthetic ideal-zero",
+  "speed_selection_allowed": false,
+  "cohorts": {
+    "server": {
+      "validation_sha256": "519d42964e174b89ccda0703dcfd3e2b4a5673cf6dd44422f3668eb1d7a4e147",
+      "functional_pass": false,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "static__": true,
+        "static__files": true,
+        "static__js_jszip_min_js": true,
+        "static__style_css": true,
+        "static__logo_png": true,
+        "static__settings": true,
+        "static__fonts": true,
+        "stock_http_status": true,
+        "http_original_book_listed": true,
+        "http_original_book_exact": true,
+        "http_upload_persisted_exact": true,
+        "http_collision_preserves_file": true,
+        "http_move_persisted_exact": true,
+        "http_recursive_delete": true,
+        "http_setting_changes_real_value": true,
+        "http_font_registry_loaded": true,
+        "http_font_deleted": true,
+        "http_opds_store_added": true,
+        "http_opds_store_removed": true,
+        "http_wifi_store_added": true,
+        "http_wifi_store_removed": true,
+        "all_26_explicit_routes_exercised": true,
+        "dav_options_class1": true,
+        "dav_put_persisted_exact": true,
+        "dav_get_exact": false,
+        "dav_head_length": true,
+        "dav_propfind_directory": true,
+        "dav_move_exact": true,
+        "dav_move_source_removed": true,
+        "dav_lock_stock_dummy_token": true,
+        "dav_protected_write_absent": true,
+        "dav_delete_persisted": true,
+        "websocket_ready": true,
+        "websocket_competing_upload_rejected": true,
+        "websocket_progress": true,
+        "websocket_done": true,
+        "websocket_persisted_exact": true,
+        "websocket_empty_done": true,
+        "websocket_overflow_ready": true,
+        "websocket_overflow_rejected": true,
+        "websocket_incomplete_file_removed": true,
+        "stock_udp_discovery": true,
+        "all_11_webdav_methods_exercised": true,
+        "original_book_unchanged": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 25,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 1142,
+        "rx-frames": 1176,
+        "rx-dropped": 78,
+        "bad-dma": 0,
+        "unsupported-accesses": 69219,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        6
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        }
+      }
+    },
+    "calibre": {
+      "validation_sha256": "773ade4c5f2afc170adf0bfe47380b6b7a363c693dea92416aae18aa0fbfc821",
+      "functional_pass": false,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "static__": true,
+        "static__files": true,
+        "static__js_jszip_min_js": true,
+        "static__style_css": true,
+        "static__logo_png": true,
+        "static__settings": true,
+        "static__fonts": true,
+        "stock_http_status": true,
+        "http_original_book_listed": true,
+        "http_original_book_exact": true,
+        "http_upload_persisted_exact": true,
+        "http_collision_preserves_file": true,
+        "http_move_persisted_exact": true,
+        "http_recursive_delete": true,
+        "http_setting_changes_real_value": true,
+        "http_font_registry_loaded": true,
+        "http_font_deleted": true,
+        "http_opds_store_added": true,
+        "http_opds_store_removed": true,
+        "http_wifi_store_added": true,
+        "http_wifi_store_removed": true,
+        "all_26_explicit_routes_exercised": true,
+        "dav_options_class1": true,
+        "dav_put_persisted_exact": true,
+        "dav_get_exact": false,
+        "dav_head_length": true,
+        "dav_propfind_directory": true,
+        "dav_move_exact": true,
+        "dav_move_source_removed": true,
+        "dav_lock_stock_dummy_token": true,
+        "dav_protected_write_absent": true,
+        "dav_delete_persisted": true,
+        "websocket_ready": true,
+        "websocket_competing_upload_rejected": true,
+        "websocket_progress": true,
+        "websocket_done": true,
+        "websocket_persisted_exact": true,
+        "websocket_empty_done": true,
+        "websocket_overflow_ready": true,
+        "websocket_overflow_rejected": true,
+        "websocket_incomplete_file_removed": true,
+        "stock_udp_discovery": true,
+        "all_11_webdav_methods_exercised": true,
+        "calibre_original_upload_persisted": true,
+        "original_book_unchanged": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 32,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 1162,
+        "rx-frames": 1181,
+        "rx-dropped": 83,
+        "bad-dma": 26,
+        "unsupported-accesses": 70222,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        6
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        }
+      }
+    },
+    "opds": {
+      "validation_sha256": "d96a1d74f23d2fd61bf16ab02b832f1be8fb753aab29601ae86b2383d1448e3a",
+      "functional_pass": true,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "opds_book_persisted_exact": true,
+        "opds_authenticated_feed_and_relative_navigation": true,
+        "opds_cross_origin_auth_not_forwarded": true,
+        "original_book_unchanged": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 35,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 86,
+        "rx-frames": 113,
+        "rx-dropped": 51,
+        "bad-dma": 23,
+        "unsupported-accesses": 6799,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        3
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        },
+        "/.crosspoint/opds.json": {
+          "size": 156,
+          "sha256": "49b57b66c8709e34f925875c08a15ea8791602ec674b441aa700a089a3c3c2d0"
+        }
+      }
+    },
+    "koreader-auth": {
+      "validation_sha256": "67774ca4b335aa2662cef75ed826933f4e544c94618479ce58dc5489a79790e1",
+      "functional_pass": true,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "koreader_original_protocol_request": true,
+        "koreader_original_guest_success_panel": true,
+        "original_book_unchanged": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 35,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 63,
+        "rx-frames": 96,
+        "rx-dropped": 261,
+        "bad-dma": 24,
+        "unsupported-accesses": 5562,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        5
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        },
+        "/.crosspoint/koreader.json": {
+          "size": 178,
+          "sha256": "698ac9a5e2cfebc65c6de01dd1cc2168094eaa215b102eef9cfb9a23b84aca27"
+        }
+      },
+      "uploaded_remote_progress": null,
+      "applied_progress": null
+    },
+    "koreader-signup": {
+      "validation_sha256": "7b3c5998bd8145e9562835b6e2f66b534a6f4a60f479395ce05de74fd94026cd",
+      "functional_pass": true,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "koreader_original_protocol_request": true,
+        "koreader_original_guest_success_panel": true,
+        "original_book_unchanged": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 35,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 60,
+        "rx-frames": 92,
+        "rx-dropped": 305,
+        "bad-dma": 23,
+        "unsupported-accesses": 5278,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        5
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        },
+        "/.crosspoint/koreader.json": {
+          "size": 178,
+          "sha256": "698ac9a5e2cfebc65c6de01dd1cc2168094eaa215b102eef9cfb9a23b84aca27"
+        }
+      },
+      "uploaded_remote_progress": null,
+      "applied_progress": null
+    },
+    "ntp": {
+      "validation_sha256": "a3d333236e8d13d316da3e7181d525b5c267f019a0be02a2dcd580c6e2e68f6b",
+      "functional_pass": true,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "ntp_original_client_packets_and_originate_echo": true,
+        "ntp_real_guest_rtc_write_readback": true,
+        "ntp_guest_sync_date_flag_persisted": true,
+        "original_book_unchanged": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "explicit_host_router_active_and_finalized": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 35,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 48,
+        "rx-frames": 80,
+        "rx-dropped": 279,
+        "bad-dma": 26,
+        "unsupported-accesses": 4485,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        }
+      },
+      "rtc_readback": {
+        "fixture_epoch": 1790985600,
+        "native_rtc_epoch": 1790985601,
+        "elapsed_virtual_seconds_since_log": 1,
+        "host_injection_count": 0
+      }
+    },
+    "fonts": {
+      "validation_sha256": "6fc0fb53b1f743aa3896cdccd72f43734b617e262ec30e106b31e4b6ae2df60e",
+      "functional_pass": true,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "font_download_persisted_exact": true,
+        "font_original_crc32_matches_manifest": true,
+        "font_original_endpoint_requests": true,
+        "font_installer_temporary_file_removed": true,
+        "original_book_unchanged": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "explicit_host_router_active_and_finalized": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 35,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 62,
+        "rx-frames": 95,
+        "rx-dropped": 224,
+        "bad-dma": 22,
+        "unsupported-accesses": 5334,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        7
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        }
+      },
+      "font_crc": {
+        "crc32": 2883393914,
+        "size": 103
+      }
+    },
+    "koreader-boundary-roundtrip": {
+      "validation_sha256": "1e75025ca7ce34632fffa668817198ccccd3a75403d77bff47c7c1ae9313cf27",
+      "functional_pass": false,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "koreader_upload_local_page1": true,
+        "koreader_valid_progress_uploaded": true,
+        "koreader_resume_after_upload": true,
+        "koreader_new_local_page2": true,
+        "koreader_remote_page_persisted": false,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 35,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 125,
+        "rx-frames": 184,
+        "rx-dropped": 306,
+        "bad-dma": 105,
+        "unsupported-accesses": 10905,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        4,
+        1,
+        4,
+        1
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        },
+        "/.crosspoint/koreader.json": {
+          "size": 178,
+          "sha256": "402c74c0ced730c8ae64dd45e5e357d8806a287888a55caf9a80d4ddf757ff39"
+        }
+      },
+      "failure": "failed genuine guest postcondition: koreader_remote_page_persisted",
+      "uploaded_remote_progress": {
+        "document": "ffe18e5b355d104879c32680eacf4e17",
+        "metadata": {
+          "filename": "test.epub",
+          "title": "CrossInk Emulator Test Book",
+          "authors": "X3 Emulator Test Fixtures"
+        },
+        "progress": "/body/DocFragment[1]/body/p[3]/text()[1].34",
+        "percentage": 0.007932,
+        "device": "CrossInk X3",
+        "device_id": "crossink-device"
+      },
+      "applied_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 22,
+        "visible_text_offset": 0
+      }
+    },
+    "koreader-distinct-nonboundary-apply": {
+      "validation_sha256": "4ff6db63fc649db7901958966fc6552cdc534c8a74f51106310eb574d2a74679",
+      "functional_pass": true,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "koreader_upload_local_page1": true,
+        "koreader_valid_progress_uploaded": true,
+        "distinct_remote_peer_advanced_one_character": true,
+        "koreader_resume_after_upload": true,
+        "koreader_new_local_page2": true,
+        "koreader_remote_page_persisted": true,
+        "koreader_remote_page_content_geometry": true,
+        "original_book_unchanged": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 38,
+      "backend_sha256": "6fccb05f569101889c15a22fe5fb9d9a8f624156bb4dfaa229b51feee95afcb0",
+      "wifi": {
+        "tx-frames": 127,
+        "rx-frames": 186,
+        "rx-dropped": 546,
+        "bad-dma": 101,
+        "unsupported-accesses": 11053,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        4,
+        1,
+        4,
+        1
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        },
+        "/.crosspoint/koreader.json": {
+          "size": 178,
+          "sha256": "d6cf7fb6d1dfd48630c67770da8a6b540b680db95eb3a8b10b11c81efc2b31bd"
+        }
+      },
+      "uploaded_remote_progress": {
+        "document": "ffe18e5b355d104879c32680eacf4e17",
+        "metadata": {
+          "filename": "test.epub",
+          "title": "CrossInk Emulator Test Book",
+          "authors": "X3 Emulator Test Fixtures"
+        },
+        "progress": "/body/DocFragment[1]/body/p[3]/text()[1].34",
+        "percentage": 0.007932,
+        "device": "CrossInk X3",
+        "device_id": "crossink-device"
+      },
+      "applied_progress": {
+        "spine_index": 0,
+        "page_number": 1,
+        "page_count": 22,
+        "visible_text_offset": 586
+      },
+      "separate_remote_peer_xpath": "/body/DocFragment[1]/body/p[3]/text()[1].35",
+      "original_boundary_roundtrip_waived": false
+    },
+    "ota-original-icount": {
+      "validation_sha256": "4e883adfeb264841cf8bc72629eb1fc66f9902105f89acd270f2f19ad19c6320",
+      "functional_pass": false,
+      "complete_machine_acceptance_passed": false,
+      "checks": {
+        "wifi_and_phy_diagnostics_available": true,
+        "real_wifi_scan_completed": true,
+        "real_wifi_connected": true,
+        "rom_cold_boot": true,
+        "source_controlled_network_software_reset_sequence": true,
+        "source_controlled_network_boot_targets": true,
+        "no_sd_error_or_guest_panic": true,
+        "explicit_host_router_active_and_finalized": true,
+        "launcher_stopped_cleanly": true
+      },
+      "checked_source_count": 35,
+      "backend_sha256": "77fa9830e760a2cdbc85f5571dde815032d48107af769ebb9cc7b005c0795aee",
+      "wifi": {
+        "tx-frames": 49,
+        "rx-frames": 87,
+        "rx-dropped": 234,
+        "bad-dma": 25,
+        "unsupported-accesses": 4635,
+        "air-enabled": true,
+        "channel": 6
+      },
+      "source_controlled_reset_targets": [
+        0,
+        2
+      ],
+      "input_files": {
+        "/test.epub": {
+          "size": 8878,
+          "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+        }
+      },
+      "failure": "timed out waiting for original guest result labels: No update available"
+    }
+  }
+}

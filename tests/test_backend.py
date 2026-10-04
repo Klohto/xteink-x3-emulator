@@ -127,7 +127,8 @@ class BackendRunTests(unittest.TestCase):
                 raise SystemExit(0)
             args = sys.argv[1:]
             def option(name): return args[args.index(name) + 1]
-            qmp_path = option("-chardev").split("path=", 1)[1]
+            qmp_path = next(args[i + 1] for i, value in enumerate(args)
+                            if value == "-chardev" and args[i + 1].startswith("pipe,id=x3qmp,")).split("path=", 1)[1]
             diagnostics_path = pathlib.Path(option("-D"))
             diagnostics_path.write_text(DIAGNOSTICS)
             for i, value in enumerate(args):
@@ -249,6 +250,78 @@ class BackendRunTests(unittest.TestCase):
         self.assertTrue(result["wifi"]["enabled"])
         self.assertFalse(result["validity"]["unsupported_features_checked"])
         self.assertFalse(result["validity"]["diagnostics_clean"])
+
+    def test_raw_peer_uses_loopback_frames_and_client_omits_listener_only_wait(self):
+        for mode in ("listen", "connect"):
+            with self.subTest(mode=mode):
+                config = self.config(wifi_peer=f"{mode}:33333", wifi_channel=1, device_mac="02:58:33:45:44:02")
+                argv = build_command(config)
+                endpoint = next(argv[i + 1] for i, value in enumerate(argv)
+                                if value == "-chardev" and argv[i + 1].startswith("socket,id=x3peer,"))
+                self.assertIn("host=127.0.0.1,port=33333", endpoint)
+                self.assertEqual("wait=off" in endpoint, mode == "listen")
+                self.assertIn(f"server={'on' if mode == 'listen' else 'off'}", endpoint)
+                self.assertIn("driver=esp32c3.wifi,property=peer-only,value=true", argv)
+                self.assertIn("driver=esp32c3.wifi,property=channel,value=1", argv)
+                self.assertEqual(argv[argv.index("-nic") + 1], "none")
+                self.assertEqual(config.resolved().device_mac, "02:58:33:45:44:02")
+
+    def test_peer_ports_channels_and_mode_combinations_are_validated(self):
+        invalid = (
+            {"wifi_peer": "connect:0"}, {"wifi_peer": "listen:65536"},
+            {"wifi_peer": "connect:127.0.0.1:33"}, {"wifi_peer": "connect:33,server=on"},
+            {"wifi_peer": "listen:33", "wifi": True},
+            {"wifi_peer": "listen:33", "usb_port": 33},
+            {"wifi_peer": "connect:33", "usb_port": 33},
+            {"wifi_peer": "connect:33", "wifi_channel": True},
+            {"wifi_peer": "connect:33", "wifi_channel": 15},
+            {"wifi_channel": 1},
+        )
+        for values in invalid:
+            with self.subTest(values=values), self.assertRaises(BackendError):
+                build_command(self.config(**values))
+
+    def test_factory_efuse_is_real_drive_input_and_supplied_file_is_unchanged(self):
+        from x3emu.efuse import make_efuse_image
+        self.install_fake_backend()
+        efuse = self.root / "factory.bin"
+        data = make_efuse_image("02:58:33:45:44:03")
+        efuse.write_bytes(data)
+        result = run(self.config(efuse=efuse, in_place=True))
+        self.assertEqual(efuse.read_bytes(), data)
+        self.assertEqual((self.output / "efuse.bin").read_bytes(), data)
+        self.assertEqual(result["input"]["efuse"]["factory_mac"], "02:58:33:45:44:03")
+        self.assertEqual(result["input"]["efuse"]["source"], "supplied_image")
+        self.assertIn("driver=nvram.esp32c3.efuse,property=drive,value=efuse0", result["argv"])
+        self.assertIn(f"file={self.output}/efuse.bin,if=none,format=raw,id=efuse0", result["argv"])
+        self.assertIn("efuse.bin", result["artifact_sha256"])
+        with self.assertRaises(BackendError):
+            build_command(self.config(efuse=efuse, device_mac="02:58:33:45:44:02"))
+        efuse.write_bytes(data[:-1])
+        with self.assertRaisesRegex(BackendError, "exactly 336"):
+            build_command(self.config(efuse=efuse))
+
+    def test_peer_requires_configured_telemetry_and_rejects_link_errors(self):
+        from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_PEER_OBSERVATIONS, WIFI_FCS_OBSERVATIONS
+        extras = {"/machine/wifi": list(WIFI_BASE_OBSERVATIONS),
+                  "/machine/regi2c": ["phy-handshake-modelled", "synthetic-measurements"]}
+        variants = (("missing", False, False, 0), ("not-configured", True, False, 0),
+                    ("clean", True, True, 0), ("link-error", True, True, 1))
+        for label, observed, configured, errors in variants:
+            with self.subTest(label=label):
+                self.output = self.root / label
+                available = {path: list(names) for path, names in extras.items()}
+                if observed:
+                    available["/machine/wifi"] += list(WIFI_PEER_OBSERVATIONS + WIFI_FCS_OBSERVATIONS)
+                self.install_fake_backend(extra_properties=available, counter_overrides={
+                    "/machine/wifi:peer-configured": configured,
+                    "/machine/wifi:peer-link-errors": errors,
+                })
+                result = run(self.config(wifi_peer="connect:33333"))
+                self.assertEqual(result["wifi"]["backend"], "raw MPDU peer")
+                self.assertEqual(result["validity"]["unsupported_features_checked"], observed and configured)
+                self.assertEqual(result["validity"]["diagnostics_clean"], label == "clean")
+                self.assertFalse(result["timing"]["speed_selection_allowed"])
 
     def test_wifi_requires_phy_handshake_observations_and_records_synthetic_limits(self):
         from x3emu.backend import DEVICE_PROPERTIES

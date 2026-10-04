@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "upstream_repository": "https://github.com/espressif/qemu.git",
+  "upstream_revision": "febae182e132e4055529be423a818225ebddaa3a",
+  "source_tree": "6cf55f53115b680953ddd4c15bbfb78dcc2126b1",
+  "subprojects": [
+    {
+      "name": "berkeley-softfloat-3",
+      "repository": "https://gitlab.com/qemu-project/berkeley-softfloat-3.git",
+      "revision": "b64af41c3276f97f0e181920400ee056b9c88037",
+      "source_tree": "2deedfb2818c1f63055285983e524cd5b2c8852a",
+      "wrap_sha256": "f5b245e02a2f9400d7cfcc4a10860ed8c6d088577cf753ce6fe161e475a7d9ff",
+      "patch_directory": "berkeley-softfloat-3"
+    },
+    {
+      "name": "berkeley-testfloat-3",
+      "repository": "https://gitlab.com/qemu-project/berkeley-testfloat-3.git",
+      "revision": "e7af9751d9f9fd3b47911f51a5cfd08af256a9ab",
+      "source_tree": "e396e5bd0b085f41e8fd0486d9984db47a077367",
+      "wrap_sha256": "b4d204e9f59e671c1c636259d8521b9c7f29116cc4b9ff6598e8e635f0359bef",
+      "patch_directory": "berkeley-testfloat-3"
+    },
+    {
+      "name": "dtc",
+      "repository": "https://gitlab.com/qemu-project/dtc.git",
+      "revision": "b6910bec11614980a21e46fbccc35934b671bd81",
+      "source_tree": "5de1e174f53a6ea499a49ac7b5eb7fe816dd9902",
+      "wrap_sha256": "932ca47fc50a6932207a6fc82e15d07d848e93c4ff9abcd0cc34c15f40a30885",
+      "patch_directory": null
+    },
+    {
+      "name": "keycodemapdb",
+      "repository": "https://gitlab.com/qemu-project/keycodemapdb.git",
+      "revision": "f5772a62ec52591ff6870b7e8ef32482371f22c6",
+      "source_tree": "eaa3f9fb1e2c7687b334f57cb605140cb5450f16",
+      "wrap_sha256": "306b37c10ce735432220c08c6832dc67c0a306b88a0023c65937c90c638dba97",
+      "patch_directory": null
+    }
+  ],
+  "patch_sha256": "c847edb98eb8af1c39556e506e08ccc81be233da8957ee2d5ad27648e88a0f2a",
+  "binary_sha256": "6fccb05f569101889c15a22fe5fb9d9a8f624156bb4dfaa229b51feee95afcb0",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "version": "QEMU emulator version 9.2.2",
+  "source_directory": "/tmp/x3-native-candidate-c847edb98eb8af1c/src",
+  "build_directory": "/tmp/x3-native-candidate-c847edb98eb8af1c/build",
+  "binary": "/tmp/x3-native-candidate-c847edb98eb8af1c/install/bin/qemu-system-riscv32",
+  "bios_directory": "/tmp/x3-native-candidate-c847edb98eb8af1c/install/share/qemu",
+  "timing_calibrated": false,
+  "native_device_tests_passed": true,
+  "native_device_test_suites": [
+    {
+      "name": "esp32c3-gpspi-test",
+      "cases_passed": 3,
+      "tap_sha256": "c9628bbee494735e04df20a07b702d5c2cd7d66d98dd3804a6229e9c97a3234c",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/esp32c3-gpspi-test.tap"
+    },
+    {
+      "name": "xteink-x3-adc-test",
+      "cases_passed": 11,
+      "tap_sha256": "01393652bf4cae98607fcdc3392490ed2777f978a0015caf20983d9101c3cf02",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/xteink-x3-adc-test.tap"
+    },
+    {
+      "name": "esp32c3-i2c-test",
+      "cases_passed": 12,
+      "tap_sha256": "5c4abc83aa0cc57112322ba4e12b07543b588271abf12f4717ff86e295b180dc",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/esp32c3-i2c-test.tap"
+    },
+    {
+      "name": "xteink-x3-epd-test",
+      "cases_passed": 10,
+      "tap_sha256": "1d91484932bf3df73713e2071698a093607bf9e744347ec39e6e66bb561e8630",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/xteink-x3-epd-test.tap"
+    },
+    {
+      "name": "esp32c3-usb-test",
+      "cases_passed": 6,
+      "tap_sha256": "41a350945e1b51d4e5e451fb52bc2d78547f5b2f6be604c2c4f7601b2f005b09",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/esp32c3-usb-test.tap"
+    },
+    {
+      "name": "xteink-x3-sd-test",
+      "cases_passed": 6,
+      "tap_sha256": "985cef7842ddbb56c050a556f6f4c3e784232d006c7d3306a40f896cc24c0ff4",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/xteink-x3-sd-test.tap"
+    },
+    {
+      "name": "esp32c3-flash-test",
+      "cases_passed": 11,
+      "tap_sha256": "45eb2e033326583433a5821963f859f2761ce0add9456bef1b9a9e8a2675ea2a",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/esp32c3-flash-test.tap"
+    },
+    {
+      "name": "esp32c3-rtc-test",
+      "cases_passed": 16,
+      "tap_sha256": "cf25d025bfa5f8c96fd0eb577434fdb944179685af8fd5d06a2ed543a818ce10",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/esp32c3-rtc-test.tap"
+    },
+    {
+      "name": "xteink-x3-soc-test",
+      "cases_passed": 2,
+      "tap_sha256": "63d95359fd081d6259757771260a3374e8186f8a551894d29806c38597533b6b",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/xteink-x3-soc-test.tap"
+    },
+    {
+      "name": "esp32c3-assist-debug-test",
+      "cases_passed": 4,
+      "tap_sha256": "f9cedf9609f6487acf61ef1d94ec0df1a4f7a72e2856602ca8e22904c36f24dd",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/esp32c3-assist-debug-test.tap"
+    },
+    {
+      "name": "esp32c3-regi2c-test",
+      "cases_passed": 10,
+      "tap_sha256": "610bdbe3218a332a7b21a6c3af2e9d1db216e0f3d41d2ab5bf5f29ced33123e6",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/esp32c3-regi2c-test.tap"
+    },
+    {
+      "name": "esp32c3-wifi-test",
+      "cases_passed": 8,
+      "tap_sha256": "9cb2bc822e498c5daa37a50746d0aea161587045a0039fa27858c1a2278c51c1",
+      "tap": "/tmp/x3-native-candidate-c847edb98eb8af1c/build/native-tests/esp32c3-wifi-test.tap"
+    }
+  ],
+  "native_device_test_cases_passed": 99,
+  "source_apply_tree_verified": true,
+  "wrapped_dependency_trees_verified_after_tests": true,
+  "native_device_test_skips": 0,
+  "binary_mode": "0755",
+  "metadata_sha256": "452596bbd35b432ac3a2fe683391e057734813cf055effef89751e6f69b48839"
+}

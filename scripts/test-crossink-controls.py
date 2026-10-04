@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise stock X3 gyro, battery, clock and physical button remapping and Power shortcuts.
+"""Exercise stock X3 sensors, Controls policies and Device settings through real UI input.
 
 Sensor inputs reach guest drivers through native I2C registers. Settings and
 saved book progress are read from the guest-written FAT card. Functional
@@ -41,10 +41,17 @@ SOURCE_FILES = {
 }
 
 SOURCE_SHA256 = {
+    'lib/GfxRenderer/GfxRenderer.cpp': 'a31f5a95ce205868e67f3cf48127041b5bcf2d69e714e431a62fbf9b74568070',
+    'lib/GfxRenderer/GfxRenderer.h': 'aa69a584faef1d6b0e76eac8e2907bf5badc0346cddb3c380587f82b442726c3',
+    'lib/hal/HalDisplay.cpp': '966694752365dd33c91c55b615b6da8075c796a6a4a68398442d6eddf1eae8f6',
+    'src/util/ScreenshotUtil.cpp': '73768f9f87327b116166557f0fdff11f396968611dde8df497fe5d57fd7044ae',
     'src/activities/reader/ControlsOptionsActivity.cpp': '5e059ead0ec9ece3af4431de95abd24a2c19853c1b412325086868a0a0a55d44',
     'src/activities/reader/ReaderUtils.h': 'd82ee89df6e8041a34d757896f329bd8dc3303eb681b3803602b897d3a5ff26c',
     'src/util/ButtonShortcutController.h': 'eeac6af8788adf7db4ffd8811fc42d29c3b862cf69eb144f0bc9aaa7fb8e67c0',
     'src/components/HeaderDate.cpp': '78e3aac37a0110328f8fceafe22ef7754aae4394c153bec74f6e1a17ac0a46f0',
+    'include/DeviceCapabilities.h': 'c4805a2f900be78eef205ddb190906e0d1f3379e06ac1a51649b06a3ec37231a',
+    'lib/Logging/Logging.h': '1c58c23516bd75254d40b876013a488ace0195d683e989fef14dc94916ae51fd',
+    'platformio.ini': '8573a73bde864e14e86198c143fb4e1d56a82ea7083d2cb8b473e1d5e73dfcb0',
     'src/CrossPointSettings.h': 'e4776b7ee73e09aaf0bc59929954c5745aff0e461381153814f7170e68d3501e',
     'src/QuickActions.h': 'd2eeb595d108345ae22ea2fa909672922fdbd433c720d336135781159ce20f3f',
     'lib/hal/HalStorage.cpp': '0d9d58c99add63525b2924bb6c88d987e4cd429fcb692fb3aecdcbefd78ead8c',
@@ -451,9 +458,15 @@ def reader_remap_workflow(replay):
     fields = ("readerFrontButtonsEnabled", "readerFrontButtonBack", "readerFrontButtonConfirm",
               "readerFrontButtonLeft", "readerFrontButtonRight")
     replay.check("reader_remap_cancel_preserves_fields", [settings(replay)[k] for k in fields] == [before[k] for k in fields])
+    # Wizard exits on side-button press; its release then moves the parent's
+    # selection once. Restore the reader-specific row before reentering.
+    replay.tap("up", "reader-remap-row-after-cancel", "Undo parent Down-release navigation after wizard cancellation")
     replay.tap("confirm", "reader-remap-reset-wizard", "Reenter reader-specific wizard")
     replay.tap("up", "reader-remap-reset-defaults", "Physical Up saves default mapping and disables reader override")
     replay.check("reader_remap_reset_saves_defaults", [settings(replay)[k] for k in fields] == [0, 0, 1, 2, 3])
+    replay.tap("down", "reader-remap-row-after-reset", "Undo parent Up-release navigation after wizard reset")
+    replay.check("reader_wizard_side_actions_do_not_change_orientation_policy",
+                 settings(replay)["frontButtonOrientationAware"] == 0)
     replay.tap("confirm", "reader-remap-apply-wizard", "Reenter wizard to apply a separate reader-only mapping")
     for physical, role in (("back", "Back"), ("confirm", "Confirm"), ("right", "Left"), ("left", "Right")):
         replay.tap(physical, f"reader-assign-{role.lower()}", f"Reader wizard: assign physical {physical} to {role}")
@@ -492,6 +505,397 @@ def reader_remap_workflow(replay):
     replay.check("reader_remap_reset_restores_default_runtime", FUNCTIONS.changed_pixels(replay.experiment.frames[page1],
                  replay.experiment.frames[restored]) == 0)
     replay.tap("back", "home-reader-remap-final", "Save restored-default reader progress")
+
+
+def hold_front_side(replay, button, label, purpose, *, hold_ms=900, reader=True):
+    replay.sequence += 1
+    count = replay.experiment.refresh_count(replay.qmp)
+    action = {"button": button, "purpose": purpose, "hold_ms": hold_ms, "status": "requested",
+              "after_frame_count": count, "boot_index": replay.boot_index}
+    replay.receipt["actions"].append(action)
+    replay.save()
+    replay.experiment.press(replay.qmp, button, hold_ms=hold_ms, purpose=purpose)
+    action.update({"input": dict(replay.experiment.steps[-1]), "status": "released"})
+    label = f"{replay.sequence:03d}-{label}"
+    action.update({"frame": replay.capture(label, count, reader=reader), "status": "captured"})
+    replay.save()
+    return label
+
+
+def orientation_aware_workflow(replay):
+    """Change both mapping policies by UI; recorded inverted orientation is a fixture."""
+    initial = replay.experiment.frames["reader-initial"]
+    reader_controls(replay, "front", "orientation-front")
+    move(replay, "down", 2, "front-orientation-aware-row")
+    choose_popup(replay, "down", 1, "front-orientation-nav")
+    replay.check("front_nav_orientation_policy_saved_by_ui", settings(replay)["frontButtonOrientationAware"] == 1)
+    close_reader_controls(replay, "orientation-front")
+    page1 = replay.tap("left", "inverted-front-left-next", "Inverted reader with Nav policy: physical Left becomes Next",
+                       reader=True)
+    replay.check("inverted_front_left_changes_page", SMOKE["changed_content_pixels"](initial,
+                 replay.experiment.frames[page1]) > 1000)
+    returned = replay.tap("right", "inverted-front-right-previous", "Inverted Nav policy: physical Right becomes Previous",
+                          reader=True)
+    replay.check("inverted_front_right_restores_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    reader_controls(replay, "side", "orientation-side")
+    replay.tap("down", "side-orientation-aware-row", "Side Buttons: select Orientation Aware row")
+    replay.tap("confirm", "side-orientation-aware-yes", "Toggle actual two-option side orientation policy to Yes")
+    replay.check("side_orientation_policy_saved_by_ui", settings(replay)["sideButtonOrientationAware"] == 1)
+    close_reader_controls(replay, "orientation-side")
+    advanced = replay.tap("up", "inverted-side-up-next", "Inverted aware side policy: physical Up becomes Next", reader=True)
+    replay.check("inverted_side_up_matches_page1", FUNCTIONS.changed_pixels(replay.experiment.frames[page1],
+                 replay.experiment.frames[advanced]) == 0)
+    returned = replay.tap("down", "inverted-side-down-previous", "Inverted aware side policy: physical Down becomes Previous",
+                          reader=True)
+    replay.check("inverted_side_down_restores_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    replay.tap("back", "home-orientation-aware", "Exit and save page0 using unchanged Back mapping")
+    replay.check("orientation_mapping_saved_page0", replay.progress()["page_number"] == 0, replay.progress())
+    replay.restart()
+    stored = settings(replay)
+    replay.check("orientation_policies_survive_new_cpu", stored["frontButtonOrientationAware"] == 1
+                 and stored["sideButtonOrientationAware"] == 1, stored)
+    reopened = replay.tap("confirm", "orientation-aware-reopen", "Global Confirm stays unchanged outside reader", reader=True)
+    replay.check("orientation_policy_reopens_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[reopened]) == 0)
+    replay.tap("up", "orientation-aware-after-reboot-page1", "Rebooted aware side input still advances", reader=True)
+    returned = replay.tap("right", "orientation-aware-after-reboot-page0", "Rebooted aware front input still returns", reader=True)
+    replay.check("both_orientation_policies_work_after_restart", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    replay.tap("back", "home-orientation-aware-final", "Flush final actual page0 progress")
+
+
+def orientation_all_workflow(replay):
+    replay.capture("home-orientation-all", 0)
+    open_settings(replay, 2)
+    move(replay, "down", 2, "all-front-submenu-row")
+    replay.tap("confirm", "all-front-submenu", "Open global Front Buttons settings outside reader mode")
+    move(replay, "down", 2, "all-front-orientation-row")
+    choose_popup(replay, "down", 2, "front-orientation-all")
+    replay.check("all_front_orientation_policy_saved_by_ui", settings(replay)["frontButtonOrientationAware"] == 2)
+    replay.tap("back", "all-controls-parent", "Outside reader: default Back closes Front Buttons")
+    replay.tap("back", "all-controls-tabs", "Outside reader: default Back focuses category tabs")
+    replay.tap("back", "home-orientation-all-saved", "Default Back exits global Settings")
+    replay.tap("down", "all-browse-row", "Home: select Browse Files")
+    replay.tap("confirm", "all-browser", "Default Confirm still opens Browser outside reader")
+    before = replay.experiment.refresh_count(replay.qmp)
+    replay.experiment.press(replay.qmp, "confirm", purpose="Default Confirm opens original EPUB before reader mapping takes effect")
+    replay.experiment.wait("inverted all-button reader", replay.experiment.book_is_open)
+    replay.capture("all-reader-page0", before, reader=True)
+    initial = replay.experiment.frames["all-reader-page0"]
+    page1 = replay.tap("back", "all-physical-back-next", "Inverted All policy: physical Back is logical Right/Next", reader=True)
+    replay.check("inverted_all_physical_back_advances", SMOKE["changed_content_pixels"](initial,
+                 replay.experiment.frames[page1]) > 1000)
+    returned = replay.tap("confirm", "all-physical-confirm-previous", "Inverted All policy: physical Confirm is logical Left/Previous",
+                          reader=True)
+    replay.check("inverted_all_physical_confirm_restores", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    menu = replay.tap("left", "all-physical-left-menu", "Inverted All policy: physical Left is logical Confirm/Reader Menu")
+    replay.check("inverted_all_physical_left_opens_menu", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[menu]) > 1000)
+    returned = replay.tap("right", "all-physical-right-closes-menu", "Inverted All policy: physical Right is logical Back", reader=True)
+    replay.check("inverted_all_physical_right_closes_menu", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    replay.tap("right", "home-all-orientation", "Logical Back via physical Right exits and saves page0")
+    replay.check("all_orientation_exit_saved_progress", replay.progress()["page_number"] == 0, replay.progress())
+    replay.restart()
+    replay.check("all_front_orientation_survives_new_cpu", settings(replay)["frontButtonOrientationAware"] == 2)
+    reopened = replay.tap("confirm", "all-orientation-reopen", "New CPU Home still uses global default Confirm", reader=True)
+    replay.check("all_orientation_reopens_exact_progress", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[reopened]) == 0)
+    replay.tap("back", "all-orientation-restarted-next", "Restarted reader retains inverted All Next binding", reader=True)
+    returned = replay.tap("confirm", "all-orientation-restarted-previous", "Restarted reader retains inverted All Previous binding",
+                          reader=True)
+    replay.check("all_orientation_runtime_survives_new_cpu", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    replay.tap("right", "home-all-orientation-final", "Flush final page0 through the remapped reader Back")
+
+
+def long_press_workflow(replay):
+    """Actual front/side rows select chapter, font and orientation actions."""
+    initial = replay.experiment.frames["reader-initial"]
+    reader_controls(replay, "front", "front-long-chapter")
+    move(replay, "down", 3, "front-long-action-row")
+    choose_popup(replay, "down", 1, "front-long-chapter")
+    replay.check("front_chapter_binding_saved_by_ui", settings(replay)["longPressButtonBehavior"] == 1)
+    close_reader_controls(replay, "front-long-chapter")
+    chapter = hold_front_side(replay, "right", "front-long-chapter2", "Physical Right 900 ms skips to the next real spine")
+    replay.tap("back", "home-front-chapter2", "Flush genuine chapter-skip progress")
+    progress = replay.progress()
+    replay.check("front_long_press_skipped_real_spine", progress["spine_index"] == 1 and progress["page_number"] == 0,
+                 progress)
+    replay.tap("confirm", "front-chapter2-reopen", "Reopen actual second-spine progress", reader=True)
+    returned = hold_front_side(replay, "left", "front-long-chapter1", "Physical Left 900 ms returns to the previous spine")
+    replay.check("front_chapter_return_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[returned]) == 0)
+    reader_controls(replay, "front", "front-long-font")
+    move(replay, "down", 3, "front-font-action-row")
+    choose_popup(replay, "down", 1, "front-long-font")
+    replay.check("front_font_binding_saved_by_ui", settings(replay)["longPressButtonBehavior"] == 3)
+    close_reader_controls(replay, "front-long-font")
+    enlarged = hold_front_side(replay, "right", "front-font-larger", "Physical Right 900 ms increases stock reader font size")
+    replay.check("front_font_long_press_reflows_text", SMOKE["changed_content_pixels"](initial,
+                 replay.experiment.frames[enlarged]) > 1000)
+    restored = hold_front_side(replay, "left", "front-font-restored", "Physical Left 900 ms restores the preceding font size")
+    replay.check("front_font_inverse_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[restored]) == 0)
+    reader_controls(replay, "side", "side-long-font")
+    move(replay, "down", 2, "side-font-action-row")
+    choose_popup(replay, "down", 1, "side-long-font")
+    replay.check("side_font_binding_saved_by_ui", settings(replay)["sideButtonLongPress"] == 1)
+    close_reader_controls(replay, "side-long-font")
+    enlarged_side = hold_front_side(replay, "up", "side-font-larger", "Physical Up 900 ms increases stock font independently of page layout")
+    replay.check("side_font_matches_front_font_reflow", FUNCTIONS.changed_pixels(replay.experiment.frames[enlarged],
+                 replay.experiment.frames[enlarged_side]) == 0)
+    restored = hold_front_side(replay, "down", "side-font-restored", "Physical Down 900 ms restores the stock font size")
+    replay.check("side_font_inverse_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[restored]) == 0)
+    reader_controls(replay, "side", "side-long-chapter")
+    move(replay, "down", 2, "side-chapter-action-row")
+    choose_popup(replay, "up", 1, "side-long-chapter")
+    replay.check("side_chapter_binding_saved_by_ui", settings(replay)["sideButtonLongPress"] == 0)
+    close_reader_controls(replay, "side-long-chapter")
+    side_chapter = hold_front_side(replay, "down", "side-long-chapter2", "Physical Down 900 ms skips to the next real spine")
+    replay.check("side_chapter_matches_front_chapter", FUNCTIONS.changed_pixels(replay.experiment.frames[chapter],
+                 replay.experiment.frames[side_chapter]) == 0)
+    restored = hold_front_side(replay, "up", "side-long-chapter1", "Physical Up 900 ms returns from chapter2 page0")
+    replay.check("side_chapter_inverse_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[restored]) == 0)
+    reader_controls(replay, "front", "front-long-rotate")
+    move(replay, "down", 3, "front-rotate-action-row")
+    choose_popup(replay, "down", 1, "front-long-rotate")
+    replay.check("front_orientation_binding_saved_by_ui", settings(replay)["longPressButtonBehavior"] == 2)
+    close_reader_controls(replay, "front-long-rotate")
+    rotated = hold_front_side(replay, "right", "front-rotate-counterclockwise", "Physical Right 900 ms rotates stock reader counter-clockwise")
+    replay.check("front_orientation_long_press_changes_layout", SMOKE["changed_content_pixels"](initial,
+                 replay.experiment.frames[rotated]) > 1000)
+    restored = hold_front_side(replay, "left", "front-rotate-restored", "Physical Left 900 ms reverses the orientation change")
+    replay.check("front_orientation_inverse_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[restored]) == 0)
+    reader_controls(replay, "side", "side-long-rotate")
+    move(replay, "down", 2, "side-rotate-action-row")
+    choose_popup(replay, "down", 2, "side-long-rotate")
+    replay.check("side_orientation_binding_saved_by_ui", settings(replay)["sideButtonLongPress"] == 3)
+    close_reader_controls(replay, "side-long-rotate")
+    rotated_side = hold_front_side(replay, "up", "side-rotate-counterclockwise", "Physical Up 900 ms rotates counter-clockwise")
+    replay.check("side_orientation_matches_front_rotation", FUNCTIONS.changed_pixels(replay.experiment.frames[rotated],
+                 replay.experiment.frames[rotated_side]) == 0)
+    restored = hold_front_side(replay, "down", "side-rotate-restored", "Physical Down 900 ms restores portrait")
+    replay.check("side_orientation_inverse_restores_raw_page", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[restored]) == 0)
+    replay.tap("back", "home-long-press-final", "Save all actual long-press bindings and final portrait progress")
+    stored = settings(replay)
+    replay.check("long_press_bindings_and_progress_saved", stored["longPressButtonBehavior"] == 2
+                 and stored["sideButtonLongPress"] == 3 and replay.progress()["spine_index"] == 0
+                 and replay.progress()["page_number"] == 0, stored)
+    book_settings = FUNCTIONS.decode_reader_settings(replay.read_file(SMOKE["cache_path"]() + "/reader_settings.bin"))
+    replay.check("long_press_inverse_saves_original_book_layout", book_settings["font_point_size"] == 14
+                 and book_settings["orientation"] == 0, book_settings)
+    replay.restart()
+    stored = settings(replay)
+    replay.check("both_long_press_bindings_survive_new_cpu", stored["longPressButtonBehavior"] == 2
+                 and stored["sideButtonLongPress"] == 3, stored)
+    reopened = replay.tap("confirm", "long-press-reopen-original-layout", "New CPU restores actual saved font, orientation and progress",
+                          reader=True)
+    replay.check("long_press_inverse_layout_survives_restart", FUNCTIONS.changed_pixels(initial,
+                 replay.experiment.frames[reopened]) == 0)
+    replay.tap("back", "home-long-press-after-restart", "Flush restarted reader progress")
+
+
+def pulse_chord(replay, buttons, label):
+    """Atomically assert genuine ADC inputs and optional dedicated GPIO3."""
+    replay.qmp.set_buttons(0)
+    replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": False})
+    wait_virtual(replay, 250_000_000, "released physical inputs before chord")
+    before = replay.experiment.refresh_count(replay.qmp)
+    hold_ns = 400_000_000
+    mask = SMOKE["button_mask"]([b for b in buttons if b != "power"])
+    replay.qmp.execute("stop")
+    try:
+        start = replay.experiment.clock(replay.qmp)
+        replay.qmp.execute("qom-set", {"path": "/machine/adc", "property": "hold-ns", "value": hold_ns})
+        replay.qmp.set_buttons(mask)
+        deadline = replay.qmp.execute("qom-get", {"path": "/machine/adc", "property": "currentrelease-deadline-ns"})
+        if "power" in buttons:
+            replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button-hold-ns", "value": hold_ns})
+            replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": True})
+        actual = replay.qmp.execute("qom-get", {"path": "/machine/adc", "property": "buttons"})
+        if actual != mask or deadline != start + hold_ns:
+            raise FUNCTIONS.SmokeError("native input timers did not schedule the exact chord")
+    finally:
+        replay.qmp.execute("cont")
+    replay.receipt["actions"].append({"kind": "physical-chord", "buttons": list(buttons), "adc_mask": mask,
+        "start_t_ns": start, "scheduled_release_t_ns": deadline, "hold_ns": hold_ns,
+        "frame_count_before_input": before, "firmware_hook": False})
+    replay.save()
+    replay.experiment.wait("native chord release", lambda:
+        replay.qmp.execute("qom-get", {"path": "/machine/adc", "property": "buttons"}) == 0 and
+        not replay.qmp.execute("qom-get", {"path": "/machine", "property": "power-button"}))
+    wait_virtual(replay, 100_000_000, "guest consumes both chord releases")
+    replay.capture(label, before, reader=True)
+    return label
+
+
+def chords_workflow(replay):
+    initial = replay.experiment.frames["reader-initial"]
+    reader_controls(replay, "power", "chord-power")
+    move(replay, "down", 2, "power-chord-row")
+    # X3 source filters Sleep/Tilt/Home/Frontlight/Touch from the chord catalog.
+    # The remaining 25 options place Screenshot eight upward wraps from Ignore.
+    choose_popup(replay, "up", 8, "power-chord-screenshot")
+    replay.check("power_up_screenshot_binding_saved_by_ui", settings(replay)["powerChordAction"] == 0)
+    close_reader_controls(replay, "chord-power")
+    # X3 has two side inputs on one ADC ladder. The stock capability function
+    # hides Up+Down chord settings on X3; native injection must reject it too.
+    replay.qmp.execute("stop")
+    rejection = None
+    try:
+        try:
+            replay.qmp.set_buttons(SMOKE["button_mask"](["up", "down"]))
+        except FUNCTIONS.BackendError as error:
+            rejection = str(error)
+        buttons_after = replay.qmp.execute("qom-get", {"path": "/machine/adc", "property": "buttons"})
+    finally:
+        replay.qmp.execute("cont")
+    replay.check("same_ladder_up_down_injection_rejected", rejection is not None
+                 and "at most one per ladder" in rejection and buttons_after == 0, {"error": rejection})
+    replay.receipt.setdefault("observations", {})["up_down_chord_scope"] = {
+        "stock_x3_reachable": False, "stock_menu_hidden_by": "deviceSupportsSideButtonChord: X4Classic or touch",
+        "native_same_adc_ladder_rejection_tested": True, "side_chord_preference_seeded": False}
+    replay.save()
+    width, height, pixels = SMOKE["read_pgm"](initial)
+    # ScreenshotUtil inverts its 1bpp framebuffer border, sends FAST, waits
+    # 1000 ms, then restores the border with HALF. It does not rerender text
+    # or send a grayscale overlay. Require the complete source-intended B/W
+    # target and preserve the raw AA-tone difference as a separate diagnostic.
+    monochrome_target = bytes(255 if pixel == 255 else 0 for pixel in pixels)
+    expected = bytes(255 if pixels[x * width + y] == 255 else 0
+                     for y in range(width) for x in range(height - 1, -1, -1))
+    for buttons, label in ((("power", "up"), "power-up"), (("power", "down"), "power-down-fixed")):
+        old_files = set(replay.files("/screenshots/"))
+        count_before = replay.experiment.refresh_count(replay.qmp)
+        captured = pulse_chord(replay, buttons, label + "-feedback")
+        new_files = set(replay.files("/screenshots/")) - old_files
+        replay.check(label + "_creates_one_actual_bmp", len(new_files) == 1, sorted(new_files))
+        data = replay.read_file(next(iter(new_files)))
+        bw, bh, bitmap = FUNCTIONS.decode_screenshot_bmp(data)
+        replay.check(label + "_screenshot_contains_original_page_geometry", (bw, bh) == (height, width)
+                     and bitmap == expected, {"path": next(iter(new_files)), "byte_length": len(data)})
+        actual_width, actual_height, actual_pixels = SMOKE["read_pgm"](replay.experiment.frames[captured])
+        if actual_pixels != monochrome_target:
+            previous = replay.receipt["frames"][captured]["frame_count"]
+            replay.capture(label + "-restored", previous, reader=True)
+            captured = label + "-restored"
+            actual_width, actual_height, actual_pixels = SMOKE["read_pgm"](replay.experiment.frames[captured])
+        replay.check(label + "_restores_exact_monochrome_framebuffer_target",
+                     (actual_width, actual_height) == (width, height) and actual_pixels == monochrome_target)
+        replay.check(label + "_completes_both_stock_feedback_refreshes",
+                     replay.receipt["frames"][captured]["frame_count"] >= count_before + 2)
+        tones = {}
+        for old, new in zip(pixels, actual_pixels):
+            if old != new:
+                key = f"{old}->{new}"
+                tones[key] = tones.get(key, 0) + 1
+        replay.receipt.setdefault("observations", {}).setdefault("screenshot_feedback", {})[label] = {
+            "raw_initial_page_difference_pixels": sum(tones.values()), "tone_changes": tones,
+            "expected_target": "exact original 1bpp framebuffer, after border inverse",
+            "grayscale_overlay_restored_by_stock_routine": False,
+            "source": "ScreenshotUtil.cpp:104-108 FAST then HALF, without AA rerender"}
+        replay.save()
+    replay.tap("back", "home-after-two-x3-chords", "Save actual unchanged page0 progress after both physical X3 chords")
+    replay.check("screenshot_chords_do_not_advance_progress", replay.progress()["page_number"] == 0
+                 and replay.progress()["spine_index"] == 0, replay.progress())
+    replay.restart()
+    stored = settings(replay)
+    replay.check("power_up_chord_binding_survives_new_cpu", stored["powerChordAction"] == 0, stored)
+
+
+def device_details_workflow(replay):
+    replay.capture("home-device-details", 0)
+    open_settings(replay, 3)
+    replay.tap("down", "details-device-row", "System: select actual Device submenu")
+    replay.tap("confirm", "details-device", "Open Device settings at Device Name")
+    move(replay, "down", 7, "device-date-format-row")
+    choose_popup(replay, "down", 4, "device-date-year-month-day")
+    replay.check("numeric_year_month_day_saved_by_ui", settings(replay)["dateFormat"] == 4)
+    replay.tap("down", "device-date-separator-row", "Device: next row is numeric date separator")
+    choose_popup(replay, "up", 1, "device-date-hyphen")
+    replay.check("hyphen_date_separator_saved_by_ui", settings(replay)["dateSeparator"] == 1)
+    replay.tap("back", "details-system-parent", "Close Device submenu")
+    replay.tap("back", "details-system-tab", "Focus root Settings category row")
+    replay.tap("back", "home-details-saved", "Exit Settings with actual saved format preferences")
+    replay.restart()
+    stored = settings(replay)
+    replay.check("date_format_and_separator_survive_new_cpu", stored["dateFormat"] == 4
+                 and stored["dateSeparator"] == 1, stored)
+    replay.receipt.setdefault("observations", {})["calendar_display_scope"] = {
+        "date_format_picker_ui_tested": True, "date_separator_picker_ui_tested": True,
+        "preferences_seeded": False, "formatted_calendar_display_tested": False,
+        "stock_x3_format_header_call_site_unreachable": "FrontlightPanelActivity requires frontlight hardware",
+        "ordinary_home_browser_header": "time only", "rtc_to_fat_calendar_callback_workflow": "clock"}
+    replay.save()
+
+
+def timeout_workflow(replay):
+    replay.capture("home-timeout", 0)
+    open_settings(replay, 3)
+    replay.tap("down", "timeout-device-row", "System: select Device")
+    replay.tap("confirm", "timeout-device", "Open actual Device submenu")
+    replay.tap("down", "timeout-row", "Device: select Time to Sleep interval")
+    replay.tap("confirm", "timeout-cancel-picker", "Open the recorded initial two-minute timeout")
+    replay.tap("left", "timeout-cancel-one-minute", "Actual Left decreases the timeout by one minute")
+    replay.tap("back", "timeout-cancelled", "Cancel interval picker without changing the persisted setting")
+    replay.check("timeout_cancel_preserves_two_minutes", settings(replay)["sleepTimeoutMinutes"] == 2)
+    replay.tap("confirm", "timeout-save-picker", "Reopen real Time to Sleep interval")
+    replay.tap("left", "timeout-one-minute", "Actual Left chooses one minute")
+    replay.tap("confirm", "timeout-one-minute-saved", "Commit one-minute automatic sleep through the actual UI")
+    replay.check("one_minute_timeout_saved_by_ui", settings(replay)["sleepTimeoutMinutes"] == 1)
+    replay.tap("back", "timeout-system-parent", "Close Device submenu")
+    replay.tap("back", "timeout-system-tab", "Focus category tabs")
+    replay.tap("back", "home-timeout-saved", "Leave Home untouched for genuine inactivity policy")
+    input_release = replay.receipt["actions"][-1]["input"]["release_deadline_t_ns"]
+    before = replay.qmp.state()
+    replay.experiment.wait("stock one-minute automatic deep sleep", lambda: replay.qmp.execute("qom-get", {
+        "path": "/machine/rtccntl", "property": "deep-sleep-active"}))
+    replay.qmp.execute("stop")
+    try:
+        sleeping = replay.qmp.state()
+    finally:
+        replay.qmp.execute("cont")
+    replay.check("ui_timeout_executes_real_auto_sleep", sleeping["rtc"]["sleep-count"] > before["rtc"]["sleep-count"]
+                 and sleeping["rtc"]["deep-sleep-active"] and not sleeping["machine"]["power-button"], sleeping)
+    # Release build LOG_LEVEL=1 compiles this main.cpp LOG_DBG line out.
+    # Native sleep counters, held-input absence and elapsed guest time remain
+    # required; the host does not synthesize a missing guest log.
+    replay.receipt.setdefault("observations", {})["timeout_log_scope"] = {
+        "auto_sleep_debug_literal_present_in_pinned_binary": False,
+        "release_log_level": 1, "native_sleep_transition_required": True}
+    elapsed = sleeping["machine"]["virtual-time-ns"] - input_release
+    replay.check("automatic_sleep_after_full_one_minute_input_quiet", elapsed >= 60_000_000_000,
+                 {"last_input_release_t_ns": input_release, "sleep_observed_t_ns": sleeping["machine"]["virtual-time-ns"],
+                  "observed_elapsed_ns": elapsed, "hardware_timing_calibrated": False})
+    replay.receipt.setdefault("observations", {})["timeout_sleep_state"] = sleeping
+    replay.qmp.execute("stop")
+    try:
+        start = replay.experiment.clock(replay.qmp)
+        replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button-hold-ns", "value": 1_000_000_000})
+        replay.qmp.execute("qom-set", {"path": "/machine", "property": "power-button", "value": True})
+    finally:
+        replay.qmp.execute("cont")
+    replay.receipt["actions"].append({"kind": "physical-power-wake", "gpio": 3, "hold_ns": 1_000_000_000,
+                                      "start_t_ns": start, "firmware_hook": False})
+    replay.save()
+    replay.experiment.wait("native wake Power release", lambda: not replay.qmp.execute("qom-get", {
+        "path": "/machine", "property": "power-button"}))
+    replay.experiment.wait("stock automatic-sleep GPIO wake", lambda: not replay.qmp.execute("qom-get", {
+        "path": "/machine/rtccntl", "property": "deep-sleep-active"}))
+    replay.capture("home-after-ui-timeout-wake", sleeping["panel"]["refresh-count"])
+    after = replay.qmp.state()
+    replay.check("ui_timeout_wakes_via_real_gpio", after["rtc"]["wake-count"] > sleeping["rtc"]["wake-count"]
+                 and "reset=8(DEEPSLEEP) sleepWake=7(GPIO)" in replay.experiment.log_text("serial.log"))
+    replay.check("ui_timeout_persists_across_deep_reset", settings(replay)["sleepTimeoutMinutes"] == 1)
+    replay.check("timeout_path_has_no_watchdog_expiry", after["rtc"]["watchdog-expiry-count"] == 0)
 
 
 def tap_held(replay, button, label, purpose, hold_ms, *, reader=False):
@@ -597,13 +1001,28 @@ def power_shortcuts_workflow(replay):
 WORKFLOWS = {"gyro": gyro_workflow, "battery": battery_workflow,
              "clock": clock_workflow, "button-remap": button_remap_workflow,
              "power-shortcuts": power_shortcuts_workflow,
-             "side-layouts": side_layouts_workflow, "reader-remap": reader_remap_workflow}
+             "side-layouts": side_layouts_workflow, "reader-remap": reader_remap_workflow,
+             "orientation-aware": orientation_aware_workflow, "long-press": long_press_workflow,
+             "orientation-all": orientation_all_workflow,
+             "chords": chords_workflow, "device-details": device_details_workflow, "timeout": timeout_workflow}
 CONTROL_SOURCES = ("src/SettingsList.h", "src/MappedInputManager.cpp", "src/CrossPointSettings.h",
                    "src/activities/reader/EpubReaderActivity.cpp",
                    "src/activities/reader/EpubReaderMenuActivity.cpp",
                    "src/activities/reader/ControlsOptionsActivity.cpp")
 SOURCE_FILES["side-layouts"] = CONTROL_SOURCES
 SOURCE_FILES["reader-remap"] = CONTROL_SOURCES + ("src/activities/settings/ButtonRemapActivity.cpp",)
+SOURCE_FILES["orientation-aware"] = CONTROL_SOURCES
+SOURCE_FILES["orientation-all"] = CONTROL_SOURCES
+SOURCE_FILES["long-press"] = CONTROL_SOURCES + ("src/activities/reader/ReaderUtils.h",)
+SOURCE_FILES["chords"] = CONTROL_SOURCES + ("src/QuickActions.h", "src/util/ButtonShortcutController.h",
+                                           "src/util/ScreenshotUtil.cpp", "src/main.cpp", "include/DeviceCapabilities.h",
+                                           "lib/GfxRenderer/GfxRenderer.cpp", "lib/GfxRenderer/GfxRenderer.h",
+                                           "lib/hal/HalDisplay.cpp")
+SOURCE_FILES["device-details"] = ("src/SettingsList.h", "src/activities/settings/SettingsActivity.cpp",
+                                  "src/components/HeaderDate.cpp", "lib/hal/HalClock.cpp")
+SOURCE_FILES["timeout"] = ("src/SettingsList.h", "src/activities/settings/SettingsActivity.cpp",
+                           "src/activities/util/IntervalSelectionActivity.cpp", "src/main.cpp",
+                           "lib/Logging/Logging.h", "platformio.ini")
 
 
 def fixture_files(name):
@@ -613,6 +1032,10 @@ def fixture_files(name):
     if name == "clock":
         seed.update({"hideClock": 0, "clockDateHasBeenSynced": 1, "clockHasBeenSynced": 1,
                      "dateFormat": 4, "clockUtcOffsetQ": 48})
+    if name in ("orientation-aware", "orientation-all"):
+        seed["orientation"] = 2
+    if name == "timeout":
+        seed["sleepTimeoutMinutes"] = 2
     return {FUNCTIONS.BOOK: make_test_epub(), SETTINGS: (json.dumps(seed) + "\n").encode()}, seed
 
 
@@ -639,7 +1062,8 @@ def main(argv=None):
     for name in args.workflows:
         files, seed = fixture_files(name)
         receipt = FUNCTIONS.run_workflow(name, args, args.output / name, fixture_files=files,
-                                         open_book=name in ("gyro", "battery", "side-layouts", "reader-remap"))
+                                         open_book=name in ("gyro", "battery", "side-layouts", "reader-remap",
+                                                            "orientation-aware", "long-press", "chords"))
         receipt["seeded_settings"] = seed
         receipt["seeded_settings_are_menu_coverage"] = False
         receipt["native_sensor_controls"] = name in ("gyro", "battery", "clock")

@@ -1,0 +1,33 @@
+{
+  "remote_commit": "c65c31349c2aec80ae4f8e808a3622ab46066feb",
+  "run_id": 37160025262,
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 111311369155,
+      "name": "native",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T22:54:55Z",
+      "completed_at": "2026-10-03T23:01:08Z"
+    },
+    {
+      "id": 111311369279,
+      "name": "python (3.12)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T22:54:56Z",
+      "completed_at": "2026-10-03T22:55:57Z"
+    },
+    {
+      "id": 111311369285,
+      "name": "python (3.11)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-03T22:54:55Z",
+      "completed_at": "2026-10-03T22:55:55Z"
+    }
+  ],
+  "source": "GitHub Actions REST API",
+  "checked_at": "2026-10-03T23:23:15.208Z"
+}

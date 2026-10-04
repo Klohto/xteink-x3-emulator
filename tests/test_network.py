@@ -4,13 +4,17 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 from pathlib import Path
 import runpy
 import re
 import socket
 import struct
 import threading
+import tempfile
+import time
 import unittest
+from unittest import mock
 import xml.etree.ElementTree as ET
 
 
@@ -130,12 +134,12 @@ class RemoteFixtureTests(unittest.TestCase):
     def test_opds_auth_relative_navigation_and_public_redirect_peer(self):
         sink, sink_http = self.fixture(sink=True)
         fixture, client = self.fixture(redirect_port=sink.port)
-        client.request("GET", "/catalog/feed.xml", expected=401)
-        _, _, feed = client.request("GET", "/catalog/feed.xml", headers=self.auth(), expected=200)
+        client.request("GET", "/catalog/", expected=401)
+        _, _, feed = client.request("GET", "/catalog/", headers=self.auth(), expected=200)
         root = ET.fromstring(feed)
-        self.assertEqual(root.find("{http://www.w3.org/2005/Atom}entry/{http://www.w3.org/2005/Atom}link").attrib["href"], "child.xml")
-        _, _, child = client.request("GET", "/catalog/child.xml", headers=self.auth(), expected=200)
-        self.assertEqual(ET.fromstring(child).find("{http://www.w3.org/2005/Atom}entry/{http://www.w3.org/2005/Atom}link").attrib["href"], "../redirect/book.epub")
+        self.assertEqual(root.find("{http://www.w3.org/2005/Atom}entry/{http://www.w3.org/2005/Atom}link").attrib["href"], "child/")
+        _, _, child = client.request("GET", "/catalog/child/", headers=self.auth(), expected=200)
+        self.assertEqual(ET.fromstring(child).find("{http://www.w3.org/2005/Atom}entry/{http://www.w3.org/2005/Atom}link").attrib["href"], "/redirect/book.epub")
         _, headers, _ = client.request("GET", "/redirect/book.epub", headers=self.auth(), expected=302)
         self.assertEqual(headers["Location"], sink.guest_origin + "/public/book.epub")
         _, _, book = sink_http.request("GET", "/public/book.epub", expected=200)
@@ -167,6 +171,22 @@ class RemoteFixtureTests(unittest.TestCase):
         client.json("POST", "/users/create", {"username": NETWORK["FIXTURE_USER"], "password": NETWORK["FIXTURE_PASSWORD"]}, expected=400)
         client.json("POST", "/users/create", {"username": NETWORK["FIXTURE_USER"], "password": hashlib.md5(NETWORK["FIXTURE_PASSWORD"].encode()).hexdigest()}, expected=201)
 
+    def test_distinct_remote_reading_action_preserves_original_boundary_upload(self):
+        fixture, client = self.fixture()
+        original = {"document": "original-document", "progress": "/body/DocFragment[1]/body/p[3]/text()[1].34",
+                    "percentage": 0.007932, "device": "CrossInk X3", "device_id": "crossink-device"}
+        client.request("PUT", "/syncs/progress", body=json.dumps(original).encode(), headers=self.auth(), expected=204)
+        remote = NETWORK["nonboundary_remote_progress"](original)
+        self.assertEqual(original["progress"], "/body/DocFragment[1]/body/p[3]/text()[1].34")
+        self.assertEqual(remote["progress"], "/body/DocFragment[1]/body/p[3]/text()[1].35")
+        self.assertNotEqual(original["device_id"], remote["device_id"])
+        client.request("PUT", "/syncs/progress", body=json.dumps(remote).encode(), headers=self.auth(), expected=204)
+        _, _, fetched = client.request("GET", "/syncs/progress/original-document", headers=self.auth(), expected=200)
+        self.assertEqual(json.loads(fetched)["progress"], remote["progress"])
+        self.assertEqual(fixture.snapshot()[0]["json"], original)
+        with self.assertRaisesRegex(NetworkError, "actually uploaded"):
+            NETWORK["nonboundary_remote_progress"]({**original, "progress": "/different/fixture.34"})
+
     def test_http_bounded_capture_and_absolute_url_rejection(self):
         _, client = self.fixture(sink=True)
         with self.assertRaisesRegex(NetworkError, "bounded capture"):
@@ -186,7 +206,122 @@ class RemoteFixtureTests(unittest.TestCase):
         self.assertEqual(pixels[18:24], [3] * 6)
 
 
+class FixedEndpointFixtureTests(unittest.TestCase):
+    def dns_query(self, name, kind=1):
+        return struct.pack("!6H", 0x102A, 0x0100, 1, 0, 0, 0) + b"".join(bytes([len(label)]) + label.encode() for label in name.split(".")) + b"\0" + struct.pack("!HH", kind, 1)
+
+    def test_dns_preserves_transaction_question_and_answers_stock_hosts(self):
+        for name in ("pool.ntp.org", NETWORK["FONT_HOST"], "api.github.com"):
+            request = self.dns_query(name)
+            reply, observation = NETWORK["dns_response"](request)
+            self.assertEqual(reply[:2], request[:2])
+            self.assertEqual(reply[12:len(request)], request[12:])
+            self.assertEqual(struct.unpack_from("!H", reply, 6)[0], 1)
+            self.assertEqual(socket.inet_ntoa(reply[-4:]), "10.0.2.2")
+            self.assertEqual(observation["rcode"], 0)
+        reply, _ = NETWORK["dns_response"](self.dns_query("unlisted.invalid"))
+        self.assertEqual(reply[3] & 15, 3)
+        self.assertEqual(struct.unpack_from("!H", reply, 6)[0], 0)
+        reply, _ = NETWORK["dns_response"](self.dns_query("pool.ntp.org", 28))
+        self.assertEqual(reply[3] & 15, 0)
+        self.assertEqual(struct.unpack_from("!H", reply, 6)[0], 0)
+
+    def test_ntp_echoes_originate_and_transmits_exact_public_epoch(self):
+        request = bytearray(48)
+        request[0:3] = b"\x23\0\x06"
+        request[40:48] = b"12345678"
+        response = NETWORK["ntp_response"](request)
+        self.assertEqual(response[0] & 7, 4)
+        self.assertEqual(response[1], 1)
+        self.assertEqual(response[24:32], b"12345678")
+        seconds, fraction = struct.unpack_from("!II", response, 40)
+        self.assertEqual(seconds - 2208988800, NETWORK["FIXTURE_UNIX_EPOCH"])
+        self.assertEqual(fraction, 0)
+        with self.assertRaisesRegex(NetworkError, "client-mode"):
+            NETWORK["ntp_response"](response)
+        with self.assertRaisesRegex(NetworkError, "truncated"):
+            NETWORK["dns_response"](b"short")
+
+    def hello(self, name):
+        value = name.encode()
+        entry = b"\0" + struct.pack("!H", len(value)) + value
+        extension = struct.pack("!H", len(entry)) + entry
+        extensions = struct.pack("!HH", 0, len(extension)) + extension
+        body = b"\x03\x03" + bytes(32) + b"\0\0\x02\x13\x01\x01\0" + struct.pack("!H", len(extensions)) + extensions
+        return b"\x01" + len(body).to_bytes(3, "big") + body
+
+    def test_tls_route_uses_original_sni_without_accepting_unlisted_origins(self):
+        self.assertEqual(NETWORK["client_hello_server_name"](self.hello("api.github.com")), "api.github.com")
+        with self.assertRaisesRegex(NetworkError, "allowlist"):
+            NETWORK["client_hello_server_name"](self.hello("untrusted.invalid"))
+        with self.assertRaisesRegex(NetworkError, "complete ClientHello"):
+            NETWORK["client_hello_server_name"](self.hello("api.github.com")[:-1])
+
+    def test_opaque_tls_relay_preserves_both_wires_and_records_actual_origin(self):
+        # A host wire test only: the local upstream deliberately emits opaque
+        # original bytes, never a replacement certificate or guest pass.
+        hello = self.hello("api.github.com")
+        request = b"\x16\x03\x03" + struct.pack("!H", len(hello)) + hello
+        response = b"\x15\x03\x03\0\x02\x02\x31"
+        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        listener.bind(("127.0.0.1", 0)); listener.listen(1); listener.settimeout(3)
+        address, failures = listener.getsockname(), []
+        def upstream():
+            try:
+                with listener:
+                    channel, _ = listener.accept()
+                    with channel:
+                        channel.settimeout(3)
+                        self.assertEqual(exact(channel, len(request)), request)
+                        channel.sendall(response)
+            except BaseException as error:
+                failures.append(error)
+        thread = threading.Thread(target=upstream, daemon=True); thread.start()
+        connect = socket.create_connection
+        def select_upstream(target, **kwargs):
+            self.assertEqual(target, ("api.github.com", 443))
+            return connect(address, **kwargs)
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(os.environ, {"HTTPS_PROXY": "", "https_proxy": ""}):
+            relay = NETWORK["TrustedTLSRelay"](Path(directory) / "wire")
+            try:
+                with connect(("127.0.0.1", relay.port), timeout=3) as guest, mock.patch.object(socket, "create_connection", side_effect=select_upstream):
+                    guest.settimeout(3); guest.sendall(request)
+                    self.assertEqual(exact(guest, len(response)), response)
+                    deadline = time.monotonic() + 3
+                    while not relay.snapshot() and time.monotonic() < deadline:
+                        time.sleep(0.01)
+                rows = relay.snapshot(); self.assertEqual(len(rows), 1)
+                row = rows[0]
+                self.assertEqual(row["official_origin"], "api.github.com")
+                self.assertFalse(row["tls_terminated"]); self.assertFalse(row["payloads_modified"])
+                self.assertEqual(row["guest_to_origin_sha256"], hashlib.sha256(request).hexdigest())
+                self.assertEqual(row["origin_to_guest_sha256"], hashlib.sha256(response).hexdigest())
+                self.assertEqual((Path(directory) / "wire/connection-001-guest-to-origin.bin").read_bytes(), request)
+                self.assertEqual((Path(directory) / "wire/connection-001-origin-to-guest.bin").read_bytes(), response)
+            finally:
+                relay.close()
+        thread.join(3); self.assertFalse(thread.is_alive())
+        if failures: raise failures[0]
+
+
 class NetworkBootValidationTests(unittest.TestCase):
+    def test_wrapper_default_icount_cannot_masquerade_as_host_paced(self):
+        timing = {"clock": "QEMU_CLOCK_VIRTUAL", "instruction_counting": True,
+                  "calibration_status": "uncalibrated", "speed_selection_allowed": False}
+        default = {"timing": timing, "argv": ["qemu", "-icount", "shift=3,align=off,sleep=off"]}
+        self.assertTrue(NETWORK["clock_policy_matches"](False, default))
+        self.assertFalse(NETWORK["clock_policy_matches"](True, default))
+        actual_host = {"timing": {**timing, "instruction_counting": False}, "argv": ["qemu"]}
+        self.assertTrue(NETWORK["clock_policy_matches"](True, actual_host))
+        actual_host["argv"].append("-icount")
+        self.assertFalse(NETWORK["clock_policy_matches"](True, actual_host))
+    def test_known_stock_failure_cannot_pass_with_otherwise_clean_diagnostics(self):
+        self.assertEqual(NETWORK["acceptance_outcome"](True, None, {"http": True, "dav_get_exact": False},
+                                                     {"diagnostics_clean": True}), (False, False))
+        self.assertEqual(NETWORK["acceptance_outcome"](True, None, {"http": True},
+                                                     {"diagnostics_clean": False}), (True, False))
+        self.assertEqual(NETWORK["acceptance_outcome"](True, "host output failed", {"http": True},
+                                                     {"diagnostics_clean": True}), (False, False))
     def serial(self, targets, reasons):
         return "\n".join(f"Reset diagnostic: reset=1({reason})\nPost-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget={target}"
                          + (f"\nMinimal network boot ready: target={target} free=100" if target >= 2 else "")
@@ -199,6 +334,7 @@ class NetworkBootValidationTests(unittest.TestCase):
     def test_source_defined_network_software_reset_is_accepted(self):
         self.assertTrue(all(self.validate("server", self.serial([0, 6], ["POWERON", "SW"])).values()))
         self.assertTrue(all(self.validate("koreader-sync", self.serial([0, 4, 1, 4, 1], ["POWERON"] + ["SW"] * 4)).values()))
+        self.assertTrue(all(self.validate("koreader-apply", self.serial([0, 4, 1, 4, 1], ["POWERON"] + ["SW"] * 4)).values()))
 
     def test_unexpected_reset_target_or_watchdog_cannot_pass(self):
         bad_target = self.validate("server", self.serial([0, 5], ["POWERON", "SW"]))

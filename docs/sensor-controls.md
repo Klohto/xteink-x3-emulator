@@ -103,6 +103,42 @@ false even if observable behavior passes. The script returns success only
 when every selected workflow passes the strict gate. Neither result permits
 firmware speed selection while timing remains uncalibrated.
 
+Additional Controls and Device workflows exercise these source-reachable
+rows through the guest UI. Their receipts establish which checks completed;
+implementing a workflow does not itself establish a pass.
+
+| Workflow | Actual UI changes and observed guest effects |
+| --- | --- |
+| `side-layouts` | Next/Previous, Disabled and Next/Next; physical page turns, unchanged disabled inputs, live front navigation, progress and a new CPU boot |
+| `reader-remap` | Reader wizard cancel, reset and apply; independent global mapping, swapped reader inputs, saved progress and reset back to defaults |
+| `orientation-aware` | Front Nav and side policies under an explicitly recorded inverted fixture; reversed physical page inputs and persistence |
+| `orientation-all` | Front All policy under the recorded inverted fixture; all four front roles change in reader mode while global navigation is preserved |
+| `long-press` | Front and side binding rows select chapter skip, font size and rotation; 900 ms pulses exceed the fixed 700 ms reader threshold, with opposite actions compared |
+| `chords` | Actual Power+Up Screenshot binding plus fixed Power+Down; simultaneous GPIO/ADC inputs produce guest-written BMPs and preserve the page; same-ladder Up+Down injection is rejected |
+| `device-details` | Date format and separator picker saves and new-CPU persistence |
+| `timeout` | Recorded initial two-minute fixture; actual interval cancel and one-minute save, then native automatic deep sleep and GPIO wake |
+
+The stock X3 Home and Browser headers display time. In this pinned source,
+the formatted calendar helper is called by the frontlight panel, which X3
+cannot reach because it has no frontlight hardware. Date-format/separator
+receipts therefore claim picker and persistence coverage, not a formatted
+calendar display. The `clock` workflow separately proves the real RTC-to-FAT
+calendar timestamp callback.
+
+Up+Down chords are stock-X3-unreachable: `deviceSupportsSideButtonChord`
+permits them only on X4 Classic or touch hardware, and the actual X3 side
+submenu omits that setting. X3 Up and Down share one ADC ladder. The native
+input API permits at most one pressed button per ladder and rejects a
+simultaneous Up+Down request without changing the input state.
+
+Screenshot feedback sends the stock renderer's monochrome framebuffer with
+FAST refresh, waits one second, then reverses its border and sends HALF
+refresh. It does not rerender the grayscale text overlay. The chord workflow
+therefore requires both feedback refreshes and the exact original monochrome
+target, while recording every difference from the initial gray tones. The
+guest-written BMP must match that same original page geometry; a new page or
+unrestored border fails the check.
+
 ## USB packet scheduling
 
 The C3 USB Serial/JTAG controller uses 64-byte CDC endpoint packets. A host

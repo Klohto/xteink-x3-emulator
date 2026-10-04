@@ -17,6 +17,33 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def slirp_static_ranges(backend: Path):
+    """Record only sized host SLIRP functions that issue socket calls."""
+    names = {"tcp_fconnect", "sosendto", "sorecvfrom"}
+    backend = backend.resolve()
+    before = digest(backend)
+    with backend.open("rb") as source:
+        header = source.read(20)
+    if header[:6] != b"\x7fELF\x02\x01" or int.from_bytes(header[16:18], "little") != 3:
+        raise RuntimeError("scoped static routing currently requires a 64-bit little-endian PIE backend ELF")
+    result = subprocess.run(["readelf", "-Ws", str(backend)], check=True, capture_output=True, text=True, timeout=30)
+    rows = []
+    for line in result.stdout.splitlines():
+        fields = line.split()
+        if len(fields) == 8 and fields[3] == "FUNC" and fields[-1] in names and fields[6] != "UND":
+            offset, size = int(fields[1], 16), int(fields[2])
+            if not offset or not size:
+                raise RuntimeError("selected backend has unsized SLIRP symbol: " + fields[-1])
+            rows.append({"function": fields[-1], "elf_offset": offset, "size": size})
+    if {row["function"] for row in rows} != names or len(rows) != 3:
+        raise RuntimeError("selected backend must retain exact sized static SLIRP symbols for scoped host routing")
+    if before != digest(backend):
+        raise RuntimeError("selected backend changed while inspecting SLIRP function ranges")
+    rows.sort(key=lambda row: row["elf_offset"])
+    return {"backend_sha256": before, "socket_caller_symbols": rows,
+            "environment_value": ",".join(f"{row['elf_offset']:x}:{row['size']:x}" for row in rows)}
+
+
 def build_router(destination: Path, compiler="cc"):
     if platform.system() != "Linux":
         raise RuntimeError("the explicit host router currently requires Linux ELF interposition")
@@ -34,7 +61,7 @@ def build_router(destination: Path, compiler="cc"):
         temporary.unlink(missing_ok=True)
         raise RuntimeError("router source changed during compile or compiler did not produce ELF")
     temporary.replace(destination)
-    metadata = {"schema_version": 1, "scope": "opt-in libslirp host socket egress only", "host_platform": platform.platform(),
+    metadata = {"schema_version": 1, "scope": "opt-in libslirp host socket egress only, DSO or exact sized ELF callers", "host_platform": platform.platform(),
                 "source": str(SOURCE), "source_sha256": source_hash, "library": str(destination), "library_sha256": digest(destination),
                 "compiler": compiler_path, "compiler_sha256": digest(Path(compiler_path).resolve()), "compile_command": command,
                 "compiler_version": subprocess.run([compiler_path, "--version"], check=True, capture_output=True, text=True, timeout=10).stdout.splitlines()[0],
