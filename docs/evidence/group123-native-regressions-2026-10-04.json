@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "kind": "group123-native-core-cold-open-DNS-hotspot-regressions-2026-10-04",
+  "functional_regressions_pass": true,
+  "native": {
+    "elf": {
+      "path": "/tmp/x3-native-recovery-20261004/group-install/bin/qemu-system-riscv32",
+      "size_bytes": 68532840,
+      "sha256": "504f14e45bfa818889204225827821da56299112645a1e35f66ba9121f854f50"
+    },
+    "patch": {
+      "path": "/tmp/x3-native-recovery-20261004/group-project/patches/qemu/xteink-x3.patch",
+      "size_bytes": 628137,
+      "sha256": "4d0032fa016713eb7f3d16c3ad3f897a7f90ebddaa523b50afb805ed77d136a8"
+    },
+    "source_tree": "86e40bf743c5a1e9f01624468fb42488f8adeb45",
+    "official_rom": {
+      "path": "/tmp/x3-native-recovery-20261004/group-install/share/qemu/esp32c3-rom.bin",
+      "size_bytes": 393216,
+      "sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99"
+    },
+    "validation_receipt": {
+      "path": "/tmp/x3-native-recovery-20261004/group123-native-validation.json",
+      "size_bytes": 5034,
+      "sha256": "49a5c203e0cbc3f8fd452d685757ed088e62b24a7d67f2c65480f8784d44d733"
+    },
+    "full_gate": {
+      "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/results.json",
+      "size_bytes": 3185,
+      "sha256": "8cf90e1e87f2cabd76f5aae5cc6cfc4ba2ee377df491b617cf42340143846ab2"
+    },
+    "native_cases_passed": 123,
+    "native_suites_passed": 12,
+    "wifi_cases_passed": 32,
+    "skips": 0,
+    "TAPs": [
+      {
+        "name": "esp32c3-gpspi-test",
+        "cases_passed": 3,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/esp32c3-gpspi-test.tap",
+        "sha256": "9d69d0344cf0f968ebbfe770b1d32f2fa04db0f42d12af0a6f5f55462ebf41e3"
+      },
+      {
+        "name": "xteink-x3-adc-test",
+        "cases_passed": 11,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/xteink-x3-adc-test.tap",
+        "sha256": "98599e66896cecb2f261e0335b4a1111d4e2ed1bbca045f9e3b97f61d25d4aa3"
+      },
+      {
+        "name": "esp32c3-i2c-test",
+        "cases_passed": 12,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/esp32c3-i2c-test.tap",
+        "sha256": "79f0c3b72fc33efe717fd49717ce53a19922733fc19cbd5b3c837cab7e9ecbb9"
+      },
+      {
+        "name": "xteink-x3-epd-test",
+        "cases_passed": 10,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/xteink-x3-epd-test.tap",
+        "sha256": "7579e49eccfeb48fd8e0f73b5963d5479b15ca3f9634c295b0526bc28d04e137"
+      },
+      {
+        "name": "esp32c3-usb-test",
+        "cases_passed": 6,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/esp32c3-usb-test.tap",
+        "sha256": "4f899f9a93c6a489e67ddb2ba09feb42ad394b8911602c0cb655fe8d8741804b"
+      },
+      {
+        "name": "xteink-x3-sd-test",
+        "cases_passed": 6,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/xteink-x3-sd-test.tap",
+        "sha256": "54953ffbc1e29a9af0fb1e4d4785b8dc1fcdb4c61e9f7f06944523bad317000d"
+      },
+      {
+        "name": "esp32c3-flash-test",
+        "cases_passed": 11,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/esp32c3-flash-test.tap",
+        "sha256": "53f498bcd44004f73270956ba7a40f6b96b9b6e366c6b02b6b44e001d8cb2ca3"
+      },
+      {
+        "name": "esp32c3-rtc-test",
+        "cases_passed": 16,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/esp32c3-rtc-test.tap",
+        "sha256": "e2dc831558b95f6cc8c743a3beabb0f7d3908b4a320ebd006f47f9fdbd416d55"
+      },
+      {
+        "name": "xteink-x3-soc-test",
+        "cases_passed": 2,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/xteink-x3-soc-test.tap",
+        "sha256": "2a37e0098efde5bd602f32551bb0a98a8a1e63c6ab22bd5c96026dc3a600a8bc"
+      },
+      {
+        "name": "esp32c3-assist-debug-test",
+        "cases_passed": 4,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/esp32c3-assist-debug-test.tap",
+        "sha256": "53e33690d4505187154b606cdca471083b1742c9a701f197217c4eb046b8d9f6"
+      },
+      {
+        "name": "esp32c3-regi2c-test",
+        "cases_passed": 10,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/esp32c3-regi2c-test.tap",
+        "sha256": "6fbb37e6764bd126e57794a7e91348b553f08fd5a00651edfe121c7100bb4aba"
+      },
+      {
+        "name": "esp32c3-wifi-test",
+        "cases_passed": 32,
+        "path": "/tmp/x3-native-recovery-20261004/group-build/native-tests/esp32c3-wifi-test.tap",
+        "sha256": "614993837e69e959205407cf57bde14cd1ca58365a23da3564ea28a35d51074f"
+      }
+    ]
+  },
+  "native_source_review": {
+    "review": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/recovery/group123-independent-review/native-review.json",
+      "size_bytes": 5597,
+      "sha256": "fc7c6f49cf33aae97784913a55252342f94402cc34f5f0c9e295d8f51f3837fc"
+    },
+    "source_copy_and_wire_review": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/recovery/group123-independent-review/independent-source-and-wire-review.json",
+      "size_bytes": 4682,
+      "sha256": "c76e7f3bf5913b57c12d7c8f56e093abc43a81bef7be5d6dff39b920412c0321"
+    },
+    "regular_files_checked": 11468,
+    "unchanged_files": 11466,
+    "only_two_changed_files": [
+      {
+        "path": "hw/net/esp32c3_wifi.c",
+        "baseline_sha256": "40e697b747023380490ce04b42343813c3441a30eb09a8263bfc77f630e85e9e",
+        "candidate_sha256": "3c1efc692f93aa5817a61033bbcf1761e305c0bc151726a52dbcfbbb01c93957",
+        "candidate_size_bytes": 51401
+      },
+      {
+        "path": "tests/qtest/esp32c3-wifi-test.c",
+        "baseline_sha256": "3233240cc9fd7e395c7b64f861441464f2d5d231780aef54a2dd99e4461dfd7d",
+        "candidate_sha256": "e795368b303b198167ea2f2ca8cdc203a05efff4a888bf7d216ee0cc44376835",
+        "candidate_size_bytes": 91910
+      }
+    ]
+  },
+  "primary_SDK_audit": {
+    "original_ZIP_SHA256": "323ccd4a83e634560c22a294a3118c494e6c63133f69586f285187cf431a3939",
+    "complete_functions": 50,
+    "objects": 18,
+    "primary_receipt": {
+      "path": "/tmp/x3-group-crypto-primary-audit/audit-receipt.json",
+      "size_bytes": 943627,
+      "sha256": "73553b24989f25e62224647c0453a0005b5f8feadda57beff95cf7c1f05fc351"
+    },
+    "contract": {
+      "path": "/tmp/x3-group-crypto-primary-audit/GROUP-CONTRACT.md",
+      "size_bytes": 7615,
+      "sha256": "125099eb7d64afbaf156d609b5f905b3986309a1d1d687b9d7d68f3770dbeaf7"
+    },
+    "independent_original_bytes_review": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/recovery/group123-independent-review/independent-original-sdk-bytes-review.json",
+      "size_bytes": 31900,
+      "sha256": "eb5bd97151aa892f1f9562ba1f801990669ef9e0c5ee9abbc648f513d93415f0"
+    }
+  },
+  "official_inputs": {
+    "official-app.bin": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/frozen-inputs/virgin-inputs/official-app.bin",
+      "size_bytes": 6105536,
+      "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644"
+    },
+    "official-full-flash.bin": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/frozen-inputs/virgin-inputs/official-full-flash.bin",
+      "size_bytes": 16777216,
+      "sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095"
+    },
+    "official-rom.bin": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/frozen-inputs/virgin-inputs/official-rom.bin",
+      "size_bytes": 393216,
+      "sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99"
+    },
+    "virgin-card.img": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/frozen-inputs/virgin-inputs/virgin-card.img",
+      "size_bytes": 67108864,
+      "sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427"
+    }
+  },
+  "frozen_helpers": {
+    "core_source_snapshot": {
+      "path": "/tmp/x3-core123-reader-source/captured-dependencies.json",
+      "size_bytes": 10572,
+      "sha256": "d38dd9031d4e0b0097fe414534f546496e9e0b6e345a2b7d6c9b6fe83d62f016"
+    },
+    "open_source_snapshot": {
+      "path": "/tmp/x3-group123-open-network-source/group123-prelaunch.json",
+      "size_bytes": 110775,
+      "sha256": "2a5145fd3de79f3f1ded8ac94e5a9b1957282e5d7a8957012815b5a482491882"
+    },
+    "core_reader_code_sha256": "dc522481b4817ea26ed899e66b2c1b6c5f5fe5a4c6b01b43b261945236da8510",
+    "core_cold_adaptation": "Only cohort paths, explicit native123 path/hash/check label; behavior/timeouts/assertions unchanged",
+    "network_helpers_byte_identical_to119": true,
+    "CrossInk_source_files_verified": 54,
+    "SDK_source_files_verified": 2,
+    "Arduino_DNS_files_verified": 2,
+    "QR_decoder_sha256": "b35867be1c4e41773db98fb69f96521d77bc51dc9da59198a1c681fe50c4ba4d"
+  },
+  "regressions": {
+    "core": {
+      "functional_pass": true,
+      "independent_closed_receipt": {
+        "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/core-reader-independent-check.json",
+        "size_bytes": 4689,
+        "sha256": "fef7e2cc7033c160364028cd7a76a084534b4de4c53bde3ab3b85e4e8255afe1"
+      },
+      "native_exit_codes": [
+        0
+      ],
+      "full_native_frame_counts": [
+        29
+      ],
+      "capture_counts": [
+        9
+      ],
+      "all_captures_reparsed_against_full_native_trace_CRC": true,
+      "official_app_and_original_EPUB_unchanged": true,
+      "all_9_capture_pixel_deltas_against119": {
+        "home": 0,
+        "navigation": 0,
+        "page0": 0,
+        "page1": 0,
+        "page0-return": 0,
+        "page1-return": 0,
+        "home-final": 0,
+        "page1-reopened": 0,
+        "home-after-reopen": 0
+      },
+      "saved_page": 1,
+      "chapter_pages": 22,
+      "exact_back_forward_and_saved_reopen_pixel_delta": 0,
+      "card_and_progress_independent_receipt": {
+        "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/core-final-card-check.json",
+        "size_bytes": 1104,
+        "sha256": "2725c1358de4c5090df70b57798d3bc60704dbd593bb0e4b0092d1780c746059"
+      },
+      "harness_exit_code": 1,
+      "harness_strict_failure": "model_diagnostics_clean=false; reading_flow_pass=true"
+    },
+    "cold": {
+      "functional_pass": true,
+      "independent_closed_receipt": {
+        "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/core-cold-independent-check.json",
+        "size_bytes": 3038,
+        "sha256": "35dcf27d96a102cb7d707012accd6a2c71ce78aff7c529470c75b66cdd7cf065"
+      },
+      "native_exit_codes": [
+        0
+      ],
+      "full_native_frame_counts": [
+        11
+      ],
+      "capture_counts": [
+        3
+      ],
+      "all_captures_reparsed_against_full_native_trace_CRC": true,
+      "official_app_and_original_EPUB_unchanged": true,
+      "actual_guest_written_media_used_without_cpu_state": true,
+      "exact_saved_page1_pixel_delta": 0,
+      "all_functional_checks_pass": true,
+      "harness_exit_code": 0
+    },
+    "dns": {
+      "functional_pass": true,
+      "independent_closed_receipt": {
+        "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/dns-independent-check.json",
+        "size_bytes": 4303,
+        "sha256": "764e4ea9621f11d14805721db5d70abcd60bc20019144af41d0e06f4db8632d0"
+      },
+      "native_exit_codes": [
+        0
+      ],
+      "full_native_frame_counts": [
+        12
+      ],
+      "capture_counts": [
+        7
+      ],
+      "all_captures_reparsed_against_full_native_trace_CRC": true,
+      "official_app_and_original_EPUB_unchanged": true,
+      "wire_independent_receipt": {
+        "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/dns-independent-wire-check.json",
+        "size_bytes": 1574,
+        "sha256": "acdedcd23a79a1100fc17d1df070d91b8b86be94318d275618632a1e51490607"
+      },
+      "harness_exit_code": 0,
+      "original_DHCP_offer_and_ACK_station_address": "192.168.4.2",
+      "three_arbitrary_DNS_question_answers": "192.168.4.1"
+    },
+    "hotspot": {
+      "functional_pass": true,
+      "independent_closed_receipt": {
+        "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/hotspot-independent-check.json",
+        "size_bytes": 8578,
+        "sha256": "7548022e15eff601c9facc08cab9844e72ae901c637f0751fb62cea88d68c9c7"
+      },
+      "native_exit_codes": [
+        0,
+        0
+      ],
+      "full_native_frame_counts": [
+        12,
+        11
+      ],
+      "capture_counts": [
+        7,
+        6
+      ],
+      "all_captures_reparsed_against_full_native_trace_CRC": true,
+      "official_app_and_original_EPUB_unchanged": true,
+      "two_distinct_original_efuse_identities": true,
+      "both_original_QR_payloads_verified": true,
+      "raw_streams_reconstructed_from_original_80211_records": true,
+      "received_and_forwarded_stream_hashes_identical": true,
+      "peer_connected_original_SSID": "CrossPoint-Reader",
+      "peer_DHCP_address": "192.168.4.2",
+      "wire_QR_independent_receipt": {
+        "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/hotspot-independent-wire-QR-check.json",
+        "size_bytes": 2098,
+        "sha256": "2675c6a9e6280fbf45758ad2d75efc728e97bda71d82ca08b9f4bbebabc163c5"
+      },
+      "harness_exit_code": 0
+    }
+  },
+  "private_closed_archive": {
+    "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/archive.json",
+    "size_bytes": 231781,
+    "sha256": "88858dca742141b57029f370ad0bc6d7c274d9c797e0a63279bcc6517508f6fc"
+  },
+  "separate_actual_GTK1_proof": {
+    "attribution": "Separate encrypted-group fixture and independent crypto review; this regression agent rehashed the closed receipts and checked result/native bindings, without independently rerunning their cryptographic wire analysis",
+    "closed_original_receipt": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/secure-wifi-group-recovery-20261004/group123-final/validation.json",
+      "size_bytes": 218578,
+      "sha256": "66722f80ce10dabc5bf763bd831f1b1aa2c155fc600cc86e395c7206629b8212"
+    },
+    "independent_review": {
+      "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/secure-wifi-group-recovery-20261004/independent-group123-final-review.json",
+      "size_bytes": 3267,
+      "sha256": "824ec9a2c079b6926afb1ecd1e52fa1075f8cbc024db45d90319e0581d6559aa"
+    },
+    "public_summary_path": "docs/evidence/secure-wifi-group-2026-10-04.json",
+    "reported_functional_pass": true,
+    "reported_scope": "Actual GTK1 FromDS broadcast DHCP OFFER/ACK following authentic M3 installation; KeyID2 has source/native primitive coverage; AP encryption unverified"
+  },
+  "strict_model_acceptance_pass": false,
+  "original_core_strict_failed_checks": [
+    "model_diagnostics_clean"
+  ],
+  "native_and_firmware_modified_for_test": false,
+  "guest_memory_or_API_intercepted": false,
+  "CPU_or_guest_state_reused_for_cold_run": false,
+  "native_archive_as_created_unchanged": true,
+  "broad_encryption_modelled": false,
+  "group_policy_modelled": false,
+  "hardware_replay_modelled": false,
+  "physical_RF_modelled": false,
+  "timing_calibrated": false,
+  "physical_panel_accuracy_validated": false,
+  "all_CrossInk_functions_verified": false,
+  "speed_selection_allowed": false,
+  "default_selection_authorized_by_this_receipt": false,
+  "final_source_integrity_check": {
+    "path": "/workspace/scratch/0c5ba1033bc8/xteink-x3-emulator-current/local/runs/group123-regressions/final-source-integrity-check.json",
+    "size_bytes": 5910,
+    "sha256": "db6afa2e4aaa2993a519947d4aed6a553edb440940bbd9fbf579d7c244f0008a"
+  },
+  "assembled_flash_input_provenance": {
+    "pinned_assembled_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "full_flash_bytes": 16777216,
+    "unchanged_official_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "components": "Unchanged official CrossInk release application, converted compatible official Arduino SDK bootloader, generated partition table and official Arduino OTA data.",
+    "officially_released_full_image_asset": false,
+    "physical_factory_dump": false,
+    "factory_or_tuned_crossink_bootloader_settings_verified": false,
+    "original_receipt_fields_flags_and_hashes_retained": true
+  }
+}

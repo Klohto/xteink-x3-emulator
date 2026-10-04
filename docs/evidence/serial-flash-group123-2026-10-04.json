@@ -1,0 +1,517 @@
+{
+  "schema_version": 1,
+  "validation_date": "2026-10-04",
+  "kind": "sanitized-group123-ROM-programming-and-separate-post-programming-boot-reading-validation",
+  "scope": {
+    "serial_flashing_verified": true,
+    "post_programming_boot_verified": true,
+    "post_programming_reading_flow_pass": true,
+    "original_strict_reading_validation_pass": false,
+    "all_crossink_functions_validated": false,
+    "timing_calibrated": false,
+    "speed_selection_allowed": false,
+    "physical_frame_accuracy_validated": false,
+    "optional_ram_stub_tested_in_this_run": false,
+    "physical_usb_or_web_serial_tested_in_this_run": false
+  },
+  "execution_identity": {
+    "native_backend_sha256": "504f14e45bfa818889204225827821da56299112645a1e35f66ba9121f854f50",
+    "native_backend_size_bytes": 68532840,
+    "mask_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "mask_rom_size_bytes": 393216,
+    "crossink_release": "v1.6.0",
+    "executed_crossink_source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+    "executed_crossink_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "pinned_assembled_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "full_flash_size_bytes": 16777216,
+    "application_descriptor": {
+      "version": "31ce770",
+      "project_name": "CrossInk",
+      "esp_idf_version": "5.5.2.260206",
+      "elf_sha256": "79d7a853483e1a681201adf482522f18db0d638e32774d58eab56c45df6af836"
+    }
+  },
+  "input_provenance": {
+    "full_image": "Pinned assembled image, not a factory dump or officially released full-image asset.",
+    "application": "Unchanged official CrossInk v1.6.0 release application.",
+    "application_url": "https://github.com/uxjulia/CrossInk/releases/download/v1.6.0/firmware-x3-x4-v1.6.0.bin",
+    "bootloader": "Converted compatible official Arduino ESP32 3.3.7 SDK bootloader_dio_80m.elf; factory and tuned CrossInk bootloader settings are not verified.",
+    "sdk_archive_sha256": "323ccd4a83e634560c22a294a3118c494e6c63133f69586f285187cf431a3939",
+    "bootloader_elf_sha256": "12e7c6d6be81fa48876117125eaee8d65ac307454a48b77f3bf1c623c7932c3d",
+    "partitions": "Generated pinned x3emu.flash.make_partition_table() output.",
+    "ota_data": "Official Arduino ESP32 3.3.7 boot_app0.bin."
+  },
+  "programming": {
+    "original_status": "passed",
+    "original_serial_flash_verified": true,
+    "original_boot_verified": false,
+    "esptool_version": "5.1.0",
+    "entrypoint": "python -m esptool",
+    "transport": "ROM UART0 over loopback TCP",
+    "flasher": "ESP32-C3 mask ROM",
+    "initial_flash": "all 0xff",
+    "strap_mode": 2,
+    "requested_baud": 921600,
+    "before": "no-reset",
+    "after": "no-reset",
+    "stub": false,
+    "compression": "esptool default",
+    "original_timeout_seconds": 180,
+    "four_original_ranges": [
+      {
+        "name": "bootloader.bin",
+        "offset": 0,
+        "offset_hex": "0x0",
+        "size_bytes": 18672,
+        "sha256": "6e6b0d386095f0783e9f0513ea29ea2ce413790e7f7153a06a2b04e2b5f59fb6",
+        "byte_equal": true
+      },
+      {
+        "name": "partitions.bin",
+        "offset": 32768,
+        "offset_hex": "0x8000",
+        "size_bytes": 3072,
+        "sha256": "bd0f7954aca2ef7d925ee21aaa1f3dc8822d1d6ce5cbbd26a135e5886bfff6ce",
+        "byte_equal": true
+      },
+      {
+        "name": "boot_app0.bin",
+        "offset": 57344,
+        "offset_hex": "0xe000",
+        "size_bytes": 8192,
+        "sha256": "f94c5d786a7a8fab06ac5d10e33bf37711a6697636dc037559ea19cc410a17f0",
+        "byte_equal": true
+      },
+      {
+        "name": "firmware-x3-x4-v1.6.0.bin",
+        "offset": 65536,
+        "offset_hex": "0x10000",
+        "size_bytes": 6105536,
+        "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+        "byte_equal": true
+      }
+    ],
+    "full_flash_readback": {
+      "size_bytes": 16777216,
+      "byte_equal": true,
+      "unused_byte": "0xff",
+      "expected_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "actual_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095"
+    },
+    "rom_hash_checks": 4,
+    "native_exit_code": 0,
+    "rtc": {
+      "flash-boot-mode": false,
+      "watchdog-expiry-count": 0,
+      "watchdog-feed-count": 0,
+      "reset_state_register": 12289,
+      "reset_reason": 1,
+      "qmp_reset_events": []
+    }
+  },
+  "post_programming_boot_and_reading": {
+    "actual_input_was_ROM_programmed_flash": true,
+    "actual_input_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "original_status": "failed",
+    "original_strict_pass": false,
+    "reading_flow_pass": true,
+    "original_checks": {
+      "pinned_full_flash": true,
+      "original_epub_fixture": true,
+      "saved_page1_before_reopen": true,
+      "reopened_reader_from_home": true,
+      "rom_cold_boot": true,
+      "controlled_cold_boot_reset_sequence": true,
+      "hardware_detect_x3": true,
+      "post_gpio_x3": true,
+      "no_sd_error_or_guest_panic": true,
+      "sd_mount_and_book_open": true,
+      "parsed_fixture_metadata": true,
+      "persisted_forward_page": true,
+      "visible_forward_page_change": true,
+      "up_restores_page0": true,
+      "down_restores_page1": true,
+      "up_restores_page0_content": true,
+      "down_restores_page1_content": true,
+      "reopen_restores_page1": true,
+      "reopen_restores_page1_content": true,
+      "all_frames_have_x3_dimensions_and_content": true,
+      "real_startup_power_input_configured": true,
+      "backend_stopped_cleanly": true,
+      "model_diagnostics_clean": false,
+      "speed_selection_remains_disabled": true,
+      "panel_trace_complete": true
+    },
+    "original_strict_pass_conditions": [
+      "pinned_full_flash",
+      "original_epub_fixture",
+      "real_startup_power_input_configured",
+      "rom_cold_boot",
+      "controlled_cold_boot_reset_sequence",
+      "hardware_detect_x3",
+      "post_gpio_x3",
+      "no_sd_error_or_guest_panic",
+      "sd_mount_and_book_open",
+      "parsed_fixture_metadata",
+      "persisted_forward_page",
+      "visible_forward_page_change",
+      "up_restores_page0",
+      "down_restores_page1",
+      "saved_page1_before_reopen",
+      "reopened_reader_from_home",
+      "reopen_restores_page1",
+      "all_frames_have_x3_dimensions_and_content",
+      "backend_stopped_cleanly",
+      "model_diagnostics_clean",
+      "speed_selection_remains_disabled",
+      "panel_trace_complete"
+    ],
+    "reading_flow_pass_conditions": [
+      "pinned_full_flash",
+      "original_epub_fixture",
+      "real_startup_power_input_configured",
+      "rom_cold_boot",
+      "controlled_cold_boot_reset_sequence",
+      "hardware_detect_x3",
+      "post_gpio_x3",
+      "no_sd_error_or_guest_panic",
+      "sd_mount_and_book_open",
+      "parsed_fixture_metadata",
+      "persisted_forward_page",
+      "visible_forward_page_change",
+      "saved_page1_before_reopen",
+      "reopened_reader_from_home",
+      "all_frames_have_x3_dimensions_and_content",
+      "backend_stopped_cleanly",
+      "speed_selection_remains_disabled",
+      "up_restores_page0_content",
+      "down_restores_page1_content",
+      "reopen_restores_page1_content"
+    ],
+    "original_launcher_firmware_boot_verified": false,
+    "composite_boot_verified_basis": [
+      "rom_cold_boot",
+      "controlled_cold_boot_reset_sequence",
+      "hardware_detect_x3",
+      "post_gpio_x3"
+    ],
+    "original_diagnostics_nonempty_lines": 165,
+    "native_exit_code": 0,
+    "panel_trace": {
+      "frame_events": 29,
+      "native_refresh_count": 29,
+      "complete": true
+    },
+    "pixel_deltas": {
+      "forward": 114684,
+      "back_to_page0": 0,
+      "forward_to_page1_again": 0,
+      "reopened_page1": 0
+    },
+    "content_pixel_deltas": {
+      "ink_mask_threshold": 192,
+      "back_to_page0": 0,
+      "forward_to_page1_again": 0,
+      "reopened_page1": 0
+    },
+    "progress_before_reopen": {
+      "spine_index": 0,
+      "page_number": 1,
+      "page_count": 22,
+      "visible_text_offset": 586
+    },
+    "final_reader_progress": {
+      "spine_index": 0,
+      "page_number": 1,
+      "page_count": 22,
+      "visible_text_offset": 586
+    },
+    "real_startup_power_input": {
+      "enabled": true,
+      "gpio": 3,
+      "active_level": 0,
+      "hold_ns": 1000000000,
+      "release_clock": "QEMU_CLOCK_VIRTUAL"
+    },
+    "original_timeout_seconds": 300,
+    "original_step_timeout_seconds": 90,
+    "protected_written_flash_ranges": [
+      {
+        "name": "bootloader.bin",
+        "offset": 0,
+        "size_bytes": 18672,
+        "unchanged_in_written_reading_flash": true
+      },
+      {
+        "name": "partitions.bin",
+        "offset": 32768,
+        "size_bytes": 3072,
+        "unchanged_in_written_reading_flash": true
+      },
+      {
+        "name": "boot_app0.bin",
+        "offset": 57344,
+        "size_bytes": 8192,
+        "unchanged_in_written_reading_flash": true
+      },
+      {
+        "name": "firmware-x3-x4-v1.6.0.bin",
+        "offset": 65536,
+        "size_bytes": 6105536,
+        "unchanged_in_written_reading_flash": true
+      }
+    ],
+    "cold_resume_on_a_second_reader_CPU_tested_in_this_record": false
+  },
+  "host_exit_observation": {
+    "observer_source": {
+      "path": "local/runs/group123-serial-flash/source-freeze/observe-serial-host-exit.py",
+      "size_bytes": 1648,
+      "sha256": "1cea19263ac3413d9672fc168d193b4868b4c2425bea9d9e818454b4bf68aaa0"
+    },
+    "kind": "Read-only Python return-event observation of completed Popen pid/returncode/args.",
+    "native_or_guest_operations_replaced": false,
+    "guest_memory_or_firmware_modified": false,
+    "timeouts_changed": false,
+    "earlier_ptrace_attempt_started_guest": false,
+    "earlier_ptrace_attempt": "Kernel PTRACE_TRACEME was denied before helper execution; original logs preserved.",
+    "prelaunch_strace_intention_superseded_by_actual_launch_proof": true
+  },
+  "installed_distribution_identity": [
+    {
+      "name": "esptool",
+      "version": "5.1.0",
+      "record_sha256": "d9f6132f1d1ffa1432f8f7e8cf3d88deb9e42c05b88e3ba0abd8e2063ff20ef5",
+      "hashed_package_files_verified": 152,
+      "unused_console_entrypoints_not_verified": [
+        "../../bin/esp_rfc2217_server",
+        "../../bin/esp_rfc2217_server.py",
+        "../../bin/espefuse",
+        "../../bin/espefuse.py",
+        "../../bin/espsecure",
+        "../../bin/espsecure.py",
+        "../../bin/esptool",
+        "../../bin/esptool.py"
+      ],
+      "execution_entrypoint": "python -m esptool"
+    },
+    {
+      "name": "pyserial",
+      "version": "3.5",
+      "record_sha256": "162687d3624672a666df67fe4cdf05d303f025a7fefcdb60404edb71bdbd9414",
+      "hashed_package_files_verified": 35,
+      "unused_console_entrypoints_not_verified": [
+        "../../bin/pyserial-miniterm",
+        "../../bin/pyserial-ports"
+      ],
+      "execution_entrypoint": "import serial"
+    }
+  ],
+  "frozen_source_files": [
+    {
+      "path": "x3emu/storage.py",
+      "size_bytes": 1003,
+      "sha256": "d0976fce3154ad257873a97c4d9e2abc0fe3c2c61aa9eb6ab57053f2d7f06956"
+    },
+    {
+      "path": "x3emu/ui.py",
+      "size_bytes": 14344,
+      "sha256": "2291258056470fd21e34ba9a0c1fb34678ed0cca2fce77a3dfcb540378aa30f8"
+    },
+    {
+      "path": "x3emu/sdcard.py",
+      "size_bytes": 16923,
+      "sha256": "5f4d437fd31723d8ff05c2189a77dd9984cf4404646c6c79e67fcf14f5a2c1fc"
+    },
+    {
+      "path": "x3emu/efuse.py",
+      "size_bytes": 1863,
+      "sha256": "a882949c2e8d299bf5847f5e4892bd1f5ffea8c39cb28163e830935e16b61530"
+    },
+    {
+      "path": "x3emu/__init__.py",
+      "size_bytes": 169,
+      "sha256": "30d127acfbeecf163116a6fdfeb97e4ee6621e727212c5475354669b56bab9d4"
+    },
+    {
+      "path": "x3emu/firmware.py",
+      "size_bytes": 7167,
+      "sha256": "75a768cdd3bf229f6a3a8a4cd274be6c9c33958ce7d0ca908591d225ac998c9b"
+    },
+    {
+      "path": "x3emu/__main__.py",
+      "size_bytes": 10483,
+      "sha256": "78d30ba2058c3df339df9d35ca8b0d81ee3309dfe071408565e36dac315ad1c3"
+    },
+    {
+      "path": "x3emu/usb_transfer.py",
+      "size_bytes": 10017,
+      "sha256": "bbb41134b6cbf17ed73b2f0dc262ebedfdb6a7125875e0f02b9396db3b643374"
+    },
+    {
+      "path": "x3emu/clock.py",
+      "size_bytes": 3810,
+      "sha256": "2d37012e1a3fb1c44cf761b48f1f766d1b56af6200cdfbe246199e736fb33f4f"
+    },
+    {
+      "path": "x3emu/fixtures.py",
+      "size_bytes": 23812,
+      "sha256": "a18b740ca7c4266f87b64f77f1587808766dc93a37776fd559c3020157369710"
+    },
+    {
+      "path": "x3emu/flash.py",
+      "size_bytes": 15975,
+      "sha256": "4b64c564ecd1b236cb7eedca7eceb9f75d6e0d674c66e991d65c515ea63dc3ae"
+    },
+    {
+      "path": "x3emu/backend.py",
+      "size_bytes": 51968,
+      "sha256": "9be3f8aa0ccf2c99f398553dfbe3de5258d2ecb6e9102a633d3b6a1c6bb52787"
+    },
+    {
+      "path": "pyproject.toml",
+      "size_bytes": 555,
+      "sha256": "3e454410ffe257e492a67eb8b6bb3df291e0462ba6f79262f7820355f0051199"
+    },
+    {
+      "path": "boards/xteink-x3.toml",
+      "size_bytes": 1620,
+      "sha256": "2eec5b9440fbcb452e8c98987e61bd354b59c962708241231a7e5e82739606d6"
+    },
+    {
+      "path": "scripts/test-serial-flash.py",
+      "size_bytes": 16482,
+      "sha256": "efc440aaba8047c28118d2a515eaabe9b6092ec2837f46acc793fe1c40fb0c1d"
+    },
+    {
+      "path": "scripts/smoke-crossink.py",
+      "size_bytes": 40286,
+      "sha256": "dc522481b4817ea26ed899e66b2c1b6c5f5fe5a4c6b01b43b261945236da8510"
+    }
+  ],
+  "unchanged_inputs": [
+    {
+      "name": "qemu-system-riscv32",
+      "size_bytes": 68532840,
+      "sha256": "504f14e45bfa818889204225827821da56299112645a1e35f66ba9121f854f50",
+      "unchanged_after_programming_and_reading": true
+    },
+    {
+      "name": "esp32c3-rom.bin",
+      "size_bytes": 393216,
+      "sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+      "unchanged_after_programming_and_reading": true
+    },
+    {
+      "name": "bootloader.bin",
+      "size_bytes": 18672,
+      "sha256": "6e6b0d386095f0783e9f0513ea29ea2ce413790e7f7153a06a2b04e2b5f59fb6",
+      "unchanged_after_programming_and_reading": true
+    },
+    {
+      "name": "partitions.bin",
+      "size_bytes": 3072,
+      "sha256": "bd0f7954aca2ef7d925ee21aaa1f3dc8822d1d6ce5cbbd26a135e5886bfff6ce",
+      "unchanged_after_programming_and_reading": true
+    },
+    {
+      "name": "boot_app0.bin",
+      "size_bytes": 8192,
+      "sha256": "f94c5d786a7a8fab06ac5d10e33bf37711a6697636dc037559ea19cc410a17f0",
+      "unchanged_after_programming_and_reading": true
+    },
+    {
+      "name": "firmware-x3-x4-v1.6.0.bin",
+      "size_bytes": 6105536,
+      "sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+      "unchanged_after_programming_and_reading": true
+    },
+    {
+      "name": "crossink-v1.6.0-x3-full-flash.bin",
+      "size_bytes": 16777216,
+      "sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+      "unchanged_after_programming_and_reading": true
+    },
+    {
+      "name": "core-reader-start.img",
+      "size_bytes": 67108864,
+      "sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+      "unchanged_after_programming_and_reading": true
+    }
+  ],
+  "receipts": {
+    "prelaunch": {
+      "path": "local/runs/group123-serial-flash/source-freeze/prelaunch-proof.json",
+      "size_bytes": 5902,
+      "sha256": "c0c02af17e0222a692a310795d928484fab717e66737bd92684d117f4492837c"
+    },
+    "actual_launch": {
+      "path": "local/runs/group123-serial-flash/source-freeze/actual-launch-proof.json",
+      "size_bytes": 1571,
+      "sha256": "ac116abd12fabd13d3c08bc20b466a3b3c9aebf40c876e2d29633e18d0e569d0"
+    },
+    "serial_programming": {
+      "path": "local/runs/group123-serial-flash/serial/result.json",
+      "size_bytes": 8165,
+      "sha256": "73bfce65a5860f77ceb9e99fd73395261aee6c0c63c1a0a2f6cf879ebc86c36f"
+    },
+    "native_programming_exit": {
+      "path": "local/runs/group123-serial-flash/serial/host-process-exit-observation.json",
+      "size_bytes": 1362,
+      "sha256": "ae93f7bf898f76320a3e3182ffd20d62a6648f9a1784157735731e763925d22b"
+    },
+    "esptool_log": {
+      "path": "local/runs/group123-serial-flash/serial/esptool-write.log",
+      "size_bytes": 1554,
+      "sha256": "b16a0c577ceec1013343befd383e435752f634012699ffbfe5b369d58784a654"
+    },
+    "serial_rtc": {
+      "path": "local/runs/group123-serial-flash/serial/rtc-snapshot.json",
+      "size_bytes": 237,
+      "sha256": "909f96f0f589f4e89d4526b45ebe53e66adbfc63f9ce22469fd54fe3dcf65a23"
+    },
+    "post_programming_boot_and_reading": {
+      "path": "local/runs/group123-serial-flash/post-serial-reader/validation.json",
+      "size_bytes": 41927,
+      "sha256": "d93586b7874eb76206dcc1b70a984318526e5cafbb27798a0ed90d6dcfc53346"
+    },
+    "post_boot_native_run": {
+      "path": "local/runs/group123-serial-flash/post-serial-reader/run/run.json",
+      "size_bytes": 235273,
+      "sha256": "61ac290c69a11b05d75cf02be86cdb2283c1b1058333faf0f6dd42923128e4ac"
+    },
+    "failed_host_ptrace_console": {
+      "path": "local/runs/group123-serial-flash/failed-host-ptrace/console.txt",
+      "size_bytes": 247,
+      "sha256": "01c79a7d47475a07737aecab58d739206fd0dcf4a572f2efdab84f037f393c00"
+    },
+    "failed_host_ptrace_process_log": {
+      "path": "local/runs/group123-serial-flash/failed-host-ptrace/process.log",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "independent_recheck": {
+      "path": "local/runs/group123-serial-flash/independent-recheck.json",
+      "size_bytes": 3428,
+      "sha256": "ff91e6eb761975f2e7ad9527c4c3022461318d2023d823b4228cea4ad6e49376"
+    },
+    "closed_archive": {
+      "path": "local/runs/group123-serial-flash/archive.json",
+      "size_bytes": 19037,
+      "sha256": "2f36b1531b8a8a014c3757b02c1974498792b6e0a6fad0c2bb3c6054acf0f633"
+    }
+  },
+  "evidence_handling": {
+    "original_receipts_unchanged": true,
+    "all_original_and_preserved_files_rehashed": true,
+    "archived_regular_file_count": 64,
+    "archived_size_bytes": 105942975,
+    "raw_flash_sd_images_efuse_credentials_keys_and_wire_payloads_published": false
+  },
+  "limitations": [
+    "The unchanged original programming receipt has boot_verified=false; a separate actual boot/reading run establishes application execution.",
+    "The unchanged strict smoke verdict is retained separately from its functional reading_flow_pass.",
+    "This record proves the real ROM UART path; optional RAM stub and physical USB/Web Serial are outside this run.",
+    "CPU/cache instruction costs, electrical behavior and physical panel/timing calibration remain unvalidated; no speed-selection result."
+  ]
+}

@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "kind": "public-safe-genuine-stats-ciss-receiver-ui-cold-proof",
+  "functional_pass": true,
+  "original_unseeded_epub_pair_receipt_sha256": "85f4e621dac8bfd8f3739c741da5bd6c5b581730cdb08c12189037affb7d85db",
+  "genuine_guest_created_records_only": true,
+  "whole_saved_media_copied_byte_identically": true,
+  "host_statistics_insertion": false,
+  "firmware_modified": false,
+  "native_modified_for_statistics": false,
+  "native_elf_sha256": "504f14e45bfa818889204225827821da56299112645a1e35f66ba9121f854f50",
+  "native_patch_sha256": "4d0032fa016713eb7f3d16c3ad3f897a7f90ebddaa523b50afb805ed77d136a8",
+  "native_source_tree": "86e40bf743c5a1e9f01624468fb42488f8adeb45",
+  "native_validation_receipt_sha256": "49a5c203e0cbc3f8fd452d685757ed088e62b24a7d67f2c65480f8784d44d733",
+  "native_device_cases_passed": 123,
+  "native_suites_passed": 12,
+  "native_skips": 0,
+  "official_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "pinned_assembled_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+  "firmware_source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "source_file_pins": [
+    {
+      "path": "src/activities/reader/GlobalReadingStats.cpp",
+      "sha256": "df1876cc088bcb0859ae845d258672f8384a5a1e516c01fb9517049788cb4333",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/GlobalReadingStats.cpp"
+    },
+    {
+      "path": "src/activities/reader/BookStatsActivity.cpp",
+      "sha256": "c6e24ea445b3c611b6a9843cb892246dbbff7e4e5a1b2e313c10a8a054105d77",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/BookStatsActivity.cpp"
+    },
+    {
+      "path": "src/activities/reader/BookStatsView.cpp",
+      "sha256": "34e2b94abe472b9ae34962a248f71840e7b450a220f679bd4750f306dfccd3f0",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/BookStatsView.cpp"
+    },
+    {
+      "path": "src/activities/reader/ReadingStatsUtils.cpp",
+      "sha256": "812ff4db429b0e476ac9a4dd1f0c70813f61f6165a4cb84a40422840bd84c924",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/ReadingStatsUtils.cpp"
+    },
+    {
+      "path": "src/activities/reader/EpubReaderActivity.cpp",
+      "sha256": "c4b13517aed22a2baf2e2eb1b1919e1515ce0f88f1d0945f05980f4228a05399",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/EpubReaderActivity.cpp"
+    },
+    {
+      "path": "src/activities/home/HomeActivity.cpp",
+      "sha256": "fd705c18643e4937323a351477f4d605f1c6ce0db0212fcc9d6ac3f0aa3ca000",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/home/HomeActivity.cpp"
+    },
+    {
+      "path": "src/activities/reader/GlobalReadingStats.h",
+      "sha256": "d282a9147bd052c5cfc1128423134326fee9294f4fe5d88f709ab354b3ec9ffc",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/GlobalReadingStats.h"
+    },
+    {
+      "path": "src/activities/reader/ReadingStatsUtils.h",
+      "sha256": "dfa5047558e68c5631b3d48560c2011ec6c9e5b6a6394f13a9f3d7892bf00179",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/ReadingStatsUtils.h"
+    },
+    {
+      "path": "src/activities/reader/BookStatsActivity.h",
+      "sha256": "c6eecc5e0b72255006a994bd5eb0647360134a4430732965f9bdefa2125ff759",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/BookStatsActivity.h"
+    },
+    {
+      "path": "lib/hal/HalClock.cpp",
+      "sha256": "c788f9245e3c5789a616e8827967464bdd1a685f24cfd5b9014a66f18b7a1db2",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/lib/hal/HalClock.cpp"
+    },
+    {
+      "path": "src/activities/network/NearbyStatsSyncActivity.cpp",
+      "sha256": "578f9f0cd6e518b16923fbd4fca1bcf31ab9206645a9ef1d618a8ba375820f08",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/network/NearbyStatsSyncActivity.cpp"
+    },
+    {
+      "path": "src/activities/reader/BookReadingStats.cpp",
+      "sha256": "173841508840ecd1014ba302a8c00f0d616909bfdbcbd5624182a416067d4b78",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/BookReadingStats.cpp"
+    },
+    {
+      "path": "lib/I18n/translations/english.yaml",
+      "sha256": "655005c0a2b5e09d90ba70fd3a0f6d1551c4a83c5322a09515fef56a7636a7fc",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/lib/I18n/translations/english.yaml"
+    }
+  ],
+  "cohorts": {
+    "genuine_donor": {
+      "original_receipt_sha256": "9719538ebf845d7e239a3b9aa2fb0d5eed2b4c23ae851cd19ccf93d2a0eff47f",
+      "functional_pass": true,
+      "completed": true,
+      "checks": 29,
+      "native_captures": 10
+    },
+    "ciss_baseline": {
+      "original_receipt_sha256": "bf5a75da88305c938930169c8a6a8a98c163c6b1218fea52d403c13d7b020a0f",
+      "functional_pass": true,
+      "completed": true,
+      "checks": 3,
+      "native_captures": 0
+    },
+    "ciss_snapshot_replacement": {
+      "original_receipt_sha256": "61ef11ae614311620610d0bd5d8473742d46e1e1e2e7caf063c45d2b850fb13c",
+      "functional_pass": true,
+      "completed": true,
+      "checks": 3,
+      "native_captures": 0
+    },
+    "ciss_idempotent_repeat": {
+      "original_receipt_sha256": "4422ec9542fb4c0be0d753a3bd0ef8a4e015859699c974af0e4fbb1dc936b2bc",
+      "functional_pass": true,
+      "completed": true,
+      "checks": 3,
+      "native_captures": 0
+    },
+    "receiver_ui_and_cold": {
+      "original_receipt_sha256": "27e15d5ed37ba6ab1b1f2b12068ee54f422e5c15b7a259eaf5b05121ab911b0d",
+      "functional_pass": true,
+      "completed": true,
+      "checks": 30,
+      "native_captures": 16
+    },
+    "original_false_duration_oracle": {
+      "original_receipt_sha256": "6eab9f326467e8da013c1f5b9b834d8cef8bc29910fb255fc5867911c1284e7f",
+      "functional_pass": false,
+      "completed": false,
+      "checks": 16,
+      "native_captures": 6
+    }
+  },
+  "independent_review_sha256": "7616e0d3c289bb46eb81fab448b92f729b1f55873be75a096e2328af0075222f",
+  "independent_checks": {
+    "actual_genuine_donor_reading_new_cpu_media_verified": true,
+    "genuine_raw_bilateral_ciss": true,
+    "older_snapshot_replaced_under_same_factory_mac": true,
+    "real_repeat_idempotent_at_record_level": true,
+    "receiver_native_nonzero_aggregate_chart_streak_UI": true,
+    "actual_receiver_media_cold_persistence": true,
+    "all_original_code_media_traces_independently_verified": true
+  },
+  "cleanly_stopped_cpu_instances": 10,
+  "closed_panel_events": 2992,
+  "completed_native_refreshes": 144,
+  "original_code_epub_media_identities_preserved": true,
+  "all_native_packet_and_panel_error_counters_zero": true,
+  "ciss_crypto_tx_rx_counters_zero": true,
+  "bilateral_original_ciss_stats_ack_verified_from_raw_frames": true,
+  "same_factory_mac_snapshot_replacement": true,
+  "record_level_idempotent_repeat": true,
+  "receiver_local": {
+    "sessions": 0,
+    "seconds": 0,
+    "pages": 2,
+    "completed": 0,
+    "time_of_day": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "weekday": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "receiver_aggregate": {
+    "sessions": 1,
+    "seconds": 324,
+    "pages": 6,
+    "completed": 0,
+    "time_of_day": [
+      32,
+      33,
+      0,
+      259
+    ],
+    "weekday": [
+      0,
+      0,
+      0,
+      259,
+      32,
+      33,
+      0
+    ],
+    "actual_ui_sessions": "1",
+    "actual_ui_duration": "5 min",
+    "actual_ui_pages_per_minute": "1.1",
+    "actual_ui_reading_streak": "2 days"
+  },
+  "native_chart_rectangles": {
+    "height_pixels": 16,
+    "time_bucket_widths": [
+      44,
+      45,
+      358
+    ],
+    "weekday_widths": [
+      384,
+      47,
+      48
+    ],
+    "exact_source_uint64_proportional_floor_formula": true,
+    "nonzero_bars": 6
+  },
+  "cold_this_device_differing_pixels": 0,
+  "cold_all_devices_differing_pixels": 0,
+  "cold_actual_stats_bytes_equal": true,
+  "focused_host_tests_passed": 9,
+  "focused_host_tests_receipt_sha256": "c046a22ede37cba4115070b98023ba9afb2f466afe4c0a9ee037d857d3c96bf7",
+  "original_false_receipts_and_original_regular_files_preserved": true,
+  "private_regular_file_archive_manifests": [
+    {
+      "cohort": "ciss-baseline",
+      "sha256": "93b3f00fd2ca3486fa8c9a9558904ecfa292d5fc9014687bfd1d0886d6413a4c",
+      "regular_files": 54
+    },
+    {
+      "cohort": "ciss-idempotent",
+      "sha256": "4b50a924713dc08107d5306bdef6bab048bfd566dd3e5ebb261a8aff2c3f87c1",
+      "regular_files": 54
+    },
+    {
+      "cohort": "ciss-replace",
+      "sha256": "72cd23d7c94ebb611aaf1a81f82767db7529108e1e5e69ba15dae19e7cfd7431",
+      "regular_files": 54
+    },
+    {
+      "cohort": "donor-reading-first",
+      "sha256": "3b891ce3c2ebe35444d7c7689461b1a2439ac7de4742edac884bd77d2746dd65",
+      "regular_files": 36
+    },
+    {
+      "cohort": "host-snapshot-duration-corrected",
+      "sha256": "e0e1892a948529afb10687ef6b26c74c64ef38f2bceb427cf26600047266653a",
+      "regular_files": 50
+    },
+    {
+      "cohort": "host-snapshot-first-receiver",
+      "sha256": "fac23d7d27604dde05fc32f4038c199a41e7ac855ab763c9cb11863dd8a8acc9",
+      "regular_files": 50
+    },
+    {
+      "cohort": "host-snapshot-original",
+      "sha256": "37cdf07dcd9856deb770d527a5e2ba49a799edfec18195bc65bb0c52a56c83f2",
+      "regular_files": 50
+    },
+    {
+      "cohort": "receiver-ui-duration-corrected",
+      "sha256": "795ef002902d98a2f9ba29d91d3a85a0eff8fd76f49c6ed88ca6c587efe48a3e",
+      "regular_files": 40
+    },
+    {
+      "cohort": "receiver-ui-first",
+      "sha256": "894a5cce0643f436426bfbca66f8824af9fe3573443e9dbd0339364cac19aa9f",
+      "regular_files": 19
+    }
+  ],
+  "strict_pass": false,
+  "complete_machine_acceptance_passed": false,
+  "all_crossink_functions_verified": false,
+  "physical_output_validated": false,
+  "physical_rf_modelled": false,
+  "speed_selection_allowed": false,
+  "broad_encryption_modelled": false,
+  "hardware_replay_modelled": false,
+  "general_group_policy_modelled": false,
+  "raw_packet_media_records_credentials_keys_not_included": true,
+  "source_files": [
+    {
+      "path": "scripts/test-crossink-stats-peer.py",
+      "size_bytes": 29188,
+      "sha256": "03b70ef9112c90aee3a0cf183d829d5e5e13fc545ec6217ba2bacbb6b918040d"
+    },
+    {
+      "path": "tests/test_stats_peer.py",
+      "size_bytes": 6599,
+      "sha256": "3d977ae12f805108f2f6e5c17ac34c15f49c75fd851c6f983e47e8ce6c34b49c"
+    },
+    {
+      "path": "docs/stats-peer-validation-2026-10-04.md",
+      "size_bytes": 6358,
+      "sha256": "e748b9832abd3be0e95014a7c25ebe6a27bb4d61399b010ba3dc12e5ea6c62de"
+    }
+  ]
+}

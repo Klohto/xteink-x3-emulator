@@ -23,7 +23,65 @@ def wire(frame, channel=1):
     return struct.pack("<4sHH", b"X3W1", channel, len(frame)) + frame
 
 
+def multi_vendor_action_frame(payload):
+    frame = bytearray(action_frame(b"")[:32])
+    parts = [payload[index:index + 250] for index in range(0, len(payload), 250)]
+    for index, part in enumerate(parts):
+        value = b"\x18\xfe\x34\x04" + bytes((2 | (16 if index + 1 < len(parts) else 0),)) + part
+        frame.extend(bytes((221, len(value))) + value)
+    return bytes(frame)
+
+
 class PassiveRawPeerTests(unittest.TestCase):
+    def test_idle_wake_leaves_an_awake_guest_alone_and_rejects_untyped_observations(self):
+        class QMP:
+            def __init__(self, value):
+                self.value, self.calls = value, []
+
+            def execute(self, command, arguments):
+                self.calls.append((command, arguments))
+                return self.value
+
+        class Replay:
+            pass
+
+        class Guest:
+            pass
+
+        for value in (False, 0, None, "false"):
+            guest = Guest()
+            guest.replay, guest.experiment = Replay(), None
+            guest.replay.qmp = QMP(value)
+            if value is False:
+                PAIR["wake_idle_guest"](guest, "test")
+            else:
+                with self.assertRaisesRegex(PAIR["NearbyError"], "not a boolean"):
+                    PAIR["wake_idle_guest"](guest, "test")
+            self.assertEqual(guest.replay.qmp.calls, [
+                ("qom-get", {"path": "/machine/rtccntl", "property": "deep-sleep-active"})])
+
+    def test_txt_cache_oracle_rejects_incomplete_and_invalid_original_offsets(self):
+        # The actual reader serializes an ITXT/version-4 header and byte offsets.
+        header = bytearray(34)
+        struct.pack_into("<I", header, 0, 0x54585449)
+        header[4] = 4
+        struct.pack_into("<I", header, 5, 1000)
+        struct.pack_into("<I", header, 30, 3)
+        actual = bytes(header) + struct.pack("<III", 0, 200, 700)
+        result = PAIR["decode_txt_index"](actual, 1000)
+        self.assertEqual(result["offsets"], [0, 200, 700])
+        self.assertEqual(result["pages"], 3)
+        bad_header = bytearray(header)
+        bad_header[4] = 0
+        malformed = [actual[:-1], actual + b"\0", bytes(bad_header) + actual[34:]]
+        malformed += [bytes(header) + struct.pack("<III", *values)
+                      for values in ((1, 200, 700), (0, 200, 200), (0, 700, 200), (0, 200, 1000))]
+        for value in malformed:
+            with self.subTest(cache=value), self.assertRaises(PAIR["NearbyError"]):
+                PAIR["decode_txt_index"](value, 1000)
+        with self.assertRaises(PAIR["NearbyError"]):
+            PAIR["decode_txt_index"](actual, 999)
+
     def test_saved_media_allows_nvs_persistence_but_rejects_changed_boot_code(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -109,6 +167,99 @@ class PassiveRawPeerTests(unittest.TestCase):
         self.assertEqual(actual["file_complete"], {"bytes": len(original), "crc32": zlib.crc32(original)})
         self.assertFalse(actual["protected"])
         self.assertEqual(observer.buffer, b"")
+
+    def test_observed_offer_keeps_exact_filename_separate_from_ocr_punctuation(self):
+        sender, filename = b"Original sender", b"test.epub"
+        body = struct.pack("<QHBB", 8878, 1024, len(sender), len(filename)) + sender + filename
+        packet = struct.pack("<4sBBHII", b"CIFT", 1, 3, len(body), 0x10203040, 0) + body
+        observer = PAIR["RawWireObserver"]()
+        original = wire(action_frame(packet))
+        for offset in range(0, len(original), 3):
+            observer.feed(original[offset:offset + 3])
+        offered = observer.frames[0]["file_offer"]
+        self.assertEqual(offered, {"bytes": 8878, "chunk_bytes": 1024,
+                                  "sender_name": "Original sender", "filename": "test.epub"})
+        self.assertEqual(base64.b64decode(observer.frames[0]["application_base64"]), packet)
+        damaged = bytearray(packet)
+        damaged[6] += 1
+        observed = PAIR["observe_mpdu"](action_frame(damaged))
+        self.assertFalse(observed["application_length_valid"])
+        self.assertNotIn("file_offer", observed)
+
+    def test_response_observer_distinguishes_user_reject_from_crc_failure(self):
+        for kind in (5, 9):
+            packet = struct.pack("<4sBBHII", b"CIFT", 1, kind, 1, 123, 0) + b"\x01"
+            result = PAIR["observe_mpdu"](action_frame(packet))
+            self.assertEqual(result["file_response"], {"type": kind, "value": 1})
+            self.assertEqual(base64.b64decode(result["application_base64"]), packet)
+
+    def test_declared_negative_crc_fixture_changes_only_actual_complete_crc(self):
+        data = struct.pack("<4sBBHII", b"CIFT", 1, 6, 3, 123, 7) + b"abc"
+        complete = struct.pack("<4sBBHIIQI", b"CIFT", 1, 8, 12, 123, 8, 3, zlib.crc32(b"abc"))
+        first, last = wire(action_frame(data)), wire(action_frame(complete))
+        original = first + last + first
+        for fragments in ([original], [bytes((byte,)) for byte in original]):
+            fault = PAIR["CompleteCRCFault"]()
+            forwarded = b"".join(fault.feed(chunk) for chunk in fragments)
+            self.assertEqual(len(forwarded), len(original))
+            self.assertEqual(forwarded[:len(first)], first)
+            self.assertEqual(forwarded[-len(first):], first)
+            self.assertEqual(len(fault.changes), 1)
+            change = fault.changes[0]
+            self.assertTrue(change["only_declared_crc_field_changed"])
+            old = base64.b64decode(change["original_wire_base64"])
+            new = base64.b64decode(change["forwarded_wire_base64"])
+            self.assertEqual(old, last)
+            self.assertEqual([i for i in range(len(old)) if old[i] != new[i]], [change["wire_crc_offset"]])
+            observed = PAIR["observe_mpdu"](new[8:])
+            self.assertEqual(observed["file_complete"], {"bytes": 3, "crc32": zlib.crc32(b"abc") ^ 1})
+            self.assertEqual(fault.buffer, b"")
+
+    def test_negative_crc_fixture_does_not_guess_malformed_or_other_messages(self):
+        for version, kind, declared in ((2, 8, 12), (1, 7, 12), (1, 8, 13)):
+            packet = struct.pack("<4sBBHIIQI", b"CIFT", version, kind, declared, 123, 8, 3, 456)
+            original = wire(action_frame(packet))
+            fault = PAIR["CompleteCRCFault"]()
+            self.assertEqual(fault.feed(original), original)
+            self.assertEqual(fault.changes, [])
+        fault = PAIR["CompleteCRCFault"]()
+        with self.assertRaisesRegex(PAIR["NearbyError"], "invalid X3W1"):
+            fault.feed(b"NOPE\1\0\x18\0")
+
+    def test_negative_data_fixture_retains_original_complete_across_vendor_fragmentation(self):
+        content = bytes(range(256)) * 4
+        packet = struct.pack("<4sBBHII", b"CIFT", 1, 6, len(content), 123, 0) + content
+        data = wire(multi_vendor_action_frame(packet))
+        later = wire(multi_vendor_action_frame(struct.pack("<4sBBHII", b"CIFT", 1, 6, len(content), 123, 1) + content))
+        complete = wire(action_frame(struct.pack("<4sBBHIIQI", b"CIFT", 1, 8, 12, 123, 2, len(content), zlib.crc32(content))))
+        fault = PAIR["FirstDataByteFault"]()
+        original = data + later + data + complete
+        forwarded = b"".join(fault.feed(bytes((byte,))) for byte in original)
+        self.assertEqual(len(forwarded), len(original))
+        self.assertEqual(forwarded[-len(complete):], complete)
+        self.assertEqual(forwarded[len(data):len(data) + len(later)], later)
+        self.assertEqual(len(fault.changes), 2)
+        for change in fault.changes:
+            old = base64.b64decode(change["original_wire_base64"])
+            new = base64.b64decode(change["forwarded_wire_base64"])
+            self.assertEqual(old, data)
+            self.assertEqual([i for i in range(len(old)) if old[i] != new[i]], [change["wire_byte_offset"]])
+            observed = PAIR["observe_mpdu"](new[8:])
+            mutated = base64.b64decode(observed["application_base64"])
+            self.assertEqual(mutated[:16], packet[:16])
+            self.assertEqual(mutated[17:], packet[17:])
+            self.assertEqual(mutated[16], packet[16] ^ 1)
+        self.assertEqual(len(fault.unchanged_completes), 1)
+        self.assertEqual(fault.unchanged_completes[0]["original_wire_base64"], fault.unchanged_completes[0]["forwarded_wire_base64"])
+        self.assertEqual(fault.buffer, b"")
+
+    def test_nested_final_observation_failure_prevents_false_whole_flow_pass(self):
+        valid = {"workflow_completed": True, "checks": {"actual_result": True}}
+        self.assertTrue(PAIR["finalize_guest_pass"](valid))
+        for fault in ("final_observation_error", "freeze_error", "workflow_error"):
+            self.assertFalse(PAIR["finalize_guest_pass"](valid | {fault: "original observer failure"}))
+        self.assertFalse(PAIR["finalize_guest_pass"](valid | {"workflow_completed": False}))
+        self.assertFalse(PAIR["finalize_guest_pass"](valid | {"checks": {"actual_result": False}}))
 
     def test_multiple_frames_and_incomplete_tail_do_not_manufacture_a_frame(self):
         frame = action_frame(b"original payload")

@@ -474,6 +474,55 @@ class BackendRunTests(unittest.TestCase):
                     self.assertIs(result["model_limits"]["wifi_ccmp_hardware_replay_modelled"], False)
                 self.assertFalse(result["timing"]["speed_selection_allowed"])
 
+    def test_optional_ccmp_group_scope_preserves_old_backends_and_requires_complete_typed_crypto(self):
+        from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_CCMP_OBSERVATIONS, WIFI_CCMP_GROUP_SCOPE
+        cases = (
+            ("older-pairwise", None, True, True, True, 0),
+            ("group-supported", True, True, True, True, 0),
+            ("group-unsupported", False, True, True, True, 0),
+            ("integer-group", 1, True, False, False, 0),
+            ("string-group", "true", True, False, False, 0),
+            ("group-without-crypto", True, False, False, False, 0),
+            ("group-with-refusal", True, True, True, False, 1),
+        )
+        for label, group, complete, valid, clean, refused in cases:
+            with self.subTest(label=label):
+                self.output = self.root / label
+                properties = list(WIFI_BASE_OBSERVATIONS)
+                if complete:
+                    properties += list(WIFI_CCMP_OBSERVATIONS)
+                if group is not None:
+                    properties.append(WIFI_CCMP_GROUP_SCOPE)
+                overrides = {
+                    "/machine/wifi:ccmp-ordinary-tx-scope-modelled": True,
+                    "/machine/wifi:ccmp-station-rx-scope-modelled": True,
+                    "/machine/wifi:ccmp-hardware-replay-modelled": False,
+                    "/machine/wifi:encryption-modelled": False,
+                    "/machine/wifi:rx-ccmp-rejected-frames": refused,
+                    "/machine/wifi:rx-dropped": refused,
+                }
+                if group is not None:
+                    overrides["/machine/wifi:" + WIFI_CCMP_GROUP_SCOPE] = group
+                self.install_fake_backend(extra_properties={
+                    "/machine/wifi": properties,
+                    "/machine/regi2c": ["phy-handshake-modelled", "synthetic-measurements"],
+                }, counter_overrides=overrides)
+                result = run(self.config(wifi=True))
+                self.assertEqual(result["wifi"]["ccmp_telemetry_valid"], valid)
+                self.assertEqual(result["validity"]["unsupported_features_checked"], valid)
+                self.assertEqual(result["validity"]["diagnostics_clean"], clean)
+                self.assertEqual(result["wifi"]["rx_unexplained_drops"], refused)
+                self.assertEqual(result["final_state"]["wifi"]["rx-dropped"], refused)
+                if group is None:
+                    self.assertNotIn(WIFI_CCMP_GROUP_SCOPE, result["final_state"]["wifi"])
+                    self.assertNotIn("wifi_ccmp_station_group_rx_scope_modelled", result["model_limits"])
+                else:
+                    self.assertEqual(result["final_state"]["wifi"][WIFI_CCMP_GROUP_SCOPE], group)
+                    self.assertIs(result["model_limits"]["wifi_ccmp_station_group_rx_scope_modelled"],
+                                  group if type(group) is bool else False)
+                self.assertIs(result["final_state"]["wifi"]["encryption-modelled"], False)
+                self.assertFalse(result["timing"]["speed_selection_allowed"])
+
     def test_synthetic_mac_random_seed_is_explicit_bounded_and_requires_observation(self):
         from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_RANDOM_OBSERVATIONS
         config = self.config(wifi=True, wifi_random_seed=0xffffffff)

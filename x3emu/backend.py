@@ -95,6 +95,7 @@ WIFI_CCMP_COUNTS = ("tx-ccmp-encrypted-frames", "tx-ccmp-rejected-frames",
                     "rx-ccmp-decrypted-frames", "rx-ccmp-rejected-frames",
                     "rx-ccmp-auth-failed-frames")
 WIFI_CCMP_OBSERVATIONS = WIFI_CCMP_SCOPES + WIFI_CCMP_COUNTS
+WIFI_CCMP_GROUP_SCOPE = "ccmp-station-group-rx-scope-modelled"
 WIFI_RANDOM_OBSERVATIONS = ("random-seed", "random-state", "random-read-count", "random-source-synthetic",
                             "random-entropy-modelled", "random-timing-calibrated", "random-state-migration-modelled")
 DEVICE_PROPERTIES["wifi"] += WIFI_PEER_OBSERVATIONS
@@ -104,6 +105,7 @@ DEVICE_PROPERTIES["wifi"] += WIFI_RX_OBSERVATIONS
 DEVICE_PROPERTIES["wifi"] += WIFI_RX_ENABLE_OBSERVATIONS
 DEVICE_PROPERTIES["wifi"] += ("rx-context-logging",)
 DEVICE_PROPERTIES["wifi"] += WIFI_CCMP_OBSERVATIONS
+DEVICE_PROPERTIES["wifi"] += (WIFI_CCMP_GROUP_SCOPE,)
 DEVICE_PROPERTIES["wifi"] += WIFI_RANDOM_OBSERVATIONS
 MACHINE_STATE_PROPERTIES = MACHINE_PROPERTIES + ("virtual-time-ns", "power-button", "power-button-hold-ns", "unsupported-io-json")
 REQUIRED_COUNTERS = {"machine": MACHINE_PROPERTIES,
@@ -627,6 +629,7 @@ def _record_capabilities(result: dict, state: dict) -> None:
         "wifi_rx_dma_enable_modelled": ("wifi", "rx-dma-enable-modelled"),
         "wifi_ccmp_ordinary_tx_scope_modelled": ("wifi", "ccmp-ordinary-tx-scope-modelled"),
         "wifi_ccmp_station_rx_scope_modelled": ("wifi", "ccmp-station-rx-scope-modelled"),
+        "wifi_ccmp_station_group_rx_scope_modelled": ("wifi", WIFI_CCMP_GROUP_SCOPE),
         "wifi_ccmp_hardware_replay_modelled": ("wifi", "ccmp-hardware-replay-modelled"),
         "wifi_tx_buffer_prefix_modelled": ("wifi", "tx-buffer-prefix-modelled"),
         "wifi_tx_aggregation_modelled": ("wifi", "tx-aggregation-modelled"),
@@ -637,7 +640,8 @@ def _record_capabilities(result: dict, state: dict) -> None:
     }
     for name, (device, prop) in properties.items():
         if prop in state.get(device, {}):
-            if (name == "wifi_rx_dma_enable_modelled" or prop in WIFI_CCMP_SCOPES) \
+            if (name == "wifi_rx_dma_enable_modelled" or prop in WIFI_CCMP_SCOPES
+                    or prop == WIFI_CCMP_GROUP_SCOPE) \
                     and type(state[device][prop]) is not bool:
                 result["model_limits"][name] = False
                 continue
@@ -862,9 +866,12 @@ def run(config: RunConfig) -> dict:
                 if valid_enable and wifi_state["rx-dma-enable-modelled"]:
                     # Source-backed RX-off drops are disjoint from address-filter drops.
                     drops -= wifi_state["rx-disabled-dropped-frames"]
-            if any(prop in wifi_state for prop in WIFI_CCMP_OBSERVATIONS):
+            if any(prop in wifi_state for prop in WIFI_CCMP_OBSERVATIONS) \
+                    or WIFI_CCMP_GROUP_SCOPE in wifi_state:
                 valid_crypto = all(prop in wifi_state for prop in WIFI_CCMP_OBSERVATIONS)
                 valid_crypto = valid_crypto and all(type(wifi_state[prop]) is bool for prop in WIFI_CCMP_SCOPES)
+                valid_crypto = valid_crypto and (WIFI_CCMP_GROUP_SCOPE not in wifi_state
+                    or type(wifi_state[WIFI_CCMP_GROUP_SCOPE]) is bool)
                 valid_crypto = valid_crypto and all(type(wifi_state[prop]) is int and wifi_state[prop] >= 0
                                                    for prop in WIFI_CCMP_COUNTS)
                 valid_crypto = valid_crypto and all(type(wifi_state.get(prop)) is int and wifi_state[prop] >= 0

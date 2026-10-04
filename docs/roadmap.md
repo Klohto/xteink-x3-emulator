@@ -2,8 +2,8 @@
 
 ## Firmware execution and board model
 
-Implemented: pinned Espressif QEMU execution, original ROM and bootloader,
-writable flash, GPIO/SPI wiring, ADC buttons, SD block operations, digital
+Implemented: pinned Espressif QEMU execution, original ROM and converted
+compatible official SDK bootloader, writable flash, GPIO/SPI wiring, ADC buttons, SD block operations, digital
 panel output, I2C discovery devices, USB console and RTC sleep/wake. The real
 ROM downloader programs CrossInk with verified byte readback. Native tests
 exercise the actual MMIO, interrupt and wire protocols.
@@ -13,12 +13,21 @@ in `validation.md`. Unsupported registers and capabilities stay visible in run
 manifests. Support for a new command requires its real semantics and observable
 checks; register readback alone does not establish hardware behavior.
 
-## Complete more functional coverage
+## Remaining scope beyond the closed CrossInk workflows
+
+The fresh continuation closes the source-reviewed owning routes in
+[function coverage](function-coverage.md), including book reading/cold resume,
+end-book actions, Quick Actions, editors, error controls, native secure DHCP,
+Nearby formats/positions, received statistics and real ROM programming.
+Each record has a bounded backend/input profile. Format, trigger, value and
+error permutations do not yet have exhaustive execution coverage; the source
+inventory and preserved firmware defects are not an all-functions claim.
 
 - Resolve the optional esptool RAM flasher failure; retain the verified ROM path.
 - Test other CrossInk releases, app-generated OTA writes and rollback behavior.
-- Exercise Wi-Fi, BLE, USB host enumeration, sensor alarms and motion features
-  only as their native device models become available.
+- Broaden the bounded Wi-Fi cipher/key/frame profile only with primary-source
+  contracts and actual unchanged firmware gates. Physical USB enumeration and
+  optional model features need separate coverage; stock X3 disables BLE.
 - Validate both physical panel variants against captured command/RAM traces.
 - Expand reset, low-power, memory-protection and invalid-access coverage.
 

@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "validation_date_utc": "2026-10-04",
+  "evidence_type": "allowlisted summary of actual unchanged stock firmware runs; raw captures retained privately",
+  "firmware": {
+    "release": "v1.6.0",
+    "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+    "application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "sdk_source_commit": "b784446302c076b4b5a622627867f0c80905cc50",
+    "original_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99"
+  },
+  "backend": {
+    "cohort": "RX114",
+    "sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+    "recorded_run_bound_to_this_backend": true,
+    "later_native_candidates_not_validated_by_these_receipts": true
+  },
+  "limits": {
+    "strict_model_pass": false,
+    "network_protocol_verified": false,
+    "whole_machine_verified": false,
+    "all_functions_verified": false,
+    "physical_timing_verified": false,
+    "physical_panel_fidelity_verified": false,
+    "timing_calibrated": false,
+    "speed_selection_allowed": false
+  },
+  "publication": {
+    "raw_flash_sd_efuse_captures_included": false,
+    "raw_guest_store_or_credential_values_included": false,
+    "keys_or_request_auth_headers_included": false,
+    "raw_request_response_payloads_included": false,
+    "derived_private_summary_sha256": "a76e4974d039d3a05a202012cefab5d0c801fd44f1559a82d815bca57a8d3371"
+  },
+  "feature": "OPDS and KOReader GUI credential/settings editors",
+  "functional_editor_chain_pass": true,
+  "actual_gui_editor_chain": {
+    "original_overall_failed_receipt_preserved_sha256": "8e8664ac2f965f442451d18c9defe60844f23a341278603a8b2e3a5ece572b2c",
+    "required_original_opds_positive_checks": 16,
+    "actual_koreader_continuation_receipt_sha256": "0e96c3fac5e7a565935e1a7cfc3df3b81f748900e6ac36ebbbaf7dc8f1e0beb5",
+    "actual_cold_persistence_delete_receipt_sha256": "8f6da7dbe49b847191a3e214cc7b14dc0e6f621d2d9ac438b7d3b12f4562a8c9",
+    "closed_independent_audit_sha256": "848454becb5cb829f30be1f0d93e421e3540c70250658e9f25ae4857946713f4",
+    "opds_actual_edits_and_cancels_verified": true,
+    "koreader_actual_edits_and_cancel_verified": true,
+    "cp_v1_against_actual_efuse_verified": true,
+    "all_three_actual_cold_editor_rasters_exact": true,
+    "actual_opds_delete_verified": true,
+    "source_defined_first_load_settings_normalization": {
+      "key": "homeButtonDoubleTapAction",
+      "from": 24,
+      "to": 23,
+      "performed_by_original_guest": true,
+      "subsequent_cold_bytes_exact": true
+    },
+    "original_settings_snapshot_path_mapping_independently_audited_without_receipt_rewrite": true,
+    "original_launch_source_pins": {
+      "crossink_files": 22,
+      "sdk_files": 1,
+      "harness_sha256": "e38fc8eb09187586cd16fb43a7d95cedc987db37f8e7aa9800b630f5ee171116"
+    },
+    "supplemental_after_closed_run_source_audit": {
+      "crossink_files": 23,
+      "sdk_files": 4,
+      "not_retroactive_launch_pin_claim": true
+    }
+  },
+  "media_chain": {
+    "first_opds_cpu_started_without_opds_or_koreader_store": true,
+    "continuation_consumed_actual_opds_guest_written_flash_sd_efuse": true,
+    "cold_cpu_consumed_continuation_actual_written_flash_sd_efuse": true,
+    "guest_store_seeding": false,
+    "guest_firmware_or_memory_patches": false,
+    "ordinary_adc_hold_ms": 400,
+    "original_epub_preserved": true
+  },
+  "workflows": [
+    {
+      "workflow": "editors",
+      "receipt_sha256": "0e96c3fac5e7a565935e1a7cfc3df3b81f748900e6ac36ebbbaf7dc8f1e0beb5",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks_passed": 18,
+      "adc_pulses": 158,
+      "retained_panel_captures": 12,
+      "transient_native_trace_observations": 158,
+      "native_trace_events": 2618,
+      "native_refreshes": 162,
+      "native_exit_code": 0,
+      "complete_native_trace": true
+    },
+    {
+      "workflow": "cold-persistence-delete",
+      "receipt_sha256": "8f6da7dbe49b847191a3e214cc7b14dc0e6f621d2d9ac438b7d3b12f4562a8c9",
+      "functional_pass": true,
+      "strict_pass": false,
+      "checks_passed": 23,
+      "adc_pulses": 21,
+      "retained_panel_captures": 7,
+      "transient_native_trace_observations": 21,
+      "native_trace_events": 426,
+      "native_refreshes": 25,
+      "native_exit_code": 0,
+      "complete_native_trace": true
+    }
+  ],
+  "receipts": {
+    "combined_functional_sha256": "eaf8a86485066320a809ef00d398c4f3d33e71ba6ac5752e235fb627e842e93f",
+    "closed_independent_audit_sha256": "848454becb5cb829f30be1f0d93e421e3540c70250658e9f25ae4857946713f4",
+    "private_closed_archive_manifest_sha256": "994a6eaf8798d0eef59bc760fe0bf5d6c4129d7570cc10955f35699571ef24e9"
+  },
+  "failures_preserved": {
+    "original_opds_positive_ko_reader_ocr_failed": {
+      "receipt_sha256": "8e8664ac2f965f442451d18c9defe60844f23a341278603a8b2e3a5ece572b2c",
+      "overall_functional_pass": false,
+      "cause": "OCR missed visible default Smart Sync label; sixteen completed original OPDS/media/source/trace checks required by continuation"
+    },
+    "early_cold_settings_identity_check": {
+      "receipt_sha256": "11b419927cc83ff6ee1f64672664dca6dfa87fe674f264a71a457ee89dc0038b",
+      "overall_functional_pass": false,
+      "cause": "pre-normalization settings bytes differed from genuine stock X3 Home shortcut normalization"
+    },
+    "original_receipts_rewritten": false,
+    "workspace_trace_failures_waived_as_success": false
+  },
+  "current_harness": {
+    "path": "scripts/test-crossink-network-settings.py",
+    "sha256": "9ba72b6925ab3040cae0d0ad015c690dcefa06f8d0750c62bbeb4f80fb145d01",
+    "required_crossink_source_pins": 23,
+    "required_sdk_source_pins": 4,
+    "historical_launch_harness_unchanged": true
+  }
+}

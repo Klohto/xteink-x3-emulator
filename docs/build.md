@@ -39,7 +39,7 @@ Create a Python environment for the project and build tools:
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install 'meson==1.8.5' 'pycotap==1.3.1'
-python -m pip install -e .
+python -m pip install -e '.[validation]'
 ```
 
 The ESP32-C3 machine needs libgcrypt for its AES peripheral. The script enables

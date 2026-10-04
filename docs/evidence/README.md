@@ -1,5 +1,23 @@
 # Recorded firmware experiments
 
+Fresh 2026-10-04 summaries retain exact original receipt hashes and backend
+identities. Private binary media and wire captures are excluded:
+
+| File | Closed actual firmware evidence |
+| --- | --- |
+| [secure-wifi-2026-10-04.json](secure-wifi-2026-10-04.json) | 119 password Save, fresh handshake on a new CPU, Forget Cancel/Confirm |
+| [network-settings-2026-10-04.json](network-settings-2026-10-04.json) | RX114 real OPDS/KOReader keyboard editors and cold persistence/Delete |
+| [koreader-binary-2026-10-04.json](koreader-binary-2026-10-04.json) | RX114 genuine metadata/progress upload and exact-pixel Apply |
+| [end-book-2026-10-04.json](end-book-2026-10-04.json) | RX114 nonempty suggestions and actions, 50 checks across three CPUs |
+| [nearby-completed-branches-2026-10-04.json](nearby-completed-branches-2026-10-04.json) | Six formats, folders/collisions/cancellation/identity and eight cold reading resumes; CRC UI failures remain false |
+| [group123-native-regressions-2026-10-04.json](group123-native-regressions-2026-10-04.json) | Selected123 native source/gate and exact reader/cold/DNS/hotspot regressions |
+| [secure-wifi-group-2026-10-04.json](secure-wifi-group-2026-10-04.json) | Actual GTK1 installation/broadcast DHCP and independently authenticated protected frames |
+| [serial-flash-group123-2026-10-04.json](serial-flash-group123-2026-10-04.json) | Real ROM programming and a separate boot/read of the actual programmed image |
+| [quick-actions-editor-dispatch-2026-10-04.json](quick-actions-editor-dispatch-2026-10-04.json) | Actual editor/cold persistence and19 further dispatch entries; earlier five remain distinct |
+| [network-error-controls-2026-10-04.json](network-error-controls-2026-10-04.json) | Genuine OPDS500/fontCRC refusal with physical Retry/Back |
+| [wifi-settings-2026-10-04.json](wifi-settings-2026-10-04.json) | Settings-specific real entry/scan/Back and exact raster restoration |
+| [stats-peer-2026-10-04.json](stats-peer-2026-10-04.json) | Genuine CISS replacement/idempotence, nonzero charts/streak and cold restore |
+
 Receipts from the 2026-10-03 implementation checks. Commands and inputs are
 documented in [validation.md](../validation.md). The original baseline experiments below identify the same installed backend
 SHA-256. Expanded function experiments identify their own immutable backend

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "workflow": "stock X3 OPDS and font visible error controls",
+  "functional_pass": true,
+  "complete_machine_acceptance_passed": false,
+  "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "sdk_commit": "b784446302c076b4b5a622627867f0c80905cc50",
+  "backend_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+  "official_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+  "opds": {
+    "receipt_sha256": "033bba9877aa7dde7a5690b535e5c3309a2a11361f2e58a32a827026771b62b1",
+    "check_count": 19,
+    "all_checks_true": true,
+    "postconditions": [
+      "Visible HTTP500 Retry fetched the same child URL with200",
+      "Second visible HTTP500 Back fetched previous parent",
+      "Original book/firmware preserved"
+    ],
+    "declared_external_http500_fault_count": 2,
+    "closed_refreshes": 23,
+    "closed_trace_events": 417,
+    "native_exit_zero": true,
+    "all_trace_counts_bytes_identities_crc_complete": true,
+    "config_scope": "Original fixture catalog URL/credentials provided for service-entry scope; no editor-input claim in this cohort.",
+    "host_execution_source_manifest_sha256": "bb2a76bc53baa0cd159516422ed9ee2394554b7e4960eee96e9d176fbcee18ff"
+  },
+  "fonts": {
+    "receipt_sha256": "b7ed523d5dd0c0d294fa5c7702eee936d90d857369457891bdce430a7bc31f77",
+    "check_count": 25,
+    "all_checks_true": true,
+    "postconditions": [
+      "Two genuine CRC refusals after complete one-byte-corrupted16pt HTTP bodies with original manifest CRC/length",
+      "Physical visible Retry installed exact16pt and preserved real14pt",
+      "Physical visible Back restored catalog and preserved all earlier real installed fonts",
+      "Invalid destination/temp/backup absent"
+    ],
+    "sizes": [
+      14,
+      16
+    ],
+    "virgin_size_range": "Tiny; source allowed10/12/14/16",
+    "seeded_installed_fonts": false,
+    "declared_external_body_byte_fault_count": 2,
+    "closed_refreshes": 49,
+    "closed_trace_events": 833,
+    "native_exit_zero": true,
+    "all_trace_counts_bytes_identities_crc_complete": true,
+    "source_pin_count": 53,
+    "sdk_pin_count": 3,
+    "host_execution_source_manifest_sha256": "d70246ff8d1451ac9680e33cfe4c6b1219fc943898a232819786af65df96895e"
+  },
+  "independent_proof_sha256": "4dac056b6c451993b5a3368e8e059e7e1941ad308fb708f5041fb9e314e176a4",
+  "opds_archive_sha256": "6f00375ec575d2adec201005994fc4808ad3b47b8e49090cbe0a42770769338e",
+  "fonts_archive_sha256": "eb26a588e181d8e2a797c962eb5ad037eb294bb7ccfb7e59c65553066f679468",
+  "font_first_wrong_range_failure_preserved": true,
+  "font_prelaunch_generator_failure_preserved": true,
+  "font_catalog_ocr_failure_preserved": true,
+  "host_helpers_only_no_guest_code_or_memory_patch": true,
+  "focused_tests_passed": 8,
+  "focused_gate_sha256": "e74ba05a287033d3ef5105b54c41b522679a1213d4fbdf5e10c51cb025a13f23",
+  "physical_output_validated": false,
+  "physical_timing_validated": false,
+  "all_functions_verified": false,
+  "speed_selection_allowed": false,
+  "assembled_flash_input_provenance": {
+    "pinned_assembled_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "full_flash_bytes": 16777216,
+    "unchanged_official_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "components": "Unchanged official CrossInk release application, converted compatible official Arduino SDK bootloader, generated partition table and official Arduino OTA data.",
+    "officially_released_full_image_asset": false,
+    "physical_factory_dump": false,
+    "factory_or_tuned_crossink_bootloader_settings_verified": false,
+    "original_receipt_fields_flags_and_hashes_retained": true
+  }
+}

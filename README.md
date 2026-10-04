@@ -9,11 +9,12 @@ script, flash and SD image tools, a runtime, local front panel, button controls 
 integration experiments. Firmware images and generated storage stay outside
 Git.
 
-The current working patch passes 119 native cases across 12 suites. Actual
-unchanged CrossInk passes EPUB reading and saved-page cold restoration, WPA2
-password Save/reconnect/Forget, hotspot/DHCP, captive DNS, and Nearby EPUB
-transfer/read/cold restoration on this backend. The encrypted profile is
-bounded pairwise station CCMP; additional group traffic is still being checked.
+The current working patch passes 123 native cases across 12 suites. Actual
+unchanged CrossInk passes EPUB reading and saved-page cold restoration,
+authenticated saved-network GTK1 broadcast DHCP, hotspot/join, captive DNS,
+and real ROM programming followed by boot/read on this backend. The previous
+119 backend's password Save/reconnect/Forget and Nearby transfer/read/cold
+proofs retain their exact identity. The encrypted profile is bounded native CCMP.
 See [native encryption validation](docs/native-ccmp-validation.md) and the
 [recovery record](docs/emulator-recovery-2026-10-04.md) for exact source pins,
 original receipts, preserved failures and remaining work. GitHub `main` remains
@@ -71,6 +72,25 @@ records disclosed by the index. Original protocol failures and incomplete
 strict-model results remain retained; this is not an all-functions acceptance
 claim.
 
+Fresh RX114 runs now also verify the [OPDS and KOReader settings editors and
+Binary progress sync](docs/network-settings-validation.md), a [nonempty
+end-of-book menu across three CPUs](docs/end-book-validation-2026-10-04.md), and
+[Nearby format, folder, collision, cancellation and identity checks](docs/nearby-validation-2026-10-04.md).
+Nearby has 16 positive cases, including six transferred file formats and eight
+cold reading resumes. Its two corrupted-transfer cases preserve files and
+refuse CRC failures; the observed stock error-message loop remains a failed
+UI result. Each linked record retains its exact backend and original failures.
+
+The remaining [Quick Actions](docs/quick-actions-validation-2026-10-04.md),
+[OPDS/font Retry and Back](docs/network-error-controls-2026-10-04.md),
+[Settings Wi-Fi route](docs/wifi-settings-validation-2026-10-04.md), and
+[received statistics charts/streak/cold persistence](docs/stats-peer-validation-2026-10-04.md)
+also have closed actual firmware proofs. The final
+[ROM flashing and post-programming reading](docs/flashing-validation-2026-10-04.md)
+run verifies the selected 123-case binary. The full-flash input is a pinned assembled
+image with the unchanged official app and compatible SDK bootloader, generated
+partitions and official OTA data; it is not a factory dump/full-image release.
+
 This source and metadata checkpoint includes 57 previously approved full records
 from 119 local captures. Two compressed records were blocked by automatic
 upload review; all other nonapproved compressed payloads remain deferred and
@@ -118,7 +138,7 @@ Use Linux and Python 3.11 or later. Install the native dependencies described in
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e . 'meson==1.8.5' 'pycotap==1.3.1' 'esptool==5.1.0'
+python -m pip install -e '.[validation]' 'meson==1.8.5' 'pycotap==1.3.1' 'esptool==5.1.0'
 ./scripts/build-qemu.sh --fetch --test --jobs 4
 python -m x3emu.firmware --download --directory local/firmware
 python -m x3emu.sdcard --output local/card.img
@@ -147,9 +167,9 @@ outputs and transport behavior are in [`docs/run.md`](docs/run.md).
 
 ## Flash CrossInk through the ROM
 
-The flashing experiment starts with erased flash and sends the original
-bootloader, partition table, OTA data and application through actual UART ROM
-commands. It verifies the complete resulting flash file:
+The flashing experiment starts with erased flash and sends the prepared
+compatible SDK bootloader, generated partition table, official OTA data and
+unchanged official application through actual UART ROM commands. It verifies the complete resulting flash file:
 
 ```sh
 python scripts/test-serial-flash.py --output local/runs/serial-flash

@@ -1,0 +1,1502 @@
+{
+  "actions": [
+    {
+      "evidence_cohort": "rich-reader",
+      "id": 0,
+      "label": "Ignore",
+      "proof": "Actual guest Save and cold persistence of ID 0; original popup has four nonempty rows.",
+      "scope": "configured-and-filtered"
+    },
+    {
+      "evidence_cohort": "reader-options",
+      "id": 1,
+      "label": "Sleep",
+      "proof": "Native RTC deep sleep, one-second GPIO3 Power wake and retained settings; watchdog expiry count 0.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "editor",
+      "id": 2,
+      "label": "Next page",
+      "proof": "Page raster changes through original reader.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "editor",
+      "id": 31,
+      "label": "Previous page",
+      "proof": "Reader content returns exactly to the original page.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "editor",
+      "id": 7,
+      "label": "Bookmark",
+      "proof": "Guest bookmark store contains one entry, then removing it deletes the last-entry store.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "editor",
+      "id": 10,
+      "label": "Reading stats",
+      "proof": "Actual stats panel and return to identical reader content.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "reader-options",
+      "id": 9,
+      "label": "Mark finished",
+      "proof": "Guest stats completed flag changes true, then false.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "historical-E32",
+      "id": 3,
+      "label": "Force refresh",
+      "proof": "Refresh returns the original reader pixels.",
+      "scope": "retained-functional"
+    },
+    {
+      "evidence_cohort": "reader-options",
+      "id": 4,
+      "label": "Change font",
+      "proof": "Actual binary per-book family changes and original EPUB reindexes to a different raster.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "historical-E32",
+      "id": 5,
+      "label": "Guide dots",
+      "proof": "Guest book override and visible text/guide change.",
+      "scope": "retained-functional"
+    },
+    {
+      "evidence_cohort": "historical-E32",
+      "id": 6,
+      "label": "Focus reading",
+      "proof": "Guest book override and visible text change.",
+      "scope": "retained-functional"
+    },
+    {
+      "evidence_cohort": "reader-options",
+      "id": 12,
+      "label": "Cycle page turn",
+      "proof": "Actual interval picker opens; Cancel restores the font-modified reader exactly. Automatic timer behavior is covered separately, not by this quick entry.",
+      "scope": "entry-and-cancel"
+    },
+    {
+      "evidence_cohort": "reader-options",
+      "id": 14,
+      "label": "Tilt page turn",
+      "proof": "Genuine enabled preference then restore. Physical tilt trigger and calibration are not verified here.",
+      "scope": "preference-only"
+    },
+    {
+      "evidence_cohort": "rich-reader",
+      "id": 8,
+      "label": "Sync progress",
+      "proof": "Missing credentials opens original KOReader settings. Cancel lands Home; Home Read restores exact highlighted page and stores. Remote sync and intended direct Reader return are not verified.",
+      "scope": "entry-and-recovery"
+    },
+    {
+      "evidence_cohort": "network-entrypoints",
+      "id": 32,
+      "label": "Nearby position sync",
+      "proof": "Original Ready/Share/Finding reader flow, increased native TX count, Cancel restores page. Peer exchange and exact Hello wire bytes are not proven by this quick entry.",
+      "scope": "entry-tx-and-cancel"
+    },
+    {
+      "evidence_cohort": "network-entrypoints",
+      "id": 13,
+      "label": "File transfer",
+      "proof": "Original mode selector, Cancel lands Home; Home Read restores exact page. Remote transfer is not exercised here.",
+      "scope": "entry-and-recovery"
+    },
+    {
+      "evidence_cohort": "network-entrypoints",
+      "id": 18,
+      "label": "Calibre Wireless",
+      "proof": "Actual prerequisite WiFi selector and Cancel to original reader. Remote Calibre transfer is not exercised here.",
+      "scope": "entry-and-cancel"
+    },
+    {
+      "evidence_cohort": "network-entrypoints",
+      "id": 19,
+      "label": "Join a Network",
+      "proof": "Actual WiFi selector, Back to original network modes, then Back to reader.",
+      "scope": "entry-and-cancel"
+    },
+    {
+      "evidence_cohort": "network-entrypoints",
+      "id": 20,
+      "label": "Create Hotspot",
+      "proof": "Actual Hotspot Mode/CrossPoint-Reader/server URL panel and increased native TX count; exit restores page. Remote HTTP transfer is not exercised here.",
+      "scope": "service-tx-and-cancel"
+    },
+    {
+      "evidence_cohort": "historical-E32",
+      "id": 11,
+      "label": "Screenshot",
+      "proof": "Original book filename, portrait one-bit BMP of reader rather than popup, feedback restores reader.",
+      "scope": "retained-functional"
+    },
+    {
+      "evidence_cohort": "historical-E32",
+      "id": 15,
+      "label": "Reader Dark Mode",
+      "proof": "Actual global preference, reader inversion, then exact raster roundtrip.",
+      "scope": "retained-functional"
+    },
+    {
+      "evidence_cohort": "rich-reader",
+      "id": 16,
+      "label": "Footnotes",
+      "proof": "Actual note navigation then identical saved-origin reader content.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "editor",
+      "id": 17,
+      "label": "Browse Files",
+      "proof": "Original browser entry; first fresh Confirm consumed by source guard, second opens the original page exactly.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "rich-reader",
+      "id": 21,
+      "label": "Create Clipping",
+      "proof": "Real two-word selected range, one clipping store entry, matching My Clippings text and cold retention.",
+      "scope": "functional"
+    },
+    {
+      "evidence_cohort": "rich-reader",
+      "id": 22,
+      "label": "Look Up Word",
+      "proof": "Dictionary selected through guest menu, actual definition and D-status history entry; exact cold retained bytes.",
+      "scope": "functional"
+    }
+  ],
+  "all_actions_validated": false,
+  "all_functions_validated": false,
+  "application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+  "backend_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+  "cohorts": {
+    "editor": {
+      "archive_sha256": "a3defa91ac933d21746708afcd1c4cf04be7d8d974543a6251ddde70da8b67aa",
+      "checks": {
+        "backend_stopped_cleanly": true,
+        "browse_slot_reopens_same_original_content": true,
+        "closed_native_trace_complete": true,
+        "controlled_cold_boot_reset_sequence": true,
+        "dispatch_roundtrip_persists_page0": true,
+        "dispatches_preserve_five_saved_slots": true,
+        "fresh_cpu_preserves_exact_original_guest_settings": true,
+        "guest_opened_original_epub": true,
+        "hardware_detect_x3": true,
+        "no_sd_error_or_guest_panic": true,
+        "post_gpio_x3": true,
+        "rom_cold_boot": true,
+        "stock_browser_consumes_first_fresh_confirm_after_popup": true
+      },
+      "closed_trace_proofs": [
+        {
+          "checks": {
+            "backend_unchanged": true,
+            "contiguous_full_trace": true,
+            "durable_trace_bytes": true,
+            "every_attempt_flushed": true,
+            "every_refresh_recorded": true,
+            "final_dump_crc": true,
+            "native_dimensions_and_refresh": true,
+            "same_trace_file": true,
+            "stopped_exit_zero": true,
+            "zero_bad_dma": true,
+            "zero_output_errors": true
+          },
+          "complete": true,
+          "dump_sha256": "82a63d8973f29f0556c2dc37bc7e465b256a7b80b7294fd2ddb21fb1499999df",
+          "events": 522,
+          "manifest_sha256": "fb131dab4d70bf69a5739e397f18f3ee78f1013dc41db26091ba67d02cac6644",
+          "refreshes": 22,
+          "trace_sha256": "d59f52c514f4c38d0f20fae434e454f7098fa0b35cba23b89e743e280b5b3354"
+        }
+      ],
+      "completed": true,
+      "configured_slots": [
+        2,
+        31,
+        7,
+        10,
+        17
+      ],
+      "cpu_state_preserved": false,
+      "firmware_fixed_regions_unchanged": {
+        "app0_partition": true,
+        "bootloader_and_padding": true,
+        "ota_selection": true,
+        "partition_table": true
+      },
+      "functional_pass": true,
+      "original_executor_sha256": "11233795ea0a016b4d82266dc9cd666f2baa751cdc624bc7e1749adb5ebe6c8b",
+      "parent_archive_sha256": "7f2d48498d848e56fca4da6688f89aa27e414e5509c31d23b2b1fde50731b4bf",
+      "parent_closed_trace_proofs": [
+        {
+          "complete": true,
+          "dump_sha256": "b6f2d0d109aca0e84deccf4f8f9523d3343b4e19c095113845cbb832d9566b32",
+          "events": 316,
+          "manifest_sha256": "d3cf717407fadcf4f84379bdca38e325a888d9da8117b2fbe732a8f7d08f805d",
+          "refreshes": 18,
+          "trace_sha256": "f7181c06343e375d5032a8378b6588b0b34b7b6337477af869da389404ff60a7"
+        },
+        {
+          "complete": true,
+          "dump_sha256": "2be446d90a1ba377dfd3c81f5bcf5ae6d75a7a39a3d3e50e8f37a2b9143c8355",
+          "events": 1194,
+          "manifest_sha256": "30c1194a27f01bd05c17f3e446a7c65668c8bcb613ac0b30753ae456c689e356",
+          "refreshes": 73,
+          "trace_sha256": "3d546bab74f823f67380a4682687614916df8fce9b234580125daed37a6ccb08"
+        },
+        {
+          "complete": true,
+          "dump_sha256": "24ee3947f763325b6ae8a9ec8382c6a7ed290408779f8fd92c236c583825048f",
+          "events": 1569,
+          "manifest_sha256": "8f4ad2cba697d725a4d83f4f16faf827dc29f45519a95325a88f1a552f9e648c",
+          "refreshes": 52,
+          "trace_sha256": "9aa40397752e408a98e4a6aabc0be7c3be3e5c8131744fb0a423d3343bc80d97"
+        }
+      ],
+      "parent_error_preserved": "timed out waiting for settled 110-reader-from-browser frame",
+      "parent_established_checks": {
+        "backend_stopped_cleanly": true,
+        "bookmark_slot_creates_real_store": true,
+        "bookmark_slot_roundtrip_removes_last_store": true,
+        "boot0_controlled_cold_boot_reset_sequence": true,
+        "boot0_hardware_detect_x3": true,
+        "boot0_no_sd_error_or_guest_panic": true,
+        "boot0_post_gpio_x3": true,
+        "boot0_rom_cold_boot": true,
+        "boot1_controlled_cold_boot_reset_sequence": true,
+        "boot1_hardware_detect_x3": true,
+        "boot1_no_sd_error_or_guest_panic": true,
+        "boot1_post_gpio_x3": true,
+        "boot1_rom_cold_boot": true,
+        "boot2_controlled_cold_boot_reset_sequence": true,
+        "boot2_hardware_detect_x3": true,
+        "boot2_no_sd_error_or_guest_panic": true,
+        "boot2_post_gpio_x3": true,
+        "boot2_rom_cold_boot": true,
+        "browse_slot_opens_different_panel": true,
+        "cancel_preserves_exact_settings_bytes": true,
+        "draft_edits_do_not_write_store": true,
+        "first_cpu_stopped_cleanly_for_reboot": true,
+        "five_slots_and_single_trigger_saved_by_guest": true,
+        "fixture_files_stored_exactly": true,
+        "fixture_has_no_preconfigured_settings": true,
+        "fresh_cpu_preserves_exact_settings_bytes": true,
+        "guest_created_virgin_baseline": true,
+        "guest_opened_original_epub": true,
+        "next_page_slot_changes_original_reader": true,
+        "pinned_full_flash": true,
+        "previous_page_slot_restores_original_content": true,
+        "save_changes_store": true,
+        "slot_1_draft_keeps_store_unchanged": true,
+        "slot_2_draft_keeps_store_unchanged": true,
+        "slot_3_draft_keeps_store_unchanged": true,
+        "slot_4_draft_keeps_store_unchanged": true,
+        "slot_5_draft_keeps_store_unchanged": true,
+        "stats_slot_opens_different_panel": true,
+        "stats_slot_returns_same_reader_content": true,
+        "stock_normalizes_only_unavailable_virgin_home_action": true
+      },
+      "parent_executor_sha256": "5000be24bc854607cc62fa4d891814523cbc7ca66cdc98e8804325cbd77cd919",
+      "parent_failed_checks_preserved": {},
+      "parent_original_failure_preserved": true,
+      "parent_receipt_sha256": "c298139dac28b85c69e2f8ac6367ac476edf3299db05c334ec9d71a2473a1344",
+      "receipt_sha256": "ea89c847823292945c7386064ad768e8de833a64ac7bcaa690575e68c947a1ef",
+      "settings_persistence_sha256": "8936e4f77a905eab44d445514a77e7e01c01d88dde8d1f985de86ec27bafeda6",
+      "settings_seeded": false,
+      "strict_pass": false
+    },
+    "network-entrypoints": {
+      "archive_sha256": "7a35bce8adba35dc8e6743d180a55d6e7dad54577875d3c911cd096490502a8c",
+      "cancel_destinations": {
+        "003-file-transfer-cancel": "Home",
+        "008-calibre-wifi-cancel": "Reader",
+        "014-join-mode-cancel": "Reader",
+        "020-hotspot-cancel": "Reader",
+        "028-nearby-position-cancel": "Reader"
+      },
+      "canonical_parent_cold_boot_checks": [
+        {
+          "controlled_cold_boot_reset_sequence": true,
+          "hardware_detect_x3": true,
+          "no_sd_error_or_guest_panic": true,
+          "post_gpio_x3": true,
+          "rom_cold_boot": true
+        },
+        {
+          "controlled_cold_boot_reset_sequence": true,
+          "hardware_detect_x3": true,
+          "no_sd_error_or_guest_panic": true,
+          "post_gpio_x3": true,
+          "rom_cold_boot": true
+        },
+        {
+          "controlled_cold_boot_reset_sequence": true,
+          "hardware_detect_x3": true,
+          "no_sd_error_or_guest_panic": true,
+          "post_gpio_x3": true,
+          "rom_cold_boot": true
+        }
+      ],
+      "checks": {
+        "003-file-transfer-cancel-actual-home_original_panel_identity": true,
+        "003-file-transfer-cancel_restores_original_reader": true,
+        "008-calibre-wifi-cancel_restores_original_reader": true,
+        "014-join-mode-cancel_restores_original_reader": true,
+        "020-hotspot-cancel_restores_original_reader": true,
+        "028-nearby-position-cancel_restores_original_reader": true,
+        "backend_stopped_cleanly": true,
+        "calibre-wifi-selection_original_panel_identity": true,
+        "closed_native_trace_complete": true,
+        "controlled_source_network_reset_sequence": true,
+        "file-transfer-mode-selector_original_panel_identity": true,
+        "fresh_cpu_preserves_exact_original_guest_settings": true,
+        "guest_opened_original_epub": true,
+        "hardware_detect_x3": true,
+        "hotspot-created_original_panel_identity": true,
+        "hotspot_slot_starts_actual_native_transmission": true,
+        "join-cancel-mode-selector_original_panel_identity": true,
+        "join-wifi-selection_original_panel_identity": true,
+        "nearby-position-discovery_original_panel_identity": true,
+        "nearby-position-ready_original_panel_identity": true,
+        "nearby_slot_sends_actual_native_frame": true,
+        "network_entrypoint_slots_preserve_saved_configuration": true,
+        "network_entrypoints_preserve_original_saved_page": true,
+        "no_sd_error_or_guest_panic": true,
+        "post_gpio_x3": true,
+        "rom_cold_boot": true
+      },
+      "closed_trace_proofs": [
+        {
+          "checks": {
+            "backend_unchanged": true,
+            "contiguous_full_trace": true,
+            "durable_trace_bytes": true,
+            "every_attempt_flushed": true,
+            "every_refresh_recorded": true,
+            "final_dump_crc": true,
+            "native_dimensions_and_refresh": true,
+            "same_trace_file": true,
+            "stopped_exit_zero": true,
+            "zero_bad_dma": true,
+            "zero_output_errors": true
+          },
+          "complete": true,
+          "dump_sha256": "461c8d706cf9e5060fc1e300cd8467fe7e9c4720d62160c0c38f8b7bb6ef419c",
+          "events": 1877,
+          "manifest_sha256": "62cc8d07b2120f60cfc9ad17bb592cc8e236a7309dbc251985dc079c0cbdd09f",
+          "refreshes": 75,
+          "trace_sha256": "3d7459bb05dc57603bafbe7891eb33072cd429b681f7560db41210452a4494ac"
+        }
+      ],
+      "completed": true,
+      "configured_slots": [
+        13,
+        18,
+        19,
+        20,
+        32
+      ],
+      "cpu_state_preserved": false,
+      "derived_observer": {
+        "focused_tests_passed": 9,
+        "focused_tests_sha256": "d31105c108715f184f32064f6720c9557c406f4fb8fb0103e1b2f1262a97e970",
+        "runtime_files": [
+          {
+            "bytes": 63677,
+            "path": "scripts/test-crossink-quick-action-editor.py",
+            "sha256": "aa21c044ae87ff5a241dfa6b006f7eb350c20edcce8f1c352b6a713c48310b41"
+          },
+          {
+            "bytes": 159483,
+            "path": "scripts/test-crossink-functions.py",
+            "sha256": "d20da67ff9cd6acbcd18d543af6bcd552de45d5f5a93525a2e10e3cc3669e3d9"
+          },
+          {
+            "bytes": 40286,
+            "path": "scripts/smoke-crossink.py",
+            "sha256": "dc522481b4817ea26ed899e66b2c1b6c5f5fe5a4c6b01b43b261945236da8510"
+          },
+          {
+            "bytes": 169,
+            "path": "x3emu/__init__.py",
+            "sha256": "30d127acfbeecf163116a6fdfeb97e4ee6621e727212c5475354669b56bab9d4"
+          },
+          {
+            "bytes": 10483,
+            "path": "x3emu/__main__.py",
+            "sha256": "78d30ba2058c3df339df9d35ca8b0d81ee3309dfe071408565e36dac315ad1c3"
+          },
+          {
+            "bytes": 51968,
+            "path": "x3emu/backend.py",
+            "sha256": "9be3f8aa0ccf2c99f398553dfbe3de5258d2ecb6e9102a633d3b6a1c6bb52787"
+          },
+          {
+            "bytes": 3810,
+            "path": "x3emu/clock.py",
+            "sha256": "2d37012e1a3fb1c44cf761b48f1f766d1b56af6200cdfbe246199e736fb33f4f"
+          },
+          {
+            "bytes": 1863,
+            "path": "x3emu/efuse.py",
+            "sha256": "a882949c2e8d299bf5847f5e4892bd1f5ffea8c39cb28163e830935e16b61530"
+          },
+          {
+            "bytes": 7167,
+            "path": "x3emu/firmware.py",
+            "sha256": "75a768cdd3bf229f6a3a8a4cd274be6c9c33958ce7d0ca908591d225ac998c9b"
+          },
+          {
+            "bytes": 23812,
+            "path": "x3emu/fixtures.py",
+            "sha256": "a18b740ca7c4266f87b64f77f1587808766dc93a37776fd559c3020157369710"
+          },
+          {
+            "bytes": 15975,
+            "path": "x3emu/flash.py",
+            "sha256": "4b64c564ecd1b236cb7eedca7eceb9f75d6e0d674c66e991d65c515ea63dc3ae"
+          },
+          {
+            "bytes": 16923,
+            "path": "x3emu/sdcard.py",
+            "sha256": "5f4d437fd31723d8ff05c2189a77dd9984cf4404646c6c79e67fcf14f5a2c1fc"
+          },
+          {
+            "bytes": 1003,
+            "path": "x3emu/storage.py",
+            "sha256": "d0976fce3154ad257873a97c4d9e2abc0fe3c2c61aa9eb6ab57053f2d7f06956"
+          },
+          {
+            "bytes": 14344,
+            "path": "x3emu/ui.py",
+            "sha256": "2291258056470fd21e34ba9a0c1fb34678ed0cca2fce77a3dfcb540378aa30f8"
+          },
+          {
+            "bytes": 10017,
+            "path": "x3emu/usb_transfer.py",
+            "sha256": "bbb41134b6cbf17ed73b2f0dc262ebedfdb6a7125875e0f02b9396db3b643374"
+          }
+        ],
+        "runtime_source_unchanged": true,
+        "script_sha256": "aa21c044ae87ff5a241dfa6b006f7eb350c20edcce8f1c352b6a713c48310b41",
+        "sdk_commit": "b784446302c076b4b5a622627867f0c80905cc50",
+        "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+        "source_hashes": {
+          "lib/I18n/translations/english.yaml": "655005c0a2b5e09d90ba70fd3a0f6d1551c4a83c5322a09515fef56a7636a7fc",
+          "lib/hal/HalGPIO.cpp": "582186a32630b7e522d3c33e65543a3f4809454954ff1d6902c2552cb7b08866",
+          "src/BookmarkStore.cpp": "fb278ab9a58e54c046a90ec3fb733238deb28bf83e2aa523657ed47047326a1f",
+          "src/ClippingStore.cpp": "2007301999508cbdfdb042e2a483c0f6143dcc9115aa5272e9dabd4acb500654",
+          "src/CrossPointSettings.cpp": "29ea3e2c765370b5fcae0d6b878930c8b3c3df4c357356fcdd3e891d6f7b065f",
+          "src/CrossPointSettings.h": "e4776b7ee73e09aaf0bc59929954c5745aff0e461381153814f7170e68d3501e",
+          "src/GlobalActions.h": "49d36392e3fab683d679083e7eb43952249d77ed87fa320f6eebd445a8bdbfaf",
+          "src/MappedInputManager.cpp": "f3a24a5fe6c4d69b28c77eca9a015bb9926d96fdc1d34f2ba51334787f09ed83",
+          "src/MappedInputManager.h": "ff8bc231cb91ff8dc96f6ab39b5cb3c9b1c2a789d77ec89eab6d71c92d028d81",
+          "src/QuickActions.cpp": "88aee9108888b1e3548e8d287a04a755ad42f574be50c7d106d9a2c5c3f66d37",
+          "src/QuickActions.h": "d2eeb595d108345ae22ea2fa909672922fdbd433c720d336135781159ce20f3f",
+          "src/SettingsList.h": "95f2b99393a1dfb3523e5ba2e07818833eb777fa9f6b7fba856c14effb820dcc",
+          "src/SilentRestart.h": "bfcfbb6a6f6dc172e517f6530df9ff9bd50fc4a0afba5ea512aaf59a295e10ea",
+          "src/activities/ActivityManager.cpp": "69132ac13c6637f53ba54cdb76fdb735495663150bd2aafb7ea58d1e1cdd3ed7",
+          "src/activities/home/FileBrowserActivity.cpp": "e4d7d9e885645c4bfe47a71cc50e4f80f3c2dc010660735e0ec496548c1b1dc9",
+          "src/activities/network/CalibreConnectActivity.cpp": "6cfbe1c9e5df6e940837b87910537efdc3116da350dfcc9cd376fd77b9c91851",
+          "src/activities/network/CrossPointWebServerActivity.cpp": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+          "src/activities/network/NetworkModeSelectionActivity.cpp": "700ddfc703b884b5a764f0007b207027926471a44bb530053b8962dd4ceadb15",
+          "src/activities/network/WifiSelectionActivity.cpp": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+          "src/activities/reader/BookStatsActivity.cpp": "c6e24ea445b3c611b6a9843cb892246dbbff7e4e5a1b2e313c10a8a054105d77",
+          "src/activities/reader/ClipSelectionActivity.cpp": "d813ecb20c07a09d0690d2f9487bc41e7fe63f2d6191f10bd5064a6531302890",
+          "src/activities/reader/DictionaryWordSelectActivity.cpp": "1152feb1fbf964d1a230fffad3f7ec3cfb82103217bc69b0f217f8e2033bbfce",
+          "src/activities/reader/EpubReaderActivity.cpp": "c4b13517aed22a2baf2e2eb1b1919e1515ce0f88f1d0945f05980f4228a05399",
+          "src/activities/reader/NearbyBookPositionSyncActivity.cpp": "cc21d9d683ef67d9c90a721deb9780c48881968e1487fc4af2f09e3b55001b99",
+          "src/activities/settings/KOReaderSettingsActivity.cpp": "6e1f3a6453f6ce53940d15220cb8d1958e31fb711ef0009a5f4861727b902eca",
+          "src/activities/settings/QuickActionsActivity.cpp": "9b2ee39f97a7dd36f4a6901ec47aa6663263809d939de698403b0d4a8eba74f4",
+          "src/activities/settings/QuickActionsActivity.h": "d4f316a60790a84b544d4187d8ca95b2769fdf4e4ee2a55b4a972a22ac36f42a",
+          "src/activities/settings/SettingsActivity.cpp": "57ffa1c8c6b718fdaf231ca83f0fcf57fdb3b7a2d70a2930dd8bb6946ba50c72",
+          "src/activities/util/IntervalSelectionActivity.cpp": "17b94cc429cd0e2056e81432560a1aa42d9d14af97f304b323e95e7415eb1b65",
+          "src/clippings/ClippingHighlightGeometry.h": "b25b86f2a042ac90a86d14d7ff4b5874ea9df307037714523e9534f92c311feb",
+          "src/components/OptionPopup.h": "d21476ec6f866b931d31fb579bf4ec993c61ff1fbd708ae4c08f09be95c5dcf6",
+          "src/main.cpp": "21ee21ddac33088eda7d67f5dc5ae9f0f725fcdf5b2b9a2242ebf378133c3028",
+          "src/util/DictionaryRegistry.cpp": "e0b09c9ab6d6728a8ecef6ed0205668b8e8731bae067e446b4cd6cfcbfd143f7",
+          "src/util/ReleaseSuppression.h": "e7ccdd2caa84b42b3d1fed88f0cdf9b6cfab060a1f0c2b98bd7a82ba74e033ad"
+        },
+        "tests_sha256": "f16d3b933d0f5adba1bc166ec4b90c5a5f1f3ad9750b7e7bd41b6f8a31c09f52"
+      },
+      "firmware_fixed_regions_unchanged": {
+        "app0_partition": true,
+        "bootloader_and_padding": true,
+        "ota_selection": true,
+        "partition_table": true
+      },
+      "functional_pass": true,
+      "network_reset_proof": {
+        "checks": {
+          "every_sw_reset_bound_to_actual_input_and_frame": true,
+          "exact_poweron_then_seven_source_sw_resets": true,
+          "exact_rom_poweron_then_sw_reasons": true,
+          "exact_source_network_and_reader_routes": true,
+          "no_fatal_logs": true,
+          "three_actual_minimal_file_transfer_boots": true
+        },
+        "complete": true,
+        "input_windows": [
+          {
+            "action_suffix": "-calibre",
+            "press_t_ns": 38368946016,
+            "settled_frame_t_ns": 40526587216,
+            "unique_actual_input": true
+          },
+          {
+            "action_suffix": "-calibre-wifi-cancel",
+            "press_t_ns": 42673000384,
+            "settled_frame_t_ns": 45971742808,
+            "unique_actual_input": true
+          },
+          {
+            "action_suffix": "-join-network",
+            "press_t_ns": 56138585040,
+            "settled_frame_t_ns": 58519584896,
+            "unique_actual_input": true
+          },
+          {
+            "action_suffix": "-join-mode-cancel",
+            "press_t_ns": 74097684784,
+            "settled_frame_t_ns": 77354164104,
+            "unique_actual_input": true
+          },
+          {
+            "action_suffix": "-create-hotspot",
+            "press_t_ns": 132502804376,
+            "settled_frame_t_ns": 135703585304,
+            "unique_actual_input": true
+          },
+          {
+            "action_suffix": "-hotspot-cancel",
+            "press_t_ns": 160465585304,
+            "settled_frame_t_ns": 163729278536,
+            "unique_actual_input": true
+          },
+          {
+            "action_suffix": "-nearby-position-cancel",
+            "press_t_ns": 221141292912,
+            "settled_frame_t_ns": 224343062744,
+            "unique_actual_input": true
+          }
+        ],
+        "reset_diagnostics": [
+          [
+            "280",
+            "1",
+            "POWERON",
+            "0",
+            "UNDEFINED"
+          ],
+          [
+            "38903",
+            "3",
+            "SW",
+            "0",
+            "UNDEFINED"
+          ],
+          [
+            "43235",
+            "3",
+            "SW",
+            "0",
+            "UNDEFINED"
+          ],
+          [
+            "56663",
+            "3",
+            "SW",
+            "0",
+            "UNDEFINED"
+          ],
+          [
+            "74671",
+            "3",
+            "SW",
+            "0",
+            "UNDEFINED"
+          ],
+          [
+            "133035",
+            "3",
+            "SW",
+            "0",
+            "UNDEFINED"
+          ],
+          [
+            "161103",
+            "3",
+            "SW",
+            "0",
+            "UNDEFINED"
+          ],
+          [
+            "221650",
+            "3",
+            "SW",
+            "0",
+            "UNDEFINED"
+          ]
+        ],
+        "rom_normalized_text_sha256": "ac8dcf67b5fc09e325801a6531fcf6aee13397fa253c68efbcce497b7058a3db",
+        "serial_normalized_text_sha256": "6ca3b577c25b687c0d60ba35369e3d8ebb7264c2abdf55d14f02d05c1c29788b",
+        "source_route_targets": [
+          0,
+          6,
+          1,
+          6,
+          1,
+          6,
+          1,
+          1
+        ]
+      },
+      "network_slot_scope": {
+        "hotspot_actual_service_and_tx": true,
+        "nearby_actual_hello_tx": true,
+        "original_activity_entry_and_cancel": true,
+        "physical_radio_validated": false,
+        "successful_remote_position_exchange": false,
+        "successful_remote_transfers": false
+      },
+      "original_cold_boot_oracle_failure_preserved": {
+        "controlled_cold_boot_reset_sequence": false
+      },
+      "original_executor_sha256": "a9d93089fa6773d1b8495f878b90523e1f7c4dcb852020aef1dc7a944d4b168f",
+      "parent_archive_sha256": "899a217401e9c856b5f9f9270b01044da8b871d758e3b9fe9f1ecebce5c900ff",
+      "parent_closed_trace_proofs": [
+        {
+          "complete": true,
+          "dump_sha256": "b6f2d0d109aca0e84deccf4f8f9523d3343b4e19c095113845cbb832d9566b32",
+          "events": 316,
+          "manifest_sha256": "af817ef75ff0343efe00a0c179d770982807df10276dab480bdb62cbe6989035",
+          "refreshes": 18,
+          "trace_sha256": "9156643259716886baf2aa23559e7d7e92e4892e333f5da389bd55adba749a8c"
+        },
+        {
+          "complete": true,
+          "dump_sha256": "f08e66bd5eebbe549949dd441b2d5ed6ba47dd4ef049ef87083b8e888f462155",
+          "events": 1706,
+          "manifest_sha256": "d8849e36850b6621eabbfda9f71bc0e3e101d461050e7a148eced1c5d0fc4ca3",
+          "refreshes": 105,
+          "trace_sha256": "12ea9863e6b8e884661ffd29c89d94de925635bd96bbb68af400389d58941d13"
+        },
+        {
+          "complete": true,
+          "dump_sha256": "b8d8f165bf9a527a8fbee0369cc832b00632f708eac97ee7570568b92a016eae",
+          "events": 354,
+          "manifest_sha256": "db0295bdef540f3081c446a3faaa5c3643ba0f3171a30558c7daa29edb84506f",
+          "refreshes": 16,
+          "trace_sha256": "86acaa17c4329d5df1f2071b460eb4b6a095fa832f45d76158a38897fbcd7bb7"
+        }
+      ],
+      "parent_error_preserved": "timed out waiting for original stock panel labels: File Transfer, Join Network, Calibre Wireless, Create Hotspot",
+      "parent_established_checks": {
+        "backend_stopped_cleanly": true,
+        "boot0_hardware_detect_x3": true,
+        "boot0_no_sd_error_or_guest_panic": true,
+        "boot0_post_gpio_x3": true,
+        "boot0_rom_cold_boot": true,
+        "boot1_hardware_detect_x3": true,
+        "boot1_no_sd_error_or_guest_panic": true,
+        "boot1_post_gpio_x3": true,
+        "boot1_rom_cold_boot": true,
+        "boot2_hardware_detect_x3": true,
+        "boot2_no_sd_error_or_guest_panic": true,
+        "boot2_post_gpio_x3": true,
+        "boot2_rom_cold_boot": true,
+        "cancel_preserves_exact_settings_bytes": true,
+        "draft_edits_do_not_write_store": true,
+        "first_cpu_stopped_cleanly_for_reboot": true,
+        "five_slots_and_single_trigger_saved_by_guest": true,
+        "fixture_files_stored_exactly": true,
+        "fixture_has_no_preconfigured_settings": true,
+        "fresh_cpu_preserves_exact_settings_bytes": true,
+        "guest_created_virgin_baseline": true,
+        "guest_opened_original_epub": true,
+        "picker_cancel_preserves_exact_store": true,
+        "pinned_full_flash": true,
+        "save_changes_store": true,
+        "slot_1_draft_keeps_store_unchanged": true,
+        "slot_2_draft_keeps_store_unchanged": true,
+        "slot_3_draft_keeps_store_unchanged": true,
+        "slot_4_draft_keeps_store_unchanged": true,
+        "slot_5_draft_keeps_store_unchanged": true,
+        "stock_normalizes_only_unavailable_virgin_home_action": true
+      },
+      "parent_executor_sha256": "5e12ca2e5baebd0d51929647a5067cb0ed65753eae375b38bdaf588d9784abc9",
+      "parent_failed_checks_preserved": {
+        "boot0_controlled_file_transfer_reset_sequence": false,
+        "boot1_controlled_file_transfer_reset_sequence": false,
+        "boot2_controlled_file_transfer_reset_sequence": false
+      },
+      "parent_original_failure_preserved": true,
+      "parent_receipt_sha256": "4f9b8bb1703abce2995bea1e24c2cd2e6e1b7409063faf22e4900cecddbda22c",
+      "receipt_sha256": "0d5aa2882489f757233865af56a2cc83056d9af1e20656bc6f7b06b0a7a90481",
+      "settings_persistence_sha256": "7aec6a320f13f7f93945be53c8e721c12927a7ad17026689012026f8fc517403",
+      "settings_seeded": false,
+      "source_closed_archive_sha256": "494cf5f3db7652194a53fc0241b394bcd47d9aeb395ffe23601f02793a339dce",
+      "source_closed_functional_pass": false,
+      "source_closed_receipt_sha256": "ba9ff00a05e0e901fdfeaf92edeb1e72d6f319c355a180e715b88e6420e5f7bf",
+      "strict_pass": false
+    },
+    "reader-options": {
+      "archive_sha256": "126a557af2bae463087e0761e398f57e4effb13a32167ae0d18f4ab2d6f43cf1",
+      "checks": {
+        "backend_stopped_cleanly": true,
+        "closed_native_trace_complete": true,
+        "controlled_cold_boot_reset_sequence": true,
+        "cycle_picker_cancel_restores_font_page": true,
+        "cycle_slot_opens_actual_interval_picker": true,
+        "font_slot_changes_actual_saved_family": true,
+        "font_slot_reindexes_and_changes_content": true,
+        "fresh_cpu_preserves_exact_original_guest_settings": true,
+        "guest_opened_original_epub": true,
+        "hardware_detect_x3": true,
+        "mark_finished_slot_roundtrip_clears_real_stats": true,
+        "mark_finished_slot_sets_real_stats": true,
+        "no_sd_error_or_guest_panic": true,
+        "post_gpio_x3": true,
+        "reader_options_slots_survive_deep_sleep": true,
+        "rom_cold_boot": true,
+        "sleep_slot_enters_native_deep_sleep": true,
+        "sleep_slot_has_no_watchdog_expiry": true,
+        "sleep_slot_wakes_through_real_gpio_reset": true,
+        "tilt_slot_roundtrip_restores_preference": true,
+        "tilt_slot_writes_enabled_preference": true
+      },
+      "closed_trace_proofs": [
+        {
+          "checks": {
+            "backend_unchanged": true,
+            "contiguous_full_trace": true,
+            "durable_trace_bytes": true,
+            "every_attempt_flushed": true,
+            "every_refresh_recorded": true,
+            "final_dump_crc": true,
+            "native_dimensions_and_refresh": true,
+            "same_trace_file": true,
+            "stopped_exit_zero": true,
+            "zero_bad_dma": true,
+            "zero_output_errors": true
+          },
+          "complete": true,
+          "dump_sha256": "003a2f00e7a833408259bae42cb97634b9e859e5f5d835a28e45cf93c7ec01e1",
+          "events": 1988,
+          "manifest_sha256": "347c04e933e4b7bd15bb382f35aa67546f3e72879fb3bb51ba08ff9640e30522",
+          "refreshes": 67,
+          "trace_sha256": "8ac5ffcc8266368a552da2fe0092469459efcefd2ddb511cecd6f18148218068"
+        }
+      ],
+      "completed": true,
+      "configured_slots": [
+        4,
+        12,
+        14,
+        9,
+        1
+      ],
+      "cpu_state_preserved": false,
+      "firmware_fixed_regions_unchanged": {
+        "app0_partition": true,
+        "bootloader_and_padding": true,
+        "ota_selection": true,
+        "partition_table": true
+      },
+      "functional_pass": true,
+      "original_executor_sha256": "32f674337c6e0234947d72ed35c056e12dde7a0d7f75ef8351a64dd62be31e60",
+      "parent_archive_sha256": "cba8c37a988b495332ccf491c52f824f32a20630d9f2fbecdb4627c8c01a0544",
+      "parent_closed_trace_proofs": [
+        {
+          "complete": true,
+          "dump_sha256": "b6f2d0d109aca0e84deccf4f8f9523d3343b4e19c095113845cbb832d9566b32",
+          "events": 316,
+          "manifest_sha256": "35b494c05af5a2e26f77965ccad062d2ec2eb7d203318e8a06f040369a0b9376",
+          "refreshes": 18,
+          "trace_sha256": "da4db49bb26ef50626120ef4754c1832280d981eb101ceae4f459ad75fb1f19b"
+        },
+        {
+          "complete": true,
+          "dump_sha256": "09459672fb7b32bd1e98a68ee33cf5b420ee59e6d3bd7aa3404549d547994905",
+          "events": 1594,
+          "manifest_sha256": "7db6309d94f9c2a83ad778496173beccc7be9926ee03f00d90de6cfec8307b5a",
+          "refreshes": 98,
+          "trace_sha256": "536a623e672d3aa08f918c5e795baaa0f5d33df6707c9849246830bddd8e11eb"
+        },
+        {
+          "complete": true,
+          "dump_sha256": "4899915edba28df449b5e39cb3240a2b33ce998d6c16e5f0f325016d33d22222",
+          "events": 322,
+          "manifest_sha256": "93856983f202bb1e53047bde6eca5b541b99ea2f05aaa29988de63779cb08ce3",
+          "refreshes": 14,
+          "trace_sha256": "95044625689ef1c98e884ec98c32a0082e8374215a2e263f46d8d5da6532bcf5"
+        }
+      ],
+      "parent_error_preserved": "/.crosspoint/epub_16603256303045570950/reader_settings.bin",
+      "parent_established_checks": {
+        "backend_stopped_cleanly": true,
+        "boot0_controlled_cold_boot_reset_sequence": true,
+        "boot0_hardware_detect_x3": true,
+        "boot0_no_sd_error_or_guest_panic": true,
+        "boot0_post_gpio_x3": true,
+        "boot0_rom_cold_boot": true,
+        "boot1_controlled_cold_boot_reset_sequence": true,
+        "boot1_hardware_detect_x3": true,
+        "boot1_no_sd_error_or_guest_panic": true,
+        "boot1_post_gpio_x3": true,
+        "boot1_rom_cold_boot": true,
+        "boot2_controlled_cold_boot_reset_sequence": true,
+        "boot2_hardware_detect_x3": true,
+        "boot2_no_sd_error_or_guest_panic": true,
+        "boot2_post_gpio_x3": true,
+        "boot2_rom_cold_boot": true,
+        "cancel_preserves_exact_settings_bytes": true,
+        "draft_edits_do_not_write_store": true,
+        "first_cpu_stopped_cleanly_for_reboot": true,
+        "five_slots_and_single_trigger_saved_by_guest": true,
+        "fixture_files_stored_exactly": true,
+        "fixture_has_no_preconfigured_settings": true,
+        "fresh_cpu_preserves_exact_settings_bytes": true,
+        "guest_created_virgin_baseline": true,
+        "guest_opened_original_epub": true,
+        "picker_cancel_preserves_exact_store": true,
+        "pinned_full_flash": true,
+        "save_changes_store": true,
+        "slot_1_draft_keeps_store_unchanged": true,
+        "slot_2_draft_keeps_store_unchanged": true,
+        "slot_3_draft_keeps_store_unchanged": true,
+        "slot_4_draft_keeps_store_unchanged": true,
+        "slot_5_draft_keeps_store_unchanged": true,
+        "stock_normalizes_only_unavailable_virgin_home_action": true
+      },
+      "parent_executor_sha256": "d06adba108838e6d1952f13383ac39e67808ecbbdf618737dc9022e7dadd05e9",
+      "parent_failed_checks_preserved": {},
+      "parent_original_failure_preserved": true,
+      "parent_receipt_sha256": "1fa2abcc2026df1222178604b0bdd246c5308f04adad91b907a278aaada0c6ec",
+      "receipt_sha256": "f5b89ca41e12aa2d2ee4e80bb191c4c64960e11daa3ffff1d92118e0e30a6294",
+      "settings_persistence_sha256": "8997292807187cf41ce7d69c3fc59b302dae238217316f5a33e0961bf5fb1675",
+      "settings_seeded": false,
+      "strict_pass": false
+    },
+    "rich-reader": {
+      "archive_sha256": "3b37b71db6afae24b71496e2cc2059f8e59856bbc1bec3b0a9c900c2eddd4273",
+      "checks": {
+        "backend_stopped_cleanly": true,
+        "closed_native_trace_complete": true,
+        "controlled_cold_boot_reset_sequence": true,
+        "fresh_cpu_preserves_exact_original_guest_settings": true,
+        "guest_opened_original_epub": true,
+        "hardware_detect_x3": true,
+        "no_sd_error_or_guest_panic": true,
+        "post_gpio_x3": true,
+        "rich-sync-actual-settings_original_panel_identity": true,
+        "rich-sync-cancel-actual-home_original_panel_identity": true,
+        "rich_actual_cancel_preserves_saved_stores": true,
+        "rich_cold_preserves_original_page_content": true,
+        "rich_cold_preserves_real_clipping_dictionary_and_history": true,
+        "rich_dispatches_save_ordinary_page_zero": true,
+        "rich_home_read_recovers_original_content": true,
+        "rom_cold_boot": true
+      },
+      "closed_trace_proofs": [
+        {
+          "checks": {
+            "backend_unchanged": true,
+            "contiguous_full_trace": true,
+            "durable_trace_bytes": true,
+            "every_attempt_flushed": true,
+            "every_refresh_recorded": true,
+            "final_dump_crc": true,
+            "native_dimensions_and_refresh": true,
+            "same_trace_file": true,
+            "stopped_exit_zero": true,
+            "zero_bad_dma": true,
+            "zero_output_errors": true
+          },
+          "complete": true,
+          "dump_sha256": "007a85ef578c06dfbbb5dbd3946061b2e7eace37d4d057d6dd323770c4518c03",
+          "events": 641,
+          "manifest_sha256": "7773cf5aa152c6f03c605c7ec84fc6e93b5f2cf6ec24fcc2854f6fbbe223db07",
+          "refreshes": 25,
+          "trace_sha256": "69e836b1fdd6c94bd2fdda19bae059ea0d44a4cecf10de47435b98075b409054"
+        }
+      ],
+      "completed": true,
+      "configured_slots": [
+        16,
+        21,
+        22,
+        8,
+        0
+      ],
+      "cpu_state_preserved": false,
+      "firmware_fixed_regions_unchanged": {
+        "app0_partition": true,
+        "bootloader_and_padding": true,
+        "ota_selection": true,
+        "partition_table": true
+      },
+      "functional_pass": true,
+      "original_executor_sha256": "cf7b5245fc6f30e37c3c78715f5e892d02f11bca56df160494234a72deb44252",
+      "parent_archive_sha256": "088173d3de22ffc45ec1464e5d1bcb2d0f9e5a03da2095b534a69edeb7c1314f",
+      "parent_closed_trace_proofs": [
+        {
+          "complete": true,
+          "dump_sha256": "b6f2d0d109aca0e84deccf4f8f9523d3343b4e19c095113845cbb832d9566b32",
+          "events": 316,
+          "manifest_sha256": "e18638a1cda5fa355530bea9926820abe8e383965c184301f9c7aa698fe55a48",
+          "refreshes": 18,
+          "trace_sha256": "03628518f0011908460b1588060825e73be6121cde4345e807e84789631d3dc9"
+        },
+        {
+          "complete": true,
+          "dump_sha256": "81cab3b84651ba7a4c0383094f0bfb6544afcb40a16bad8718bbe525d1dd966b",
+          "events": 1290,
+          "manifest_sha256": "537f0f36b7457a801451e370fd57fdf243552c15b62154574c3318f664bfefe3",
+          "refreshes": 79,
+          "trace_sha256": "0a74f6c6043130dd2f96481fd1034d0c69c0a3c5ebb9484407683455eb016cf4"
+        },
+        {
+          "complete": true,
+          "dump_sha256": "bc8488acc5cb2fa205ab097d5d54adb9dadac561cee7a774d07bec8646746248",
+          "events": 1533,
+          "manifest_sha256": "00e4b3349cfb2ea86a935edf522d47965d95f6b2805c5eb368cda165f4aefb7d",
+          "refreshes": 63,
+          "trace_sha256": "b13d08c08563572b6eb187db958a212373f5a9213c41d0da05557d3e63395390"
+        }
+      ],
+      "parent_error_preserved": "observable effect failed: sync_settings_cancel_restores_actual_reader",
+      "parent_established_checks": {
+        "backend_stopped_cleanly": true,
+        "boot0_controlled_cold_boot_reset_sequence": true,
+        "boot0_hardware_detect_x3": true,
+        "boot0_no_sd_error_or_guest_panic": true,
+        "boot0_post_gpio_x3": true,
+        "boot0_rom_cold_boot": true,
+        "boot1_controlled_cold_boot_reset_sequence": true,
+        "boot1_hardware_detect_x3": true,
+        "boot1_no_sd_error_or_guest_panic": true,
+        "boot1_post_gpio_x3": true,
+        "boot1_rom_cold_boot": true,
+        "boot2_controlled_cold_boot_reset_sequence": true,
+        "boot2_hardware_detect_x3": true,
+        "boot2_no_sd_error_or_guest_panic": true,
+        "boot2_post_gpio_x3": true,
+        "boot2_rom_cold_boot": true,
+        "cancel_preserves_exact_settings_bytes": true,
+        "clipping_slot_creates_real_entry_and_export": true,
+        "clipping_slot_selects_visible_range": true,
+        "dictionary_override_not_host_seeded": true,
+        "draft_edits_do_not_write_store": true,
+        "first_cpu_stopped_cleanly_for_reboot": true,
+        "five_slots_and_single_trigger_saved_by_guest": true,
+        "fixture_files_stored_exactly": true,
+        "fixture_has_no_preconfigured_settings": true,
+        "footnotes_slot_navigates_to_actual_note": true,
+        "footnotes_slot_restores_exact_origin": true,
+        "fresh_cpu_preserves_exact_settings_bytes": true,
+        "guest_created_virgin_baseline": true,
+        "guest_opened_original_epub": true,
+        "lookup_slot_displays_definition": true,
+        "lookup_slot_records_genuine_definition": true,
+        "picker_cancel_preserves_exact_store": true,
+        "pinned_full_flash": true,
+        "rich_dictionary_selected_by_guest": true,
+        "save_changes_store": true,
+        "slot_1_draft_keeps_store_unchanged": true,
+        "slot_2_draft_keeps_store_unchanged": true,
+        "slot_3_draft_keeps_store_unchanged": true,
+        "slot_4_draft_keeps_store_unchanged": true,
+        "slot_5_draft_keeps_store_unchanged": true,
+        "stock_normalizes_only_unavailable_virgin_home_action": true,
+        "sync_slot_opens_credentials_settings": true
+      },
+      "parent_executor_sha256": "e33dab8c5453cb0e0fa0a5115abd8726b75fd6d76377a952dfd471bb82a993a5",
+      "parent_failed_checks_preserved": {
+        "sync_settings_cancel_restores_actual_reader": false
+      },
+      "parent_original_failure_preserved": true,
+      "parent_receipt_sha256": "41a820580111d964c1e6413213d7030c7f569cc26b6bb0d93e5351ff8586e06a",
+      "post_clipping_reader_reference_sha256": "ddf1c2fe844634348ecda6fa512add30f63b38ee7e40c12df6cb28b290905a24",
+      "receipt_sha256": "8b8febb8e1598db8b02d53370d51c7dcf86c40006dd3f1eaa96beed128b6d91c",
+      "settings_persistence_sha256": "a076ccfa3b0e08c64c8365c8fcbcf0396c9713d025ac43144d34d60910b5a3f3",
+      "settings_seeded": false,
+      "strict_pass": false,
+      "sync_settings_cancel_scope": {
+        "actual_destination": "Home",
+        "home_read_recovery_verified": true,
+        "intended_direct_reader_return_verified": false,
+        "original_direct_return_failure_preserved": true,
+        "physical_hardware_reproduced": false
+      }
+    }
+  },
+  "current_script_sha256": "aa21c044ae87ff5a241dfa6b006f7eb350c20edcce8f1c352b6a713c48310b41",
+  "date": "2026-10-04",
+  "focused_tests_passed": 9,
+  "historical_five": {
+    "backend_sha256": "4eca016507b0a7cc810e235cc5f5002bf971f27a38c9c453e812fa9dd98c3f91",
+    "checks": {
+      "backend_stopped_cleanly": true,
+      "controlled_cold_boot_reset_sequence": true,
+      "dark_mode_global_setting_saved": true,
+      "dark_mode_inverts_reader_pixels": true,
+      "dark_mode_roundtrip": true,
+      "five_quick_action_slots_preserved": true,
+      "focus_reading_changes_text": true,
+      "focus_reading_saved_book_override": true,
+      "guide_reading_changes_text": true,
+      "guide_reading_saved_book_override": true,
+      "hardware_detect_x3": true,
+      "manual_refresh_preserves_reader_ink": true,
+      "no_sd_error_or_guest_panic": true,
+      "pinned_full_flash": true,
+      "post_gpio_x3": true,
+      "quick_action_created_one_screenshot": true,
+      "quick_actions_book_options_survive_reopen": true,
+      "quick_actions_ui_saved_single_owner": true,
+      "rom_cold_boot": true,
+      "screenshot_captures_reader_not_popup": true,
+      "screenshot_feedback_restores_reader": true,
+      "screenshot_original_book_filename": true,
+      "screenshot_portrait_one_bit_bmp": true
+    },
+    "configured_slots": [
+      3,
+      15,
+      6,
+      5,
+      11
+    ],
+    "functional_pass": true,
+    "guest_slot_picker_selection_verified": false,
+    "host_seeded_settings": true,
+    "original_private_artifacts_recovered": false,
+    "original_receipt_sha256": "f5cb7c4e708c8720f5e4a3053e2da2c8ce094324d81b4c374fcda676d39afb78",
+    "safe_receipt": "docs/evidence/functions-next/quick-actions.json",
+    "safe_receipt_sha256": "1daea8b06a240532e45dbb217751e1566fdb5dbe3cfaaa5ba73f98d5c033ee85",
+    "strict_pass": false
+  },
+  "ignore_popup_observation": {
+    "configured_slots": [
+      16,
+      21,
+      22,
+      8,
+      0
+    ],
+    "ignore_row_present": false,
+    "observer": "Direct visual inspection of original unchanged guest pixels; source QuickActions.cpp excludes IGNORE before popup construction.",
+    "original_frame_sha256": "62a8061b6996ffa7ef19966460ed91efdc587da61a6b5b3df4df1cafd9117091",
+    "original_native_dimensions": [
+      792,
+      528
+    ],
+    "original_pixel_sha256": "8373ea73eeda2f4784602335293fdff40b4d1ec577cb17c1ca81c5186c53a055",
+    "visible_nonempty_rows": [
+      "Footnotes",
+      "Create Clipping",
+      "Look Up Word",
+      "Sync Progress"
+    ],
+    "visible_row_count": 4
+  },
+  "inventory": {
+    "available_x3_imu_picker_entries": 25,
+    "excluded_quick_actions_self_and_quick_lock": true,
+    "excluded_touch_home_frontlight_actions": true,
+    "historical_e32_nonempty_action_entries": 5,
+    "ignore_entries": 1,
+    "new_rx114_nonempty_action_entries": 19,
+    "nonempty_actions": 24,
+    "picker_order": [
+      0,
+      1,
+      2,
+      31,
+      7,
+      10,
+      9,
+      3,
+      4,
+      5,
+      6,
+      12,
+      14,
+      8,
+      32,
+      13,
+      18,
+      19,
+      20,
+      11,
+      15,
+      16,
+      17,
+      21,
+      22
+    ],
+    "rx114_distinct_values_selected_saved_and_cold_persisted": 20
+  },
+  "limitations": [
+    "The legacy five have retained sanitized E32 evidence and seeded slot inputs; their full original private artifact set was not recovered.",
+    "RX114 nineteen dispatches are source-backed bounded cases, not every state or error path.",
+    "Cycle picker and tilt preference do not prove every timed/physical trigger.",
+    "Network entries do not prove remote transfers or a completed Nearby position exchange.",
+    "Sync credentials Cancel reaches Home; intended direct Reader return remains false and physical-hardware reproduction is absent.",
+    "Digital pixels, virtual RTC intervals and native counters are not calibrated X3 speed or analog panel/RF measurements."
+  ],
+  "new_cohort_functional_scopes_completed": true,
+  "official_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+  "physical_output_validated": false,
+  "physical_radio_validated": false,
+  "preserved_cohorts": [
+    {
+      "archive_sha256": "23cc3c2cd8b8aaddfbfd2e33beadfaed11b35776fcc047c0ae36040c4af829b5",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "first-invalid-sleep-expectation",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "observable effect failed: five_slots_and_single_trigger_saved_by_guest",
+      "original_executor_sha256": "42c68a32787b415af06d9983adb8abcdc0d281102d43aa13abd77ee07f3b80f5",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "ceb28f38c3098b1d8120947b24f7f292f3483502981d82a4d4d1c421a127040d",
+      "regular_files": 134
+    },
+    {
+      "archive_sha256": "7a35bce8adba35dc8e6743d180a55d6e7dad54577875d3c911cd096490502a8c",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "network-closed-source-reset-proof-20261004",
+      "completed": true,
+      "functional_pass": true,
+      "original_error": null,
+      "original_executor_sha256": "a9d93089fa6773d1b8495f878b90523e1f7c4dcb852020aef1dc7a944d4b168f",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "0d5aa2882489f757233865af56a2cc83056d9af1e20656bc6f7b06b0a7a90481",
+      "regular_files": 19
+    },
+    {
+      "archive_sha256": "45f551120f4e4f2d4aab0e45718a114932e381f0a40cf97f67807ae9b8c5f05c",
+      "closed_trace_complete": [
+        true,
+        true
+      ],
+      "cohort": "second-virgin-normalization",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "observable effect failed: fresh_cpu_preserves_exact_settings_bytes",
+      "original_executor_sha256": "b5aac0435e6b7c5db79eb2c1a82dc3c3295a66c35b810863882073edde4b520d",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "3db74cd8dcef280912938fff8109d9c8829afcd60ecef92d50df0a1d083912f6",
+      "regular_files": 148
+    },
+    {
+      "archive_sha256": "c8b53c7a0109caf5e908b333e102c1434cb57a9985c269ad965d605f5047e3dc",
+      "closed_trace_complete": [
+        false,
+        true
+      ],
+      "cohort": "third-interrupted",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": null,
+      "original_executor_sha256": "5000be24bc854607cc62fa4d891814523cbc7ca66cdc98e8804325cbd77cd919",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "ee478c42bd52fcfd8468f9742b7bb2b60240433ca04e5fb6291727a1d061050f",
+      "regular_files": 112
+    },
+    {
+      "archive_sha256": "bf45dc068719493b67c75d4665f866f3a83796b41d4b9885cdbf4d71adfb1ecb",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-browser-continuation-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "timed out waiting for settled reader-initial frame",
+      "original_executor_sha256": "4c473e516aa30f0bb29dcc0317c9195b676a517579532fd0d6898ac8f9d2d28c",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "7699f94cfc125c1973b086e0eb635dca607b1eab6a58c51aed574c9ea143588c",
+      "regular_files": 78
+    },
+    {
+      "archive_sha256": "b9988782dcde32441261655d65697bd5adba705f1d34081e5026ea0b73749ff0",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-browser-read-shortcut-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "/.crosspoint/crossink-settings.json",
+      "original_executor_sha256": "32f674337c6e0234947d72ed35c056e12dde7a0d7f75ef8351a64dd62be31e60",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "f6b6f8a3d65d1c55d962018f5babea51f0e9978ac3b5a11e80524bcbdeaa380d",
+      "regular_files": 76
+    },
+    {
+      "archive_sha256": "a3defa91ac933d21746708afcd1c4cf04be7d8d974543a6251ddde70da8b67aa",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-browser-settled-boot-20261004",
+      "completed": true,
+      "functional_pass": true,
+      "original_error": null,
+      "original_executor_sha256": "11233795ea0a016b4d82266dc9cd666f2baa751cdc624bc7e1749adb5ebe6c8b",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "ea89c847823292945c7386064ad768e8de833a64ac7bcaa690575e68c947a1ef",
+      "regular_files": 87
+    },
+    {
+      "archive_sha256": "899a217401e9c856b5f9f9270b01044da8b871d758e3b9fe9f1ecebce5c900ff",
+      "closed_trace_complete": [
+        true,
+        true,
+        true
+      ],
+      "cohort": "x3-quick-actions-network-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "timed out waiting for original stock panel labels: File Transfer, Join Network, Calibre Wireless, Create Hotspot",
+      "original_executor_sha256": "5e12ca2e5baebd0d51929647a5067cb0ed65753eae375b38bdaf588d9784abc9",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "4f9b8bb1703abce2995bea1e24c2cd2e6e1b7409063faf22e4900cecddbda22c",
+      "regular_files": 259
+    },
+    {
+      "archive_sha256": "8ed0742fae13ec349ab89dff411c5b83275c38885b50267f1a63fd4ca86c5d72",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-network-continuation-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "observable effect failed: 003-file-transfer-cancel_restores_original_reader",
+      "original_executor_sha256": "11233795ea0a016b4d82266dc9cd666f2baa751cdc624bc7e1749adb5ebe6c8b",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "6a90598a9b1526ccb167f996eafc7b73d0ef2a60a10a752d95ef1a411fceaad4",
+      "regular_files": 82
+    },
+    {
+      "archive_sha256": "83d0c5428e6ea5f2ef68093f032b7a31c003ab404b7d2ec41aef4acfc491d40b",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-network-home-return-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "timed out waiting for original stock panel labels: Hotspot Mode, 192.168.4.1",
+      "original_executor_sha256": "cf7b5245fc6f30e37c3c78715f5e892d02f11bca56df160494234a72deb44252",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "d0b0cd767ea5adcf01451e31a35cf6ed6c7c2e77813b62c68ae7e712458d23a7",
+      "regular_files": 133
+    },
+    {
+      "archive_sha256": "494cf5f3db7652194a53fc0241b394bcd47d9aeb395ffe23601f02793a339dce",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-network-hotspot-source-labels-20261004",
+      "completed": true,
+      "functional_pass": false,
+      "original_error": null,
+      "original_executor_sha256": "a9d93089fa6773d1b8495f878b90523e1f7c4dcb852020aef1dc7a944d4b168f",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "ba9ff00a05e0e901fdfeaf92edeb1e72d6f319c355a180e715b88e6420e5f7bf",
+      "regular_files": 117
+    },
+    {
+      "archive_sha256": "cba8c37a988b495332ccf491c52f824f32a20630d9f2fbecdb4627c8c01a0544",
+      "closed_trace_complete": [
+        true,
+        true,
+        true
+      ],
+      "cohort": "x3-quick-actions-options-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "/.crosspoint/epub_16603256303045570950/reader_settings.bin",
+      "original_executor_sha256": "d06adba108838e6d1952f13383ac39e67808ecbbdf618737dc9022e7dadd05e9",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "1fa2abcc2026df1222178604b0bdd246c5308f04adad91b907a278aaada0c6ec",
+      "regular_files": 196
+    },
+    {
+      "archive_sha256": "c6678b9d5ca2d077c1e7c47705f860e902d28860d25e3cd1b27bf0b53de82e04",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-options-continuation-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "timed out waiting for settled reader-initial frame",
+      "original_executor_sha256": "4c473e516aa30f0bb29dcc0317c9195b676a517579532fd0d6898ac8f9d2d28c",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "7420caf627777f50297df2b5b4444b83ca9d882876099235b2672e30b7f2eef5",
+      "regular_files": 78
+    },
+    {
+      "archive_sha256": "126a557af2bae463087e0761e398f57e4effb13a32167ae0d18f4ab2d6f43cf1",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-options-read-shortcut-20261004",
+      "completed": true,
+      "functional_pass": true,
+      "original_error": null,
+      "original_executor_sha256": "32f674337c6e0234947d72ed35c056e12dde7a0d7f75ef8351a64dd62be31e60",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "f5b89ca41e12aa2d2ee4e80bb191c4c64960e11daa3ffff1d92118e0e30a6294",
+      "regular_files": 108
+    },
+    {
+      "archive_sha256": "7f2d48498d848e56fca4da6688f89aa27e414e5509c31d23b2b1fde50731b4bf",
+      "closed_trace_complete": [
+        true,
+        true,
+        true
+      ],
+      "cohort": "x3-quick-actions-resume-complete-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "timed out waiting for settled 110-reader-from-browser frame",
+      "original_executor_sha256": "5000be24bc854607cc62fa4d891814523cbc7ca66cdc98e8804325cbd77cd919",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "c298139dac28b85c69e2f8ac6367ac476edf3299db05c334ec9d71a2473a1344",
+      "regular_files": 195
+    },
+    {
+      "archive_sha256": "088173d3de22ffc45ec1464e5d1bcb2d0f9e5a03da2095b534a69edeb7c1314f",
+      "closed_trace_complete": [
+        true,
+        true,
+        true
+      ],
+      "cohort": "x3-quick-actions-rich-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "observable effect failed: sync_settings_cancel_restores_actual_reader",
+      "original_executor_sha256": "e33dab8c5453cb0e0fa0a5115abd8726b75fd6d76377a952dfd471bb82a993a5",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "41a820580111d964c1e6413213d7030c7f569cc26b6bb0d93e5351ff8586e06a",
+      "regular_files": 212
+    },
+    {
+      "archive_sha256": "3b37b71db6afae24b71496e2cc2059f8e59856bbc1bec3b0a9c900c2eddd4273",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-rich-highlight-reference-20261004",
+      "completed": true,
+      "functional_pass": true,
+      "original_error": null,
+      "original_executor_sha256": "cf7b5245fc6f30e37c3c78715f5e892d02f11bca56df160494234a72deb44252",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "8b8febb8e1598db8b02d53370d51c7dcf86c40006dd3f1eaa96beed128b6d91c",
+      "regular_files": 89
+    },
+    {
+      "archive_sha256": "4b86510656cccd6f615191c10af559174706873a3505fbe020a63ff4ff9f7040",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-rich-home-return-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "allocated FAT16 chain ends in a free cluster",
+      "original_executor_sha256": "b17f9f080d942bd3714be6aaa85745890db16411fc6e171a3b4013748ffb2753",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "7d169a0b3b2747d9a2518df4ecc77cd608a48eeb741ac4c44bee2492cb00f920",
+      "regular_files": 76
+    },
+    {
+      "archive_sha256": "1c44daa1cd8e0f05099a60bb80e010021f3a8b412be53a6cc39ea8cbe9a0ca35",
+      "closed_trace_complete": [
+        true
+      ],
+      "cohort": "x3-quick-actions-rich-settled-boot-20261004",
+      "completed": false,
+      "functional_pass": false,
+      "original_error": "observable effect failed: rich_cold_preserves_original_page_content",
+      "original_executor_sha256": "11233795ea0a016b4d82266dc9cd666f2baa751cdc624bc7e1749adb5ebe6c8b",
+      "original_receipt_bytes_modified": false,
+      "original_receipt_sha256": "dfbdb6c24edb9f430329d861363ecdd97be2ba5c816262f5d001acb7c36a04f4",
+      "regular_files": 78
+    }
+  ],
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "schema_version": 1,
+  "sdk_commit": "b784446302c076b4b5a622627867f0c80905cc50",
+  "sdk_files": {
+    "libs/hardware/InputManager/include/InputManager.h": "0916e5c71059df67d1a9aba72d710f7931a7619a258902e03bd3a22272714ce3",
+    "libs/hardware/InputManager/src/InputManager.cpp": "562e77e52479ed47f36185d31e89f8013032ac203f0e7fe45421d07a1b0efbc3"
+  },
+  "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "source_files": {
+    "lib/I18n/translations/english.yaml": "655005c0a2b5e09d90ba70fd3a0f6d1551c4a83c5322a09515fef56a7636a7fc",
+    "lib/hal/HalGPIO.cpp": "582186a32630b7e522d3c33e65543a3f4809454954ff1d6902c2552cb7b08866",
+    "src/BookmarkStore.cpp": "fb278ab9a58e54c046a90ec3fb733238deb28bf83e2aa523657ed47047326a1f",
+    "src/ClippingStore.cpp": "2007301999508cbdfdb042e2a483c0f6143dcc9115aa5272e9dabd4acb500654",
+    "src/CrossPointSettings.cpp": "29ea3e2c765370b5fcae0d6b878930c8b3c3df4c357356fcdd3e891d6f7b065f",
+    "src/CrossPointSettings.h": "e4776b7ee73e09aaf0bc59929954c5745aff0e461381153814f7170e68d3501e",
+    "src/GlobalActions.h": "49d36392e3fab683d679083e7eb43952249d77ed87fa320f6eebd445a8bdbfaf",
+    "src/MappedInputManager.cpp": "f3a24a5fe6c4d69b28c77eca9a015bb9926d96fdc1d34f2ba51334787f09ed83",
+    "src/MappedInputManager.h": "ff8bc231cb91ff8dc96f6ab39b5cb3c9b1c2a789d77ec89eab6d71c92d028d81",
+    "src/QuickActions.cpp": "88aee9108888b1e3548e8d287a04a755ad42f574be50c7d106d9a2c5c3f66d37",
+    "src/QuickActions.h": "d2eeb595d108345ae22ea2fa909672922fdbd433c720d336135781159ce20f3f",
+    "src/SettingsList.h": "95f2b99393a1dfb3523e5ba2e07818833eb777fa9f6b7fba856c14effb820dcc",
+    "src/SilentRestart.h": "bfcfbb6a6f6dc172e517f6530df9ff9bd50fc4a0afba5ea512aaf59a295e10ea",
+    "src/activities/ActivityManager.cpp": "69132ac13c6637f53ba54cdb76fdb735495663150bd2aafb7ea58d1e1cdd3ed7",
+    "src/activities/home/FileBrowserActivity.cpp": "e4d7d9e885645c4bfe47a71cc50e4f80f3c2dc010660735e0ec496548c1b1dc9",
+    "src/activities/network/CalibreConnectActivity.cpp": "6cfbe1c9e5df6e940837b87910537efdc3116da350dfcc9cd376fd77b9c91851",
+    "src/activities/network/CrossPointWebServerActivity.cpp": "a3de31c738e27ee7b4e246e8bc438f627309db46065fba6d7ee1af0d81379365",
+    "src/activities/network/NetworkModeSelectionActivity.cpp": "700ddfc703b884b5a764f0007b207027926471a44bb530053b8962dd4ceadb15",
+    "src/activities/network/WifiSelectionActivity.cpp": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+    "src/activities/reader/BookStatsActivity.cpp": "c6e24ea445b3c611b6a9843cb892246dbbff7e4e5a1b2e313c10a8a054105d77",
+    "src/activities/reader/ClipSelectionActivity.cpp": "d813ecb20c07a09d0690d2f9487bc41e7fe63f2d6191f10bd5064a6531302890",
+    "src/activities/reader/DictionaryWordSelectActivity.cpp": "1152feb1fbf964d1a230fffad3f7ec3cfb82103217bc69b0f217f8e2033bbfce",
+    "src/activities/reader/EpubReaderActivity.cpp": "c4b13517aed22a2baf2e2eb1b1919e1515ce0f88f1d0945f05980f4228a05399",
+    "src/activities/reader/NearbyBookPositionSyncActivity.cpp": "cc21d9d683ef67d9c90a721deb9780c48881968e1487fc4af2f09e3b55001b99",
+    "src/activities/settings/KOReaderSettingsActivity.cpp": "6e1f3a6453f6ce53940d15220cb8d1958e31fb711ef0009a5f4861727b902eca",
+    "src/activities/settings/QuickActionsActivity.cpp": "9b2ee39f97a7dd36f4a6901ec47aa6663263809d939de698403b0d4a8eba74f4",
+    "src/activities/settings/QuickActionsActivity.h": "d4f316a60790a84b544d4187d8ca95b2769fdf4e4ee2a55b4a972a22ac36f42a",
+    "src/activities/settings/SettingsActivity.cpp": "57ffa1c8c6b718fdaf231ca83f0fcf57fdb3b7a2d70a2930dd8bb6946ba50c72",
+    "src/activities/util/IntervalSelectionActivity.cpp": "17b94cc429cd0e2056e81432560a1aa42d9d14af97f304b323e95e7415eb1b65",
+    "src/clippings/ClippingHighlightGeometry.h": "b25b86f2a042ac90a86d14d7ff4b5874ea9df307037714523e9534f92c311feb",
+    "src/components/OptionPopup.h": "d21476ec6f866b931d31fb579bf4ec993c61ff1fbd708ae4c08f09be95c5dcf6",
+    "src/main.cpp": "21ee21ddac33088eda7d67f5dc5ae9f0f725fcdf5b2b9a2242ebf378133c3028",
+    "src/util/DictionaryRegistry.cpp": "e0b09c9ab6d6728a8ecef6ed0205668b8e8731bae067e446b4cd6cfcbfd143f7",
+    "src/util/ReleaseSuppression.h": "e7ccdd2caa84b42b3d1fed88f0cdf9b6cfab060a1f0c2b98bd7a82ba74e033ad"
+  },
+  "speed_selection_allowed": false,
+  "strict_pass": false,
+  "tests_sha256": "f16d3b933d0f5adba1bc166ec4b90c5a5f1f3ad9750b7e7bd41b6f8a31c09f52",
+  "timing_calibrated": false,
+  "workflow": "quick-action-editor-and-source-available-dispatch-audit",
+  "assembled_flash_input_provenance": {
+    "pinned_assembled_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "full_flash_bytes": 16777216,
+    "unchanged_official_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "components": "Unchanged official CrossInk release application, converted compatible official Arduino SDK bootloader, generated partition table and official Arduino OTA data.",
+    "officially_released_full_image_asset": false,
+    "physical_factory_dump": false,
+    "factory_or_tuned_crossink_bootloader_settings_verified": false,
+    "original_receipt_fields_flags_and_hashes_retained": true
+  }
+}

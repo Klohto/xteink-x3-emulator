@@ -5719,10 +5719,10 @@ index 0000000..436c004
 +#endif
 diff --git a/hw/net/esp32c3_wifi.c b/hw/net/esp32c3_wifi.c
 new file mode 100644
-index 0000000..7119546
+index 0000000..66cbadf
 --- /dev/null
 +++ b/hw/net/esp32c3_wifi.c
-@@ -0,0 +1,1333 @@
+@@ -0,0 +1,1358 @@
 +/*
 + * ESP32-C3 Wi-Fi MAC and an open virtual 802.11 access point.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -6529,6 +6529,38 @@ index 0000000..7119546
 +    }
 +}
 +
++static bool wifi_ccmp_station_rx_key(ESP32C3WifiState *s,
++                                     const uint8_t *frame,
++                                     const X3CCMPParameters *parameters,
++                                     uint8_t key[16])
++{
++    unsigned row;
++
++    /* Stock group installation maps KeyID1/2 to rows0/1; the guest binds
++     * node+311+KeyID to that same row. The row peer is A2/BSSID, not group
++     * A1. Admit only this configured station scope, without a key search.
++     */
++    if (frame[4] & 1) {
++        if (parameters->key_id != 1 && parameters->key_id != 2) {
++            return false;
++        }
++        row = parameters->key_id - 1;
++    } else {
++        if (parameters->key_id ||
++            !wifi_address_matches(s, frame + 4, 0x40, 0x60)) {
++            return false;
++        }
++        row = 4;
++    }
++    return (lduw_le_p(frame) & 0x0300) == 0x0200 &&
++           s->regs[0x060 / 4] == UINT32_MAX &&
++           s->regs[0x064 / 4] == 0x1ffff &&
++           s->regs[0x020 / 4] == UINT32_MAX &&
++           s->regs[0x024 / 4] == 0x1ffff &&
++           wifi_address_matches(s, frame + 10, 0x00, 0x20) &&
++           wifi_ccmp_key(s, row, 0, parameters->key_id, frame + 10, key);
++}
++
 +static bool wifi_receive_frame(ESP32C3WifiState *s, ESP32C3AirFrame *f)
 +{
 +    uint8_t descriptor[12], data[48 + 2304 + 4], plain[2304];
@@ -6547,20 +6579,11 @@ index 0000000..7119546
 +        X3CCMPParameters parameters;
 +        uint8_t key[16];
 +
-+        /* Official station path is interface0, node+308 pairwise context4,
-+         * FromDS unicast, A1 station address, A2 BSSID/row peer. No generic
-+         * key-row search, group fallback or inferred hardware priority.
++        /* Authenticate the exact configured station context before any
++         * descriptor probe. The unchanged guest owns each key's replay.
 +         */
 +        if (!wifi_ccmp_parameters(f->data, f->length, &parameters, &hlen) ||
-+            (lduw_le_p(f->data) & 0x0300) != 0x0200 ||
-+            (f->data[4] & 1) || parameters.key_id ||
-+            s->regs[0x060 / 4] != UINT32_MAX ||
-+            s->regs[0x064 / 4] != 0x1ffff ||
-+            s->regs[0x020 / 4] != UINT32_MAX ||
-+            s->regs[0x024 / 4] != 0x1ffff ||
-+            !wifi_address_matches(s, f->data + 4, 0x40, 0x60) ||
-+            !wifi_address_matches(s, f->data + 10, 0x00, 0x20) ||
-+            !wifi_ccmp_key(s, 4, 0, 0, f->data + 10, key)) {
++            !wifi_ccmp_station_rx_key(s, f->data, &parameters, key)) {
 +            s->rx_ccmp_rejected++;
 +            s->unsupported++;
 +            s->rx_dropped++;
@@ -6935,6 +6958,8 @@ index 0000000..7119546
 +    object_property_add_bool(obj, "ccmp-ordinary-tx-scope-modelled",
 +                             wifi_true, NULL);
 +    object_property_add_bool(obj, "ccmp-station-rx-scope-modelled",
++                             wifi_true, NULL);
++    object_property_add_bool(obj, "ccmp-station-group-rx-scope-modelled",
 +                             wifi_true, NULL);
 +    object_property_add_bool(obj, "ccmp-hardware-replay-modelled",
 +                             wifi_false, NULL);
@@ -12230,10 +12255,10 @@ index 0000000..475b32f
 +}
 diff --git a/tests/qtest/esp32c3-wifi-test.c b/tests/qtest/esp32c3-wifi-test.c
 new file mode 100644
-index 0000000..d40f3ca
+index 0000000..eb30948
 --- /dev/null
 +++ b/tests/qtest/esp32c3-wifi-test.c
-@@ -0,0 +1,1832 @@
+@@ -0,0 +1,2067 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
 +#include "qemu/bswap.h"
@@ -13518,7 +13543,9 @@ index 0000000..d40f3ca
 +
 +/* Public synthetic fixtures: first six match the frozen independently
 + * verified AESCCM/hostap foundation. Seventh is a separate cryptography
-+ * AESCCM oracle for the stock-shaped 388-byte prepared DMA reservation. */
++ * AESCCM oracle for the stock-shaped 388-byte prepared DMA reservation.
++ * Final two are independent AESCCM group KeyID1/2 wire oracles, with
++ * broadcast non-QoS and multicast QoS/TID5 respectively. */
 +typedef struct CCMPVector {
 +    const char *header, *extiv, *plain, *wire;
 +} CCMPVector;
@@ -13564,6 +13591,18 @@ index 0000000..d40f3ca
 +        "0300002000000000",
 +        "aaaa0300000008000b30557a9fc4e90e33587da2c7ec11365b80a5caef14395e83a8cdf2173c6186abd0f51a3f6489aed3f81d42678cb1d6fb20456a8fb4d9fe23486d92b7dc01264b7095badf04294e7398bde2072c51769bc0e50a2f54799ec3e80d32577ca1c6eb10355a7fa4c9ee13385d82a7ccf1163b6085aacff4193e6388add2f71c41668bb0d5fa1f44698eb3d8fd22476c91b6db00254a6f94b9de03284d7297bce1062b50759abfe4092e53789dc2e70c31567ba0c5ea0f34597ea3c8ed12375c81a6cbf0153a5f84a9cef3183d6287acd1f61b40658aafd4f91e43688db2d7fc21466b90b5daff24496e93b8dd02274c7196bbe0052a4f7499bee3082d52779cc1e60b30557a9fc4e90e33587da2c7ec11365b80a5caef14395e83a8cdf2173c6186abd0f51a3f6489aed3f81d42678cb1d6fb20456a8fb4d9fe23486d92b7dc01264b7095badf04294e7398bde2072c5176",
 +        "0841778802000000000102000000000202000000000330b60300002000000000e2c6cc10e7c83b598a47bc46c77deb98bde1242a5e2f6db4e8ca7ebbb2e2a2b9a143dc1543ed94c382da99e0cc02806bd7e7a14043207d043ce51f4171a78ad3c0ff2cde268fb61b232e53ad800b5c131b915f495846a9d2cf32b635e8648af0f78345dbab1e8b346506ba0ca3bed4f82d47332d47d4783e1fbfda5bea1f46637f8f72f40421525bb39052071e25dbff15a0ac2d6188e77a4ba56388ab9c77b53a7ca47e3a048efd695196d96a5ec9d17dbe4d0c06c182a05eb940f2b052b1fdb22757f56b9cb20e7382abbe94ff16a180f87127e0ccaf5b04bf888a668c4431b073d91cad58eab7c00b39a97dc73e4bb04164526c2402998c383fd2463051bb2ec020a7e6cd7bde3285bb2079376db2be28de70c38ff22529bee099dfde8d4ebeb553a9bd3887d7d5ececf9c839073236b8f308f9365ccf4374cbddf40991ad7184d2e55b9073e56a0b66f0477a9252db1e7f5f59e03b65446d53eaaa4b3232",
++    },
++    {
++        "08427788ffffffffffff02000000000202000000000330b6",
++        "0300006000000000",
++        "aaaa0300000008000b30557a9fc4e90e33587da2c7ec11365b80a5caef14395e83a8cdf2173c6186abd0f51a3f6489aed3f81d42678cb1d6",
++        "08427788ffffffffffff02000000000202000000000330b60300006000000000e2c6cc10e7c83b598a47bc46c77deb98bde1242a5e2f6db4e8ca7ebbb2e2a2b9a143dc1543ed94c382da99e0cc02806bd7e7a14043207d0400d98529335dc46b",
++    },
++    {
++        "8842778801005e00000102000000000202000000000330b60500",
++        "030000a000000000",
++        "aaaa030000000800163b6085aacff4193e6388add2f71c41668bb0d5fa1f44698eb3d8fd22476c91b6db00254a6f94b9de03284d7297bce1",
++        "8842778801005e00000102000000000202000000000330b60500030000a0000000002f40a475503a8cd82bfdea4ff1a3839d0af0f890e29791b0abd2857692d53d0bb18bb6729c2a4cb4e303e091b1aa81c4e1ff8977ad8edf42650b21b2d4977b5b",
 +    },
 +};
 +
@@ -13677,7 +13716,8 @@ index 0000000..d40f3ca
 +    size_t hlen;
 +
 +    wait_connected(qts, true);
-+    for (unsigned v = 0; v < G_N_ELEMENTS(ccmp_vectors); v++) {
++    /* Preserve the seven original pairwise fixtures and all four rows. */
++    for (unsigned v = 0; v < 7; v++) {
 +        size_t length = ccmp_fixture(v, dma, expected, &hlen);
 +
 +        for (unsigned r = 0; r < G_N_ELEMENTS(rows); r++) {
@@ -13807,24 +13847,32 @@ index 0000000..d40f3ca
 +    return ~crc;
 +}
 +
-+static void ccmp_host_send(QTestState *qts, int fd,
-+                           const uint8_t *frame, size_t length)
++static void ccmp_host_send_count(QTestState *qts, int fd,
++                                 const uint8_t *frame, size_t length,
++                                 const char *counter)
 +{
 +    uint8_t packet[8 + 2304];
-+    uint64_t peer = count(qts, "peer-rx-frames") + 1;
++    uint64_t peer = count(qts, counter) + 1;
 +
 +    memcpy(packet, "X3W1", 4);
 +    stw_le_p(packet + 4, 1);
 +    stw_le_p(packet + 6, length);
 +    memcpy(packet + 8, frame, length);
 +    host_send(fd, packet, length + 8);
-+    wait_count(qts, "peer-rx-frames", peer);
++    wait_count(qts, counter, peer);
 +    qtest_clock_step(qts, 2000000);
 +}
 +
-+static void ccmp_expect_rx_refusal(QTestState *qts, int fd,
-+                                   const uint8_t *frame, size_t length,
-+                                   bool auth_failure)
++static void ccmp_host_send(QTestState *qts, int fd,
++                           const uint8_t *frame, size_t length)
++{
++    ccmp_host_send_count(qts, fd, frame, length, "peer-rx-frames");
++}
++
++static void ccmp_expect_rx_refusal_count(QTestState *qts, int fd,
++                                         const uint8_t *frame, size_t length,
++                                         bool auth_failure,
++                                         const char *counter)
 +{
 +    uint8_t before[2048], after[2048], desc_before[12], desc_after[12];
 +    uint64_t rejected = count(qts, "rx-ccmp-rejected-frames");
@@ -13837,7 +13885,7 @@ index 0000000..d40f3ca
 +    arm_rx(qts, 0x10, 4095);
 +    qtest_memread(qts, RX_DESC, desc_before, sizeof(desc_before));
 +    qtest_writel(qts, MAC + 0xc40, UINT32_MAX);
-+    ccmp_host_send(qts, fd, frame, length);
++    ccmp_host_send_count(qts, fd, frame, length, counter);
 +    g_assert_cmpuint(count(qts, "rx-ccmp-rejected-frames"), ==, rejected + 1);
 +    g_assert_cmpuint(count(qts, "rx-ccmp-auth-failed-frames"), ==,
 +                     failed + auth_failure);
@@ -13848,6 +13896,14 @@ index 0000000..d40f3ca
 +    g_assert_cmpmem(desc_before, sizeof(desc_before), desc_after, sizeof(desc_after));
 +    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
 +    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++}
++
++static void ccmp_expect_rx_refusal(QTestState *qts, int fd,
++                                   const uint8_t *frame, size_t length,
++                                   bool auth_failure)
++{
++    ccmp_expect_rx_refusal_count(qts, fd, frame, length, auth_failure,
++                                 "peer-rx-frames");
 +}
 +
 +static void test_ccmp_rx_authentication_and_guest_framing(void)
@@ -14009,6 +14065,202 @@ index 0000000..d40f3ca
 +    qtest_quit(qts);
 +}
 +
++static void test_ccmp_station_group_rows_guest_framing_and_replay(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t dma[2308], wire[2304], expected[2304], received[48 + 2304 + 4];
++    const uint8_t station[6] = {2, 0, 0, 0, 0, 1};
++    uint64_t delivered = 0;
++    size_t hlen;
++
++    wait_connected(qts, true);
++    for (unsigned vector = 7; vector < 9; vector++) {
++        unsigned key_id = vector - 6, row = key_id - 1;
++        size_t length = ccmp_fixture(vector, dma, wire, &hlen) - 4;
++        size_t plen = length - hlen - 8 - 8;
++
++        program_filter(qts, 0, station, wire + 10);
++        ccmp_key(qts, row, 0, 3, key_id, wire + 10, true);
++        memcpy(expected, wire, length);
++        memcpy(expected + hlen + 8, dma + hlen + 8, plen);
++        /* The station RA and row peer differ from group A1. The selected
++         * GTK context, including per-TID replay, belongs to the real guest.
++         */
++        for (unsigned repeat = 0; repeat < 2; repeat++) {
++            arm_rx(qts, RX_BUFFER, 4095);
++            qtest_writel(qts, MAC + 0xc40, UINT32_MAX);
++            ccmp_host_send(qts, fd, wire, length);
++            g_assert_cmpuint(count(qts, "rx-ccmp-decrypted-frames"), ==,
++                             ++delivered);
++            qtest_memread(qts, RX_BUFFER, received, length + 52);
++            g_assert_cmpuint(ldl_le_p(received + 44), ==, length + 4);
++            g_assert_cmpuint(received[47], ==, 0);
++            g_assert_cmphex(ldl_le_p(received) & 0x30000000, ==, 1u << 28);
++            g_assert_cmpmem(received + 48, length, expected, length);
++            g_assert_cmphex((uint32_t)ldl_le_p(received + 48 + length), ==,
++                            ccmp_wire_fcs(wire, length));
++            g_assert_cmphex(qtest_readl(qts, RX_DESC) & (1u << 30), ==,
++                            1u << 30);
++        }
++        wire[hlen + 8] ^= 1;
++        ccmp_expect_rx_refusal(qts, fd, wire, length, true);
++        wire[hlen + 8] ^= 1;
++        wire[length - 1] ^= 1;
++        ccmp_expect_rx_refusal(qts, fd, wire, length, true);
++        wire[length - 1] ^= 1;
++        wire[4] ^= 2; /* Still group, altered authenticated A1. */
++        ccmp_expect_rx_refusal(qts, fd, wire, length, true);
++    }
++    g_assert_true(flag(qts, "ccmp-station-group-rx-scope-modelled"));
++    g_assert_false(flag(qts, "ccmp-hardware-replay-modelled"));
++    g_assert_false(flag(qts, "rx-group-policy-modelled"));
++    g_assert_false(flag(qts, "encryption-modelled"));
++    g_assert_cmpuint(count(qts, "rx-match-unverified-frames"), ==, 0);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_ccmp_station_group_scope_and_predma_refusals(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t dma[2308], wire[2304], peer[6];
++    const uint8_t station[6] = {2, 0, 0, 0, 0, 1};
++    size_t hlen, length;
++
++    wait_connected(qts, true);
++    for (unsigned refusal = 0; refusal < 19; refusal++) {
++        length = ccmp_fixture(7, dma, wire, &hlen) - 4;
++        program_filter(qts, 0, station, wire + 10);
++        ccmp_key(qts, 0, 0, 3, 1, wire + 10, true);
++        ccmp_key(qts, 1, 0, 3, 1, wire + 10, true);
++        switch (refusal) {
++        case 0: ccmp_key(qts, 0, 0, 3, 1, wire + 10, false); break;
++        case 1: ccmp_key(qts, 0, 0, 4, 1, wire + 10, true); break;
++        case 2: ccmp_key(qts, 0, 1, 3, 1, wire + 10, true); break;
++        case 3: ccmp_key(qts, 0, 0, 3, 2, wire + 10, true); break;
++        case 4:
++            memcpy(peer, wire + 10, sizeof(peer));
++            peer[5] ^= 1;
++            ccmp_key(qts, 0, 0, 3, 1, peer, true);
++            break;
++        case 5: ccmp_key(qts, 0, 0, 3, 1, wire + 4, true); break;
++        case 6: qtest_writel(qts, MAC + 0x800, 0x30000); break;
++        case 7: qtest_writel(qts, MAC + 0x60, 0); break;
++        case 8: qtest_writel(qts, MAC + 0x64, 0x10000); break;
++        case 9: qtest_writel(qts, MAC + 0x64, 0xffff); break;
++        case 10: qtest_writel(qts, MAC + 0x20, 0); break;
++        case 11: qtest_writel(qts, MAC + 0x24, 0x1ff00); break;
++        case 12: qtest_writel(qts, MAC + 0x24, 0xffff); break;
++        case 13: qtest_writel(qts, MAC, 0); break;
++        case 14: wire[hlen + 3] = 0x20; break; /* KeyID0 group excluded. */
++        case 15: wire[hlen + 3] = 0xe0; break; /* KeyID3 group excluded. */
++        case 16: wire[1] = 0x41; break; /* ToDS excluded. */
++        case 17: wire[4] &= ~1; break; /* KeyID1 unicast excluded. */
++        case 18: wire[22] |= 1; break; /* Fragmented frame excluded. */
++        }
++        /* Fragmented Protected input is rejected by the existing transport
++         * before peer-rx increments, with the same pre-DMA assertions.
++         */
++        ccmp_expect_rx_refusal_count(qts, fd, wire, length, false,
++            refusal == 18 ? "peer-unmodelled-frames" : "peer-rx-frames");
++    }
++    /* Live key bytes must be observed rather than a previously cached GTK. */
++    length = ccmp_fixture(7, dma, wire, &hlen) - 4;
++    program_filter(qts, 0, station, wire + 10);
++    ccmp_key(qts, 0, 0, 3, 1, wire + 10, true);
++    qtest_writel(qts, MAC + 0x1408, 0);
++    ccmp_expect_rx_refusal(qts, fd, wire, length, true);
++
++    /* Bad MIC with invalid descriptor base must not probe the descriptor. */
++    qtest_writel(qts, 0x60026018, 1u << 2);
++    qtest_writel(qts, 0x60026018, 0);
++    program_filter(qts, 0, station, wire + 10);
++    ccmp_key(qts, 0, 0, 3, 1, wire + 10, true);
++    qtest_writel(qts, MAC + 0x084, 1u << 31);
++    qtest_writel(qts, MAC + 0x088, 0x10);
++    wire[length - 1] ^= 1;
++    uint64_t failed = count(qts, "rx-ccmp-auth-failed-frames");
++    ccmp_host_send(qts, fd, wire, length);
++    g_assert_cmpuint(count(qts, "rx-ccmp-auth-failed-frames"), ==, failed + 1);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x08c), ==, 0x10);
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_ccmp_station_group_readonly_and_reset_key_clear(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t dma[2308], wire[2304];
++    const uint8_t station[6] = {2, 0, 0, 0, 0, 1};
++    size_t hlen, length = ccmp_fixture(7, dma, wire, &hlen) - 4;
++
++    wait_connected(qts, true);
++    g_assert_true(flag(qts, "ccmp-station-group-rx-scope-modelled"));
++    qobject_unref(qtest_qmp_assert_failure_ref(qts,
++        "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/wifi',"
++        " 'property': 'ccmp-station-group-rx-scope-modelled', 'value': false } }"));
++    program_filter(qts, 0, station, wire + 10);
++    ccmp_key(qts, 0, 0, 3, 1, wire + 10, true);
++    qtest_writel(qts, 0x60026018, 1u << 2);
++    qtest_writel(qts, 0x60026018, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x814), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x1408), ==, 0);
++    program_filter(qts, 0, station, wire + 10);
++    ccmp_expect_rx_refusal(qts, fd, wire, length, false);
++    g_assert_true(flag(qts, "ccmp-station-group-rx-scope-modelled"));
++    g_assert_false(flag(qts, "rx-group-policy-modelled"));
++    g_assert_false(flag(qts, "encryption-modelled"));
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_ccmp_ap_group_tx_selected_rows_and_wire_oracle(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t dma[2308], expected[2304], received[8 + 2304];
++    const uint8_t broadcast[6] = {255, 255, 255, 255, 255, 255};
++    const uint32_t flags = 3u << 30;
++    size_t hlen;
++
++    wait_connected(qts, true);
++    for (unsigned vector = 7; vector < 9; vector++) {
++        unsigned key_id = vector - 6, row = key_id + 1;
++        size_t length = ccmp_fixture(vector, dma, expected, &hlen);
++
++        /* SDK AP GTK KeyID1/2 are rows2/3 on interface1, with group peer
++         * sixFF. Existing ordinary TX must use the descriptor's exact row.
++         */
++        qtest_writel(qts, MAC + 0x814, 0);
++        ccmp_key(qts, row, 1, 3, key_id, broadcast, true);
++        ccmp_send(qts, dma, length, row, 1, flags, 0, length);
++        wait_count(qts, "peer-tx-frames", vector - 6);
++        host_receive(fd, received, length - 4 + 8);
++        g_assert_cmpmem(received, 4, "X3W1", 4);
++        g_assert_cmpuint(lduw_le_p(received + 6), ==, length - 4);
++        g_assert_cmpmem(received + 8, length - 4, expected, length - 4);
++        assert_tx_dma_unchanged(qts, dma, length, flags, 0);
++        g_assert_cmphex(qtest_readl(qts, MAC + 0xcb0), ==, 1);
++        g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 1u << 7);
++    }
++    g_assert_cmpuint(count(qts, "tx-ccmp-encrypted-frames"), ==, 2);
++    g_assert_cmpuint(count(qts, "tx-ccmp-rejected-frames"), ==, 0);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    g_assert_false(flag(qts, "encryption-modelled"));
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -14064,6 +14316,14 @@ index 0000000..d40f3ca
 +                   test_ccmp_rx_scope_no_fallback_or_wildcards);
 +    qtest_add_func("/esp32c3/wifi/ccmp-keys-reset-live-updates-readonly",
 +                   test_ccmp_keys_reset_live_updates_and_readonly);
++    qtest_add_func("/esp32c3/wifi/ccmp-station-group-rows-framing-replay",
++                   test_ccmp_station_group_rows_guest_framing_and_replay);
++    qtest_add_func("/esp32c3/wifi/ccmp-station-group-scope-predma-refusals",
++                   test_ccmp_station_group_scope_and_predma_refusals);
++    qtest_add_func("/esp32c3/wifi/ccmp-station-group-readonly-reset-key-clear",
++                   test_ccmp_station_group_readonly_and_reset_key_clear);
++    qtest_add_func("/esp32c3/wifi/ccmp-ap-group-tx-selected-rows-wire-oracle",
++                   test_ccmp_ap_group_tx_selected_rows_and_wire_oracle);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/libqtest.c b/tests/qtest/libqtest.c

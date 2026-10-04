@@ -1,0 +1,912 @@
+{
+  "schema_version": 1,
+  "kind": "stock-CrossInk-v1.6.0-Nearby-functional-branches-2026-10-04",
+  "derived_summary_sha256": "a3ae11bb3e2e272189bc1e23a5a964e6f840ef7ef236fe7517d33941d6ba9793",
+  "firmware_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+  "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "case_count": 18,
+  "distinct_workflows": 17,
+  "functional_positive_cases_passed": 16,
+  "positive_distinct_workflows": 15,
+  "stock_crc_refusal_cases_passed": 2,
+  "verified_supported_file_types": [
+    "epub",
+    "txt",
+    "xtc",
+    "xtch",
+    "bmp",
+    "png"
+  ],
+  "new_cpu_reading_resumes": 8,
+  "native_backends": {
+    "rx114": {
+      "elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "case_count": 17
+    },
+    "ccmp119_regression": {
+      "elf_sha256": "ab28e1b48ab7921db5ad07c3abfa5db4f09708f8b31d500d3dc864c82cbbe3e0",
+      "case_count": 1,
+      "workflow": "file",
+      "proves_encrypted_esp_now": false
+    }
+  },
+  "receipt_rehash_verification": {
+    "run_receipts": 18,
+    "cold_resume_receipts": 8,
+    "original_failure_receipts": 5,
+    "total": 31,
+    "original_and_preserved_copies_verified": true
+  },
+  "primary_source_files": [
+    {
+      "path": "src/activities/network/NearbyBookTransferActivity.cpp",
+      "sha256": "34a2468c5a5e28325e78fb002d56dc540925a14240f6ae688c4559375d79cb9a",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/network/NearbyBookTransferActivity.cpp"
+    },
+    {
+      "path": "src/activities/reader/NearbyBookPositionSyncActivity.cpp",
+      "sha256": "cc21d9d683ef67d9c90a721deb9780c48881968e1487fc4af2f09e3b55001b99",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/NearbyBookPositionSyncActivity.cpp"
+    },
+    {
+      "path": "src/activities/home/FileBrowserActivity.cpp",
+      "sha256": "e4d7d9e885645c4bfe47a71cc50e4f80f3c2dc010660735e0ec496548c1b1dc9",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/home/FileBrowserActivity.cpp"
+    },
+    {
+      "path": "src/activities/reader/TxtReaderActivity.cpp",
+      "sha256": "9d807c831df4d928c4b1f9c0646035081c23c6d474ae12f69d9b4ce951594efc",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/TxtReaderActivity.cpp"
+    },
+    {
+      "path": "src/activities/reader/XtcReaderActivity.cpp",
+      "sha256": "6c11afdb8c05fc05f0fe69ddf5d53feef4dfdabc2ee27780c771be0a31a6dedd",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/XtcReaderActivity.cpp"
+    },
+    {
+      "path": "src/activities/reader/XtcReaderMenuActivity.cpp",
+      "sha256": "5c2b6505d933b139e813fdddeff33dab100bdff328cfa72c16ee5efffec3130e",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/reader/XtcReaderMenuActivity.cpp"
+    },
+    {
+      "path": "src/activities/util/BmpViewerActivity.cpp",
+      "sha256": "e9566e004683beb0f316dfa9c7ce783896f71895b8fc2246bcbeed4546c421e0",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/activities/util/BmpViewerActivity.cpp"
+    },
+    {
+      "path": "lib/Xtc/Xtc.cpp",
+      "sha256": "a92c0f8bac9ad62ad599331fd577d6eae8b5a0462b7dc097ec20f5fdd145470b",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/lib/Xtc/Xtc.cpp"
+    },
+    {
+      "path": "lib/Xtc/Xtc/XtcParser.cpp",
+      "sha256": "9566cf50f3bab89ab79f29682800dec8c49c521eb3dc6530ffbdf53a4759e0b6",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/lib/Xtc/Xtc/XtcParser.cpp"
+    },
+    {
+      "path": "src/CrossPointSettings.cpp",
+      "sha256": "29ea3e2c765370b5fcae0d6b878930c8b3c3df4c357356fcdd3e891d6f7b065f",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/CrossPointSettings.cpp"
+    },
+    {
+      "path": "src/main.cpp",
+      "sha256": "21ee21ddac33088eda7d67f5dc5ae9f0f725fcdf5b2b9a2242ebf378133c3028",
+      "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "url": "https://github.com/uxjulia/CrossInk/blob/31ce770487bfa9cb70447a374cdd8aae89d8bfe4/src/main.cpp"
+    }
+  ],
+  "harness": {
+    "path": "scripts/test-crossink-nearby.py",
+    "sha256": "c8382c6eb909c89d4c8d89a0b5236fda570b42474b7e5ff770beea52049f5eb5",
+    "tests_path": "tests/test_nearby.py",
+    "tests_sha256": "2a53c386c71114b8e6eb70b49c6c6101cfb0a92ab84505074cc7d75819655313",
+    "focused_cases": 16,
+    "focused_pass": true,
+    "focused_transcript_sha256": "5e468aefead1cbeeb26b5b36a3b098337b84ed4dad7b047789bc20e938b72af5"
+  },
+  "cases": [
+    {
+      "workflow": "file",
+      "cohort": "reader-v2",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "e5d52c8aa474ca5ae5865a92059f979c9376251e56eb408855d592a6bbbc6665",
+      "functional_pass": true,
+      "checks_passed": 2,
+      "guest_check_counts": [
+        15,
+        20
+      ],
+      "guest_panel_counts": [
+        10,
+        16
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-reader-v2/file/validation.json",
+        "sha256": "b5def6a8b5f5dc1c7109cf7a75b3c1f826c4149c00cdfe6bdbc8495ce4b4f56f",
+        "size_bytes": 984737
+      },
+      "new_cpu_resume": {
+        "validation": {
+          "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-reader-v2/file/guest-2/received-cold-restart/validation.json",
+          "sha256": "912116b59a835d21144d22d027217a5af81219ee0ec153b27e4f02300fdf72cc",
+          "size_bytes": 149541
+        },
+        "functional_pass": true,
+        "checks": {
+          "cold_received_progress_bytes_unchanged": true,
+          "cold_received_page1_all_tones_restored": true,
+          "cold_received_page1_survives_exit": true,
+          "new_cpu_stopped_cleanly0": true,
+          "new_cpu_clock_policy_matches": true,
+          "full_new_cpu_panel_trace_and_crc": true,
+          "no_new_cpu_guest_panic_or_sd_error": true
+        },
+        "cpu_state_preserved": false,
+        "guest_data_patched": false
+      }
+    },
+    {
+      "workflow": "file-xtc",
+      "cohort": "reader-v2",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "e5d52c8aa474ca5ae5865a92059f979c9376251e56eb408855d592a6bbbc6665",
+      "functional_pass": true,
+      "checks_passed": 2,
+      "guest_check_counts": [
+        16,
+        21
+      ],
+      "guest_panel_counts": [
+        15,
+        16
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-reader-v2/file-xtc/validation.json",
+        "sha256": "01ade9697f1c8014ac04240e378e3e2a9390498df0b8c3c32beb45da49e4ae86",
+        "size_bytes": 989100
+      },
+      "new_cpu_resume": {
+        "validation": {
+          "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-reader-v2/file-xtc/guest-2/received-cold-restart/validation.json",
+          "sha256": "474a048ebeeacafc868f17cb5e1a874e2d846c3a4fdf5c9bf56c5d7b7d5c1128",
+          "size_bytes": 145571
+        },
+        "functional_pass": true,
+        "checks": {
+          "cold_received_progress_bytes_unchanged": true,
+          "cold_received_page1_all_tones_restored": true,
+          "cold_received_page1_survives_exit": true,
+          "new_cpu_stopped_cleanly0": true,
+          "new_cpu_clock_policy_matches": true,
+          "full_new_cpu_panel_trace_and_crc": true,
+          "no_new_cpu_guest_panic_or_sd_error": true
+        },
+        "cpu_state_preserved": false,
+        "guest_data_patched": false
+      }
+    },
+    {
+      "workflow": "file-txt",
+      "cohort": "positive-v4",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "dc9d5f4c198f5ce73e8ce0e4ce9c45f235a4af0d163160ecb5c7d9158a6ec19b",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        16,
+        21
+      ],
+      "guest_panel_counts": [
+        14,
+        20
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-txt/validation.json",
+        "sha256": "e341062054ffe5b46ed2947d72647c56016ead605d715ab23f3d8337218129ee",
+        "size_bytes": 1039851
+      },
+      "new_cpu_resume": {
+        "validation": {
+          "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-txt/guest-2/received-cold-restart/validation.json",
+          "sha256": "fc7a6546ea1e95f10482ffffb857ebd174acde1a2f9ffd77eee0c038c8a2c892",
+          "size_bytes": 154363
+        },
+        "functional_pass": true,
+        "checks": {
+          "cold_received_progress_bytes_unchanged": true,
+          "cold_received_page1_all_tones_restored": true,
+          "cold_received_saved_page_survives_exit": true,
+          "new_cpu_stopped_cleanly0": true,
+          "new_cpu_clock_policy_matches": true,
+          "full_new_cpu_panel_trace_and_crc": true,
+          "no_new_cpu_guest_panic_or_sd_error": true
+        },
+        "cpu_state_preserved": false,
+        "guest_data_patched": false
+      }
+    },
+    {
+      "workflow": "file-bmp",
+      "cohort": "positive-v4",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "dc9d5f4c198f5ce73e8ce0e4ce9c45f235a4af0d163160ecb5c7d9158a6ec19b",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        15,
+        15
+      ],
+      "guest_panel_counts": [
+        9,
+        12
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-bmp/validation.json",
+        "sha256": "7c922dfa3a0f8471c0a101cf8cd06c503caef545df10aaf9ded56e71cfc3a43e",
+        "size_bytes": 605291
+      }
+    },
+    {
+      "workflow": "file-png",
+      "cohort": "positive-v4",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "dc9d5f4c198f5ce73e8ce0e4ce9c45f235a4af0d163160ecb5c7d9158a6ec19b",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        15,
+        15
+      ],
+      "guest_panel_counts": [
+        9,
+        12
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-png/validation.json",
+        "sha256": "7e0377a70a5a7f54fd703fbed8f6d274a6db719357b880515dfbd463ae911ff6",
+        "size_bytes": 569868
+      }
+    },
+    {
+      "workflow": "file-collision-replace",
+      "cohort": "positive-v4",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "dc9d5f4c198f5ce73e8ce0e4ce9c45f235a4af0d163160ecb5c7d9158a6ec19b",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        15,
+        20
+      ],
+      "guest_panel_counts": [
+        10,
+        17
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-collision-replace/validation.json",
+        "sha256": "ae90236b7674285d329230ac3294b480a753665f4b947035305dd466dd83922b",
+        "size_bytes": 1010613
+      },
+      "new_cpu_resume": {
+        "validation": {
+          "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-collision-replace/guest-2/received-cold-restart/validation.json",
+          "sha256": "b745c442260202bcc54160fc3e48bd4edeaca2f0b9dc0cbfe53e4e04e2a6b2be",
+          "size_bytes": 157841
+        },
+        "functional_pass": true,
+        "checks": {
+          "cold_received_progress_bytes_unchanged": true,
+          "cold_received_page1_all_tones_restored": true,
+          "cold_received_saved_page_survives_exit": true,
+          "new_cpu_stopped_cleanly0": true,
+          "new_cpu_clock_policy_matches": true,
+          "full_new_cpu_panel_trace_and_crc": true,
+          "no_new_cpu_guest_panic_or_sd_error": true
+        },
+        "cpu_state_preserved": false,
+        "guest_data_patched": false
+      }
+    },
+    {
+      "workflow": "file-collision-keep-both",
+      "cohort": "positive-v4",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "dc9d5f4c198f5ce73e8ce0e4ce9c45f235a4af0d163160ecb5c7d9158a6ec19b",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        15,
+        21
+      ],
+      "guest_panel_counts": [
+        10,
+        18
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-collision-keep-both/validation.json",
+        "sha256": "f53a77d5404203d8887c7b85d10c1e89d29447579c28a7f6207efbae11b77ced",
+        "size_bytes": 1083874
+      },
+      "new_cpu_resume": {
+        "validation": {
+          "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-collision-keep-both/guest-2/received-cold-restart/validation.json",
+          "sha256": "42afca4b9b1b33c95d51695aeeab868b6a30b0513d04749339d725d9ba4dde4f",
+          "size_bytes": 165259
+        },
+        "functional_pass": true,
+        "checks": {
+          "cold_received_progress_bytes_unchanged": true,
+          "cold_received_page1_all_tones_restored": true,
+          "cold_received_saved_page_survives_exit": true,
+          "new_cpu_stopped_cleanly0": true,
+          "new_cpu_clock_policy_matches": true,
+          "full_new_cpu_panel_trace_and_crc": true,
+          "no_new_cpu_guest_panic_or_sd_error": true
+        },
+        "cpu_state_preserved": false,
+        "guest_data_patched": false
+      }
+    },
+    {
+      "workflow": "file-offer-reject",
+      "cohort": "negative-v3",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "cea4f3f98fd6796bfaede1c2a6e920dbb1fe65dd2e6d9f7fe8a46428b36c4ee3",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        14,
+        16
+      ],
+      "guest_panel_counts": [
+        10,
+        11
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-negative-v3/file-offer-reject/validation.json",
+        "sha256": "bff5c067d2bff57ca98449661c36ded8317b6973dc1e308c07ad8bd07fd417fa",
+        "size_bytes": 600054
+      }
+    },
+    {
+      "workflow": "file-collision-cancel",
+      "cohort": "negative-v3",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "cea4f3f98fd6796bfaede1c2a6e920dbb1fe65dd2e6d9f7fe8a46428b36c4ee3",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        14,
+        16
+      ],
+      "guest_panel_counts": [
+        10,
+        14
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-negative-v3/file-collision-cancel/validation.json",
+        "sha256": "cb11fc10dc4ac166ef527c850bfd31f9f56bce8aae0299aee91852c3ced2ecac",
+        "size_bytes": 641030
+      }
+    },
+    {
+      "workflow": "file-transfer-cancel",
+      "cohort": "negative-v3",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "cea4f3f98fd6796bfaede1c2a6e920dbb1fe65dd2e6d9f7fe8a46428b36c4ee3",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        15,
+        15
+      ],
+      "guest_panel_counts": [
+        14,
+        12
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-negative-v3/file-transfer-cancel/validation.json",
+        "sha256": "7dac426be260e23fca345813d170d3662492060f30d303a8768efada88b40e10",
+        "size_bytes": 662022
+      }
+    },
+    {
+      "workflow": "file-unsupported-md",
+      "cohort": "negative-v3",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "cea4f3f98fd6796bfaede1c2a6e920dbb1fe65dd2e6d9f7fe8a46428b36c4ee3",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        14,
+        14
+      ],
+      "guest_panel_counts": [
+        8,
+        8
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-negative-v3/file-unsupported-md/validation.json",
+        "sha256": "b2053094996b06177e7bc886fbe9477053425df74f9d52531b77612b48037047",
+        "size_bytes": 422806
+      }
+    },
+    {
+      "workflow": "file-xtch",
+      "cohort": "xtch-v5",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "967048e93064eb7b842601cf73ed04963dbacf0445505fc2381c5eba389ebb77",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        16,
+        22
+      ],
+      "guest_panel_counts": [
+        8,
+        17
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-xtch-v5/file-xtch/validation.json",
+        "sha256": "a8d06ea20391c84a48e1b57dd557b4e2e04d4616044eb2133d6e51459fae6e68",
+        "size_bytes": 1185668
+      },
+      "new_cpu_resume": {
+        "validation": {
+          "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-xtch-v5/file-xtch/guest-2/received-cold-restart/validation.json",
+          "sha256": "df68def5fb198cb5a30f2b923c7c73c0460dedcbea0f8759b4e29b31381443b4",
+          "size_bytes": 178390
+        },
+        "functional_pass": true,
+        "checks": {
+          "cold_received_progress_bytes_unchanged": true,
+          "cold_received_page1_all_tones_restored": true,
+          "cold_received_saved_page_survives_exit": true,
+          "new_cpu_stopped_cleanly0": true,
+          "new_cpu_clock_policy_matches": true,
+          "full_new_cpu_panel_trace_and_crc": true,
+          "no_new_cpu_guest_panic_or_sd_error": true
+        },
+        "cpu_state_preserved": false,
+        "guest_data_patched": false
+      }
+    },
+    {
+      "workflow": "file-wrong-crc",
+      "cohort": "ordered-negative-v4",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "dc9d5f4c198f5ce73e8ce0e4ce9c45f235a4af0d163160ecb5c7d9158a6ec19b",
+      "functional_pass": false,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        16,
+        15
+      ],
+      "guest_panel_counts": [
+        10,
+        12
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": true,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-ordered-negative-v4/file-wrong-crc/validation.json",
+        "sha256": "82bc4afb3d2b8dacd8eef2f0e717e5634b1507aaae8fa90019670bbccd5fbe72",
+        "size_bytes": 679212
+      },
+      "functional_crc_refusal": true,
+      "error_ui_stability": false,
+      "stock_cancel_echo_defect": true,
+      "clock_ordering_declared": true,
+      "hardware_reproduced": false,
+      "declared_fault": "one bit in genuine Complete CRC field",
+      "protocol_messages_suppressed": false
+    },
+    {
+      "workflow": "file-data-corrupt",
+      "cohort": "ordered-negative-v4",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "dc9d5f4c198f5ce73e8ce0e4ce9c45f235a4af0d163160ecb5c7d9158a6ec19b",
+      "functional_pass": false,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        17,
+        15
+      ],
+      "guest_panel_counts": [
+        10,
+        12
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": true,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-ordered-negative-v4/file-data-corrupt/validation.json",
+        "sha256": "611daaaa85d0d03bbd230fabed414f2ffdc54cd1a98eeb94d310230d6b345085",
+        "size_bytes": 680969
+      },
+      "functional_crc_refusal": true,
+      "error_ui_stability": false,
+      "stock_cancel_echo_defect": true,
+      "clock_ordering_declared": true,
+      "hardware_reproduced": false,
+      "declared_fault": "one bit in a genuine Data payload; original Complete CRC forwarded unchanged",
+      "protocol_messages_suppressed": false
+    },
+    {
+      "workflow": "file-folder",
+      "cohort": "final-114-v6",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "6738c82989a4bbeaf13bf9857486ec5b88c9ca20eb54e48008846d429fe9b389",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        14,
+        22
+      ],
+      "guest_panel_counts": [
+        10,
+        23
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/final114-folder-position-v6/file-folder/validation.json",
+        "sha256": "dac693f8c3cbc2a64d625b34b0f30c15ba5061aaa03f4d0973d7bda636016cb2",
+        "size_bytes": 1188247
+      },
+      "new_cpu_resume": {
+        "validation": {
+          "private_relative_path": "local/runs/nearby-recovery-20261004/final114-folder-position-v6/file-folder/guest-2/received-cold-restart/validation.json",
+          "sha256": "0b9388875e08819c734747d335219d261dbf8a070a45d3c947ec292151c5ba90",
+          "size_bytes": 168674
+        },
+        "functional_pass": true,
+        "checks": {
+          "cold_received_progress_bytes_unchanged": true,
+          "cold_received_page1_all_tones_restored": true,
+          "cold_received_saved_page_survives_exit": true,
+          "actual_receive_folder_survives_new_cpu": true,
+          "new_cpu_stopped_cleanly0": true,
+          "new_cpu_clock_policy_matches": true,
+          "full_new_cpu_panel_trace_and_crc": true,
+          "no_new_cpu_guest_panic_or_sd_error": true
+        },
+        "cpu_state_preserved": false,
+        "guest_data_patched": false
+      }
+    },
+    {
+      "workflow": "position-cancel",
+      "cohort": "final-114-v6",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "6738c82989a4bbeaf13bf9857486ec5b88c9ca20eb54e48008846d429fe9b389",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        12,
+        16
+      ],
+      "guest_panel_counts": [
+        12,
+        13
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/final114-folder-position-v6/position-cancel/validation.json",
+        "sha256": "0a2a60d1c58edcc6e0a68345e1d76c54842f3871b53170550dbf39e1ca513c92",
+        "size_bytes": 820797
+      }
+    },
+    {
+      "workflow": "position-identity-mismatch",
+      "cohort": "final-identity-v7",
+      "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+      "harness_sha256": "c8382c6eb909c89d4c8d89a0b5236fda570b42474b7e5ff770beea52049f5eb5",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        14,
+        15
+      ],
+      "guest_panel_counts": [
+        10,
+        12
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/final114-identity-v7/position-identity-mismatch/validation.json",
+        "sha256": "8d431e9c0f9d707445b713e01f36611856400c88281c8ce4c865d2503f2f5253",
+        "size_bytes": 729481
+      }
+    },
+    {
+      "workflow": "file",
+      "cohort": "119-regression-v6",
+      "native_elf_sha256": "ab28e1b48ab7921db5ad07c3abfa5db4f09708f8b31d500d3dc864c82cbbe3e0",
+      "harness_sha256": "6738c82989a4bbeaf13bf9857486ec5b88c9ca20eb54e48008846d429fe9b389",
+      "functional_pass": true,
+      "checks_passed": 3,
+      "guest_check_counts": [
+        14,
+        19
+      ],
+      "guest_panel_counts": [
+        10,
+        16
+      ],
+      "packets_manufactured": false,
+      "packet_payloads_modified": false,
+      "guest_exits": [
+        0,
+        0
+      ],
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/ccmp119-epub-v6/file/validation.json",
+        "sha256": "85f4e621dac8bfd8f3739c741da5bd6c5b581730cdb08c12189037affb7d85db",
+        "size_bytes": 1142936
+      },
+      "new_cpu_resume": {
+        "validation": {
+          "private_relative_path": "local/runs/nearby-recovery-20261004/ccmp119-epub-v6/file/guest-2/received-cold-restart/validation.json",
+          "sha256": "898662556d89c02307c8b3578c898207d27310b78cfce9ca2f163ab3dd4a6775",
+          "size_bytes": 174952
+        },
+        "functional_pass": true,
+        "checks": {
+          "cold_received_progress_bytes_unchanged": true,
+          "cold_received_page1_all_tones_restored": true,
+          "cold_received_saved_page_survives_exit": true,
+          "new_cpu_stopped_cleanly0": true,
+          "new_cpu_clock_policy_matches": true,
+          "full_new_cpu_panel_trace_and_crc": true,
+          "no_new_cpu_guest_panic_or_sd_error": true
+        },
+        "cpu_state_preserved": false,
+        "guest_data_patched": false
+      }
+    }
+  ],
+  "preserved_original_failures": [
+    {
+      "workflow": "file-txt",
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-reader-v2/file-txt/validation.json",
+        "sha256": "df3cfb65dd77a6eaab57276beac8f6bab6853d3d0bc53780827fc28cca9cd2b2",
+        "size_bytes": 261211
+      },
+      "original_functional_pass": false,
+      "original_error": "failed genuine guest postcondition: source-reader-page0-real-txt-index",
+      "explanation": "Initial host oracle assumed the wrong TXT cache version location; actual ITXT header/version layout is now validated.",
+      "original_preserved": true
+    },
+    {
+      "workflow": "file-xtch",
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-reader-v2/file-xtch/validation.json",
+        "sha256": "62a7e0a4052a7080e9514cec630e03d324a972dfa319cf5ec43c50d93823509b",
+        "size_bytes": 691822
+      },
+      "original_functional_pass": false,
+      "original_error": "timed out waiting for settled 003-source-browse-row frame",
+      "explanation": "Initial bounded Home wait expired during original 480px thumbnail work; full cache/BMP readiness succeeded without a native change.",
+      "original_preserved": true
+    },
+    {
+      "workflow": "file-folder",
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/positive-v4/file-folder/validation.json",
+        "sha256": "793493944f4288910f4f0ded58b0c4910026405d227878f14d8d1e45c1a7222b",
+        "size_bytes": 344589
+      },
+      "original_functional_pass": false,
+      "original_error": "/.crosspoint/settings.json",
+      "explanation": "Initial host oracle read the legacy settings path; corrected actual CrossInk settings path was verified in a fresh cohort.",
+      "original_preserved": true
+    },
+    {
+      "workflow": "file-wrong-crc",
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/x3-nearby-recovery114-negative-v3/file-wrong-crc/validation.json",
+        "sha256": "5d0eae0c671a27a8ea9b31e5a17b72e74562e156bd0aef1529e9ce384432ef43",
+        "size_bytes": 833179
+      },
+      "original_functional_pass": false,
+      "original_error": "timed out waiting for original guest result labels: The received file did not pass verification: timed out waiting for settled receiver-rejects-wrong-original-crc-probe1 frame",
+      "explanation": "Both stock guests echo Cancel during simultaneous error handling; ordered observations prove only CRC refusal and file preservation.",
+      "original_preserved": true
+    },
+    {
+      "workflow": "position-identity-mismatch",
+      "validation": {
+        "private_relative_path": "local/runs/nearby-recovery-20261004/final114-folder-position-v6/position-identity-mismatch/validation.json",
+        "sha256": "b098ababc18daa65abe34ba700dac84111c5e0da3160c71f738894e30734fc24",
+        "size_bytes": 451398
+      },
+      "original_functional_pass": false,
+      "original_error": "timed out waiting for released input before confirm",
+      "explanation": "Idle guest2 reached stock Auto Sleep while its independently clocked peer ran; fresh helper wakes a sleeping unit through declared physical GPIO3 before navigation.",
+      "original_preserved": true
+    }
+  ],
+  "physical_idle_wake": {
+    "original_failed_receipt_sha256": "b098ababc18daa65abe34ba700dac84111c5e0da3160c71f738894e30734fc24",
+    "successful_receipt_sha256": "8d431e9c0f9d707445b713e01f36611856400c88281c8ce4c865d2503f2f5253",
+    "before_rtc": {
+      "sleeping": true,
+      "deep-sleep-active": true,
+      "sleep-count": 1,
+      "wake-count": 0
+    },
+    "actual_input": {
+      "gpio": 3,
+      "active_level": 0,
+      "press_t_ns": 602719341673,
+      "hold_ns": 1000000000,
+      "release_transport": "QEMU_CLOCK_VIRTUAL timer",
+      "guest_data_patched": false
+    },
+    "after_rtc": {
+      "sleeping": false,
+      "deep-sleep-active": false,
+      "sleep-count": 1,
+      "wake-count": 1,
+      "watchdog-expiry-count": 0
+    },
+    "physical_timing_calibrated": false
+  },
+  "private_lossless_archives": [
+    {
+      "private_relative_path": "local/runs/nearby-recovery-20261004/archive-reader-v2.json",
+      "sha256": "022c0bab2ca180325d757910c2f504387f7d41c2eca8fbc23a48887a931af732"
+    },
+    {
+      "private_relative_path": "local/runs/nearby-recovery-20261004/archive-positive-v4.json",
+      "sha256": "a7382d378f1167e7dc099c23a6438869987b513e8e8b2a2d5c5a239323b3c601"
+    },
+    {
+      "private_relative_path": "local/runs/nearby-recovery-20261004/archive-negative-v3-v4.json",
+      "sha256": "3727751514155e539cacf0237b9af1d3d4bfbc11aaf805adeaeb855dac2267b3"
+    },
+    {
+      "private_relative_path": "local/runs/nearby-recovery-20261004/archive-xtch-v5-and-independent-audits.json",
+      "sha256": "cf368f057c7376d9f9d9250a75a513e737f4522ddd752fc34a2ad2d0a2c47691"
+    },
+    {
+      "private_relative_path": "local/runs/nearby-recovery-20261004/archive-ccmp119-epub-v6.json",
+      "sha256": "3cc5050cb5b439f88ec26cfa4a42d1f7f65bfbb50b57236151586d98b051a2d9"
+    },
+    {
+      "private_relative_path": "local/runs/nearby-recovery-20261004/archive-final114-folder-position-v6.json",
+      "sha256": "5b4b07f23abf7e01c43677abaa00f62601b2e6f4ad98144718c5773db7d9b0c4"
+    },
+    {
+      "private_relative_path": "local/runs/nearby-recovery-20261004/archive-final114-identity-v7.json",
+      "sha256": "2e39a0ff47b1fca99d4c6f452b7b337f44e3dbd9ee5b1237bd28e1fbe7590ce9"
+    }
+  ],
+  "limits": {
+    "guest_ram_or_firmware_patched": false,
+    "error_ui_stability": false,
+    "complete_machine_acceptance_passed": false,
+    "all_crossink_functions_verified": false,
+    "radio_physics_modelled": false,
+    "physical_entropy_verified": false,
+    "panel_optics_calibrated": false,
+    "timing_calibrated": false,
+    "speed_selection_allowed": false
+  },
+  "public_contents": "Whitelisted derived results, source identities and receipt digests only; full images, guest media, key bytes and raw wire remain private.",
+  "assembled_flash_input_provenance": {
+    "pinned_assembled_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "full_flash_bytes": 16777216,
+    "unchanged_official_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "components": "Unchanged official CrossInk release application, converted compatible official Arduino SDK bootloader, generated partition table and official Arduino OTA data.",
+    "officially_released_full_image_asset": false,
+    "physical_factory_dump": false,
+    "factory_or_tuned_crossink_bootloader_settings_verified": false,
+    "original_receipt_fields_flags_and_hashes_retained": true
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "validation_date_utc": "2026-10-04",
+  "evidence_type": "allowlisted summary of actual unchanged stock firmware runs; raw captures retained privately",
+  "firmware": {
+    "release": "v1.6.0",
+    "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+    "application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "sdk_source_commit": "b784446302c076b4b5a622627867f0c80905cc50",
+    "original_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99"
+  },
+  "backend": {
+    "cohort": "RX114",
+    "sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+    "recorded_run_bound_to_this_backend": true,
+    "later_native_candidates_not_validated_by_these_receipts": true
+  },
+  "limits": {
+    "strict_model_pass": false,
+    "network_protocol_verified": true,
+    "whole_machine_verified": false,
+    "all_functions_verified": false,
+    "physical_timing_verified": false,
+    "physical_panel_fidelity_verified": false,
+    "timing_calibrated": false,
+    "speed_selection_allowed": false
+  },
+  "publication": {
+    "raw_flash_sd_efuse_captures_included": false,
+    "raw_guest_store_or_credential_values_included": false,
+    "keys_or_request_auth_headers_included": false,
+    "raw_request_response_payloads_included": false,
+    "derived_private_summary_sha256": "a76e4974d039d3a05a202012cefab5d0c801fd44f1559a82d815bca57a8d3371"
+  },
+  "feature": "KOReader Binary matching, metadata upload and Ask/Apply",
+  "functional_protocol_pass": true,
+  "actual_binary_cohort": {
+    "functional_pass": true,
+    "summary_receipt_sha256": "c5d1bd0ab4cc84cc35897ec73a2fcac4330310dc339d9d8c742c70406972b8d9",
+    "closed_independent_audit_sha256": "e9ab23a7837c1f2125f672c80bbaba6bcc842bf4e3dacf79cf4c0461d3d5ee70",
+    "closed_archive_manifest_sha256": "1c9cd6b60c388fff6430b8fc7058e1aa9eccf9daea9841d1b50e0ab17dfb0620",
+    "source_prelaunch_proof_sha256": "b426f48c2c140a3a9df38ed2f4d4bd960e99e9329fdfc4b039a6e08fa3a3e6bf",
+    "url_editor_receipt_sha256": "6d13e3eaf18ee1c5942babdd64fc95ab424df1814a02ef0c58387208ad4cc6e0",
+    "fresh_binary_sync_receipt_sha256": "114931dad7f07f772d87dc35443f801e98dd5f15bb9f106762b47ec02ba2b143",
+    "actual_gui_store_consumed_without_seeding": true,
+    "real_keyboard_changed_only_peer_url": true,
+    "guest_uploaded_binary_id": "dab3083b8f3d04523f6fd97f4a32bb79",
+    "metadata_matched_original_epub": true,
+    "remote_get_status_codes": [
+      204,
+      200
+    ],
+    "remote_put_count": 1,
+    "remote_put_status_codes": [
+      204
+    ],
+    "uploaded_body_sha256": "9085b767f10927798d7052d7af03672c83974b474147cf4cc6a125b2d952eda6",
+    "real_guest_positions_page0_page1_applied_page0": true,
+    "local_page1_visible_text_offset": 586,
+    "applied_content_pixel_differences": 0,
+    "applied_exact_tone_differences": 0,
+    "actual_guest_written_store_and_epub_preserved": true,
+    "guest_progress_manufacture": false,
+    "declared_url_clear_confirm_ms": 1800,
+    "ordinary_adc_hold_ms": 400,
+    "workflows": [
+      {
+        "workflow": "actual-peer-url-editor",
+        "passing_checks": 12,
+        "adc_pulses": 74,
+        "retained_panel_captures": 4,
+        "transient_native_trace_observations": 74,
+        "native_trace_events": 1274,
+        "native_refreshes": 78,
+        "native_exit_code": 0,
+        "complete_native_trace": true,
+        "all_checks_pass": true
+      },
+      {
+        "workflow": "binary-upload-apply",
+        "passing_checks": 22,
+        "adc_pulses": 21,
+        "retained_panel_captures": 8,
+        "transient_native_trace_observations": 13,
+        "native_trace_events": 1309,
+        "native_refreshes": 57,
+        "native_exit_code": 0,
+        "complete_native_trace": true,
+        "all_checks_pass": true
+      }
+    ]
+  },
+  "launch_source_pins": {
+    "stock_crossink_files": 34,
+    "sdk_files": 4
+  },
+  "source_gui_chain": {
+    "cold_persistence_delete_receipt_sha256": "8f6da7dbe49b847191a3e214cc7b14dc0e6f621d2d9ac438b7d3b12f4562a8c9",
+    "functional_pass": true,
+    "actual_original_media_and_source_evidence_checked_before_peer_started": true,
+    "historical_gui_crossink_launch_pins": 22,
+    "historical_gui_sdk_launch_pins": 1,
+    "historical_gui_supplemental_after_stop_pins": {
+      "crossink_files": 23,
+      "sdk_files": 4
+    }
+  },
+  "binary_id_algorithm": {
+    "source_implementation_first_offset": 0,
+    "following_offsets_begin": [
+      1024,
+      4096
+    ],
+    "header_comment_first_offset": 256,
+    "header_comment_differs_from_implementation": true,
+    "original_epub_binary_id": "dab3083b8f3d04523f6fd97f4a32bb79",
+    "filename_id_differs": true
+  },
+  "media_and_auth": {
+    "actual_gui_written_credentials_binary_metadata_ask_consumed": true,
+    "only_peer_url_changed_through_actual_keyboard": true,
+    "cp_v1_against_consumed_efuse_verified": true,
+    "external_peer_checked_stock_auth_without_auth_values_in_public_record": true,
+    "guest_store_seeding": false,
+    "guest_firmware_or_memory_patches": false,
+    "actual_final_app0_bootloader_and_ota_selector_bytes_unchanged": true
+  },
+  "preserved_limits": {
+    "known_page1_xpath_boundary_failure_waived": false,
+    "positive_cohort_applied_original_uploaded_page0": true,
+    "general_remote_page_mapping_verified": false,
+    "public_or_tls_service_connectivity_verified": false
+  },
+  "harness": {
+    "path": "scripts/test-crossink-koreader-binary.py",
+    "sha256": "f425cd54fc75a6636c0aaef275a3301470103b7805f0199f704a08a8432294e4",
+    "network_settings_dependency_sha256": "9ba72b6925ab3040cae0d0ad015c690dcefa06f8d0750c62bbeb4f80fb145d01"
+  },
+  "host_gate": {
+    "focused_tests_passed": 16,
+    "exact_transcript_sha256": "b9fc5469687687898480547acc1c6ca7412aba5b0c8361fe98d71ed2a7043e1e"
+  }
+}

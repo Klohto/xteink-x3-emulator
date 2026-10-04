@@ -72,7 +72,18 @@
     },
     {
       "path": "docs/secure-wifi-validation.md",
-      "sha256": "1ed5395ff231ba0119696c23c655fcdc060736a1b4b4ed0dc31d3c3e6d075fc8"
+      "sha256": "6aa5c8ab30baa1ecf4de963567b46aa3453a25606a81fb2d8fb89114379d306a",
+      "bytes": 8652
     }
-  ]
+  ],
+  "assembled_flash_input_provenance": {
+    "pinned_assembled_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+    "full_flash_bytes": 16777216,
+    "unchanged_official_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+    "components": "Unchanged official CrossInk release application, converted compatible official Arduino SDK bootloader, generated partition table and official Arduino OTA data.",
+    "officially_released_full_image_asset": false,
+    "physical_factory_dump": false,
+    "factory_or_tuned_crossink_bootloader_settings_verified": false,
+    "original_receipt_fields_flags_and_hashes_retained": true
+  }
 }

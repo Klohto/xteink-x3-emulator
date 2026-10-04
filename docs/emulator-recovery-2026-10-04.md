@@ -16,7 +16,10 @@ Its first run, 37190985116, passed; the baseline Tests run 37190985125 passed
 native and Python 3.11/3.12. A local recovery snapshot has a separate commit
 identity and is not presented as that remote commit.
 
-Official full-flash, application, C3 ROM and SDK ZIP hashes were rechecked.
+Pinned assembled full-flash, official application, C3 ROM and SDK ZIP hashes were rechecked.
+The full-flash image contains the unchanged official application, converted
+compatible SDK bootloader, generated partition table and official OTA data;
+it is not a factory dump or an official full-image release asset.
 The recovered older local ELF and vanished private runs were not treated as
 newly verified. Fresh builds and actual stock-firmware executions establish the
 results below. New helpers were reconstructed where unpublished source was
@@ -77,7 +80,7 @@ Two earlier host QR-oracle failures are retained as failures, not passes.
 The adjacent [recovery evidence](evidence/rx-enable-recovery-2026-10-04.json)
 binds exact original receipts and source inputs without exposing private stores.
 
-## Selected native encryption
+## Verified 119 encryption predecessor
 
 The independent CCMP foundation passes RFC 3610 vectors, cross-provider
 ciphertexts, authenticated-header tests and sanitizer checks. A separately
@@ -86,17 +89,49 @@ skips. Its unchanged official CrossInk guest also passes page turns, saved
 progress and a new-CPU saved-page restore with zero text or tone differences.
 The actual Save/reconnect/Forget lifecycle, hotspot, captive DNS and strong
 Nearby EPUB reading/new-CPU regressions now pass. These gates select the bounded
-119-case backend locally and in the working patch. GitHub `main` remains RX114;
+119-case predecessor locally and in its working checkpoint. GitHub `main` remains RX114;
 automatic approval review blocked that ref update, and the source checkpoint
-has a separate review branch. The selected patch, ELF and complete source tree
-are bound in the native record below.
-See [the bounded native encryption record](native-ccmp-validation.md).
+has a separate review branch. The predecessor patch, ELF and complete source tree are bound in
+[its original 119 metadata](evidence/ccmp-native-reader-2026-10-04.json).
+Its legacy `official_full_flash_sha256` key names the assembled image described
+above, rather than an official full-image release. Its selected-default fields
+record the 119 checkpoint at that time; the newer 123 selection follows below.
+See [current bounded native encryption validation](native-ccmp-validation.md).
 
-## Work continuing
+## Selected 123 extension and closed functions
 
-Offline OPDS/KOReader editors and the remaining Nearby reading, folder,
-approval, collision, image and negative-protocol routes are undergoing actual
-stock-firmware tests. Their unfinished results are not included as passes here.
+The station-group extension now passes all 123 native cases across 12 suites
+with zero skips. Its patch is
+`4d0032fa016713eb7f3d16c3ad3f897a7f90ebddaa523b50afb805ed77d136a8`,
+source tree `86e40bf743c5a1e9f01624468fb42488f8adeb45`, and installed ELF
+`504f14e45bfa818889204225827821da56299112645a1e35f66ba9121f854f50`.
+Independent SDK/source review and all native TAPs were rehashed before selection.
+Actual core/cold reading, GTK1 broadcast DHCP, captive DNS, hotspot/join and
+ROM programming followed by original-app boot/read all pass. The new reader
+matches all nine 119 captures exactly. The current working patch and local
+runtime select this 123 backend; preserved 119 receipts retain their identity.
+See [native CCMP validation](native-ccmp-validation.md),
+[actual regressions](group123-native-regressions-2026-10-04.md), and
+[ROM programming/boot](flashing-validation-2026-10-04.md).
+
+The offline [OPDS/KOReader editor chain and Binary progress upload/Apply](network-settings-validation.md),
+[nonempty end-book actions](end-book-validation-2026-10-04.md), and
+[Nearby format, folder, collision, cancellation and identity routes](nearby-validation-2026-10-04.md)
+now have complete actual RX114 firmware receipts. Their backend identities and
+failed predecessors stay separate from the 119 selection gates. Nearby's two
+CRC faults prove refusal and file preservation, while their stock Cancel loop
+remains a failed UI result.
+
+[Quick Actions](quick-actions-validation-2026-10-04.md) now close the 19 remaining
+action entries and actual editor/cold persistence, with the five earlier
+dispatches explicitly distinguished. [OPDS/font error controls](network-error-controls-2026-10-04.md)
+pass genuine external failures and physical Retry/Back. The separate
+[Settings Wi-Fi route](wifi-settings-validation-2026-10-04.md) passes real entry,
+scan and exact Back restoration. [Received statistics](stats-peer-validation-2026-10-04.md)
+now prove genuine donor reading, three raw CISS exchanges, snapshot replacement,
+idempotence, nonzero aggregate/chart/streak output and exact cold restoration.
+All ten participating statistics CPUs stop cleanly with complete traces.
+The records preserve original host-oracle failures and source/trace boundaries.
 [Stock firmware limitations](stock-firmware-limitations.md) remain intact.
 
 `all_functions_verified=false`, `complete_machine_verified=false`,
