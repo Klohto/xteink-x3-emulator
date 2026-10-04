@@ -1,0 +1,32 @@
+{
+  "repository": "Klohto/xteink-x3-emulator",
+  "commit": "644dc37b41ae3a1a680d6ea9ac1bb58c20f840f2",
+  "tree": "c9f5b6b63fb6c84f261807c6487b340d5d6e292b",
+  "run_id": 37172452436,
+  "run_url": "https://github.com/Klohto/xteink-x3-emulator/actions/runs/37172452436",
+  "observed_date": "2026-10-04",
+  "run_attempt": 1,
+  "jobs": [
+    {
+      "name": "native",
+      "id": 111348019282,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "python (3.12)",
+      "id": 111348019353,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "python (3.11)",
+      "id": 111348019363,
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "scope": "CI validates the published 111-native-case source checkpoint. It does not validate newer RX-enable or CCMP candidates or all CrossInk functions.",
+  "all_functions_verified": false,
+  "speed_selection_allowed": false
+}
