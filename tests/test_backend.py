@@ -182,7 +182,7 @@ class BackendRunTests(unittest.TestCase):
                     prop = arguments["property"]
                     value = buttons if prop == "buttons" else PANEL_UNSUPPORTED if prop == "unsupported-count" and arguments["path"].endswith("epd") else SPI_UNSUPPORTED if prop == "unsupported-reads" else 1000000000 if prop == "power-button-hold-ns" else False if prop in ("power-button", "sleeping", "deep-sleep-active", "analog-modelled", "rtc-watchdog-modelled", "rtc-watchdog-timing-calibrated", "sleep-transition-calibrated", "rtc-crc-hardware-verified", "rtc-crc-timing-calibrated") else 0
                     if prop == "unsupported-io-json": value = '[]'
-                    if prop.endswith(("-modelled", "-calibrated")): value = False
+                    if prop.endswith(("-modelled", "-calibrated")) or prop in ("rx-enabled", "rx-context-logging"): value = False
                     value = COUNTER_OVERRIDES.get(arguments["path"] + ":" + prop, value)
                 elif command == "qom-set": buttons = arguments["value"]
                 elif command == "stop": running = False
@@ -381,6 +381,49 @@ class BackendRunTests(unittest.TestCase):
                 self.assertEqual(result["validity"]["unsupported_features_checked"], checked)
                 self.assertEqual(result["validity"]["diagnostics_clean"], clean)
                 self.assertFalse(result["model_limits"]["wifi_tx_aggregation_modelled"] if not missing else False)
+                self.assertFalse(result["timing"]["speed_selection_allowed"])
+
+    def test_rx_enable_counts_are_complete_typed_and_disjoint_from_filter_drops(self):
+        from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_RX_OBSERVATIONS, WIFI_RX_ENABLE_OBSERVATIONS
+        variants = (
+            ("normal-disabled", None, 5, 2, 3, True, False, True, True, 0),
+            ("reenabled", None, 5, 2, 3, True, True, True, True, 0),
+            ("unexplained", None, 8, 2, 3, True, True, True, False, 3),
+            ("overlap", None, 4, 2, 3, True, False, False, False, 2),
+            ("missing", "rx-enabled", 5, 2, 3, True, False, False, False, 3),
+            ("negative", None, 5, 2, -1, True, False, False, False, 3),
+            ("boolean-count", None, 5, 2, True, True, False, False, False, 3),
+            ("integer-state", None, 5, 2, 3, True, 0, False, False, 3),
+            ("integer-model", None, 5, 2, 3, 1, False, False, False, 3),
+            ("unmodelled", None, 5, 2, 3, False, False, True, False, 3),
+        )
+        for label, missing, total, filtered, disabled, modelled, enabled, checked, clean, unexplained in variants:
+            with self.subTest(label=label):
+                self.output = self.root / label
+                self.install_fake_backend(extra_properties={
+                    "/machine/wifi": list(WIFI_BASE_OBSERVATIONS + WIFI_RX_OBSERVATIONS)
+                        + [prop for prop in WIFI_RX_ENABLE_OBSERVATIONS if prop != missing]
+                        + ["rx-context-logging"],
+                    "/machine/regi2c": ["phy-handshake-modelled", "synthetic-measurements"],
+                }, counter_overrides={
+                    "/machine/wifi:rx-dropped": total,
+                    "/machine/wifi:rx-filter-dropped-frames": filtered,
+                    "/machine/wifi:rx-group-policy-modelled": False,
+                    "/machine/wifi:rx-disabled-dropped-frames": disabled,
+                    "/machine/wifi:rx-dma-enable-modelled": modelled,
+                    "/machine/wifi:rx-enabled": enabled,
+                    "/machine/wifi:rx-context-logging": label == "reenabled",
+                })
+                result = run(self.config(wifi=True))
+                self.assertEqual(result["wifi"]["rx_enable_telemetry_valid"], checked)
+                self.assertEqual(result["validity"]["unsupported_features_checked"], checked)
+                self.assertEqual(result["validity"]["diagnostics_clean"], clean)
+                self.assertEqual(result["wifi"]["rx_unexplained_drops"], unexplained)
+                self.assertEqual(result["final_state"]["wifi"]["rx-dropped"], total)
+                self.assertEqual(result["final_state"]["wifi"]["rx-disabled-dropped-frames"], disabled)
+                self.assertIs(result["final_state"]["wifi"]["rx-context-logging"], label == "reenabled")
+                self.assertIs(result["model_limits"]["wifi_rx_dma_enable_modelled"],
+                              modelled if type(modelled) is bool else False)
                 self.assertFalse(result["timing"]["speed_selection_allowed"])
 
     def test_synthetic_mac_random_seed_is_explicit_bounded_and_requires_observation(self):

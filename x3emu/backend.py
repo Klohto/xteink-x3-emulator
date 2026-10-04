@@ -88,12 +88,15 @@ WIFI_PREFIX_OBSERVATIONS = ("tx-buffer-prefix-stripped-frames", "tx-buffer-prefi
                             "tx-buffer-prefix-modelled", "tx-aggregation-modelled")
 WIFI_RX_OBSERVATIONS = ("rx-interface0-frames", "rx-interface1-frames", "rx-filter-dropped-frames",
                         "rx-match-unverified-frames", "rx-group-policy-modelled")
+WIFI_RX_ENABLE_OBSERVATIONS = ("rx-disabled-dropped-frames", "rx-dma-enable-modelled", "rx-enabled")
 WIFI_RANDOM_OBSERVATIONS = ("random-seed", "random-state", "random-read-count", "random-source-synthetic",
                             "random-entropy-modelled", "random-timing-calibrated", "random-state-migration-modelled")
 DEVICE_PROPERTIES["wifi"] += WIFI_PEER_OBSERVATIONS
 DEVICE_PROPERTIES["wifi"] += WIFI_FCS_OBSERVATIONS
 DEVICE_PROPERTIES["wifi"] += WIFI_PREFIX_OBSERVATIONS
 DEVICE_PROPERTIES["wifi"] += WIFI_RX_OBSERVATIONS
+DEVICE_PROPERTIES["wifi"] += WIFI_RX_ENABLE_OBSERVATIONS
+DEVICE_PROPERTIES["wifi"] += ("rx-context-logging",)
 DEVICE_PROPERTIES["wifi"] += WIFI_RANDOM_OBSERVATIONS
 MACHINE_STATE_PROPERTIES = MACHINE_PROPERTIES + ("virtual-time-ns", "power-button", "power-button-hold-ns", "unsupported-io-json")
 REQUIRED_COUNTERS = {"machine": MACHINE_PROPERTIES,
@@ -614,6 +617,7 @@ def _record_capabilities(result: dict, state: dict) -> None:
         "wifi_peer_clock_sync_modelled": ("wifi", "peer-clock-sync-modelled"),
         "wifi_peer_link_migration_modelled": ("wifi", "peer-link-migration-modelled"),
         "wifi_rx_group_policy_modelled": ("wifi", "rx-group-policy-modelled"),
+        "wifi_rx_dma_enable_modelled": ("wifi", "rx-dma-enable-modelled"),
         "wifi_tx_buffer_prefix_modelled": ("wifi", "tx-buffer-prefix-modelled"),
         "wifi_tx_aggregation_modelled": ("wifi", "tx-aggregation-modelled"),
         "wifi_random_source_synthetic": ("wifi", "random-source-synthetic"),
@@ -623,6 +627,9 @@ def _record_capabilities(result: dict, state: dict) -> None:
     }
     for name, (device, prop) in properties.items():
         if prop in state.get(device, {}):
+            if name == "wifi_rx_dma_enable_modelled" and type(state[device][prop]) is not bool:
+                result["model_limits"][name] = False
+                continue
             result["model_limits"][name] = state[device][prop]
     if "synthetic-measurements" in state.get("regi2c", {}):
         result["wifi"]["phy_synthetic_measurements"] = state["regi2c"]["synthetic-measurements"]
@@ -831,6 +838,19 @@ def run(config: RunConfig) -> dict:
                     # Other drops and provisional classification remain errors.
                     drops -= wifi_state["rx-filter-dropped-frames"]
                 unsupported.append(wifi_state.get("rx-match-unverified-frames", 0))
+            if any(prop in wifi_state for prop in WIFI_RX_ENABLE_OBSERVATIONS):
+                valid_enable = all(prop in wifi_state for prop in WIFI_RX_ENABLE_OBSERVATIONS)
+                valid_enable = valid_enable and type(wifi_state["rx-disabled-dropped-frames"]) is int \
+                    and wifi_state["rx-disabled-dropped-frames"] >= 0
+                valid_enable = valid_enable and all(type(wifi_state[prop]) is bool
+                                                   for prop in WIFI_RX_ENABLE_OBSERVATIONS[1:])
+                valid_enable = valid_enable and type(drops) is int \
+                    and wifi_state["rx-disabled-dropped-frames"] <= drops
+                required = required and valid_enable
+                result["wifi"]["rx_enable_telemetry_valid"] = valid_enable
+                if valid_enable and wifi_state["rx-dma-enable-modelled"]:
+                    # Source-backed RX-off drops are disjoint from address-filter drops.
+                    drops -= wifi_state["rx-disabled-dropped-frames"]
             result["wifi"]["rx_unexplained_drops"] = drops
             unsupported.extend(wifi_state.get(prop, 0) for prop in ("unsupported-accesses", "bad-dma"))
             unsupported.append(drops)

@@ -10,6 +10,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+validation = ["cryptography==46.0.0"]
+
 [project.urls]
 Repository = "https://github.com/Klohto/xteink-x3-emulator"
 

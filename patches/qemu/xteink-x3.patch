@@ -5427,10 +5427,10 @@ index 0000000..6626e7d
 +type_init(xteink_x3_adc_register_types)
 diff --git a/hw/net/esp32c3_wifi.c b/hw/net/esp32c3_wifi.c
 new file mode 100644
-index 0000000..48ad336
+index 0000000..f7e93f4
 --- /dev/null
 +++ b/hw/net/esp32c3_wifi.c
-@@ -0,0 +1,1042 @@
+@@ -0,0 +1,1123 @@
 +/*
 + * ESP32-C3 Wi-Fi MAC and an open virtual 802.11 access point.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -5512,10 +5512,56 @@ index 0000000..48ad336
 +                MEMTXATTRS_UNSPECIFIED, data, len)) == MEMTX_OK;
 +}
 +
++static bool wifi_rx_enabled(ESP32C3WifiState *s)
++{
++    /* Official C3 libpp hal_mac_rx_enable/disable control bit31 here. */
++    return !!(s->regs[0x084 / 4] & BIT(31));
++}
++
++static void wifi_rx_control_context(ESP32C3WifiState *s, uint32_t value)
++{
++    if (!s->rx_context_logging || s->rx_control_logs >= 128) {
++        return;
++    }
++    s->rx_control_logs++;
++    qemu_log_mask(LOG_UNIMP,
++                  "esp32c3-wifi: RX control at=%" PRId64
++                  " old=%08x new=%08x base=%08x next=%08x last=%08x\n",
++                  qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL),
++                  s->regs[0x084 / 4], value, s->rx_base, s->rx_next,
++                  s->last_rx_desc);
++}
++
++static void wifi_rx_dma_context(ESP32C3WifiState *s, const char *phase,
++                                uint32_t desc, uint32_t d0, uint32_t buf,
++                                uint32_t next, uint32_t total)
++{
++    if (!s->rx_context_logging || s->rx_dma_logs >= 16) {
++        return;
++    }
++    s->rx_dma_logs++;
++    /* Log values already read by this operation; perform no diagnostic DMA. */
++    qemu_log_mask(LOG_UNIMP,
++                  "esp32c3-wifi: RX DMA failure at=%" PRId64
++                  " phase=%s control=%08x desc=%08x d0=%08x"
++                  " buf=%08x next=%08x bytes=%u\n",
++                  qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL), phase,
++                  s->regs[0x084 / 4], desc, d0, buf, next, total);
++}
++
 +static bool wifi_queue(ESP32C3WifiState *s, const uint8_t *data, size_t len)
 +{
 +    ESP32C3AirFrame *f;
-+    if (len > sizeof(f->data) || s->queued >= 128) {
++    if (len > sizeof(f->data)) {
++        s->rx_dropped++;
++        return false;
++    }
++    if (!wifi_rx_enabled(s)) {
++        s->rx_dropped++;
++        s->rx_disabled_dropped++;
++        return true; /* Reception is disabled; consume without queuing DMA. */
++    }
++    if (s->queued >= 128) {
 +        s->rx_dropped++;
 +        return false;
 +    }
@@ -6054,6 +6100,12 @@ index 0000000..48ad336
 +    uint8_t descriptor[12], data[48 + 2304 + 4];
 +    uint32_t desc, d0, buf, next, flags, total = 48 + f->length + 4;
 +    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++    if (!wifi_rx_enabled(s)) {
++        /* Guard even the previous-descriptor probe before guest buffers free. */
++        s->rx_dropped++;
++        s->rx_disabled_dropped++;
++        return true;
++    }
 +    if (!s->rx_next || now < s->last_rx_ns + AIR_POLL_NS) {
 +        return false;
 +    }
@@ -6065,6 +6117,7 @@ index 0000000..48ad336
 +    desc = DMA_HIGH | (s->rx_next & 0xfffff);
 +    if (!wifi_dma(desc, descriptor, 12, false)) {
 +        s->bad_dma++;
++        wifi_rx_dma_context(s, "descriptor-read", desc, 0, 0, 0, total);
 +        return true;
 +    }
 +    d0 = ldl_le_p(descriptor); buf = ldl_le_p(descriptor + 4);
@@ -6088,12 +6141,14 @@ index 0000000..48ad336
 +    stl_le_p(data + 48 + f->length, crc32(0, f->data, f->length));
 +    if (!wifi_dma(buf, data, total, true)) {
 +        s->bad_dma++;
++        wifi_rx_dma_context(s, "packet-write", desc, d0, buf, next, total);
 +        return true;
 +    }
 +    stl_le_p(descriptor, (d0 & ~(0xfffu << 12)) | (total << 12) |
 +                          BIT(30) | BIT(31));
 +    if (!wifi_dma(desc, descriptor, 4, true)) {
 +        s->bad_dma++;
++        wifi_rx_dma_context(s, "descriptor-write", desc, d0, buf, next, total);
 +        return true;
 +    }
 +    s->rx_last = (desc & 0xfffff) | BIT(24);
@@ -6183,6 +6238,9 @@ index 0000000..48ad336
 +    uint32_t mask = wifi_match_register_mask(addr);
 +    if (s->reset_held) {
 +        return;
++    }
++    if (addr == 0x084) {
++        wifi_rx_control_context(s, v);
 +    }
 +    s->regs[addr / 4] = v;
 +    switch (addr) {
@@ -6304,6 +6362,21 @@ index 0000000..48ad336
 +static bool wifi_false(Object *obj, Error **errp) { return false; }
 +static bool wifi_true(Object *obj, Error **errp) { return true; }
 +
++static bool wifi_rx_is_enabled(Object *obj, Error **errp)
++{
++    return wifi_rx_enabled(ESP32C3_WIFI(obj));
++}
++
++static bool wifi_rx_context_logging_get(Object *obj, Error **errp)
++{
++    return ESP32C3_WIFI(obj)->rx_context_logging;
++}
++
++static void wifi_rx_context_logging_set(Object *obj, bool value, Error **errp)
++{
++    ESP32C3_WIFI(obj)->rx_context_logging = value;
++}
++
 +static bool wifi_peer_configured(Object *obj, Error **errp)
 +{
 +    return qemu_chr_fe_backend_connected(&ESP32C3_WIFI(obj)->peer_chr);
@@ -6355,6 +6428,14 @@ index 0000000..48ad336
 +    object_property_add_bool(obj, "rx-group-policy-modelled",
 +                             wifi_false, NULL);
 +    object_property_add_uint64_ptr(obj, "rx-dropped", &s->rx_dropped, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "rx-disabled-dropped-frames",
++                                   &s->rx_disabled_dropped, OBJ_PROP_FLAG_READ);
++    object_property_add_bool(obj, "rx-dma-enable-modelled", wifi_true, NULL);
++    object_property_add_bool(obj, "rx-enabled", wifi_rx_is_enabled, NULL);
++    object_property_set_default_bool(
++        object_property_add_bool(obj, "rx-context-logging",
++                                 wifi_rx_context_logging_get,
++                                 wifi_rx_context_logging_set), false);
 +    object_property_add_uint64_ptr(obj, "bad-dma", &s->bad_dma, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "ethernet-tx", &s->eth_tx, OBJ_PROP_FLAG_READ);
 +    object_property_add_uint64_ptr(obj, "ethernet-rx", &s->eth_rx, OBJ_PROP_FLAG_READ);
@@ -8696,10 +8777,10 @@ index 0000000..949ed54
 +#endif
 diff --git a/include/hw/net/esp32c3_wifi.h b/include/hw/net/esp32c3_wifi.h
 new file mode 100644
-index 0000000..fbd48c3
+index 0000000..90ac30a
 --- /dev/null
 +++ b/include/hw/net/esp32c3_wifi.h
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,66 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#ifndef HW_ESP32C3_WIFI_H
 +#define HW_ESP32C3_WIFI_H
@@ -8752,6 +8833,9 @@ index 0000000..fbd48c3
 +    uint64_t tx_fcs_stripped, tx_fcs_unverified, tx_length_errors;
 +    uint64_t tx_prefix_stripped, tx_prefix_errors;
 +    uint64_t rx_interface0, rx_interface1, rx_filter_dropped, rx_unverified;
++    uint64_t rx_disabled_dropped;
++    bool rx_context_logging;
++    unsigned rx_control_logs, rx_dma_logs;
 +    uint64_t unsupported, bad_dma, beacons, auth_requests, assoc_requests;
 +    CharBackend peer_chr;
 +    bool peer_only, peer_connected;
@@ -11642,10 +11726,10 @@ index 0000000..475b32f
 +}
 diff --git a/tests/qtest/esp32c3-wifi-test.c b/tests/qtest/esp32c3-wifi-test.c
 new file mode 100644
-index 0000000..def1a0f
+index 0000000..2b9c083
 --- /dev/null
 +++ b/tests/qtest/esp32c3-wifi-test.c
-@@ -0,0 +1,1119 @@
+@@ -0,0 +1,1329 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
 +#include "qemu/bswap.h"
@@ -11903,6 +11987,7 @@ index 0000000..def1a0f
 +
 +static void arm_rx(QTestState *qts, uint32_t buffer, unsigned size)
 +{
++    qtest_writel(qts, MAC + 0x084, 1u << 31);
 +    qtest_writel(qts, RX_DESC, (1u << 31) | size);
 +    qtest_writel(qts, RX_DESC + 4, buffer);
 +    qtest_writel(qts, RX_DESC + 8, 0);
@@ -12103,7 +12188,7 @@ index 0000000..def1a0f
 +    wait_count(qts, "peer-rx-frames", 2);
 +    g_assert_cmpuint(count(qts, "peer-malformed-inputs"), >, 0);
 +    qtest_writel(qts, RX_DESC, (1u << 31) | 2048);
-+    qtest_writel(qts, MAC + 0x084, 1);
++    qtest_writel(qts, MAC + 0x084, (1u << 31) | 1);
 +    qtest_clock_step(qts, 2000000);
 +    g_assert_cmpuint(count(qts, "rx-frames"), ==, 2);
 +    assert_rx_frame(qts, frame);
@@ -12132,6 +12217,7 @@ index 0000000..def1a0f
 +    g_assert_cmpuint(count(qts, "unsupported-accesses"), ==, 1);
 +    frame[1] = 0;
 +    wire_packet(wire, frame, 1);
++    qtest_writel(qts, MAC + 0x084, 1u << 31);
 +    for (index = 0; index < 129; index++) {
 +        host_send(fd, wire, sizeof(wire));
 +    }
@@ -12724,6 +12810,208 @@ index 0000000..def1a0f
 +    g_assert_nonnull(strstr(errors, "Wi-Fi random-seed must be nonzero"));
 +}
 +
++static void test_rx_disabled_null_and_freed_descriptors(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t frame[40], wire[48], before[128], after[128];
++    uint8_t descriptor_before[12], descriptor_after[12];
++
++    wait_connected(qts, true);
++    action_frame(frame, 1, 2);
++    wire_packet(wire, frame, 1);
++    program_filter(qts, 0, frame + 4, NULL);
++    memset(before, 0x5a, sizeof(before));
++    qtest_memwrite(qts, RX_BUFFER, before, sizeof(before));
++    g_assert_false(flag(qts, "rx-enabled"));
++    g_assert_true(flag(qts, "rx-dma-enable-modelled"));
++    g_assert_false(flag(qts, "rx-context-logging"));
++
++    /* Cold RX has no descriptor. A valid incoming MPDU is consumed safely. */
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 1);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++
++    /* The official firmware frees its descriptors after disabling RX. */
++    qtest_writel(qts, RX_DESC, 0xabba1234);
++    qtest_writel(qts, RX_DESC + 4, 0x10);
++    qtest_writel(qts, RX_DESC + 8, 0);
++    qtest_writel(qts, MAC + 0x088, RX_DESC);
++    qtest_memread(qts, RX_DESC, descriptor_before, sizeof(descriptor_before));
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 2);
++    qtest_clock_step(qts, 2000000);
++    qtest_memread(qts, RX_DESC, descriptor_after, sizeof(descriptor_after));
++    qtest_memread(qts, RX_BUFFER, after, sizeof(after));
++    g_assert_cmpmem(descriptor_before, sizeof(descriptor_before),
++                    descriptor_after, sizeof(descriptor_after));
++    g_assert_cmpmem(before, sizeof(before), after, sizeof(after));
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 2);
++    g_assert_cmpuint(count(qts, "rx-dropped"), ==, 2);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 0);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    g_assert_cmpuint(count(qts, "peer-dropped-frames"), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++    g_assert_cmpuint(count(qts, "unsupported-accesses"), ==, 0);
++
++    /* This real invalid DMA pointer still fails when RX is enabled. */
++    qtest_writel(qts, RX_DESC, (1u << 31) | 2048);
++    qtest_writel(qts, MAC + 0x084, (1u << 31) | 1);
++    g_assert_true(flag(qts, "rx-enabled"));
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 3);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 1);
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 2);
++    g_assert_cmpuint(count(qts, "rx-dropped"), ==, 2);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 0);
++    g_assert_cmpuint(count(qts, "unsupported-accesses"), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++    qtest_memread(qts, RX_BUFFER, after, sizeof(after));
++    g_assert_cmpmem(before, sizeof(before), after, sizeof(after));
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_rx_pending_disabled_no_replay_and_reenable(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t frame[40], wire[48], before[128], after[128];
++    uint8_t descriptors_before[24], descriptors_after[24];
++    const uint32_t second = RX_DESC + 12;
++
++    wait_connected(qts, true);
++    action_frame(frame, 1, 2);
++    wire_packet(wire, frame, 1);
++    program_filter(qts, 0, frame + 4, NULL);
++    arm_rx(qts, RX_BUFFER, 2048);
++    qtest_writel(qts, RX_DESC + 8, second);
++    qtest_writel(qts, second, (1u << 31) | 2048);
++    qtest_writel(qts, second + 4, RX_BUFFER);
++    qtest_writel(qts, second + 8, 0);
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 1);
++    qtest_clock_step(qts, 2000000);
++    assert_rx_frame(qts, frame);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0x08c), ==, second & 0xfffff);
++    qtest_writel(qts, MAC + 0xc40, UINT32_MAX);
++
++    /* Queue while enabled, then disable before its normal poll deadline. */
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 2);
++    qtest_writel(qts, MAC + 0x084, 0);
++    g_assert_false(flag(qts, "rx-enabled"));
++    for (unsigned offset = 0; offset < 24; offset += 12) {
++        qtest_writel(qts, RX_DESC + offset, 0xabba1234);
++        qtest_writel(qts, RX_DESC + offset + 4, 0x10);
++        qtest_writel(qts, RX_DESC + offset + 8, 0);
++    }
++    memset(before, 0xa7, sizeof(before));
++    qtest_memwrite(qts, RX_BUFFER, before, sizeof(before));
++    qtest_memread(qts, RX_DESC, descriptors_before, sizeof(descriptors_before));
++    qtest_clock_step(qts, 2000000);
++    qtest_memread(qts, RX_DESC, descriptors_after, sizeof(descriptors_after));
++    qtest_memread(qts, RX_BUFFER, after, sizeof(after));
++    g_assert_cmpmem(descriptors_before, sizeof(descriptors_before),
++                    descriptors_after, sizeof(descriptors_after));
++    g_assert_cmpmem(before, sizeof(before), after, sizeof(after));
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "rx-dropped"), ==, 1);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    g_assert_cmphex(qtest_readl(qts, MAC + 0xc3c), ==, 0);
++
++    /* Re-enable the unchanged next pointer; no old packet is replayed. */
++    qtest_writel(qts, second, (1u << 31) | 2048);
++    qtest_writel(qts, second + 4, RX_BUFFER);
++    qtest_writel(qts, MAC + 0x084, 1u << 31);
++    qtest_clock_step(qts, 2000000);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 1);
++    qtest_memread(qts, RX_BUFFER, after, sizeof(after));
++    g_assert_cmpmem(before, sizeof(before), after, sizeof(after));
++    frame[32] ^= 0xff;
++    wire_packet(wire, frame, 1);
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 3);
++    qtest_clock_step(qts, 2000000);
++    assert_rx_frame(qts, frame);
++    g_assert_cmpuint(count(qts, "rx-frames"), ==, 2);
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    g_assert_cmpuint(count(qts, "unsupported-accesses"), ==, 0);
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
++static void test_rx_enable_reset_readonly_and_lifetime_observations(void)
++{
++    PeerListener listener = reserve_listener();
++    QTestState *qts = start_peer(&listener, true);
++    int fd = connect_peer(listener.port);
++    uint8_t frame[40], wire[48];
++
++    wait_connected(qts, true);
++    action_frame(frame, 1, 2);
++    wire_packet(wire, frame, 1);
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-rx-frames", 1);
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 1);
++    g_assert_false(flag(qts, "rx-context-logging"));
++    qtest_qmp_assert_success(qts,
++        "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/wifi',"
++        " 'property': 'rx-context-logging', 'value': true } }");
++    g_assert_true(flag(qts, "rx-context-logging"));
++    qobject_unref(qtest_qmp_assert_failure_ref(qts,
++        "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/wifi',"
++        " 'property': 'rx-enabled', 'value': false } }"));
++    qobject_unref(qtest_qmp_assert_failure_ref(qts,
++        "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/wifi',"
++        " 'property': 'rx-dma-enable-modelled', 'value': false } }"));
++    qobject_unref(qtest_qmp_assert_failure_ref(qts,
++        "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/wifi',"
++        " 'property': 'rx-disabled-dropped-frames', 'value': 0 } }"));
++    arm_rx(qts, RX_BUFFER, 2048);
++    g_assert_true(flag(qts, "rx-enabled"));
++    qtest_writel(qts, 0x60026018, 1u << 2);
++    g_assert_false(flag(qts, "rx-enabled"));
++    g_assert_true(flag(qts, "rx-context-logging"));
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 1);
++    arm_rx(qts, RX_BUFFER, 2048); /* Held reset ignores enable writes. */
++    g_assert_false(flag(qts, "rx-enabled"));
++    qtest_writel(qts, 0x60026018, 0);
++    arm_rx(qts, RX_BUFFER, 2048);
++    g_assert_true(flag(qts, "rx-enabled"));
++    qtest_qmp_assert_success(qts, "{ 'execute': 'system_reset' }");
++    qtest_qmp_eventwait(qts, "RESET");
++    g_assert_false(flag(qts, "rx-enabled"));
++    g_assert_true(flag(qts, "rx-context-logging"));
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "rx-dropped"), ==, 1);
++    g_assert_cmpuint(count(qts, "bad-dma"), ==, 0);
++    g_assert_cmpuint(count(qts, "unsupported-accesses"), ==, 0);
++    qtest_qmp_assert_success(qts,
++        "{ 'execute': 'qom-set', 'arguments': { 'path': '/machine/wifi',"
++        " 'property': 'rx-context-logging', 'value': false } }");
++    g_assert_false(flag(qts, "rx-context-logging"));
++
++    /* RX-off does not waive the transport's unsupported encrypted-frame rule. */
++    frame[1] = 0x40;
++    wire_packet(wire, frame, 1);
++    host_send(fd, wire, sizeof(wire));
++    wait_count(qts, "peer-unmodelled-frames", 1);
++    g_assert_cmpuint(count(qts, "unsupported-accesses"), ==, 1);
++    g_assert_cmpuint(count(qts, "peer-rx-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "rx-disabled-dropped-frames"), ==, 1);
++    g_assert_cmpuint(count(qts, "rx-dropped"), ==, 1);
++    close_socket(fd);
++    qtest_quit(qts);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -12763,6 +13051,12 @@ index 0000000..def1a0f
 +                   test_mac_random_reset_continuity_and_readonly);
 +    qtest_add_func("/esp32c3/wifi/mac-random-rejects-zero-seed",
 +                   test_mac_random_rejects_zero_seed);
++    qtest_add_func("/esp32c3/wifi/rx-disabled-null-freed-descriptors",
++                   test_rx_disabled_null_and_freed_descriptors);
++    qtest_add_func("/esp32c3/wifi/rx-pending-disabled-no-replay-reenable",
++                   test_rx_pending_disabled_no_replay_and_reenable);
++    qtest_add_func("/esp32c3/wifi/rx-enable-reset-readonly-lifetime",
++                   test_rx_enable_reset_readonly_and_lifetime_observations);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/libqtest.c b/tests/qtest/libqtest.c

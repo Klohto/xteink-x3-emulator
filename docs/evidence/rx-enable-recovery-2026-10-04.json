@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "kind": "verified-rx-enable-recovery-checkpoint",
+  "official_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+  "upstream_revision": "febae182e132e4055529be423a818225ebddaa3a",
+  "source_tree": "a7349ac58dfac44abf69368d95bef6c213f8205b",
+  "patch_sha256": "844a36765cd0bcec8e040c8197fceb40c9056647ac2610a12464dee21a24b480",
+  "native_elf_sha256": "56514829d86aa1bc20007bb76e129e36583897a3216e0fe15d2a3f5942f1acfa",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "native_suites": 12,
+  "native_passed": 114,
+  "native_skipped": 0,
+  "native_original_receipt_sha256": "204d25038fccec8e15fdd4bcd5c5348011b2f1b0e24dde13dba8c85a81c1f87f",
+  "native_gate_sha256": "053e67de3595f3762fed48018e584d1ba24028638749dcec21488c8c56b016f8",
+  "independent_source_review_sha256": "b334d329bb37b0b6c4d18fa70c975bbe45cbb02e3adde8124e627264f3a4199a",
+  "primary_rx_enable_audit_sha256": "adf5d91868ed1cef9b9add1cf4605621ac4ed6d68e2ba7a489c07edf551e2e74",
+  "python_optional_rx_gate": {
+    "passed": 59,
+    "transcript_sha256": "6c354ed9a9d44d56d5774c304eaa95ab39eb5c3f763edd7f6a59ae39ea809368"
+  },
+  "external_secure_peer_gate": {
+    "passed": 20,
+    "cryptography_version": "46.0.0",
+    "transcript_sha256": "d1af577045fcdb99e2e4bc11853d14ba0e19db2ccba2f56049ddbd856b0218ba",
+    "native_secure_guest_verified": false
+  },
+  "source_recovery": {
+    "remote_commit": "ff545f91ce75e2e08839139bcfed4dc4a41dbb27",
+    "git_tree": "135af44f5e3ce942e35aef9d98a02cfaf21d9fe9",
+    "source_blobs_verified": 332,
+    "existing_gzip_blobs_recovered": 57,
+    "verification_sha256": "d1c7a62681dfc1d449d9e43e6932a44878893ceafa356df9ecffac4cf0a4d64d",
+    "unpublished_lost_private_runs_recovered": false
+  },
+  "actual_guest_gates": [
+    {
+      "name": "reader",
+      "original_receipt_sha256": "9f81e07d192393592dcd87cbfb85f99a9fbcdef8716bd554b70f346c51912807",
+      "actual_checks_verified": true,
+      "outer_functional_pass": true,
+      "original_nested_constructor_flags_false": false
+    },
+    {
+      "name": "reader-cold",
+      "original_receipt_sha256": "2b60c55110c9ae81cf46486cc10318402eb5e679c04ba74d161900558d55013a",
+      "actual_checks_verified": true,
+      "outer_functional_pass": true,
+      "original_nested_constructor_flags_false": false
+    },
+    {
+      "name": "hidden-open",
+      "original_receipt_sha256": "0f11bfbccc971889139761e0e884c0cb39c17a7fcfa2aea46d4583b3389d590c",
+      "actual_checks_verified": true,
+      "outer_functional_pass": true,
+      "original_nested_constructor_flags_false": false
+    },
+    {
+      "name": "hotspot",
+      "original_receipt_sha256": "07048261c68c66bd65c058e4f7975c8c7ff1f96ab2af06997fecfefb62d7cbdb",
+      "actual_checks_verified": true,
+      "outer_functional_pass": true,
+      "original_nested_constructor_flags_false": true
+    },
+    {
+      "name": "captive-dns",
+      "original_receipt_sha256": "515cb18f49b5bc1daf62f272f192d375105ec5b6c9d31fee7658a98de496cff1",
+      "actual_checks_verified": true,
+      "outer_functional_pass": true,
+      "original_nested_constructor_flags_false": true
+    }
+  ],
+  "selected_install_archive_sha256": "2d24d5da20a66d3ef2a29b0380ed6a546aa5f63d29651a92a0fb4406a645e05e",
+  "raw_counters_preserved": true,
+  "full_native_panel_traces_checked": true,
+  "rx_context_logging_default": false,
+  "actual_inputs_private": true,
+  "firmware_modified": false,
+  "all_functions_verified": false,
+  "complete_machine_verified": false,
+  "physical_timing_verified": false,
+  "speed_selection_allowed": false,
+  "publish_python_gate": {
+    "total": 242,
+    "passed": 241,
+    "skipped": 1,
+    "expected_skip": "opt-in ROM download",
+    "transcript_path": "docs/evidence/rx114-python-gate.txt",
+    "transcript_sha256": "7b4c0bfeff45cb774d00005ebca125c187cb65dc5855bcf5b085ba8fc0d39898",
+    "frozen_code_tests_and_patch_unchanged": true
+  }
+}
