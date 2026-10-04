@@ -65,7 +65,14 @@ acceptance remains false.
 The first passing hotspot and DNS originals contain inherited false nested
 constructor flags despite all final guest checks passing. They are retained
 unchanged; their checks, trace accounting, native counters and exits were
-reviewed independently. A corrected harness and fresh final cohort are pending.
+reviewed independently. Corrected harnesses now also have fresh final cohorts:
+hotspot receipt `15ce8dd7add9db8fdbc83dddb0378b839d3080e4c9f578c29689e201e7ac583c`
+and captive-DNS receipt
+`9160d4706ac92900d57a84c7936f2d5ed37b09c4355b90cb14539ae4e4becfda`.
+Every final guest and outer predicate passes; all three native children stop
+with status zero and complete panel traces. The corrected QR oracle compares
+the decoder's typed QR enum, and the DNS harness freezes all consumed helpers
+before constructing its guest.
 Two earlier host QR-oracle failures are retained as failures, not passes.
 The adjacent [recovery evidence](evidence/rx-enable-recovery-2026-10-04.json)
 binds exact original receipts and source inputs without exposing private stores.
@@ -73,10 +80,13 @@ binds exact original receipts and source inputs without exposing private stores.
 ## Work continuing
 
 The independent CCMP foundation passes RFC 3610 vectors, cross-provider
-ciphertexts, authenticated-header tests and sanitizer checks. The external WPA2
-peer and physical Save/reconnect/Forget harness pass 20 host checks. The native
-CCMP integration is still a private draft awaiting its source and device gates;
-encrypted guest DHCP and the secure lifecycle are not yet verified.
+ciphertexts, authenticated-header tests and sanitizer checks. A separately
+built candidate now passes 119 native cases in the same 12 suites, with no
+skips. Its unchanged official CrossInk guest also passes page turns, saved
+progress and a new-CPU saved-page restore with zero text or tone differences.
+The candidate is not yet selected here. The actual Save/reconnect/Forget
+lifecycle and open-network regression gates must complete before selection.
+See [the bounded native encryption record](native-ccmp-validation.md).
 
 Offline OPDS/KOReader editors and the remaining Nearby reading, folder,
 approval, collision, image and negative-protocol routes are undergoing actual

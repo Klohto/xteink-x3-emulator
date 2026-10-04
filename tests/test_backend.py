@@ -426,6 +426,54 @@ class BackendRunTests(unittest.TestCase):
                               modelled if type(modelled) is bool else False)
                 self.assertFalse(result["timing"]["speed_selection_allowed"])
 
+    def test_ccmp_observations_are_typed_scoped_and_never_hide_refusals(self):
+        from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_CCMP_OBSERVATIONS
+        original = {
+            "/machine/wifi:tx-frames": 2, "/machine/wifi:rx-frames": 1,
+            "/machine/wifi:tx-ccmp-encrypted-frames": 2,
+            "/machine/wifi:rx-ccmp-decrypted-frames": 1,
+            "/machine/wifi:ccmp-ordinary-tx-scope-modelled": True,
+            "/machine/wifi:ccmp-station-rx-scope-modelled": True,
+            "/machine/wifi:ccmp-hardware-replay-modelled": False,
+        }
+        cases = (
+            ("positive", None, {}, True, True),
+            ("tx-refusal", None, {"tx-ccmp-rejected-frames": 1}, True, False),
+            ("auth-failure", None, {"rx-ccmp-rejected-frames": 1,
+                "rx-ccmp-auth-failed-frames": 1, "rx-dropped": 1}, True, False),
+            ("missing", "ccmp-hardware-replay-modelled", {}, False, False),
+            ("boolean-count", None, {"tx-ccmp-encrypted-frames": True}, False, False),
+            ("integer-scope", None, {"ccmp-ordinary-tx-scope-modelled": 1}, False, False),
+            ("negative", None, {"rx-ccmp-decrypted-frames": -1}, False, False),
+            ("excess-success", None, {"tx-ccmp-encrypted-frames": 3}, False, False),
+            ("auth-exceeds-refusal", None, {"rx-ccmp-auth-failed-frames": 2,
+                "rx-ccmp-rejected-frames": 1}, False, False),
+            ("unscoped-success", None, {"ccmp-station-rx-scope-modelled": False}, False, False),
+        )
+        for label, missing, changes, valid, clean in cases:
+            with self.subTest(label=label):
+                self.output = self.root / label
+                overrides = {**original, **{"/machine/wifi:" + key: value for key, value in changes.items()}}
+                self.install_fake_backend(extra_properties={"/machine/wifi":
+                    list(WIFI_BASE_OBSERVATIONS) + [key for key in WIFI_CCMP_OBSERVATIONS if key != missing],
+                    "/machine/regi2c": ["phy-handshake-modelled", "synthetic-measurements"]},
+                    counter_overrides=overrides)
+                result = run(self.config(wifi=True))
+                self.assertEqual(result["wifi"]["ccmp_telemetry_valid"], valid)
+                self.assertEqual(result["validity"]["unsupported_features_checked"], valid)
+                self.assertEqual(result["validity"]["diagnostics_clean"], clean)
+                state = result["final_state"]["wifi"]
+                self.assertEqual(state["tx-ccmp-encrypted-frames"], overrides["/machine/wifi:tx-ccmp-encrypted-frames"])
+                self.assertEqual(state["rx-dropped"], changes.get("rx-dropped", 0))
+                self.assertEqual(result["wifi"]["rx_unexplained_drops"], changes.get("rx-dropped", 0))
+                if label == "integer-scope":
+                    self.assertIs(result["model_limits"]["wifi_ccmp_ordinary_tx_scope_modelled"], False)
+                if missing:
+                    self.assertNotIn("wifi_ccmp_hardware_replay_modelled", result["model_limits"])
+                else:
+                    self.assertIs(result["model_limits"]["wifi_ccmp_hardware_replay_modelled"], False)
+                self.assertFalse(result["timing"]["speed_selection_allowed"])
+
     def test_synthetic_mac_random_seed_is_explicit_bounded_and_requires_observation(self):
         from x3emu.backend import WIFI_BASE_OBSERVATIONS, WIFI_RANDOM_OBSERVATIONS
         config = self.config(wifi=True, wifi_random_seed=0xffffffff)

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "kind": "stock-crossink-crc-refusal-and-cancel-echo-defect",
+  "pinned_application_source": {
+    "path": "src/activities/network/NearbyBookTransferActivity.cpp",
+    "sha256": "34a2468c5a5e28325e78fb002d56dc540925a14240f6ae688c4559375d79cb9a",
+    "commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4"
+  },
+  "source_contract": {
+    "finishReceivedFile": "size/bytes/CRC mismatch closes and removes part; invokes setError(VERIFY_FAILED)",
+    "setError": "logs requested error, invokes cancelTransfer then State::Error",
+    "cancelTransfer": "sends PacketType::Cancel for any started radio and known peer; independent of current transfer state",
+    "handlePacket Cancel": "invokes cancelTransfer then setError(CANCELLED), causing another Cancel"
+  },
+  "wire": {
+    "1": {
+      "application_type_counts": {
+        "1": 1,
+        "3": 6,
+        "6": 11,
+        "8": 1,
+        "10": 212
+      },
+      "result1": 0
+    },
+    "2": {
+      "application_type_counts": {
+        "2": 1,
+        "4": 3,
+        "7": 11,
+        "10": 260,
+        "9": 1
+      },
+      "result1": 1
+    }
+  },
+  "stopped_media_checks": {
+    "/receiver-fixture.txt": true,
+    "/test.epub": true,
+    "/.test.epub.crossink-part absent": true,
+    "/.test.epub.crossink-backup absent": true
+  },
+  "functional_crc_refusal": true,
+  "error_ui_stability": false,
+  "native_clock_policy": "uncalibrated instruction-counted shift3",
+  "speed_selection_allowed": false,
+  "original_failure_receipt_sha256": "5d0eae0c671a27a8ea9b31e5a17b72e74562e156bd0aef1529e9ce384432ef43",
+  "original_functional_pass": false,
+  "original_failure_retained": true,
+  "private_lossless_archive_sha256": "b55d5b5a41361a84442fce6c3fef1c3eac3223bc4412a355a605f787814ea5b7",
+  "negative_fixture": "Exactly one bit in the genuine sender Complete CRC field; original and forwarded bytes retained. No messages manufactured.",
+  "simultaneous_guests_without_message_suppression": true,
+  "hardware_reproduced": false,
+  "all_functions_verified": false
+}

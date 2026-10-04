@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "kind": "bounded-native-ccmp-candidate-and-stock-reader-regression",
+  "candidate_selected_default": false,
+  "qemu_revision": "febae182e132e4055529be423a818225ebddaa3a",
+  "source_tree": "b600322513688fa90994a9e95edc2cf569db1363",
+  "patch_sha256": "1010a3adf336d33b4dafbae1f50989f7a499f5919874dd2de5edfee80f1462c5",
+  "elf_sha256": "ab28e1b48ab7921db5ad07c3abfa5db4f09708f8b31d500d3dc864c82cbbe3e0",
+  "official_full_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+  "official_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+  "official_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "native_gate": {
+    "suites": 12,
+    "cases_passed": 119,
+    "skips": 0,
+    "functional_pass": true,
+    "gate_sha256": "4b3aee6f840c3632b93f04c37054ef227f1e5d074ccd3783c7e9a55c0f137f5a",
+    "original_receipt_sha256": "cc0f1cd639319bcc92355ec486dd290365ef99ff1b94960490c9c6f28dcec040",
+    "first_failed_receipt_sha256": "a419bccac322ac72edf684ad4a3120840b8a2dfc3ab11587d8502e378daea934",
+    "test_only_correction_receipt_sha256": "4c933f0a3570b813412e0b5897cb155611553da1e5e9834cdac856177866b2a8"
+  },
+  "primary_source_audits": {
+    "tx_key_contract_sha256": "ac1fa05572f888197045ba65e6e3a2ad33bd43027975a64cf2f87e4919cf8c4f",
+    "rx_contract_sha256": "791a8fc7defbfec3be8f691284d2cdfe910d801723ebdb93de62837be502725c",
+    "rx_audit_receipt_sha256": "babe697d305d1f077364f0e6b3cfee419efa75195f3bd016e8145932c6ade050",
+    "independent_native_review_sha256": "1285047f7cc15d17c220fd72c15bc057c27f9e80ee094a915fb43a0fff557b39"
+  },
+  "actual_reader": {
+    "first_receipt_sha256": "3f3932cd38272bab9d3507583ae538f6c1e2a0a1dc9e5bb1a17b923f54b23709",
+    "fresh_cpu_receipt_sha256": "602807beac0576a9406a2be60fb24b2155e0359877b7f55d74419098d8112494",
+    "combined_archive_sha256": "0ccc5de165cb201762124367e43d84bd75207992071ec2e28d43613ffa38f303",
+    "functional_regression_pass": true,
+    "saved_page": 1,
+    "chapter_pages": 22,
+    "visible_text_offset": 586,
+    "changed_restored_content_pixels": 0,
+    "changed_restored_tone_pixels": 0,
+    "native_exit_statuses": [0, 0],
+    "guest_memory_patched": false,
+    "cpu_state_reused": false,
+    "original_application_and_book_preserved": true
+  },
+  "secure_lifecycle_final_pass": false,
+  "open_network_candidate_regression_final_pass": false,
+  "strict_model_validation_pass": false,
+  "all_crossink_functions_verified": false,
+  "complete_machine_verified": false,
+  "physical_timing_calibrated": false,
+  "speed_selection_allowed": false,
+  "credentials_or_private_capture_bytes_included": false
+}

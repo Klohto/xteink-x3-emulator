@@ -23,6 +23,7 @@ the pinned `31ce7704` source and appear after the receipts.
 | USB `CMD:SCREENSHOT` | Advertises 52,272 bytes, but only 896 bitmap bytes precede the end marker. `main.cpp:1616` ignores the single `HWCDC::write` result; the Arduino implementation can return a partial count after its configured 1 ms no-progress timeout. | Require the complete payload and end marker. This establishes a short-write hazard, not the same timing outcome on physical X3. | U |
 | OPDS relative file-base URL | A `result.epub` link in `/catalog-two/search.xml?q=a%20b` requests `/catalog-two/search.xml/result.epub` and receives 404. `UrlUtils::buildUrl` removes the query and appends to the complete base; it does not resolve a filename base or `..`. | Directory-base and absolute-link receipts validate their own scope; they do not establish general relative URL resolution. | O |
 | Font catalog cached status | After exact 14/18 files install, the catalog row still says Update while the action hint says Delete. `downloadFamily` updates flags; individual COMPLETE→FAMILY_LIST does not rebuild cached `listItems_`. Rendering uses that cache, while the hint uses current flags. | Installed bytes and CRC can be correct while the row label is stale. Separate Update All and cancel/resume passes retain the original failed catalog postcondition. | C |
+| Nearby CRC-error Cancel echo | A declared one-bit corruption of the genuine Complete CRC field makes the receiver reject the transfer, remove the partial file and preserve its old destination. The two original guests then exchange repeated Cancel messages and redraw their errors. `setError` invokes `cancelTransfer`; handling a received Cancel invokes `cancelTransfer` and then `setError`, sending another Cancel even in Error state. | CRC refusal and media preservation pass independently. The simultaneous error UI does not settle; the original overall failure remains false. Physical reproduction and frequency are unverified. | R |
 
 Original failures and their false conditions remain preserved. No emulator
 workaround rewrites these payloads, URLs, positions or firmware instructions.
@@ -45,6 +46,7 @@ identity. Hashes here identify the original uncompressed JSON bytes.
 | U | [USB screenshot source/observation explanation](usb-transfer.md), `local/runs/usb-screenshot-99-failure/validation.json`; `screenshot-short-write-analysis.json` SHA `971cae078d52bd28378f4575a48121cea896020661745c698c3f5daa2e5bf515` | `886b4490e5919583c11cb519e662ac0876ef5373f3f82ec82de61e93519910be` |
 | O | [OPDS source/receipt explanation](network-validation.md#opds-and-koreader), `local/runs/opds-siblings-109-relative-acquisition-failure/opds-siblings/validation.json`; exact 404 request retained | `7f6fc5fbae16913f92af3735c96626b87b0ebfc74c60876154cf2b103eef9c8c` |
 | C | [Network source and receipt explanation](network-validation.md), `cohorts.fonts-cancel-resume.retained_full_lifecycle_failure`; `local/runs/x3-network-font-cancel-runtime109/fonts-lifecycle/validation.json`; expected Installed label fails | `73666820fe4c7cf0aeb362e62c5274efc9ca1d3c49579113c64eb26519aaedc2` |
+| R | [CRC refusal and Cancel echo](evidence/nearby-crc-refusal-2026-10-04.json), retained failed `local/runs/nearby-recovery-20261004/negative-v3-file-wrong-crc/validation.json`; `functional_crc_refusal=true`, `error_ui_stability=false` | `5d0eae0c671a27a8ea9b31e5a17b72e74562e156bd0aef1529e9ce384432ef43` |
 
 ## Primary source hashes
 
@@ -67,6 +69,7 @@ hashes, not an assertion that every path within a file is defective.
 | U | Arduino `cores/esp32/HWCDC.cpp` | `8238d208409ac8a9e74e5960360a5e59c4f2f85dc2339fd96442a62297d5ff45` |
 | O | `src/util/UrlUtils.cpp` | `5b8979ae1ebb891e2a5b94178e47d09ba35e24508792371aaa97c5a8c3af1462` |
 | C | `src/activities/settings/FontDownloadActivity.cpp` | `00e7df505949c2bc183874c742612926ecaf9fd7881189b541584619e9527e42` |
+| R | `src/activities/network/NearbyBookTransferActivity.cpp` | `34a2468c5a5e28325e78fb002d56dc540925a14240f6ae688c4559375d79cb9a` |
 
 ## Separate environment and emulator boundaries
 
