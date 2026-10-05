@@ -74,6 +74,13 @@ USB status response must report firmware `1.6.1`. The guest must also remove
 `/.crosspoint/ota-update.bin` and complete only its source-defined software
 reset sequence.
 
+The USB console attaches before the full QMP startup snapshot. Real ROM reset
+records independently establish initial `POWERON` and the two expected software
+resets (reason `0x3` or `0xc`). Original USB startup diagnostic rows and any
+missing early row are retained separately. The first CI attempt's unattached
+console failure is preserved; moving the host connection does not change
+firmware, network endpoints or trust.
+
 A second CPU boots from those written flash/card/eFuse bytes, reads the
 untouched EPUB, turns pages, saves page 1 and reopens it. Its completed EPUB
 cache must use the reviewed v1.6.1 **version 83** header; an old version 77 or
@@ -88,5 +95,5 @@ trace, native framebuffer CRCs, captures, logs and original launcher manifest.
 `validation.json` reports functional success separately from the original
 strict native diagnostics. Unsupported accesses, physical timing, RF and
 complete machine fidelity are not promoted to passed by a successful update.
-The six host tests cover refusal/schema/capture binding; they do not execute
+The seven host tests cover refusal/schema/capture/reset binding; they do not execute
 firmware or stand in for the guest integration result.

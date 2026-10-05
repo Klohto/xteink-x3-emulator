@@ -27,6 +27,15 @@ def finalized_section():
 
 
 class OnlineOtaAcceptanceTests(unittest.TestCase):
+    def test_rom_reset_sequence_is_independent_of_missing_usb_startup_log(self):
+        rom = ("ESP-ROM:esp32c3-api1-20210207\n"
+               "rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
+               "rst:0xc (RTC_SW_CPU_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
+               "rst:0x3 (SW_RESET),boot:0x8 (SPI_FAST_FLASH_BOOT)\n")
+        self.assertEqual(OTA.rom_reset_observations(rom), [
+            {"code": 1, "name": "POWERON"}, {"code": 12, "name": "RTC_SW_CPU_RST"}, {"code": 3, "name": "SW_RESET"}])
+        self.assertEqual(OTA.rom_reset_observations("Reset diagnostic: reset=1(POWERON)"), [])
+
     def test_direct_guard_refuses_proxy_or_override_without_exposing_credential(self):
         for key in ("HTTP_PROXY", "https_proxy", "ALL_PROXY", "LD_PRELOAD", "X3EMU_ROUTE_TLS_PORT", "X3EMU_HOST_ROUTER"):
             with self.subTest(key=key), self.assertRaises(OTA.OnlineOtaError) as caught:

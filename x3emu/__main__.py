@@ -20,6 +20,13 @@ def _integer(value: str) -> int:
         raise argparse.ArgumentTypeError("use a decimal integer or a 0x hexadecimal integer") from error
 
 
+def _gauge_capacity(value: str) -> int:
+    capacity = _integer(value)
+    if not 0 <= capacity <= 65535:
+        raise argparse.ArgumentTypeError("gauge capacity must be an integer from 0 to 65535")
+    return capacity
+
+
 def _part(value: str) -> tuple[int, Path]:
     offset, separator, path = value.partition("=")
     if not separator or not path:
@@ -63,6 +70,10 @@ def parser() -> argparse.ArgumentParser:
     network.add_argument("--wifi-peer", metavar="listen:PORT|connect:PORT", help="link real guest WiFi DMA frames to another emulator on localhost")
     execute.add_argument("--wifi-channel", type=_integer, help="fixed digital channel: peer default 1, virtual AP default 6; RF channel control is unmodelled")
     execute.add_argument("--wifi-random-seed", type=_integer, help="nonzero uint32 seed for the synthetic MAC random source; requires a supporting backend and WiFi/peer mode")
+    execute.add_argument("--initial-gauge-design-capacity-mah", type=_gauge_capacity,
+                         help="synthetic preboot BQ27220 Design Capacity; requires a supporting X3 backend")
+    execute.add_argument("--initial-gauge-learned-fcc-mah", type=_gauge_capacity,
+                         help="synthetic preboot BQ27220 Learned FCC; requires a supporting X3 backend")
     identity = execute.add_mutually_exclusive_group()
     identity.add_argument("--efuse", type=Path, help="336-byte raw C3 factory blocks; copied per run")
     identity.add_argument("--device-mac", help="synthetic unicast factory MAC stored in genuine eFuse blocks")
@@ -124,6 +135,8 @@ def main(argv: list[str] | None = None) -> int:
                 usb_port=args.usb_port, wifi=args.wifi, wifi_hostfwd=tuple(args.wifi_hostfwd),
                 efuse=args.efuse, device_mac=args.device_mac, wifi_peer=args.wifi_peer, wifi_channel=args.wifi_channel,
                 wifi_random_seed=args.wifi_random_seed,
+                initial_gauge_design_capacity_mah=args.initial_gauge_design_capacity_mah,
+                initial_gauge_learned_fcc_mah=args.initial_gauge_learned_fcc_mah,
             ))
         elif args.command == "ui":
             from .ui import serve_ui

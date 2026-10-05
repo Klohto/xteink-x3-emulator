@@ -122,7 +122,11 @@ are in [run.md](docs/run.md) and [ui.md](docs/ui.md).
 | Console and sleep | UART, USB Serial/JTAG FIFO, stock CRC file commands, RTC/GPIO wake, retained state and distinct watchdog reset domains |
 | Experimental Wi-Fi | MAC/DMA/TSF, raw peers, source-backed RX and bounded native CCMP; actual secure Save/reconnect/Forget, GTK1 DHCP, hotspot and captive DNS |
 
-The selected board patch passes 123 native cases across 12 suites. The
+Native CI builds the board patch and tests its device protocols across twelve
+suites, including the [bounded gauge capacity protocol](docs/bq27220-capacity.md).
+The [footnote regression](docs/v161-footnotes-regression.md) separately requires
+OTA-written v1.6.1 and cold restoration of the original note's reading position.
+The
 [function ledger](docs/function-coverage.md) tracks executed firmware proofs
 for reading formats, navigation, bookmarks, dictionaries, clippings, layout,
 fonts, settings, sleep, controls, USB, SD update, Nearby, OPDS, KOReader,

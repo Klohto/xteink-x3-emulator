@@ -1359,10 +1359,10 @@ index 1e84238..39660e1 100644
 +type_init(register_types)
 diff --git a/hw/i2c/esp32c3_i2c.c b/hw/i2c/esp32c3_i2c.c
 new file mode 100644
-index 0000000..d8e6820
+index 0000000..d8ea22f
 --- /dev/null
 +++ b/hw/i2c/esp32c3_i2c.c
-@@ -0,0 +1,1217 @@
+@@ -0,0 +1,1525 @@
 +/*
 + * ESP32-C3 master I2C and Xteink X3 register-level sensor models.
 + * SPDX-License-Identifier: GPL-2.0-or-later
@@ -1929,6 +1929,29 @@ index 0000000..d8e6820
 +    uint64_t motion_hold_ns;
 +    uint64_t motion_deadline_ns;
 +    QEMUTimer *motion_timer;
++    /* Bounded BQ27220 capacity path; no CEDV/electrochemistry simulation. */
++    uint16_t bq_initial_design_capacity;
++    uint16_t bq_initial_learned_fcc;
++    uint8_t bq_initial_security;
++    bool bq_initial_cfg;
++    uint8_t bq_dm[34]; /* 929D..92BE: two capacity words plus opaque padding. */
++    uint8_t bq_security;
++    bool bq_cfg;
++    uint16_t bq_last_control;
++    int64_t bq_last_control_ns;
++    uint16_t bq_mac;
++    bool bq_mac_valid;
++    bool bq_advance_pending;
++    bool bq_write_failed;
++    int64_t bq_commit_ns;
++    uint8_t bq_pending_cfg;
++    uint64_t bq_cfg_deadline_ns;
++    uint64_t bq_cfg_enter_ns;
++    uint64_t bq_cfg_exit_ns;
++    QEMUTimer *bq_cfg_timer;
++    uint64_t bq_dm_writes;
++    uint64_t bq_reinitializations;
++    uint64_t bq_rejections;
 +    uint64_t injection_count;
 +    uint64_t unsupported_accesses;
 +};
@@ -1937,6 +1960,216 @@ index 0000000..d8e6820
 +{
 +    s->regs[reg] = word;
 +    s->regs[reg + 1] = word >> 8;
++}
++
++/*
++ * TI SLUUBD4A 2.27..2.31 and 6.1: LE command/status words, BE Data Memory,
++ * address+32-byte checksum, total length 0x24, full-access CONFIG UPDATE writes.
++ * X3-specific key gaps / checksum-read advancement / post-write select quiet
++ * period follow the pinned SDK's capacity regression fixture, not calibrated
++ * hardware timings. Other Data Memory bytes are opaque zero padding; changing
++ * them is explicitly rejected rather than pretending to implement the gauge.
++ */
++#define BQ_DM_FCC 0x929d
++#define BQ_DM_DESIGN 0x929f
++#define BQ_CFG_ENTER 1
++#define BQ_CFG_EXIT 2
++#define BQ_CFG_REINIT 3
++
++static uint16_t x3_bq_dm_word(X3SensorState *s, unsigned offset)
++{
++    return (s->bq_dm[offset] << 8) | s->bq_dm[offset + 1];
++}
++
++static void x3_bq_status(X3SensorState *s)
++{
++    x3_sensor_set_word(s, 0x3a,
++                       (s->bq_cfg ? 0x0400 : 0) | (s->bq_security << 1));
++    x3_sensor_set_word(s, 0x3c, x3_bq_dm_word(s, 2));
++}
++
++static uint8_t x3_bq_checksum(X3SensorState *s)
++{
++    unsigned sum = (s->bq_mac & 255) + (s->bq_mac >> 8);
++    for (unsigned i = 0x40; i <= 0x5f; i++) {
++        sum += s->regs[i];
++    }
++    return 255 - (uint8_t)sum;
++}
++
++static void x3_bq_mac_view(X3SensorState *s)
++{
++    x3_sensor_set_word(s, 0x3e, s->bq_mac);
++    if (s->bq_mac_valid) {
++        memcpy(&s->regs[0x40], &s->bq_dm[s->bq_mac - BQ_DM_FCC], 32);
++        s->regs[0x60] = x3_bq_checksum(s);
++        s->regs[0x61] = 0x24;
++    } else {
++        memset(&s->regs[0x40], 0xff, 32);
++        s->regs[0x60] = 0xff;
++        s->regs[0x61] = 0;
++    }
++}
++
++static void x3_bq_cfg_expired(void *opaque)
++{
++    X3SensorState *s = opaque;
++    if (s->bq_pending_cfg == BQ_CFG_ENTER) {
++        s->bq_cfg = true;
++    } else {
++        s->bq_cfg = false;
++        if (s->bq_pending_cfg == BQ_CFG_REINIT) {
++            /* TRM 1.1.10: initialize FCC from Learned Full Charge Capacity. */
++            x3_sensor_set_word(s, 0x12, x3_bq_dm_word(s, 0));
++            s->bq_reinitializations++;
++        }
++    }
++    s->bq_pending_cfg = 0;
++    s->bq_cfg_deadline_ns = 0;
++    x3_bq_status(s);
++}
++
++static void x3_bq_cfg_request(X3SensorState *s, uint8_t operation)
++{
++    uint64_t delay = operation == BQ_CFG_ENTER ? s->bq_cfg_enter_ns :
++                                               s->bq_cfg_exit_ns;
++    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++    if (delay > INT64_MAX - now) {
++        qemu_log_mask(LOG_GUEST_ERROR,
++                      "xteink.bq27220: configuration deadline overflow\n");
++        s->unsupported_accesses++;
++        return;
++    }
++    s->bq_pending_cfg = operation;
++    s->bq_cfg_deadline_ns = now + delay;
++    timer_mod(s->bq_cfg_timer, s->bq_cfg_deadline_ns);
++}
++
++static void x3_bq_unsupported(X3SensorState *s, const char *reason)
++{
++    qemu_log_mask(LOG_UNIMP, "xteink.bq27220: %s\n", reason);
++    s->unsupported_accesses++;
++}
++
++static void x3_bq_control(X3SensorState *s, uint16_t command)
++{
++    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++    int64_t gap = now - s->bq_last_control_ns;
++    bool follows = gap >= 1500000000 && gap < 4000000000LL;
++
++    switch (command) {
++    case 0x0414:
++        break;
++    case 0x3672:
++        if (s->bq_security == 3 && s->bq_last_control == 0x0414 && follows) {
++            s->bq_security = 2;
++        } else {
++            s->bq_rejections++;
++        }
++        break;
++    case 0xffff:
++        if (s->bq_security == 2 && s->bq_last_control == 0xffff && follows) {
++            s->bq_security = 1;
++        } else if (s->bq_security != 2 || s->bq_last_control == 0xffff) {
++            s->bq_rejections++;
++        }
++        break;
++    case 0x0030:
++        s->bq_security = 3;
++        s->bq_mac_valid = false;
++        s->bq_advance_pending = false;
++        if (s->bq_pending_cfg == BQ_CFG_ENTER) {
++            timer_del(s->bq_cfg_timer);
++            s->bq_pending_cfg = 0;
++            s->bq_cfg_deadline_ns = 0;
++        }
++        x3_bq_mac_view(s);
++        break;
++    case 0x0090:
++        if (s->bq_security != 3) {
++            x3_bq_cfg_request(s, BQ_CFG_ENTER);
++        } else {
++            s->bq_rejections++;
++        }
++        break;
++    case 0x0091:
++    case 0x0092:
++        /* Exit remains available to recover an interrupted sealed load. */
++        x3_bq_cfg_request(s, command == 0x0091 ? BQ_CFG_REINIT : BQ_CFG_EXIT);
++        break;
++    default:
++        qemu_log_mask(LOG_UNIMP,
++                      "xteink.bq27220: unmodelled Control 0x%04x\n", command);
++        s->unsupported_accesses++;
++        break;
++    }
++    s->bq_last_control = command;
++    s->bq_last_control_ns = now;
++    x3_bq_status(s);
++}
++
++static void x3_bq_finish_write(X3SensorState *s)
++{
++    uint16_t word;
++    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
++
++    if (s->bq_write_failed) {
++        x3_bq_mac_view(s);
++        return;
++    }
++    if (s->write_start == 0 && s->written == 2) {
++        x3_bq_control(s, s->regs[0] | (s->regs[1] << 8));
++        return;
++    }
++    if (s->write_start == 0x3e && s->written == 2) {
++        word = s->regs[0x3e] | (s->regs[0x3f] << 8);
++        if (s->bq_security == 3 ||
++            (s->bq_commit_ns >= 0 && now - s->bq_commit_ns < 100000000)) {
++            s->bq_rejections++;
++            x3_bq_mac_view(s);
++            return;
++        }
++        s->bq_mac = word;
++        s->bq_mac_valid = word == BQ_DM_FCC || word == BQ_DM_DESIGN;
++        s->bq_advance_pending = false;
++        if (!s->bq_mac_valid) {
++            x3_bq_unsupported(s, "unmodelled Data Memory address");
++        }
++        x3_bq_mac_view(s);
++        return;
++    }
++    if (s->write_start >= 0x40 && s->write_start <= 0x5f &&
++        s->write_start + s->written <= 0x60) {
++        if (!s->bq_mac_valid || !s->bq_cfg || s->bq_security != 1) {
++            s->bq_rejections++;
++            x3_bq_mac_view(s);
++        }
++        return;
++    }
++    if (s->write_start == 0x60 && s->written == 2) {
++        if (!s->bq_mac_valid || !s->bq_cfg || s->bq_security != 1 ||
++            s->regs[0x61] != 0x24 || s->regs[0x60] != x3_bq_checksum(s)) {
++            s->bq_rejections++;
++            x3_bq_mac_view(s);
++            return;
++        }
++        unsigned offset = s->bq_mac - BQ_DM_FCC;
++        for (unsigned i = 0; i < 32; i++) {
++            if (offset + i >= 4 && s->regs[0x40 + i] != s->bq_dm[offset + i]) {
++                x3_bq_unsupported(s, "write to unmodelled Data Memory parameter");
++                x3_bq_mac_view(s);
++                return;
++            }
++        }
++        memcpy(&s->bq_dm[offset], &s->regs[0x40], 32);
++        s->bq_dm_writes++;
++        s->bq_commit_ns = now;
++        x3_bq_status(s);
++        x3_bq_mac_view(s);
++        return;
++    }
++    x3_bq_unsupported(s, "incomplete or unsupported command framing");
++    x3_bq_mac_view(s);
 +}
 +
 +static int64_t x3_rtc_seconds(X3SensorState *s)
@@ -2086,7 +2319,7 @@ index 0000000..d8e6820
 +        return reg <= 0x0a || (reg >= 0x2d && reg <= 0x46);
 +    case SENSOR_BQ27220:
 +        return reg <= 0x15 || (reg >= 0x2c && reg <= 0x2f) ||
-+               (reg >= 0x3a && reg <= 0x41) || reg == 0x60 || reg == 0x61;
++               (reg >= 0x3a && reg <= 0x5f) || reg == 0x60 || reg == 0x61;
 +    }
 +    return false;
 +}
@@ -2099,7 +2332,7 @@ index 0000000..d8e6820
 +    case SENSOR_QMI8658:
 +        return reg >= 0x02 && reg <= 0x0a;
 +    case SENSOR_BQ27220:
-+        return reg < 2 || (reg >= 0x3e && reg <= 0x41) ||
++        return reg < 2 || (reg >= 0x3e && reg <= 0x5f) ||
 +               reg == 0x60 || reg == 0x61;
 +    }
 +    return false;
@@ -2123,6 +2356,7 @@ index 0000000..d8e6820
 +        s->pointer = value;
 +        s->write_start = value;
 +        s->pointer_pending = false;
++        s->bq_write_failed = false;
 +        return 0;
 +    }
 +    if (!x3_sensor_writable(s, s->pointer)) {
@@ -2130,6 +2364,7 @@ index 0000000..d8e6820
 +                      "xteink.sensor%u: unsupported write register 0x%02x\n",
 +                      s->kind, s->pointer);
 +        s->unsupported_accesses++;
++        s->bq_write_failed = true;
 +        return 1;
 +    }
 +    if (s->kind == SENSOR_DS3231 && s->pointer == 0x0f) {
@@ -2167,6 +2402,15 @@ index 0000000..d8e6820
 +
 +    if (x3_sensor_readable(s, s->pointer)) {
 +        value = s->regs[s->pointer];
++        if (s->kind == SENSOR_BQ27220 && s->pointer >= 0x40 &&
++            s->pointer <= 0x61) {
++            if (!s->bq_mac_valid) {
++                x3_bq_unsupported(s, "read without a supported Data Memory selection");
++            } else if (s->pointer == 0x60) {
++                /* Keep the checksum/length response stable until this STOP. */
++                s->bq_advance_pending = true;
++            }
++        }
 +    } else {
 +        qemu_log_mask(LOG_UNIMP,
 +                      "xteink.sensor%u: unsupported read register 0x%02x\n",
@@ -2182,25 +2426,8 @@ index 0000000..d8e6820
 +    if (s->written) {
 +        if (s->kind == SENSOR_DS3231 && s->write_start < 7) {
 +            x3_rtc_commit(s);
-+        } else if (s->kind == SENSOR_BQ27220 && s->write_start >= 0x3e) {
-+            qemu_log_mask(LOG_UNIMP,
-+                          "xteink.bq27220: unmodelled MAC transaction\n");
-+            s->unsupported_accesses++;
-+        } else if (s->kind == SENSOR_BQ27220 && s->write_start == 0 &&
-+                   s->written >= 2) {
-+            uint16_t command = s->regs[0] | (s->regs[1] << 8);
-+            if (command == 0x0030) {
-+                x3_sensor_set_word(s, 0x3a, 6); /* Sealed. */
-+            } else if (command == 0x0090) {
-+                x3_sensor_set_word(s, 0x3a, 0x0400); /* CONFIG UPDATE. */
-+            } else if (command == 0x0091 || command == 0x0092) {
-+                x3_sensor_set_word(s, 0x3a, 0);
-+            } else {
-+                qemu_log_mask(LOG_UNIMP,
-+                              "xteink.bq27220: unmodelled Control 0x%04x\n",
-+                              command);
-+                s->unsupported_accesses++;
-+            }
++        } else if (s->kind == SENSOR_BQ27220) {
++            x3_bq_finish_write(s);
 +        }
 +        s->written = 0;
 +    }
@@ -2213,6 +2440,13 @@ index 0000000..d8e6820
 +    if (event == I2C_START_SEND || event == I2C_START_RECV ||
 +        event == I2C_FINISH) {
 +        x3_sensor_finish_write(s);
++    }
++    if (s->kind == SENSOR_BQ27220 && event == I2C_FINISH &&
++        s->bq_advance_pending) {
++        s->bq_advance_pending = false;
++        s->bq_mac += 32;
++        s->bq_mac_valid = false;
++        x3_bq_mac_view(s);
 +    }
 +    if (event == I2C_START_SEND) {
 +        if (s->kind == SENSOR_DS3231) {
@@ -2416,12 +2650,36 @@ index 0000000..d8e6820
 +    return false;
 +}
 +
++static void x3_bq_get_state(Object *obj, Visitor *v, const char *name,
++                             void *opaque, Error **errp)
++{
++    X3SensorState *s = X3_SENSOR(obj);
++    int64_t value;
++    if (!strcmp(name, "operation-status")) {
++        value = (s->bq_cfg ? 0x0400 : 0) | (s->bq_security << 1);
++    } else if (!strcmp(name, "design-capacity-mah")) {
++        value = x3_bq_dm_word(s, 2);
++    } else if (!strcmp(name, "learned-fcc-mah")) {
++        value = x3_bq_dm_word(s, 0);
++    } else {
++        value = s->regs[0x12] | (s->regs[0x13] << 8);
++    }
++    visit_type_int64(v, name, &value, errp);
++}
++
 +static void x3_sensor_realize(DeviceState *dev, Error **errp)
 +{
 +    X3SensorState *s = X3_SENSOR(dev);
 +
 +    if (s->kind > SENSOR_QMI8658) {
 +        error_setg(errp, "unknown X3 I2C sensor kind %u", s->kind);
++        return;
++    }
++    if (s->kind == SENSOR_BQ27220 &&
++        (s->bq_initial_security < 1 || s->bq_initial_security > 3 ||
++         s->bq_cfg_enter_ns > INT64_MAX / 2 ||
++         s->bq_cfg_exit_ns > INT64_MAX / 2)) {
++        error_setg(errp, "BQ27220 security must be 1..3 and delays must fit virtual time");
 +        return;
 +    }
 +    s->temperature_mc = 25000;
@@ -2436,15 +2694,30 @@ index 0000000..d8e6820
 +                             ARRAY_SIZE(battery_values));
 +        object_property_add_bool(OBJECT(s), "fuel-gauging-modelled",
 +                                 x3_sensor_unmodelled, NULL);
++        static const char * const state_properties[] = {
++            "operation-status", "design-capacity-mah", "learned-fcc-mah",
++            "full-charge-capacity-mah",
++        };
++        for (unsigned i = 0; i < ARRAY_SIZE(state_properties); i++) {
++            object_property_add(OBJECT(s), state_properties[i], "int64",
++                                x3_bq_get_state, NULL, NULL, NULL);
++        }
 +        x3_sensor_set_word(s, 0x06, 2981); /* 25 C, 0.1 K units. */
 +        x3_sensor_set_word(s, 0x08, 3900); /* mV. */
 +        x3_sensor_set_word(s, 0x0c, (uint16_t)-40); /* Discharging, mA. */
 +        x3_sensor_set_word(s, 0x10, 520); /* Remaining capacity, mAh. */
-+        x3_sensor_set_word(s, 0x12, 650); /* Full charge capacity, mAh. */
++        s->bq_security = s->bq_initial_security;
++        s->bq_cfg = s->bq_initial_cfg;
++        s->bq_commit_ns = -1;
++        s->bq_dm[0] = s->bq_initial_learned_fcc >> 8;
++        s->bq_dm[1] = s->bq_initial_learned_fcc;
++        s->bq_dm[2] = s->bq_initial_design_capacity >> 8;
++        s->bq_dm[3] = s->bq_initial_design_capacity;
++        x3_sensor_set_word(s, 0x12, s->bq_initial_learned_fcc);
 +        x3_sensor_set_word(s, 0x2c, 80); /* State of charge, percent. */
 +        x3_sensor_set_word(s, 0x2e, 100); /* State of health, percent. */
-+        x3_sensor_set_word(s, 0x3a, 6); /* SEC=sealed, CFGUPDATE=0. */
-+        x3_sensor_set_word(s, 0x3c, 650); /* X3 configured capacity, mAh. */
++        x3_bq_status(s);
++        x3_bq_mac_view(s);
 +    } else if (s->kind == SENSOR_DS3231) {
 +        struct tm tm;
 +        time_t epoch = s->rtc_epoch;
@@ -2488,17 +2761,27 @@ index 0000000..d8e6820
 +    object_property_add_uint64_ptr(obj, "injection-count", &s->injection_count,
 +                                  OBJ_PROP_FLAG_READ);
 +    s->motion_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, x3_motion_expired, s);
++    s->bq_cfg_timer = timer_new_ns(QEMU_CLOCK_VIRTUAL, x3_bq_cfg_expired, s);
++    object_property_add_uint64_ptr(obj, "capacity-data-writes", &s->bq_dm_writes,
++                                  OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "capacity-reinitializations",
++                                  &s->bq_reinitializations, OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "capacity-rejections", &s->bq_rejections,
++                                  OBJ_PROP_FLAG_READ);
++    object_property_add_uint64_ptr(obj, "capacity-config-deadline-ns",
++                                  &s->bq_cfg_deadline_ns, OBJ_PROP_FLAG_READ);
 +}
 +
 +static void x3_sensor_finalize(Object *obj)
 +{
 +    timer_free(X3_SENSOR(obj)->motion_timer);
++    timer_free(X3_SENSOR(obj)->bq_cfg_timer);
 +}
 +
 +static const VMStateDescription vmstate_x3_sensor = {
 +    .name = TYPE_X3_SENSOR,
-+    .version_id = 2,
-+    .minimum_version_id = 2,
++    .version_id = 3,
++    .minimum_version_id = 3,
 +    .fields = (const VMStateField[]) {
 +        VMSTATE_I2C_SLAVE(parent_obj, X3SensorState),
 +        VMSTATE_UINT8_ARRAY(regs, X3SensorState, 256),
@@ -2519,6 +2802,22 @@ index 0000000..d8e6820
 +        VMSTATE_UINT64(motion_hold_ns, X3SensorState),
 +        VMSTATE_UINT64(motion_deadline_ns, X3SensorState),
 +        VMSTATE_TIMER_PTR(motion_timer, X3SensorState),
++        VMSTATE_UINT8_ARRAY(bq_dm, X3SensorState, 34),
++        VMSTATE_UINT8(bq_security, X3SensorState),
++        VMSTATE_BOOL(bq_cfg, X3SensorState),
++        VMSTATE_UINT16(bq_last_control, X3SensorState),
++        VMSTATE_INT64(bq_last_control_ns, X3SensorState),
++        VMSTATE_UINT16(bq_mac, X3SensorState),
++        VMSTATE_BOOL(bq_mac_valid, X3SensorState),
++        VMSTATE_BOOL(bq_advance_pending, X3SensorState),
++        VMSTATE_BOOL(bq_write_failed, X3SensorState),
++        VMSTATE_INT64(bq_commit_ns, X3SensorState),
++        VMSTATE_UINT8(bq_pending_cfg, X3SensorState),
++        VMSTATE_UINT64(bq_cfg_deadline_ns, X3SensorState),
++        VMSTATE_TIMER_PTR(bq_cfg_timer, X3SensorState),
++        VMSTATE_UINT64(bq_dm_writes, X3SensorState),
++        VMSTATE_UINT64(bq_reinitializations, X3SensorState),
++        VMSTATE_UINT64(bq_rejections, X3SensorState),
 +        VMSTATE_UINT64(injection_count, X3SensorState),
 +        VMSTATE_UINT64(unsupported_accesses, X3SensorState),
 +        VMSTATE_END_OF_LIST()
@@ -2528,6 +2827,15 @@ index 0000000..d8e6820
 +static const Property x3_sensor_properties[] = {
 +    DEFINE_PROP_UINT8("kind", X3SensorState, kind, SENSOR_BQ27220),
 +    DEFINE_PROP_INT64("rtc-epoch", X3SensorState, rtc_epoch, 1767225600),
++    DEFINE_PROP_UINT16("initial-design-capacity-mah", X3SensorState,
++                       bq_initial_design_capacity, 650),
++    DEFINE_PROP_UINT16("initial-learned-fcc-mah", X3SensorState,
++                       bq_initial_learned_fcc, 650),
++    DEFINE_PROP_UINT8("initial-security", X3SensorState, bq_initial_security, 3),
++    DEFINE_PROP_BOOL("initial-config-update", X3SensorState, bq_initial_cfg, false),
++    /* Functional delays only: TI's 2 s status wait and <=1 s exit example. */
++    DEFINE_PROP_UINT64("config-enter-ns", X3SensorState, bq_cfg_enter_ns, 2000000000),
++    DEFINE_PROP_UINT64("config-exit-ns", X3SensorState, bq_cfg_exit_ns, 1000000000),
 +    DEFINE_PROP_END_OF_LIST(),
 +};
 +
@@ -10473,10 +10781,10 @@ index 0000000..d0e3e78
 +}
 diff --git a/tests/qtest/esp32c3-i2c-test.c b/tests/qtest/esp32c3-i2c-test.c
 new file mode 100644
-index 0000000..29461a0
+index 0000000..0077c3d
 --- /dev/null
 +++ b/tests/qtest/esp32c3-i2c-test.c
-@@ -0,0 +1,503 @@
+@@ -0,0 +1,749 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
 +#include "qapi/qmp/qdict.h"
@@ -10962,6 +11270,246 @@ index 0000000..29461a0
 +    qtest_quit(qts);
 +}
 +
++/* TI SLUUBD4A 6.1, and SDK6993701's actual X3 capacity-load wire sequence. */
++static QTestState *start_capacity(unsigned design, unsigned learned,
++                                  unsigned security, bool cfg)
++{
++    const char *machine = g_getenv("X3_QTEST_MACHINE");
++    QTestState *qts = qtest_initf(
++        "-machine %s,xteink-x3=true -nodefaults "
++        "-global xteink.x3-i2c-sensor.initial-design-capacity-mah=%u "
++        "-global xteink.x3-i2c-sensor.initial-learned-fcc-mah=%u "
++        "-global xteink.x3-i2c-sensor.initial-security=%u "
++        "-global xteink.x3-i2c-sensor.initial-config-update=%s",
++        machine ? machine : "esp32c3", design, learned, security,
++        cfg ? "on" : "off");
++    disable_boot_watchdog(qts);
++    configure(qts);
++    return qts;
++}
++
++static void bq_write_word(QTestState *qts, uint8_t reg, uint16_t word)
++{
++    uint8_t bytes[] = { word, word >> 8 };
++    write_register(qts, 0x55, reg, bytes, sizeof(bytes));
++}
++
++static void bq_wait_config(QTestState *qts, uint16_t before, uint16_t after)
++{
++    int64_t deadline = get_value(qts, "fuel-gauge", "capacity-config-deadline-ns");
++    g_assert_cmpint(deadline, >, 0);
++    qtest_clock_set(qts, deadline - 1);
++    /* QOM inspection does not execute an I2C transaction past the deadline. */
++    g_assert_cmphex(get_value(qts, "fuel-gauge", "operation-status"), ==, before);
++    qtest_clock_set(qts, deadline);
++    g_assert_cmphex(get_value(qts, "fuel-gauge", "operation-status"), ==, after);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-config-deadline-ns"), ==, 0);
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, after);
++}
++
++static void bq_unlock(QTestState *qts)
++{
++    const uint16_t keys[] = { 0x0414, 0x3672, 0xffff, 0xffff };
++    for (unsigned i = 0; i < ARRAY_SIZE(keys); i++) {
++        bq_write_word(qts, 0, keys[i]);
++        qtest_clock_step(qts, 1500000000);
++    }
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 2);
++    bq_write_word(qts, 0, 0x0090);
++    bq_wait_config(qts, 2, 0x0402);
++}
++
++static uint16_t bq_prepare_param(QTestState *qts, uint16_t address,
++                                uint16_t capacity)
++{
++    uint16_t old, sum;
++    bq_write_word(qts, 0x3e, address);
++    qtest_clock_step(qts, 10000000);
++    old = read_word(qts, 0x55, 0x40);
++    sum = read_word(qts, 0x55, 0x60);
++    g_assert_cmphex(sum & 0xff00, ==, 0x2400);
++    /* The X3 SDK reselects after checksum-read advancement. */
++    g_assert_cmphex(read_word(qts, 0x55, 0x3e), ==, address + 32);
++    bq_write_word(qts, 0x3e, address);
++    qtest_clock_step(qts, 10000000);
++    bq_write_word(qts, 0x40, (capacity >> 8) | (capacity << 8));
++    return (sum & 0xff00) |
++        (uint8_t)(sum + (old & 255) + (old >> 8) -
++                  (capacity & 255) - (capacity >> 8));
++}
++
++static void bq_load_capacity(QTestState *qts)
++{
++    bq_unlock(qts);
++    uint16_t sum = bq_prepare_param(qts, 0x929d, 650);
++    /* Independent wire vectors constrain address inclusion and BE byte order. */
++    g_assert_cmphex(sum, ==, 0x2481);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "learned-fcc-mah"), ==, 3000);
++    bq_write_word(qts, 0x60, sum);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "learned-fcc-mah"), ==, 650);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x12), ==, 3000);
++    /* SDK waits 500 ms before selecting the next parameter. */
++    qtest_clock_step(qts, 500000000);
++    sum = bq_prepare_param(qts, 0x929f, 650);
++    g_assert_cmphex(sum, ==, 0x2442);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 3000);
++    bq_write_word(qts, 0x60, sum);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 650);
++    bq_write_word(qts, 0, 0x0091);
++    bq_wait_config(qts, 0x0402, 2);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x12), ==, 650);
++    bq_write_word(qts, 0, 0x0030);
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 6);
++}
++
++static void test_battery_capacity_load(void)
++{
++    QTestState *qts = start_capacity(3000, 3000, 3, false);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 3000);
++    bq_load_capacity(qts);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-data-writes"), ==, 2);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-reinitializations"), ==, 1);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-rejections"), ==, 0);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "unsupported-accesses"), ==, 0);
++    /* Runtime host setters cannot bypass the guest protocol. */
++    g_assert_false(set_value(qts, "fuel-gauge", "design-capacity-mah", 1200));
++    qtest_quit(qts);
++}
++
++static void test_battery_capacity_security(void)
++{
++    QTestState *qts = start_capacity(3000, 3000, 3, false);
++    bq_write_word(qts, 0, 0x0090);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-config-deadline-ns"), ==, 0);
++    bq_write_word(qts, 0, 0x0414);
++    bq_write_word(qts, 0, 0x3672); /* Insufficient virtual key spacing. */
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 6);
++    bq_write_word(qts, 0, 0x0414);
++    qtest_clock_step(qts, 4000000000LL);
++    bq_write_word(qts, 0, 0x3672); /* Expired pair. */
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 6);
++    bq_write_word(qts, 0, 0x0414);
++    qtest_clock_step(qts, 1500000000);
++    bq_write_word(qts, 0, 0x3672);
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 4);
++    /* UNSEALED may select/read DM, but commits require FULL ACCESS + CFG. */
++    uint16_t sum = bq_prepare_param(qts, 0x929f, 650);
++    bq_write_word(qts, 0x60, sum);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 3000);
++    bq_write_word(qts, 0, 0xffff);
++    qtest_clock_step(qts, 1500000000);
++    bq_write_word(qts, 0, 0xffff);
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 2);
++    bq_write_word(qts, 0, 0x0030);
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 6);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-data-writes"), ==, 0);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "unsupported-accesses"), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_battery_capacity_checksum(void)
++{
++    QTestState *qts = start_capacity(3000, 3000, 1, true);
++    uint16_t sum = bq_prepare_param(qts, 0x929f, 650);
++    bq_write_word(qts, 0x60, sum ^ 1);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 3000);
++    sum = bq_prepare_param(qts, 0x929f, 650);
++    bq_write_word(qts, 0x60, (sum & 255) | 0x2300);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 3000);
++    sum = bq_prepare_param(qts, 0x929f, 650);
++    write_byte(qts, 0x55, 0x60, sum); /* Metadata must be one complete word. */
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 3000);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "unsupported-accesses"), ==, 1);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-data-writes"), ==, 0);
++    sum = bq_prepare_param(qts, 0x929f, 650);
++    bq_write_word(qts, 0x60, sum);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 650);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x12), ==, 3000);
++    qtest_clock_step(qts, 100000000);
++    sum = bq_prepare_param(qts, 0x929d, 650);
++    bq_write_word(qts, 0x60, sum);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "learned-fcc-mah"), ==, 650);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x12), ==, 3000);
++    bq_write_word(qts, 0, 0x0092); /* Exit without reinitialization retains FCC. */
++    bq_wait_config(qts, 0x0402, 2);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x12), ==, 3000);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-reinitializations"), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_battery_capacity_quiet_and_padding(void)
++{
++    QTestState *qts = start_capacity(3000, 3000, 1, true);
++    uint16_t sum = bq_prepare_param(qts, 0x929d, 650);
++    bq_write_word(qts, 0x60, sum);
++    bq_write_word(qts, 0x3e, 0x929f); /* Too soon after commit: selection ignored. */
++    g_assert_cmphex(read_word(qts, 0x55, 0x3e), ==, 0x929d);
++    qtest_clock_step(qts, 100000000);
++    sum = bq_prepare_param(qts, 0x929f, 650);
++    write_byte(qts, 0x55, 0x42, 1); /* Outside either known capacity parameter. */
++    sum = (sum & 0xff00) | (uint8_t)(sum - 1);
++    bq_write_word(qts, 0x60, sum); /* Even a valid checksum cannot hide this gap. */
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 3000);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-data-writes"), ==, 1);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "unsupported-accesses"), ==, 1);
++    bq_write_word(qts, 0x3e, 0x9000);
++    g_assert_cmphex(read_word(qts, 0x55, 0x40), ==, 0xffff);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "unsupported-accesses"), ==, 4);
++    qtest_quit(qts);
++}
++
++static void test_battery_capacity_reset_retention(void)
++{
++    QTestState *qts = start_capacity(3000, 3000, 3, false);
++    bq_load_capacity(qts);
++    /* Controller FSM reset, C3 software reset and RTC-WDT core reset cannot
++     * power-cycle the external gauge or reload its capacity Data Memory. */
++    clear_transfer(qts);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 650);
++    qtest_writel(qts, UINT64_C(0x60008000), 1U << 31);
++    qtest_qmp_eventwait(qts, "RESET");
++    disable_boot_watchdog(qts);
++    configure(qts);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 650);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x12), ==, 650);
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 6);
++    qtest_writel(qts, UINT64_C(0x600080a8), 0x50d83aa1);
++    qtest_writel(qts, UINT64_C(0x60008094), 68);
++    qtest_writel(qts, UINT64_C(0x60008090), (1U << 31) | (3U << 28));
++    qtest_writel(qts, UINT64_C(0x600080a4), 1U << 31);
++    qtest_clock_step(qts, 1000000);
++    qtest_qmp_eventwait(qts, "RESET");
++    disable_boot_watchdog(qts);
++    configure(qts);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x3c), ==, 650);
++    g_assert_cmpuint(read_word(qts, 0x55, 0x12), ==, 650);
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 6);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-data-writes"), ==, 2);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-reinitializations"), ==, 1);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "unsupported-accesses"), ==, 0);
++    qtest_quit(qts);
++}
++
++static void test_battery_capacity_interrupted_load(void)
++{
++    QTestState *qts = start_capacity(650, 650, 1, true);
++    /* SDK's interrupted-load close path schedules reinit, then seals. */
++    bq_write_word(qts, 0, 0x0091);
++    int64_t deadline = get_value(qts, "fuel-gauge", "capacity-config-deadline-ns");
++    qtest_qmp_assert_success(qts, "{ 'execute': 'system_reset' }");
++    qtest_qmp_eventwait(qts, "RESET");
++    disable_boot_watchdog(qts);
++    configure(qts);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-config-deadline-ns"), ==, deadline);
++    bq_wait_config(qts, 0x0402, 2);
++    bq_write_word(qts, 0, 0x0030);
++    g_assert_cmphex(read_word(qts, 0x55, 0x3a), ==, 6);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-data-writes"), ==, 0);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "capacity-reinitializations"), ==, 1);
++    g_assert_cmpuint(get_value(qts, "fuel-gauge", "unsupported-accesses"), ==, 0);
++    qtest_quit(qts);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -10978,6 +11526,12 @@ index 0000000..29461a0
 +                   test_rtc_calendar_and_flags);
 +    qtest_add_func("/esp32c3-i2c/imu-pose-and-power", test_imu_pose_and_power);
 +    qtest_add_func("/esp32c3-i2c/imu-motion-release", test_imu_motion_release);
++    qtest_add_func("/esp32c3-i2c/battery-capacity-load", test_battery_capacity_load);
++    qtest_add_func("/esp32c3-i2c/battery-capacity-security", test_battery_capacity_security);
++    qtest_add_func("/esp32c3-i2c/battery-capacity-checksum", test_battery_capacity_checksum);
++    qtest_add_func("/esp32c3-i2c/battery-capacity-quiet-and-padding", test_battery_capacity_quiet_and_padding);
++    qtest_add_func("/esp32c3-i2c/battery-capacity-reset-retention", test_battery_capacity_reset_retention);
++    qtest_add_func("/esp32c3-i2c/battery-capacity-interrupted-load", test_battery_capacity_interrupted_load);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/esp32c3-regi2c-test.c b/tests/qtest/esp32c3-regi2c-test.c

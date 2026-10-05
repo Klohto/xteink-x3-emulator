@@ -58,7 +58,11 @@ DEVICE_PROPERTIES = {
             "transmitted-packets", "received-packets", "backend-stalls", "tx-overruns",
             "timing-calibrated", "physical-effects-modelled", "usb-enumeration-modelled"),
     "fuel_gauge": ("unsupported-accesses", "temperature-mc", "injection-count", "physical-effects-modelled",
-                   "soc-percent", "voltage-mv", "current-ma", "fuel-gauging-modelled"),
+                   "soc-percent", "voltage-mv", "current-ma", "fuel-gauging-modelled",
+                   "operation-status", "design-capacity-mah", "learned-fcc-mah",
+                   "full-charge-capacity-mah", "capacity-data-writes",
+                   "capacity-reinitializations", "capacity-rejections",
+                   "capacity-config-deadline-ns"),
     "sensor_rtc": ("unsupported-accesses", "temperature-mc", "injection-count", "physical-effects-modelled",
                    "epoch-seconds", "oscillator-stopped", "alarm-modelled", "alarm-irq-wired"),
     "imu": ("unsupported-accesses", "temperature-mc", "injection-count", "physical-effects-modelled",
@@ -345,6 +349,8 @@ class RunConfig:
     wifi_peer: str | None = None
     wifi_channel: int | None = None
     wifi_random_seed: int | None = None
+    initial_gauge_design_capacity_mah: int | None = None
+    initial_gauge_learned_fcc_mah: int | None = None
 
     def resolved(self) -> RunConfig:
         backend, rom_dir = _selected_backend(self.backend, self.rom_dir)
@@ -359,6 +365,8 @@ class RunConfig:
             Path(self.efuse).expanduser().resolve() if self.efuse is not None else None,
             self.device_mac, self.wifi_peer, self.wifi_channel,
             self.wifi_random_seed,
+            self.initial_gauge_design_capacity_mah,
+            self.initial_gauge_learned_fcc_mah,
         )
 
 
@@ -465,6 +473,21 @@ def _qmp_transport_path(config: RunConfig, transport: str) -> Path:
     return config.output / ("qmp-control.sock" if transport == "unix" else "qmp-control")
 
 
+def _initial_gauge_capacity(config: RunConfig) -> dict[str, int]:
+    """Optional starting hardware state, never a runtime calibration shortcut."""
+    properties = {}
+    for field, prop in (
+        ("initial_gauge_design_capacity_mah", "initial-design-capacity-mah"),
+        ("initial_gauge_learned_fcc_mah", "initial-learned-fcc-mah"),
+    ):
+        value = getattr(config, field)
+        if value is not None:
+            if type(value) is not int or not 0 <= value <= 65535:
+                raise BackendError(f"{field} must be an integer from 0 to 65535")
+            properties[prop] = value
+    return properties
+
+
 def build_command(config: RunConfig) -> list[str]:
     """Return argv without invoking a shell or changing the supplied files."""
     config = config.resolved()
@@ -477,6 +500,7 @@ def build_command(config: RunConfig) -> list[str]:
     if not isinstance(config.wifi, bool):
         raise BackendError("WiFi enable must be a boolean")
     _efuse_input(config)
+    initial_gauge = _initial_gauge_capacity(config)
     peer = _wifi_peer(config)
     channel = _wifi_channel(config)
     if peer is not None and config.wifi:
@@ -517,6 +541,8 @@ def build_command(config: RunConfig) -> list[str]:
         "-monitor", "none", "-display", "none",
         "-d", "unimp,guest_errors", "-D", str(config.output / "diagnostics.log"),
     ]
+    for prop, value in initial_gauge.items():
+        command += ["-global", f"xteink.x3-i2c-sensor.{prop}={value}"]
     if config.usb_port is None:
         command += ["-serial", f"file:{config.output / 'serial.log'}"]
     else:
@@ -694,6 +720,15 @@ def run(config: RunConfig) -> dict:
                             "size_bytes": len(efuse_data),
                             "factory_mac": ":".join(f"{byte:02x}" for byte in efuse_data[24:30][::-1]),
                             "physical_calibration_data_verified": False},
+                  "fuel_gauge": {
+                      "device": "/machine/i2c/fuel-gauge", "target_chip": "BQ27220",
+                      "initial_design_capacity_mah": config.initial_gauge_design_capacity_mah,
+                      "initial_learned_fcc_mah": config.initial_gauge_learned_fcc_mah,
+                      "configuration_source": "explicit_synthetic_fixture" if _initial_gauge_capacity(config)
+                                              else "backend_default",
+                      "physical_calibration_verified": False,
+                      "cross_process_data_memory_persistence_modelled": False,
+                  },
                   "power_on": {"enabled": config.power_on, "gpio": 3, "active_level": 0,
                                "hold_ns": config.power_button_hold_ns if config.power_on else None,
                                "release_clock": "QEMU_CLOCK_VIRTUAL"}},

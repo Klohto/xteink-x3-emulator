@@ -140,6 +140,12 @@ def free_port() -> int:
         return listener.getsockname()[1]
 
 
+def rom_reset_observations(rom: str) -> list[dict]:
+    """Read the native ROM's reset reasons, independent of USB attachment."""
+    return [{"code": int(code, 16), "name": name} for code, name in
+            re.findall(r"^rst:0x([0-9a-fA-F]+) \(([^)]+)\),boot:", rom, re.MULTILINE)]
+
+
 def closed_run_checks(directory: Path, report: dict, smoke: dict) -> None:
     manifest = json.loads((directory / "run/run.json").read_text())
     report["run_manifest"] = manifest
@@ -165,7 +171,11 @@ def closed_run_checks(directory: Path, report: dict, smoke: dict) -> None:
     serial = (directory / "run/serial.log").read_text(errors="replace")
     rom = (directory / "run/rom.log").read_text(errors="replace")
     reasons = re.findall(r"Reset diagnostic: reset=\d+\((\w+)\)", serial)
-    report["checks"]["actual_initial_poweron_rom_boot"] = bool(reasons) and reasons[0] == "POWERON" and "ESP-ROM:esp32c3" in rom
+    resets = rom_reset_observations(rom)
+    report["rom_reset_observations"] = resets
+    report["serial_reset_observations"] = reasons
+    report["early_usb_serial_poweron_diagnostic_missing"] = not reasons or reasons[0] != "POWERON"
+    report["checks"]["actual_initial_poweron_rom_boot"] = bool(resets) and resets[0] == {"code": 1, "name": "POWERON"} and "ESP-ROM:esp32c3" in rom
 
 
 def execute_cpu(args, directory: Path, flash: Path, card: Path, *, efuse: Path | None,
@@ -181,6 +191,13 @@ def execute_cpu(args, directory: Path, flash: Path, card: Path, *, efuse: Path |
         command += ["--efuse", str(efuse)]
     else:
         command += ["--wifi"]
+    for attribute, flag in (
+        ("initial_gauge_design_capacity_mah", "--initial-gauge-design-capacity-mah"),
+        ("initial_gauge_learned_fcc_mah", "--initial-gauge-learned-fcc-mah"),
+    ):
+        value = getattr(args, attribute, None)
+        if value is not None:
+            command += [flag, str(value)]
     report = {"schema_version": 1, "status": "running", "functional_pass": False,
               "checks": {}, "frames": {}, "launcher_command": command,
               "initial_flash_sha256": file_sha256(flash), "initial_sd_sha256": file_sha256(card),
@@ -192,12 +209,19 @@ def execute_cpu(args, directory: Path, flash: Path, card: Path, *, efuse: Path |
         with (directory / "launcher.log").open("xb") as log:
             process = subprocess.Popen(command, cwd=PROJECT, stdin=subprocess.DEVNULL, stdout=log, stderr=log)
         experiment = smoke["Experiment"](directory, process, args.step_timeout, button_hold_ms=400)
+        def connect_usb():
+            try:
+                return USBSerialClient(port, timeout=3, capture=directory / "usb-wire")
+            except ConnectionRefusedError:
+                return False
+        # Attach before the launcher's full QMP snapshot. Stock boot logs are
+        # emitted early and disconnected USB cannot provide that observation.
+        client = experiment.wait("native USB console listener", connect_usb)
         experiment.wait("launcher QMP broker", lambda: (directory / "run/run.json").is_file()
                         and json.loads((directory / "run/run.json").read_text())["status"] == "running")
         qmp = QMPClient(directory / "run/qmp.sock")
         qmp.set_buttons(0)
         experiment.wait("actual X3 hardware boot", lambda: "Hardware detect: X3" in experiment.log_text("serial.log"))
-        client = USBSerialClient(port, timeout=3, capture=directory / "usb-wire")
         replay = network["Replay"](smoke, experiment, qmp, report, directory)
         work(replay, client)
         report["completed"] = True
@@ -306,8 +330,10 @@ def online_workflow(replay, client, target: bytes, initial: bytes, usb_helpers: 
         replay.check("guest_removed_downloaded_staging_file", staging_removed)
     finally:
         replay.qmp.execute("cont")
-    reasons = re.findall(r"Reset diagnostic: reset=\d+\((\w+)\)", replay.experiment.log_text("serial.log"))
-    replay.check("only_source_defined_network_and_ota_software_resets", reasons == ["POWERON", "SW", "SW"], reasons)
+    resets = rom_reset_observations(replay.experiment.log_text("rom.log"))
+    replay.check("only_source_defined_network_and_ota_software_resets", len(resets) == 3
+                 and resets[0] == {"code": 1, "name": "POWERON"}
+                 and all(row["code"] in (3, 12) for row in resets[1:]), resets)
 
 
 def cold_reading_workflow(replay, client) -> None:

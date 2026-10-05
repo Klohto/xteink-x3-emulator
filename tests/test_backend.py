@@ -211,6 +211,61 @@ class BackendRunTests(unittest.TestCase):
         unix = build_command(RunConfig(self.flash, self.sd, self.output, self.backend, qmp_transport="unix"))
         self.assertEqual(unix[unix.index("-qmp") + 1], f"unix:{self.output}/qmp-control.sock,server=on,wait=off")
 
+    def test_initial_gauge_capacities_are_opt_in_and_survive_normalization(self):
+        default_argv = build_command(self.config())
+        self.assertFalse(any("xteink.x3-i2c-sensor.initial-" in arg for arg in default_argv))
+        config = self.config(initial_gauge_design_capacity_mah=0,
+                             initial_gauge_learned_fcc_mah=65535)
+        normalized = config.resolved()
+        self.assertEqual(normalized.initial_gauge_design_capacity_mah, 0)
+        self.assertEqual(normalized.initial_gauge_learned_fcc_mah, 65535)
+        argv = build_command(normalized)
+        self.assertIn("xteink.x3-i2c-sensor.initial-design-capacity-mah=0", argv)
+        self.assertIn("xteink.x3-i2c-sensor.initial-learned-fcc-mah=65535", argv)
+        self.assertIn("esp32c3,xteink-x3=true", argv[argv.index("-machine") + 1])
+
+    def test_initial_gauge_capacity_rejects_non_uint16_values(self):
+        for name in ("initial_gauge_design_capacity_mah", "initial_gauge_learned_fcc_mah"):
+            for value in (-1, 65536, True, False, "3000", 3000.0):
+                with self.subTest(name=name, value=value), self.assertRaisesRegex(BackendError, name):
+                    build_command(self.config(**{name: value}))
+
+    def test_initial_gauge_manifest_records_fixture_without_calibration_claim(self):
+        properties = ("operation-status", "design-capacity-mah", "learned-fcc-mah",
+                      "full-charge-capacity-mah", "capacity-data-writes",
+                      "capacity-reinitializations", "capacity-rejections",
+                      "capacity-config-deadline-ns")
+        values = (6, 650, 650, 650, 2, 1, 0, 0)
+        path = "/machine/i2c/fuel-gauge"
+        self.install_fake_backend(extra_properties={path: properties},
+                                  counter_overrides={f"{path}:{prop}": value
+                                                     for prop, value in zip(properties, values)})
+        result = run(self.config(initial_gauge_design_capacity_mah=3000,
+                                 initial_gauge_learned_fcc_mah=3000))
+        self.assertEqual(result["input"]["fuel_gauge"]["initial_design_capacity_mah"], 3000)
+        self.assertEqual(result["input"]["fuel_gauge"]["initial_learned_fcc_mah"], 3000)
+        self.assertEqual(result["input"]["fuel_gauge"]["configuration_source"], "explicit_synthetic_fixture")
+        self.assertFalse(result["input"]["fuel_gauge"]["physical_calibration_verified"])
+        self.assertFalse(result["input"]["fuel_gauge"]["cross_process_data_memory_persistence_modelled"])
+        self.assertEqual(result["final_state"]["fuel_gauge"]["capacity-data-writes"], 2)
+        self.assertFalse(result["timing"]["speed_selection_allowed"])
+        self.assertEqual(result["timing"]["calibration_status"], "uncalibrated")
+
+    def test_initial_gauge_cli_uses_typed_fixture_values(self):
+        with patch("x3emu.__main__.run", return_value={"status": "completed"}) as mocked, \
+                contextlib.redirect_stdout(io.StringIO()):
+            status = main(["run", "--flash", str(self.flash), "--sd", str(self.sd),
+                           "--output", str(self.output), "--initial-gauge-design-capacity-mah", "0xbb8",
+                           "--initial-gauge-learned-fcc-mah", "2744"])
+        self.assertEqual(status, 0)
+        self.assertEqual(mocked.call_args.args[0].initial_gauge_design_capacity_mah, 3000)
+        self.assertEqual(mocked.call_args.args[0].initial_gauge_learned_fcc_mah, 2744)
+        for value in ("-1", "65536", "true", "3.5"):
+            with self.subTest(value=value), contextlib.redirect_stderr(io.StringIO()), \
+                    self.assertRaises(SystemExit):
+                main(["run", "--flash", str(self.flash), "--sd", str(self.sd), "--output", str(self.output),
+                      "--initial-gauge-design-capacity-mah", value])
+
     def test_usb_socket_routes_only_loopback_through_guest_console_and_keeps_log(self):
         config = self.config(usb_port=43210)
         self.assertEqual(config.resolved().usb_port, 43210)
