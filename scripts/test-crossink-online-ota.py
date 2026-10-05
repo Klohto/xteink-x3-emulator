@@ -175,7 +175,14 @@ def closed_run_checks(directory: Path, report: dict, smoke: dict) -> None:
     report["rom_reset_observations"] = resets
     report["serial_reset_observations"] = reasons
     report["early_usb_serial_poweron_diagnostic_missing"] = not reasons or reasons[0] != "POWERON"
+    if report.get("ota_install_authorized"):
+        report["ota_completion_serial_observation"] = ota_completion_serial_observation(serial)
     report["checks"]["actual_initial_poweron_rom_boot"] = bool(resets) and resets[0] == {"code": 1, "name": "POWERON"} and "ESP-ROM:esp32c3" in rom
+
+
+def ota_completion_serial_observation(serial: str) -> dict:
+    rows = [row for row in serial.splitlines() if "Update completed:" in row]
+    return {"observed": bool(rows), "missing": not rows, "original_rows": rows}
 
 
 def execute_cpu(args, directory: Path, flash: Path, card: Path, *, efuse: Path | None,
@@ -293,8 +300,10 @@ def online_workflow(replay, client, target: bytes, initial: bytes, usb_helpers: 
     serial_before = replay.experiment.log_text("serial.log")
     rom_before = replay.experiment.log_text("rom.log")
     detects, boots = serial_before.count("Hardware detect: X3"), rom_before.count("ESP-ROM:esp32c3")
+    replay.report["ota_install_authorized"] = True
     replay.experiment.press(replay.qmp, "confirm", purpose="authorize real official v1.6.1 download, validated staging and OTA app1 installation")
-    replay.experiment.wait("original OTA install completion", lambda: "Update completed:" in replay.experiment.log_text("serial.log"))
+    # Stock restart can discard the final pending USB log line. The real ROM
+    # reset, responding target firmware and exact storage/MMU checks prove OTA.
     replay.experiment.wait("real CPU reset after OTA app switch", lambda:
                            replay.experiment.log_text("rom.log").count("ESP-ROM:esp32c3") > boots
                            and replay.experiment.log_text("serial.log").count("Hardware detect: X3") > detects)

@@ -81,6 +81,11 @@ missing early row are retained separately. The first CI attempt's unattached
 console failure is preserved; moving the host connection does not change
 firmware, network endpoints or trust.
 
+The stock restart can also discard the pending `Update completed` USB line.
+Its exact observed rows and explicit missing flag are retained separately.
+OTA completion requires the real ROM reset, responding stock `1.6.1` USB
+protocol, and every storage, mapping and reset check described above.
+
 A second CPU boots from those written flash/card/eFuse bytes, reads the
 untouched EPUB, turns pages, saves page 1 and reopens it. Its completed EPUB
 cache must use the reviewed v1.6.1 **version 83** header; an old version 77 or
@@ -95,5 +100,5 @@ trace, native framebuffer CRCs, captures, logs and original launcher manifest.
 `validation.json` reports functional success separately from the original
 strict native diagnostics. Unsupported accesses, physical timing, RF and
 complete machine fidelity are not promoted to passed by a successful update.
-The seven host tests cover refusal/schema/capture/reset binding; they do not execute
+The eight host tests cover refusal/schema/capture/reset and missing-log binding; they do not execute
 firmware or stand in for the guest integration result.

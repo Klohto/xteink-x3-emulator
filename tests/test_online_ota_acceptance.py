@@ -27,6 +27,16 @@ def finalized_section():
 
 
 class OnlineOtaAcceptanceTests(unittest.TestCase):
+    def test_lost_stock_usb_completion_log_is_preserved_as_missing(self):
+        serial = ("[154640] [INF] [BOOT] otadata: wrote slot=1 seq=2 -> app1\n"
+                  "rst:0xc (RTC_SW_CPU_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
+                  "[159312] [INF] [MAIN] Hardware detect: X3\n")
+        self.assertEqual(OTA.ota_completion_serial_observation(serial),
+                         {"observed": False, "missing": True, "original_rows": []})
+        row = "[207010] [INF] [OTA] Update completed: 12623648 bytes"
+        self.assertEqual(OTA.ota_completion_serial_observation(serial + row + "\n"),
+                         {"observed": True, "missing": False, "original_rows": [row]})
+
     def test_rom_reset_sequence_is_independent_of_missing_usb_startup_log(self):
         rom = ("ESP-ROM:esp32c3-api1-20210207\n"
                "rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
