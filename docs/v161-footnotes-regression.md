@@ -30,8 +30,12 @@ verification separate from those checks.
 
 The first workflow follows the original same-file note, reads its final
 paragraph and performs the former lifecycle's Down action. At the finalized
-full-section boundary it must save the source-directed next-spine/page-zero
-destination. It returns with Back, compares every native framebuffer pixel,
+full-section boundary it must render the source-directed next-spine/page-zero
+destination. Live positions use the native capture's visible page counter,
+bound to the finalized section and original chapter text. CrossInk defers
+progress writes until ten observed page changes or five minutes, then flushes
+on exit; a missing or stale disk record cannot describe the live position.
+The workflow returns with Back, compares every native framebuffer pixel,
 exits, independently decodes `progress.bin`, and starts a new CPU from only
 the actual guest-written flash, SD card and eFuses. That CPU must reopen the
 original page and preserve it on exit. Finalized version-83 sections are

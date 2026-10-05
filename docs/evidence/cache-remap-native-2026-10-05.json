@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-05",
+  "scope": "Native C3 cache remapping and actual TCG execution; source-only identity and results",
+  "tested_commit": "23333a8a96c29ae0945bafe48cfa009187f26415",
+  "ci_run_id": 37304701622,
+  "ci_run_url": "https://github.com/Klohto/xteink-x3-emulator/actions/runs/37304701622",
+  "backend": {
+    "upstream_revision": "febae182e132e4055529be423a818225ebddaa3a",
+    "source_tree": "4fb14508af13898f7bc046074b83b5580653783e",
+    "board_patch_sha256": "57e84e1257ec865b134b8614bbcc9a57312f1f3ad1cb0fbf7d09065c84894989",
+    "elf_sha256": "ea279885f4c5bef213b11b2b6651beaa18c68b4f2111f0e3547fbe6fdb3c6913",
+    "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "version": "QEMU emulator version 9.2.2",
+    "native_artifact_zip_sha256": "a8b470f9f060c4929eac2e8305c9e721d00a8a0f407758ca2a6d2fd35ce4dfb7",
+    "backend_manifest_sha256": "d6b078d4071f1a50ac518d460c0c5d02f8bd1eebd46c6d46ca03ce2662ec1a88",
+    "native_results_sha256": "8b0d57812297cf5d8befba88ff1b1bb0db8fcdfb2e8c8d8f4bb0c53118ed8231"
+  },
+  "native_gate": {
+    "passed": true,
+    "cases_passed": 130,
+    "suites_passed": 12,
+    "independently_verified": [
+      "artifact paths and absence of symlinks",
+      "ELF, ROM, board patch and manifest identities",
+      "each complete TAP hash",
+      "one exact TAP plan per suite",
+      "all numbered successes contiguous",
+      "no skipped, TODO, failed or bailed-out cases"
+    ],
+    "executed_mmu_remap_case_passed": true,
+    "suites": [
+      {
+        "suite": "esp32c3-gpspi-test",
+        "passed": 3,
+        "tap_sha256": "ea2b34c99379619b6d9b0afc912447970e1eb14aa4b536161cccb8c35d56f3e1"
+      },
+      {
+        "suite": "xteink-x3-adc-test",
+        "passed": 11,
+        "tap_sha256": "16d90be85a6b3bfe9802f7ec9b2bfe1f83336a794af0a12acff4b204e9210bdf"
+      },
+      {
+        "suite": "esp32c3-i2c-test",
+        "passed": 18,
+        "tap_sha256": "d4ebefae25139020ea9fa19484c1c026f908e472fbccf7fb0f780c5a28cfd180"
+      },
+      {
+        "suite": "xteink-x3-epd-test",
+        "passed": 10,
+        "tap_sha256": "e153421eabd5e821ad35f8494df819c40beca6b34894870bd7845de46a56348c"
+      },
+      {
+        "suite": "esp32c3-usb-test",
+        "passed": 6,
+        "tap_sha256": "21cce7d4a1ce2aef912a7c70a8b8d79d7e080dde0d6084a0f5a52b2afaddce2f"
+      },
+      {
+        "suite": "xteink-x3-sd-test",
+        "passed": 6,
+        "tap_sha256": "817ff91140967fee7afb356093321643165df2091c05e9c619d8a65f689d4fbb"
+      },
+      {
+        "suite": "esp32c3-flash-test",
+        "passed": 12,
+        "tap_sha256": "a47c27c1391a7fccd75ad2bc48e1e220607e8f0ee633963d0226855476b6e42e"
+      },
+      {
+        "suite": "esp32c3-rtc-test",
+        "passed": 16,
+        "tap_sha256": "7ddc14bc2b1a2989ee24c23d212e246ff6f218ecbaa22eaae2e9c5bd66429f4a"
+      },
+      {
+        "suite": "xteink-x3-soc-test",
+        "passed": 2,
+        "tap_sha256": "8e5d12b42955af749874e5ace8a906bde8e84305ca7cb56a1a411ea197b723f3"
+      },
+      {
+        "suite": "esp32c3-assist-debug-test",
+        "passed": 4,
+        "tap_sha256": "858242ba4968444ab9283bc1d37e3ccad610785fa93741ab5d5d0456afa98e4b"
+      },
+      {
+        "suite": "esp32c3-regi2c-test",
+        "passed": 10,
+        "tap_sha256": "32cf7aff7cc1f7fa549d0b4746956b02a388fd0df3a9fe2e9550de2158f5479f"
+      },
+      {
+        "suite": "esp32c3-wifi-test",
+        "passed": 32,
+        "tap_sha256": "8f01ebbf11d08c6c42df8c773556b5471c84c8000316a10772325599fe2eb4ce"
+      }
+    ]
+  },
+  "actual_tcg_red_green": {
+    "same_guest_code_and_flash": true,
+    "guest_code_sha256": "7ec351cfcd6fb424d36431fd2dc318a6563da689655d003683ff394378926a88",
+    "guest_flash_sha256": "78a5c65f00983a5fa7ea8210dea4e8d4b1df429df5d12dfa88c06b6d5cd464af",
+    "virtual_irom_address": "0x42200000",
+    "destination_virtual_page_index": "0x20",
+    "physical_flash_page_sequence": [
+      "0x33",
+      "0x97",
+      "0x33",
+      "0x97"
+    ],
+    "negative_control": {
+      "backend_sha256": "a88e0471ed5f4cda2c76b2f00dee1699fe6ac0242a7ffceb8cef199553081f64",
+      "closed_receipt_sha256": "859ea761a570d2a99a7dfe67fd7d79857d53bfaece804221b73303177a1713c1",
+      "expected_second_return": "0x222",
+      "actual_second_return": "0x111",
+      "second_call_irom_and_drom_bytes_were_new": true,
+      "stale_execution_reproduced": true,
+      "original_proof_preserved": true
+    },
+    "fixed_control": {
+      "backend_sha256": "ea279885f4c5bef213b11b2b6651beaa18c68b4f2111f0e3547fbe6fdb3c6913",
+      "closed_receipt_sha256": "e1277c48ba9b271d8cf453359f672798b227e07ec1ab357fab422c21c9e06e5b",
+      "actual_returns": [
+        "0x111",
+        "0x222",
+        "0x111",
+        "0x222"
+      ],
+      "all_four_executed_remaps_passed": true,
+      "clean_qemu_exit": true
+    }
+  },
+  "crossink_online_ota": {
+    "ci_step_reported_passed": true,
+    "reported_run_id": 37304701622,
+    "independent_closed_crossink_receipt_readback": "pending",
+    "established_by_this_native_fixture": false
+  },
+  "limits": {
+    "footnote_guest_execution_verified_by_this_record": false,
+    "all_crossink_functions_verified": false,
+    "hardware_equivalence_verified": false,
+    "timing_calibrated": false,
+    "physical_x3_speed_verified": false
+  }
+}

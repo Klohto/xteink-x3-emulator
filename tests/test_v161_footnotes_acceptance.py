@@ -13,6 +13,26 @@ SPEC.loader.exec_module(FOOTNOTES)
 
 
 class V161FootnoteAcceptanceTests(unittest.TestCase):
+    def test_visible_page_counter_observes_live_position_without_disk_progress(self):
+        self.assertEqual(FOOTNOTES.decode_rendered_page_counter(
+            "The reader checks the clock\n80% The workshop 1/23 0%\n",
+            spine_index=0, finalized_page_count=23),
+            {"spine_index": 0, "page_number": 0, "page_count": 23})
+        self.assertEqual(FOOTNOTES.decode_rendered_page_counter(
+            "Fixture note 1: the clock belongs to the reader.\n22 / 23 91%",
+            spine_index=0, finalized_page_count=23)["page_number"], 21)
+        self.assertEqual(FOOTNOTES.decode_rendered_page_counter(
+            "A walk by the river\nin chapter 2\n1/22",
+            spine_index=1, finalized_page_count=22)["spine_index"], 1)
+
+    def test_missing_ambiguous_or_stale_rendered_counter_cannot_substitute_for_position(self):
+        for text in ("no counter", "0/23", "24/23", "1/22", "1/23 and 2/23"):
+            with self.subTest(text=text), self.assertRaises(FOOTNOTES.FootnoteError):
+                FOOTNOTES.decode_rendered_page_counter(text, spine_index=0, finalized_page_count=23)
+        for spine, count in ((True, 23), (6, 23), (0, 0), (0, True)):
+            with self.subTest(spine=spine, count=count), self.assertRaises(FOOTNOTES.FootnoteError):
+                FOOTNOTES.decode_rendered_page_counter("1/23", spine_index=spine, finalized_page_count=count)
+
     def test_forward_destination_uses_finalized_section_not_saved_estimate(self):
         for saved_count in (0, 2, 500):
             with self.subTest(saved_count=saved_count):

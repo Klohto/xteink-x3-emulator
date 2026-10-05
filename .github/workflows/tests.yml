@@ -69,6 +69,7 @@ jobs:
           git clone --filter=blob:none --no-checkout https://github.com/Free-Ink/freeink-sdk.git local/package-sources/freeink-sdk-v161
           git -C local/package-sources/freeink-sdk-v161 checkout --detach 699370183fa3a0e33c9cb83a36f701bbb6022095
       - name: Package the working Linux front panel and native backend
+        id: runtime_package
         if: github.ref == 'refs/heads/main'
         run: |
           python scripts/package-runtime.py \
@@ -85,6 +86,43 @@ jobs:
         with:
           name: xteink-x3-crossink-linux-x86_64-${{ github.sha }}
           path: ${{ runner.temp }}/xteink-x3-crossink-linux-x86_64.tar.gz
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - name: Split the sealed runtime for bounded artifact retrieval
+        if: github.ref == 'refs/heads/main'
+        run: |
+          split --bytes=24M --numeric-suffixes=1 --suffix-length=1 \
+            "$RUNNER_TEMP/xteink-x3-crossink-linux-x86_64.tar.gz" \
+            "$RUNNER_TEMP/x3-runtime-part-"
+          sha256sum "$RUNNER_TEMP/xteink-x3-crossink-linux-x86_64.tar.gz" \
+            "$RUNNER_TEMP"/x3-runtime-part-* > "$RUNNER_TEMP/x3-runtime-parts.sha256"
+      - name: Preserve runtime part 1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: x3-runtime-part-1-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/x3-runtime-part-1
+            ${{ runner.temp }}/x3-runtime-parts.sha256
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve runtime part 2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: x3-runtime-part-2-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-runtime-part-2
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve runtime part 3
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: x3-runtime-part-3-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-runtime-part-3
           compression-level: 0
           retention-days: 30
           if-no-files-found: error
@@ -113,9 +151,48 @@ jobs:
           compression-level: 6
           retention-days: 30
           if-no-files-found: error
+      - name: Preserve compact OTA receipts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && github.ref == 'refs/heads/main' && steps.online_ota.outcome == 'success'
+        with:
+          name: x3-ota-receipts-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/x3-online-ota/*.json
+            ${{ runner.temp }}/x3-online-ota/virgin-book-card.img
+            ${{ runner.temp }}/x3-online-ota/host-only-official-update
+          compression-level: 6
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve OTA CPU storage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && github.ref == 'refs/heads/main' && steps.online_ota.outcome == 'success'
+        with:
+          name: x3-ota-update-cpu-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-online-ota/online-upgrade
+          compression-level: 6
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve OTA reader storage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && github.ref == 'refs/heads/main' && steps.online_ota.outcome == 'success'
+        with:
+          name: x3-ota-reader-cpu-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-online-ota/cold-written-v161
+          compression-level: 6
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve OTA cold reader storage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && github.ref == 'refs/heads/main' && steps.online_ota.outcome == 'success'
+        with:
+          name: x3-ota-cold-reader-cpu-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-online-ota/cold-saved-reader
+          compression-level: 6
+          retention-days: 30
+          if-no-files-found: error
       - name: Original footnote persistence and cold link restoration on OTA-written CrossInk
         id: footnotes
-        if: github.ref == 'refs/heads/main'
+        if: always() && github.ref == 'refs/heads/main' && steps.online_ota.outcome == 'success'
         timeout-minutes: 20
         run: |
           python scripts/test-crossink-v161-footnotes.py \
@@ -135,7 +212,7 @@ jobs:
           if-no-files-found: error
       - name: Unchanged guest gauge capacity load and stock software reset
         id: battery_capacity
-        if: github.ref == 'refs/heads/main'
+        if: always() && github.ref == 'refs/heads/main' && steps.online_ota.outcome == 'success'
         timeout-minutes: 20
         run: |
           python scripts/test-crossink-battery-capacity.py \
@@ -156,7 +233,7 @@ jobs:
           if-no-files-found: error
       - name: Actual HTTP panel reading and fresh CPU restoration on OTA-written CrossInk
         id: panel_v161
-        if: github.ref == 'refs/heads/main'
+        if: always() && github.ref == 'refs/heads/main' && steps.online_ota.outcome == 'success'
         timeout-minutes: 20
         run: |
           python scripts/test-crossink-v161-panel.py \

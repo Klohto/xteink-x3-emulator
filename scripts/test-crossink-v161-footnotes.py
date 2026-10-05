@@ -13,6 +13,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import runpy
 import struct
 import sys
@@ -115,15 +116,38 @@ def progress(replay):
     return replay.helpers["decode_progress"](replay.read(replay.helpers["cache_path"]() + "/progress.bin"))
 
 
-def finalized_section(replay):
+def finalized_section(replay, *, spine_index=0):
     def completed():
         try:
-            return OTA["decode_v161_section"](replay.read(replay.helpers["cache_path"]() + "/sections/0.bin"))
+            return OTA["decode_v161_section"](replay.read(replay.helpers["cache_path"]() + f"/sections/{spine_index}.bin"))
         except (FileNotFoundError, FootnoteError):
             return False
     section = replay.experiment.wait("original rich EPUB finalized by v1.6.1 as v83", completed)
     replay.check("genuine_v161_finalized_v83_section", True, section)
     return section
+
+
+def decode_rendered_page_counter(text, *, spine_index, finalized_page_count):
+    """Read the visible full-section counter; disk progress may be deferred."""
+    if (type(spine_index) is not int or not 0 <= spine_index < 6
+            or type(finalized_page_count) is not int or not 1 <= finalized_page_count <= 65535):
+        raise FootnoteError("rendered position requires a bounded original-fixture spine and finalized count")
+    counters = re.findall(r"(?<!\d)(\d+)\s*/\s*(\d+)(?!\d)", text)
+    if len(counters) != 1:
+        raise FootnoteError("original reader OCR must contain exactly one visible page counter")
+    page, count = map(int, counters[0])
+    if count != finalized_page_count or not 1 <= page <= count:
+        raise FootnoteError("visible reader page counter differs from the actual finalized section")
+    return {"spine_index": spine_index, "page_number": page - 1, "page_count": count}
+
+
+def rendered_progress(replay, label, frame, section, *, spine_index=0):
+    record = replay.report.get("result_panel_ocr", {}).get(label, {})
+    if (record.get("frame") != frame.get("path") or record.get("pixel_sha256") != frame.get("pixel_sha256")
+            or not record.get("observations")):
+        raise FootnoteError("live reader counter is not bound to its actual successful OCR capture")
+    return decode_rendered_page_counter(record["observations"][-1]["text"],
+        spine_index=spine_index, finalized_page_count=section["page_count"])
 
 
 def pixels(replay, frame):
@@ -170,37 +194,44 @@ def follow_original_note(replay, *, exercise_boundary):
     replay.tap("left", "original-footnotes-selected", "Physical front Left: select last More row, original Footnotes")
     replay.capture_text("original-footnotes-row-visible", ["Footnotes"])
     note = replay.tap("confirm", "original-note-anchor", "Single source-collected #note-1 link jumps directly, without a fabricated list dialog")
-    current = progress(replay)
-    replay.check("same_file_original_note_jump_saved_nonzero_page", current["spine_index"] == 0 and current["page_number"] > 0, current)
     section = finalized_section(replay)
+    anchor = replay.capture_text("original-note-anchor-visible", ["Fixture note 1"])
+    current = rendered_progress(replay, "original-note-anchor-visible", anchor, section)
+    replay.check("same_file_original_note_jump_rendered_nonzero_page", current["spine_index"] == 0 and current["page_number"] > 0,
+        {"rendered_position": current, "capture": anchor, "disk_progress_is_not_a_live_position": True})
     destination = note_forward_destination(current, section["page_count"])
     boundary = destination["spine_index"] != current["spine_index"]
     if not boundary:
         note = replay.tap("down", "original-note-final-page", "Perform the former failing lifecycle's next-page action in the note context")
     note = replay.capture_text("original-note-final-paragraph", ["Fixture note 1", "the clock belongs to the reader"])
+    actual = rendered_progress(replay, "original-note-final-paragraph", note, section)
     original_note_pixels = pixels(replay, note)
     if boundary and exercise_boundary:
         replay.tap("down", "original-note-next-spine", "Former lifecycle Down at finalized full-section end advances to the actual next spine")
+        next_section = finalized_section(replay, spine_index=destination["spine_index"])
+        next_frame = replay.capture_text("original-note-next-spine-visible", ["A walk by the river", "in chapter 2"])
+        actual = rendered_progress(replay, "original-note-next-spine-visible", next_frame, next_section,
+            spine_index=destination["spine_index"])
     if not boundary or exercise_boundary:
-        def saved_destination():
-            actual = progress(replay)
-            return actual if all(actual[key] == value for key, value in destination.items()) else False
-        actual = replay.experiment.wait("guest saves source-directed full-section forward destination", saved_destination)
-        replay.check("original_note_down_saves_source_directed_destination", True, {
+        replay.check("original_note_down_renders_source_directed_destination", all(actual[key] == value for key, value in destination.items()), {
             "before": current, "finalized_page_count": section["page_count"],
-            "expected": destination, "actual": actual, "crosses_spine": boundary})
+            "expected": destination, "actual_rendered_position": actual, "crosses_spine": boundary,
+            "disk_progress_may_be_deferred_until_exit": True})
     else:
-        actual = progress(replay)
         replay.check("durable_original_note_boundary_down_skipped", actual == current, {
-            "saved_note": actual, "source_forward_destination": destination,
+            "rendered_note": actual, "source_forward_destination": destination,
             "reason": "durable note resume keeps the original note; Down would leave its full section"})
     return original_note_pixels, actual
 
 
 def return_workflow(replay, client):
-    original = pixels(replay, home_and_open(replay, client, virgin=True))
-    initial = progress(replay)
-    replay.check("original_reader_origin_page0", initial["spine_index"] == 0 and initial["page_number"] == 0, initial)
+    frame = home_and_open(replay, client, virgin=True)
+    original = pixels(replay, frame)
+    initial = rendered_progress(replay, "footnote-reader-opened", frame, finalized_section(replay))
+    replay.check("original_reader_origin_page0", initial["spine_index"] == 0 and initial["page_number"] == 0,
+        {"rendered_position": initial, "capture": frame,
+         "on_disk_progress_before_exit": None if replay.absent(replay.helpers["cache_path"]() + "/progress.bin") else progress(replay),
+         "source_save_policy": "ten observed page changes or five minutes; explicit flush on exit"})
     note, _ = follow_original_note(replay, exercise_boundary=True)
     replay.check("original_note_has_different_real_pixels", replay.helpers["changed_pixels"](original, note) > 1000)
     returned = pixels(replay, replay.tap("back", "original-footnote-origin-return", "Back restores the original reading position"))

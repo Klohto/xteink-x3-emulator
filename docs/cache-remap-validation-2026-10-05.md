@@ -34,10 +34,29 @@ The prior ELF is
 `a88e0471ed5f4cda2c76b2f00dee1699fe6ac0242a7ffceb8cef199553081f64`,
 from QEMU revision `febae182e132e4055529be423a818225ebddaa3a` and board patch
 `5a463a739cf660a53ecbe8d149896edffc6a741b8e0dc4aae86fdf2da64ef66a`.
-The fix and execution regression are prepared for native CI. A passing rebuilt
-regression and a new complete OTA/read/cold-resume run must establish the
-corrected result. Timing calibration, hardware equivalence and exhaustive
-function coverage remain unverified.
+
+The rebuilt backend from main commit
+`23333a8a96c29ae0945bafe48cfa009187f26415` passes all **130 native cases**
+across 12 suites, including the executed MMU remap regression. Independent
+artifact readback verified the ELF, ROM, patch and every complete TAP file,
+its exact plan and contiguous successes. The rebuilt ELF is
+`ea279885f4c5bef213b11b2b6651beaa18c68b4f2111f0e3547fbe6fdb3c6913`,
+with board patch
+`57e84e1257ec865b134b8614bbcc9a57312f1f3ad1cb0fbf7d09065c84894989`
+and patched source tree `4fb14508af13898f7bc046074b83b5580653783e`.
+
+The independent TCG fixture also passed on this exact rebuilt ELF. Identical
+guest code and flash now return `0x111`, `0x222`, `0x111`, `0x222` across all
+four executed remaps. The previous failed execution receipt remains preserved.
+The source-only [native and execution evidence](evidence/cache-remap-native-2026-10-05.json)
+records both receipt hashes and the precise backend identities.
+
+[CI run 37304701622](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37304701622)
+reports that the unchanged CrossInk online OTA gate passed. Independent readback
+of its closed CrossInk execution receipt is pending. The small native fixture
+establishes cache execution correctness for these remaps; it does not establish
+CrossInk's full workflow. Footnote execution, timing calibration, hardware
+equivalence and exhaustive function coverage are not claimed by this record.
 
 Primary contracts:
 [pinned C3 cache implementation](https://github.com/espressif/qemu/blob/febae182e132e4055529be423a818225ebddaa3a/hw/misc/esp32c3_cache.c),
