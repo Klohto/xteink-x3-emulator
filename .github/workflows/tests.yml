@@ -26,6 +26,7 @@ jobs:
         run: python -m unittest discover -s tests -v
   native:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -66,5 +67,29 @@ jobs:
           name: xteink-x3-crossink-linux-x86_64-${{ github.sha }}
           path: ${{ runner.temp }}/xteink-x3-crossink-linux-x86_64.tar.gz
           compression-level: 0
+          retention-days: 30
+          if-no-files-found: error
+      - name: Install real guest online-update observation dependencies
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sudo apt-get install -y tesseract-ocr
+          python -m pip install Pillow==12.3.0
+      - name: CrossInk direct online OTA, reboot and book reading
+        if: github.ref == 'refs/heads/main'
+        timeout-minutes: 30
+        run: |
+          python scripts/test-crossink-online-ota.py \
+            --output "$RUNNER_TEMP/x3-online-ota" \
+            --backend local/qemu/install/bin/qemu-system-riscv32 \
+            --rom-dir local/qemu/install/share/qemu \
+            --flash local/firmware/crossink-v1.6.0-x3-full-flash.bin \
+            --source local/package-sources/CrossInk --download
+      - name: Preserve actual online OTA result and written guest storage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && github.ref == 'refs/heads/main'
+        with:
+          name: x3-crossink-online-ota-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-online-ota
+          compression-level: 6
           retention-days: 30
           if-no-files-found: error

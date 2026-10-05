@@ -81,6 +81,12 @@ not a factory dump. See [flashing.md](docs/flashing.md) and
 [modern flasher validation](docs/ram-flasher-validation-2026-10-04.md), including
 the preserved legacy-stub failure.
 
+The [online OTA gate](docs/online-ota.md) exercises the original Check for
+Updates action on a direct-network GitHub runner. It requires the actual
+official v1.6.1 app in the alternate slot, a real reboot into that version,
+EPUB page turns and saved progress restored by a fresh CPU. The host's own
+release preflight and download do not count as guest update success.
+
 ## Build from source
 
 Install the native dependencies in [build.md](docs/build.md), then:
@@ -126,8 +132,9 @@ and original verdicts. Original failures and known
 
 Complete hardware equivalence and exhaustive function coverage are not
 established. Physical CPU/cache costs, SD latency, RF, panel optics, power and
-analog sensors need real X3 measurements. Full online OTA remains blocked by
-the observed TLS trust failure. BLE and parts of protection/debug hardware
+analog sensors need real X3 measurements. The earlier online OTA probe retains
+its observed proxy TLS trust failure; full online OTA remains unverified until
+the direct-network gate passes. BLE and parts of protection/debug hardware
 remain incomplete. The bounded encrypted Wi-Fi profile does not cover every
 cipher or radio behavior.
 
