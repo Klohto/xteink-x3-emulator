@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "functional_pass": true,
+  "main_cohort": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "guest_firmware": "unchanged official CrossInk v1.6.1",
+  "guest_application_bytes": 6311824,
+  "guest_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+  "source_snapshot_commit": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+  "binary_build_commit_verified": false,
+  "executed_host_source_sha256": "0c4648da1c625e7b13172030629bbadb4ee076f58dc5284ad79a9c4cf9f0b262",
+  "host_acceptance_tests_sha256": "2001422d6daca214af31e9b6adb37dc44141f7df31b44658af0544a3b30b9be8",
+  "original_root_receipt_sha256": "cca70a9496309f1d69f41f2a39a0f14e69263f971ccdbfdd74f6f3ada4183539",
+  "execution_binding_sha256": "a25276acd0e205fcdb24cce017cd6e0f257715aa481496b655d428b71274436b",
+  "native_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "accepted_original_ota_receipt_sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011",
+  "accepted_original_third_manifest_sha256": "05842d09af0082b0fffbb9448715f8667075aefd7639928b8db1d04497ecec78",
+  "guest_settings_progress_or_saved_items_seeded": false,
+  "guest_modified": false,
+  "all_functions_verified": false,
+  "complete_machine_verified": false,
+  "physical_timing_calibrated": false,
+  "speed_selection_allowed": false,
+  "stages": [
+    {
+      "workflow": "bookmarks",
+      "phase": "warm",
+      "directory": "bookmarks-warm",
+      "status": "passed",
+      "functional_pass": true,
+      "original_receipt_sha256": "2c7c0d095331509569602b81d22b41cd10b86145721d71a46b26ddb5efd98dc2",
+      "original_manifest_sha256": "8613e05fb4084d1d8b13451840bad211fe6d4c47d480a5a038a0df60f1c3dd0a",
+      "checks": {
+        "initial_poweron_and_stock_x3_usb_response": true,
+        "actual_running_stock_v161": true,
+        "actual_finalized_v83_layout": true,
+        "reader-opened_actual_visible_position": true,
+        "no_seeded_bookmark_or_clipping_or_per_book_settings": true,
+        "page1-before-bookmark_actual_visible_position": true,
+        "genuine_v5_bookmark_created": true,
+        "ordinary-bookmarked-page1_actual_visible_position": true,
+        "actual-page2-away_actual_visible_position": true,
+        "bookmark-restored-page1_actual_visible_position": true,
+        "bookmark_jump_restores_entire_page": true,
+        "bookmark_jump_preserves_actual_store": true,
+        "actual_exit_saved_position": true,
+        "no_guest_panic_or_sd_failure": true,
+        "launcher_stopped_cleanly": true,
+        "closed_native_panel_trace_complete": true,
+        "uncalibrated_speed_selection_stays_disabled": true,
+        "launcher_initial_storage_matches_carried_inputs": true,
+        "carried_efuse_hash_matches_launcher_input": true,
+        "actual_initial_poweron_rom_boot": true
+      },
+      "error": null,
+      "closure_error": null,
+      "actual_final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "830d7bf4a26056d82a3ea4c2dc6badb52c2e64526a645b914147056799881cdb",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "full_native_trace_complete": true,
+      "clean_native_exit": true,
+      "actual_usb_version": "1.6.1",
+      "rom_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "saved_progress": {
+        "spine_index": 0,
+        "page_number": 1,
+        "page_count": 22,
+        "visible_text_offset": 586
+      },
+      "saved_bookmark_sha256": "82d604bfd4ec9afcbd2096ecab50a2f0513bff924238793a1f4fd5190d511dd3",
+      "saved_reference_frame": {
+        "width": 792,
+        "height": 528,
+        "file_sha256": "dd21180486c83e6155233329b8615b43a0cbed2f199186b58dbd7be2427a076f",
+        "pixel_sha256": "81937e9cd473901f0bb8feaa552d2f82ef28177b2e0ed69b52d188841cd6986e",
+        "pixel_crc32": 3103377978,
+        "frame_count": 33
+      }
+    },
+    {
+      "workflow": "bookmarks",
+      "phase": "cold",
+      "directory": "bookmarks-cold",
+      "status": "passed",
+      "functional_pass": true,
+      "original_receipt_sha256": "482caba72c71bd81739719736fb91b25ecca3014d88955025c9972e49c935b55",
+      "original_manifest_sha256": "30a6b5a80c4c923f1fcd11e3b1d46f2f6dc7e6c870a126fadb4c790657fe417e",
+      "checks": {
+        "initial_poweron_and_stock_x3_usb_response": true,
+        "actual_running_stock_v161": true,
+        "actual_finalized_v83_layout": true,
+        "reader-opened_actual_visible_position": true,
+        "bookmark_store_survives_fresh_cpu": true,
+        "cold_bookmarked_page_restores_entire_frame": true,
+        "removing_last_bookmark_deletes_v5_store": true,
+        "ordinary-page-after-removal_actual_visible_position": true,
+        "actual_exit_saved_position": true,
+        "no_guest_panic_or_sd_failure": true,
+        "launcher_stopped_cleanly": true,
+        "closed_native_panel_trace_complete": true,
+        "uncalibrated_speed_selection_stays_disabled": true,
+        "launcher_initial_storage_matches_carried_inputs": true,
+        "carried_efuse_hash_matches_launcher_input": true,
+        "actual_initial_poweron_rom_boot": true
+      },
+      "error": null,
+      "closure_error": null,
+      "actual_final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "e2635965c7f62f24ba65dfdb538c5813b5a62e229f168a4ac040a66021a8dec0",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "full_native_trace_complete": true,
+      "clean_native_exit": true,
+      "actual_usb_version": "1.6.1",
+      "rom_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "saved_progress": {
+        "spine_index": 0,
+        "page_number": 1,
+        "page_count": 22,
+        "visible_text_offset": 586
+      }
+    },
+    {
+      "workflow": "clippings",
+      "phase": "warm",
+      "directory": "clippings-warm",
+      "status": "passed",
+      "functional_pass": true,
+      "original_receipt_sha256": "29d2f3d2ffd9430a8e6e4f5e1bfe41b4f0cbc4702a1ecf10962cae308b12df6c",
+      "original_manifest_sha256": "5d35b69ee8a9514d641e347f7499a1c05fc98aa33e0a5d65446d88f7f4218666",
+      "checks": {
+        "initial_poweron_and_stock_x3_usb_response": true,
+        "actual_running_stock_v161": true,
+        "actual_finalized_v83_layout": true,
+        "reader-opened_actual_visible_position": true,
+        "no_seeded_bookmark_or_clipping_or_per_book_settings": true,
+        "actual_selection_changes_native_highlight": true,
+        "genuine_v4_clipping_created": true,
+        "actual_clipping_text_exported": true,
+        "ordinary-saved-clipping-page0_actual_visible_position": true,
+        "actual-page1-away-from-clipping_actual_visible_position": true,
+        "clipping-returned-page0_actual_visible_position": true,
+        "clipping_jump_restores_entire_highlighted_page": true,
+        "clipping_jump_preserves_store_and_export": true,
+        "actual_exit_saved_position": true,
+        "no_guest_panic_or_sd_failure": true,
+        "launcher_stopped_cleanly": true,
+        "closed_native_panel_trace_complete": true,
+        "uncalibrated_speed_selection_stays_disabled": true,
+        "launcher_initial_storage_matches_carried_inputs": true,
+        "carried_efuse_hash_matches_launcher_input": true,
+        "actual_initial_poweron_rom_boot": true
+      },
+      "error": null,
+      "closure_error": null,
+      "actual_final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "31e1219b6a56bf9fa2f3052beed042e200da11822654b0a0c8d29073655603c3",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "full_native_trace_complete": true,
+      "clean_native_exit": true,
+      "actual_usb_version": "1.6.1",
+      "rom_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "saved_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 22,
+        "visible_text_offset": 0
+      },
+      "saved_clipping_sha256": "fbdc68c53ea3f38dc25af7aacb53be8dc418ab67312fb40917c07144a255b510",
+      "saved_export_sha256": "30ba55a49654aeed012620941974fe21d8fb7d707652b6116de24dc1aaa6711e",
+      "saved_reference_frame": {
+        "width": 792,
+        "height": 528,
+        "file_sha256": "129b9106516ebc9ac064a3d0fbcf40ab4cf481dc801b259079cba2329b76816a",
+        "pixel_sha256": "616070509fbf42033cf30ae6952fadbb2487f96d573326918a3c9172f105c068",
+        "pixel_crc32": 1506114252,
+        "frame_count": 35
+      }
+    },
+    {
+      "workflow": "clippings",
+      "phase": "cold",
+      "directory": "clippings-cold",
+      "status": "passed",
+      "functional_pass": true,
+      "original_receipt_sha256": "9f8f4b2c69669df6f9af6567632c43d4b63292aee534e8c78af5f1a13818c9c7",
+      "original_manifest_sha256": "3acb84202e569554d37fc18851c69b11de104837aed58930bec491ed2c0a77d6",
+      "checks": {
+        "initial_poweron_and_stock_x3_usb_response": true,
+        "actual_running_stock_v161": true,
+        "actual_finalized_v83_layout": true,
+        "reader-opened_actual_visible_position": true,
+        "clipping_store_and_export_survive_fresh_cpu": true,
+        "cold_clipping_restores_entire_highlighted_frame": true,
+        "actual_exit_saved_position": true,
+        "no_guest_panic_or_sd_failure": true,
+        "launcher_stopped_cleanly": true,
+        "closed_native_panel_trace_complete": true,
+        "uncalibrated_speed_selection_stays_disabled": true,
+        "launcher_initial_storage_matches_carried_inputs": true,
+        "carried_efuse_hash_matches_launcher_input": true,
+        "actual_initial_poweron_rom_boot": true
+      },
+      "error": null,
+      "closure_error": null,
+      "actual_final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "55c530e38916dbb0e812c3aa571ba4f223fc5bc34330b4b62fe22187c376401a",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "full_native_trace_complete": true,
+      "clean_native_exit": true,
+      "actual_usb_version": "1.6.1",
+      "rom_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "saved_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 22,
+        "visible_text_offset": 0
+      }
+    },
+    {
+      "workflow": "fonts",
+      "phase": "warm",
+      "directory": "fonts-warm",
+      "status": "passed",
+      "functional_pass": true,
+      "original_receipt_sha256": "2349e48bc7d853f142447170970d6c87127db6983f811cbf54e121bb1f1f8153",
+      "original_manifest_sha256": "a5bf6f460b3d37b2e257586f8b07220fde5372d7721a4fd0fcc6c078ef406149",
+      "checks": {
+        "initial_poweron_and_stock_x3_usb_response": true,
+        "actual_running_stock_v161": true,
+        "actual_finalized_v83_layout": true,
+        "reader-opened_actual_visible_position": true,
+        "no_seeded_bookmark_or_clipping_or_per_book_settings": true,
+        "genuine_v10_family_and_size_overrides_saved": true,
+        "actual-new-font-page0_actual_visible_position": true,
+        "new_builtin_font_changes_actual_rendered_pixels": true,
+        "v10_font_settings_preserved_on_exit": true,
+        "actual_exit_saved_position": true,
+        "no_guest_panic_or_sd_failure": true,
+        "launcher_stopped_cleanly": true,
+        "closed_native_panel_trace_complete": true,
+        "uncalibrated_speed_selection_stays_disabled": true,
+        "launcher_initial_storage_matches_carried_inputs": true,
+        "carried_efuse_hash_matches_launcher_input": true,
+        "actual_initial_poweron_rom_boot": true
+      },
+      "error": null,
+      "closure_error": null,
+      "actual_final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "db0850495d4e7025d549fa6c29656c4eb43fa7722d7340a03c3856a18f23501a",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "full_native_trace_complete": true,
+      "clean_native_exit": true,
+      "actual_usb_version": "1.6.1",
+      "rom_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "saved_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 25,
+        "visible_text_offset": 0
+      },
+      "saved_font_settings_sha256": "eeab3d973234edaec0a8f7cbe3398876f3ffabe9cc52582e72efd8834f885f2b",
+      "saved_reference_frame": {
+        "width": 792,
+        "height": 528,
+        "file_sha256": "eeab1109036a886e0678363440ef289b6eb3ee2abc5e3ead572b78f8c6e82abb",
+        "pixel_sha256": "a5be1fdc465eba976d44f10a2f03baea6cff05c9f2ee01552d1b70dfd6cc8bab",
+        "pixel_crc32": 1551876649,
+        "frame_count": 40
+      }
+    },
+    {
+      "workflow": "fonts",
+      "phase": "cold",
+      "directory": "fonts-cold",
+      "status": "passed",
+      "functional_pass": true,
+      "original_receipt_sha256": "9226e009cded42053555f80c9a2d1536ebcc71e2fe59b0e00dc9e64757c5a5fb",
+      "original_manifest_sha256": "f3d827206cb19d12763e933f6a47f5db32d6571df9ab2d5cfff83929a6a637c2",
+      "checks": {
+        "initial_poweron_and_stock_x3_usb_response": true,
+        "actual_running_stock_v161": true,
+        "actual_finalized_v83_layout": true,
+        "reader-opened_actual_visible_position": true,
+        "v10_font_settings_survive_fresh_cpu": true,
+        "cold_font_restores_entire_native_frame": true,
+        "actual_exit_saved_position": true,
+        "no_guest_panic_or_sd_failure": true,
+        "launcher_stopped_cleanly": true,
+        "closed_native_panel_trace_complete": true,
+        "uncalibrated_speed_selection_stays_disabled": true,
+        "launcher_initial_storage_matches_carried_inputs": true,
+        "carried_efuse_hash_matches_launcher_input": true,
+        "actual_initial_poweron_rom_boot": true
+      },
+      "error": null,
+      "closure_error": null,
+      "actual_final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "f66fe68af54fb7bb5d3158b2e4adc1d8d3c71f82c56689f1d35013b04b28e47f",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "full_native_trace_complete": true,
+      "clean_native_exit": true,
+      "actual_usb_version": "1.6.1",
+      "rom_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "saved_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 25,
+        "visible_text_offset": 0
+      }
+    }
+  ],
+  "covered_scope": {
+    "bookmarks": "create, leave page, actual list jump, saved page, fresh CPU whole-frame restoration, remove final bookmark",
+    "clippings": "two-word selection, actual v4 store/text export, list/detail anchor jump, saved page and fresh CPU whole-frame restoration if original stages pass",
+    "fonts": "builtin family/point-size preview and selection, exact v10 per-book overrides, actual v83 relayout, fresh CPU whole-frame restoration if original stages pass"
+  },
+  "not_exercised_by_this_proof": [
+    "clipping deletion",
+    "custom SD font loading",
+    "all other reader/device functions"
+  ],
+  "original_failed_v1_retained": true,
+  "original_v1_script_sha256": "ba97b2b91fc8ab045a8a8312f3e12e5121b1478ea575304f0b9fe0dcb434b272",
+  "source_sha256": {
+    "lib/Epub/Epub/Section.cpp": "7760b7b7e516767f58c909b9c2e7490ce0d1de83896922bd2cb4752b6f66f4fd",
+    "src/BookmarkStore.cpp": "bccb7636c133361e9362edecaccf3a9e2d5bbcc11ee60748163ad5bad99e820f",
+    "src/BookmarkStore.h": "ce92a45272515674255bb21ca10a7b1f1522ce4965feb6aa9887bd77b93a3c3e",
+    "src/ClippingStore.cpp": "e0534f47908d486c52388caccf095818a05fa254a6fd672f9d0d01e825070ad0",
+    "src/ClippingStore.h": "cb7981dc0f667eb84d9706473bbd4a07bdd40be826ccbb6e629fedabe65734dc",
+    "src/CrossPointSettings.h": "cb54c07310df751890cf4e4ec5069ba90cab1db390ad25240ae820afbdc5731f",
+    "src/MappedInputManager.cpp": "52600d9835f62d940153352dd4c8864badd7a795a97b207c8ae99af67d955ef8",
+    "src/SettingsList.h": "d3a28a3baf728f121217ae149e749f2484e33468a9e3302a927eedecff44b163",
+    "src/activities/reader/ClipSelectionActivity.cpp": "504779e09615e5015ea0daf833ca5a5d9dd84ca528ef882ee8e22d710702958e",
+    "src/activities/reader/EpubReaderActivity.cpp": "2cae0773ceb5ba8e5d7a51e5582d21b71a319c408204e6bca67f2160adf966be",
+    "src/activities/reader/EpubReaderActivity.h": "7ba827d7d5d3747dd23bfc905f7f45e1c43c1f3beb23f133af16131a7002e201",
+    "src/activities/reader/EpubReaderBookmarkListActivity.cpp": "1ad3deb5bf5263a439df42e87d5530ad4ecc4ca098bb5e20e15d07a716684a10",
+    "src/activities/reader/EpubReaderClippingListActivity.cpp": "2ece0c9861a703e2fc58ddc4be61bf26005ab314da83af050a8bbac515e9c8bf",
+    "src/activities/reader/EpubReaderDrawerActivity.cpp": "df2a90c8db22c8c3bc11bf07b8ab65ca94c7b26520b2eee193505fd005bbd3ef",
+    "src/activities/reader/EpubReaderMenuModel.h": "41e4035743e2f776c56aff50dc5588ab101b000f8f159fd7638ad26b8189163f",
+    "src/activities/reader/ReaderProgressSaveDebouncer.h": "4c9f51773e7feb90605fda5aa1e8d139e3c1d2c248e12f03d3f366dc242432aa",
+    "src/activities/reader/ReaderUtils.h": "fbeb9d10c860156b36c3ac517e3ec72e11b9dbc8fe781cc08224ba62b1ce54fb",
+    "src/activities/settings/FontSelectionActivity.cpp": "7cd478b669df17872b1f4475c2418d06f16c0579628bdce13baf3d6c7187867c",
+    "src/clippings/ClippingsManager.cpp": "e355d073853bb2be6828116ab769eb23440e5603c4a6e8c9eaadcc7d9296766f"
+  },
+  "observer_corrections": "Whole PGM references remain complete while hashes name decoded raw pixels; SAVE_CLIPPING retains source Location tab and actual visible clipping rows are required. Original v1 errors remain unchanged.",
+  "independently_rehashed_native_frames": 91,
+  "workflow_errors": {}
+}

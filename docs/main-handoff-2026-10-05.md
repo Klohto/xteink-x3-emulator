@@ -172,8 +172,31 @@ The separate current 1.6.0 bookmarks, clippings and font workflows record
 `functional_pass=true`, `strict_pass=false` and original command exit 1.
 Actual persistent outputs, page/font effects and cold restoration passed,
 while unsupported-model diagnostics remain retained. Those 1.6.0 receipts do
-not establish the corresponding 1.6.1 operations. Current 1.6.1 bookmarks,
-clippings and fonts are pending their own closed workflow proof.
+not establish the corresponding 1.6.1 operations. Current 1.6.1 bookmarks, clippings and fonts passed their own separate
+six-CPU workflow, with 102 positive checks and 91 original native frames.
+The [closed reader-function summary](evidence/reader-functions-v161-61927-2026-10-05.json)
+binds original root
+`cca70a9496309f1d69f41f2a39a0f14e69263f971ccdbfdd74f6f3ada4183539`
+and the exact executed portable script and source pins. Each function uses
+its own virgin card, then only actual closed written storage on a new CPU.
+
+| Current 1.6.1 reader function | Genuine executed behavior |
+| --- | --- |
+| Bookmarks | Created a version-5 store, listed and jumped to the saved page, restored identical full pixels and store on a new CPU, then removed the final bookmark |
+| Clippings | Selected two words, created the version-4 store and text export, listed/details/jumped to its anchor, then restored identical highlighted pixels and stored data on a new CPU |
+| Fonts | Saved version-10 family 1, 16-point settings with override mask 3, reflowed to 25 pages, changed 116078 pixels, then restored identical settings and full pixels on a new CPU |
+
+All five warm-jump and cold-frame comparisons changed zero pixels. Every CPU
+exited cleanly and retained a complete native trace. The
+[independent second review](evidence/reader-functions-v161-61927-independent-2026-10-05.json)
+recomputed all stored data, original native CRC bindings and full-frame pairs.
+This particular clipping lifecycle passed its actual saved-page checks; the
+earlier stock progress defect remains a separate original failure.
+
+The final portable host suite passed **414 tests** in 97.719 seconds, with one
+opt-in test skipped. Source changes since the downloadable main619 build are
+observation scripts, tests, documentation and evidence. Native board code,
+ROM and the shipped runtime payload are unchanged.
 
 Browser rendering, measured physical X3 speed, exhaustive function coverage and
 complete hardware equivalence are unverified. The package and summary keep

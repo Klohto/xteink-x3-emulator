@@ -33,8 +33,13 @@ snapshot and override mask. The new portable
 and exercises genuine bookmark, clipping and font writes on fresh cards,
 then carries only closed written flash/card/eFuse into a fresh CPU. It requires
 the original passing three-CPU OTA receipt and every child check; no saved
-items, progress or settings are seeded. Its current actual execution is
-pending closure, so its corresponding 1.6.1 feature verdicts are not claimed.
+items, progress or settings are seeded. Its [actual six-CPU execution](evidence/reader-functions-v161-61927-2026-10-05.json)
+passed all 102 checks and 91 native frame bindings on current ELF `1cf9ac9b…714e`.
+Bookmark creation/list/jump/cold restoration/removal, clipping selection/text
+export/list/detail/jump/cold highlighted restoration, and family-1/16-point
+version-10 font settings/reflow/cold restoration passed. All five jump/cold
+full-frame comparisons changed zero pixels. These exact lifecycles do not
+establish all function or error permutations.
 
 Current 1.6.0 [bookmarks, clippings and fonts](evidence/core-functions-v160-61927-2026-10-05.json)
 passed their functional outputs on this same native ELF, with four clean CPU

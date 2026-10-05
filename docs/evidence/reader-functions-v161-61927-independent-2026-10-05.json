@@ -1,0 +1,499 @@
+{
+  "schema_version": 1,
+  "source_commit_used": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "original_master_receipt_sha256": "cca70a9496309f1d69f41f2a39a0f14e69263f971ccdbfdd74f6f3ada4183539",
+  "original_execution_binding_sha256": "a25276acd0e205fcdb24cce017cd6e0f257715aa481496b655d428b71274436b",
+  "original_command_exit_code": 0,
+  "original_status": "passed",
+  "original_functional_pass": true,
+  "original_workflow_errors": null,
+  "original_error": null,
+  "executed_frozen_harness_sha256": "0c4648da1c625e7b13172030629bbadb4ee076f58dc5284ad79a9c4cf9f0b262",
+  "host_tests_source_sha256": "2001422d6daca214af31e9b6adb37dc44141f7df31b44658af0544a3b30b9be8",
+  "independent_readback_sha256": "0910c0eda53b2f8909347a816daff0ee8fee9792c5cfe1bc6b24618ace53a866",
+  "independent_reader_source_sha256": "8b9bbc2e6ed2f4e357034b6b138ca31e0af509c802a548510ebc420ef691d9fe",
+  "independent_integrity_readback": "passed",
+  "native_backend_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "unchanged_official_v161_app1_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+  "original_accepted_genuine_three_cpu_ota_input": {
+    "original_ota_receipt_sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011",
+    "carried_run_manifest_sha256": "05842d09af0082b0fffbb9448715f8667075aefd7639928b8db1d04497ecec78",
+    "carried_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+    "carried_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+    "carried_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "official_v161_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+    "actual_ota_selection": {
+      "slots": [
+        {
+          "slot": 0,
+          "sequence": 1,
+          "state": 4294967295,
+          "crc32": 1195612314,
+          "valid": true
+        },
+        {
+          "slot": 1,
+          "sequence": 2,
+          "state": 2,
+          "crc32": 1442199412,
+          "valid": true
+        }
+      ],
+      "active_slot": 1,
+      "app_index": 1,
+      "app_offset": 6619136
+    }
+  },
+  "original_target_source_commit": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+  "original_target_source_sha256": {
+    "lib/Epub/Epub/Section.cpp": "7760b7b7e516767f58c909b9c2e7490ce0d1de83896922bd2cb4752b6f66f4fd",
+    "src/BookmarkStore.cpp": "bccb7636c133361e9362edecaccf3a9e2d5bbcc11ee60748163ad5bad99e820f",
+    "src/BookmarkStore.h": "ce92a45272515674255bb21ca10a7b1f1522ce4965feb6aa9887bd77b93a3c3e",
+    "src/ClippingStore.cpp": "e0534f47908d486c52388caccf095818a05fa254a6fd672f9d0d01e825070ad0",
+    "src/ClippingStore.h": "cb7981dc0f667eb84d9706473bbd4a07bdd40be826ccbb6e629fedabe65734dc",
+    "src/CrossPointSettings.h": "cb54c07310df751890cf4e4ec5069ba90cab1db390ad25240ae820afbdc5731f",
+    "src/MappedInputManager.cpp": "52600d9835f62d940153352dd4c8864badd7a795a97b207c8ae99af67d955ef8",
+    "src/SettingsList.h": "d3a28a3baf728f121217ae149e749f2484e33468a9e3302a927eedecff44b163",
+    "src/activities/reader/ClipSelectionActivity.cpp": "504779e09615e5015ea0daf833ca5a5d9dd84ca528ef882ee8e22d710702958e",
+    "src/activities/reader/EpubReaderActivity.cpp": "2cae0773ceb5ba8e5d7a51e5582d21b71a319c408204e6bca67f2160adf966be",
+    "src/activities/reader/EpubReaderActivity.h": "7ba827d7d5d3747dd23bfc905f7f45e1c43c1f3beb23f133af16131a7002e201",
+    "src/activities/reader/EpubReaderBookmarkListActivity.cpp": "1ad3deb5bf5263a439df42e87d5530ad4ecc4ca098bb5e20e15d07a716684a10",
+    "src/activities/reader/EpubReaderClippingListActivity.cpp": "2ece0c9861a703e2fc58ddc4be61bf26005ab314da83af050a8bbac515e9c8bf",
+    "src/activities/reader/EpubReaderDrawerActivity.cpp": "df2a90c8db22c8c3bc11bf07b8ab65ca94c7b26520b2eee193505fd005bbd3ef",
+    "src/activities/reader/EpubReaderMenuModel.h": "41e4035743e2f776c56aff50dc5588ab101b000f8f159fd7638ad26b8189163f",
+    "src/activities/reader/ReaderProgressSaveDebouncer.h": "4c9f51773e7feb90605fda5aa1e8d139e3c1d2c248e12f03d3f366dc242432aa",
+    "src/activities/reader/ReaderUtils.h": "fbeb9d10c860156b36c3ac517e3ec72e11b9dbc8fe781cc08224ba62b1ce54fb",
+    "src/activities/settings/FontSelectionActivity.cpp": "7cd478b669df17872b1f4475c2418d06f16c0579628bdce13baf3d6c7187867c",
+    "src/clippings/ClippingsManager.cpp": "e355d073853bb2be6828116ab769eb23440e5603c4a6e8c9eaadcc7d9296766f"
+  },
+  "actual_cpu_count": 6,
+  "actual_check_count": 102,
+  "actual_full_native_PGMs_verified": 91,
+  "functions": {
+    "bookmarks": {
+      "original_warm_functional_pass": true,
+      "original_cold_cpu_exists": true,
+      "original_cold_functional_pass": true,
+      "original_workflow_error": null,
+      "fresh_cpu_full_frame_changed_pixels": 0,
+      "saved_reference_pixel_sha256": "81937e9cd473901f0bb8feaa552d2f82ef28177b2e0ed69b52d188841cd6986e",
+      "whole_bookmark_jump_changed_pixels": 0,
+      "actual_last_bookmark_store_removed": true,
+      "actual_closed_v5_store": {
+        "sha256": "82d604bfd4ec9afcbd2096ecab50a2f0513bff924238793a1f4fd5190d511dd3",
+        "bytes": 201,
+        "version": 5,
+        "count": 1,
+        "book_path": "/test.epub",
+        "spine_index": 0,
+        "progress": 0.04545454680919647,
+        "paragraph_index": 5
+      },
+      "actual_original_full_frame_pixel_pair": {
+        "warm_reference_capture": {
+          "path": "frames/bookmark-restored-page1-probe1.pgm",
+          "file_sha256": "dd21180486c83e6155233329b8615b43a0cbed2f199186b58dbd7be2427a076f",
+          "pixel_sha256": "81937e9cd473901f0bb8feaa552d2f82ef28177b2e0ed69b52d188841cd6986e",
+          "pixel_crc32": 3103377978,
+          "frame_count": 33,
+          "last_frame_complete_t_ns": 57030723718,
+          "observed_quiet_interval_ns": 1021766503
+        },
+        "fresh_cpu_restored_capture": {
+          "path": "frames/reader-opened-probe1.pgm",
+          "file_sha256": "1503ba1bfa1dfac874fae68432a9da8ac0cfb5c49c06603f6ed47c697aec6516",
+          "pixel_sha256": "81937e9cd473901f0bb8feaa552d2f82ef28177b2e0ed69b52d188841cd6986e",
+          "pixel_crc32": 3103377978,
+          "frame_count": 9,
+          "last_frame_complete_t_ns": 6868046975,
+          "observed_quiet_interval_ns": 1016909667
+        },
+        "all_418176_native_luminance_pixels_equal": true,
+        "recomputed_changed_pixels": 0
+      }
+    },
+    "clippings": {
+      "original_warm_functional_pass": true,
+      "original_cold_cpu_exists": true,
+      "original_cold_functional_pass": true,
+      "original_workflow_error": null,
+      "fresh_cpu_full_frame_changed_pixels": 0,
+      "saved_reference_pixel_sha256": "616070509fbf42033cf30ae6952fadbb2487f96d573326918a3c9172f105c068",
+      "actual_text_export_sha256": "30ba55a49654aeed012620941974fe21d8fb7d707652b6116de24dc1aaa6711e",
+      "actual_text_export_bytes": 162,
+      "whole_clipping_jump_changed_pixels": 0,
+      "actual_cold_store_and_export_bytes_equal": true,
+      "actual_closed_v4_store": {
+        "sha256": "fbdc68c53ea3f38dc25af7aacb53be8dc418ab67312fb40917c07144a255b510",
+        "bytes": 157,
+        "version": 4,
+        "count": 1,
+        "book_path": "/test.epub",
+        "range": {
+          "spine_index": 0,
+          "start_page": 0,
+          "end_page": 0,
+          "page_count": 22,
+          "start_word_index": 57,
+          "end_word_index": 58,
+          "word_count": 2,
+          "paragraph_index": 3,
+          "layout_signature": 964129117,
+          "table_selection": 65535
+        },
+        "actual_selected_text_utf8_sha256": "71c75600f8a8d4160ce8f648d5622a5a5666ae3d66d2cba9ce9acc1524d2acfa"
+      },
+      "actual_original_full_frame_pixel_pair": {
+        "warm_reference_capture": {
+          "path": "frames/clipping-returned-page0-probe1.pgm",
+          "file_sha256": "129b9106516ebc9ac064a3d0fbcf40ab4cf481dc801b259079cba2329b76816a",
+          "pixel_sha256": "616070509fbf42033cf30ae6952fadbb2487f96d573326918a3c9172f105c068",
+          "pixel_crc32": 1506114252,
+          "frame_count": 35,
+          "last_frame_complete_t_ns": 61310921819,
+          "observed_quiet_interval_ns": 1016921916
+        },
+        "fresh_cpu_restored_capture": {
+          "path": "frames/reader-opened-probe1.pgm",
+          "file_sha256": "bdd925144b84fd3bd3a30a8ef268238243cf751f2bbd25b21c6aaf8ebf782352",
+          "pixel_sha256": "616070509fbf42033cf30ae6952fadbb2487f96d573326918a3c9172f105c068",
+          "pixel_crc32": 1506114252,
+          "frame_count": 9,
+          "last_frame_complete_t_ns": 6911121811,
+          "observed_quiet_interval_ns": 1018513113
+        },
+        "all_418176_native_luminance_pixels_equal": true,
+        "recomputed_changed_pixels": 0
+      }
+    },
+    "fonts": {
+      "original_warm_functional_pass": true,
+      "original_cold_cpu_exists": true,
+      "original_cold_functional_pass": true,
+      "original_workflow_error": null,
+      "fresh_cpu_full_frame_changed_pixels": 0,
+      "saved_reference_pixel_sha256": "a5be1fdc465eba976d44f10a2f03baea6cff05c9f2ee01552d1b70dfd6cc8bab",
+      "whole_new_font_changed_pixels": 116078,
+      "actual_cold_v10_bytes_equal": true,
+      "actual_closed_v10_settings": {
+        "version": 10,
+        "bytes": 157,
+        "sha256": "eeab3d973234edaec0a8f7cbe3398876f3ffabe9cc52582e72efd8834f885f2b",
+        "flags": 1,
+        "font_family": 1,
+        "font_point_size": 16,
+        "override_mask": 3,
+        "sd_font_family": "",
+        "dictionary_font_family": ""
+      },
+      "actual_original_full_frame_pixel_pair": {
+        "warm_reference_capture": {
+          "path": "frames/actual-new-font-page0-probe1.pgm",
+          "file_sha256": "eeab1109036a886e0678363440ef289b6eb3ee2abc5e3ead572b78f8c6e82abb",
+          "pixel_sha256": "a5be1fdc465eba976d44f10a2f03baea6cff05c9f2ee01552d1b70dfd6cc8bab",
+          "pixel_crc32": 1551876649,
+          "frame_count": 40,
+          "last_frame_complete_t_ns": 57153707010,
+          "observed_quiet_interval_ns": 1021487879
+        },
+        "fresh_cpu_restored_capture": {
+          "path": "frames/reader-opened-probe1.pgm",
+          "file_sha256": "996355cb2bba58b1af9b691e7df73a6f2690684815ba03046ca34d2bd17de46d",
+          "pixel_sha256": "a5be1fdc465eba976d44f10a2f03baea6cff05c9f2ee01552d1b70dfd6cc8bab",
+          "pixel_crc32": 1551876649,
+          "frame_count": 9,
+          "last_frame_complete_t_ns": 6957968871,
+          "observed_quiet_interval_ns": 1015440172
+        },
+        "all_418176_native_luminance_pixels_equal": true,
+        "recomputed_changed_pixels": 0
+      }
+    }
+  },
+  "original_cpus": [
+    {
+      "workflow": "bookmarks",
+      "phase": "warm",
+      "directory": "bookmarks-warm",
+      "original_receipt_sha256": "2c7c0d095331509569602b81d22b41cd10b86145721d71a46b26ddb5efd98dc2",
+      "original_manifest_sha256": "8613e05fb4084d1d8b13451840bad211fe6d4c47d480a5a038a0df60f1c3dd0a",
+      "original_status": "passed",
+      "original_functional_pass": true,
+      "original_error": null,
+      "original_closure_error": null,
+      "native_exit_code": 0,
+      "strict_launcher_validity": {
+        "unsupported_features_checked": true,
+        "diagnostics_clean": false,
+        "functional_output_checked": false
+      },
+      "trace_records": 1013,
+      "trace_bytes": 78537,
+      "complete_refreshes": 35,
+      "trace_sha256": "a1202fb019355af8968209b99836bddd9ee3adeeba0eb08c6aa172fa25542988",
+      "native_frames_verified": 23,
+      "actual_progress_raw_hex": "0000010016004a020000",
+      "actual_progress": {
+        "spine_index": 0,
+        "page_number": 1,
+        "page_count": 22,
+        "visible_text_offset": 586
+      },
+      "whole_official_app1_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+      "initial_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "initial_sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+      "initial_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "closed_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "closed_card_sha256": "830d7bf4a26056d82a3ea4c2dc6badb52c2e64526a645b914147056799881cdb",
+      "closed_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "native_scope_flags": {
+        "timing-calibrated": false,
+        "physical-effects-modelled": false
+      },
+      "machine_unsupported_reads": 47,
+      "machine_unsupported_writes": 54,
+      "original_checks_passed": true,
+      "original_check_count": 20
+    },
+    {
+      "workflow": "bookmarks",
+      "phase": "cold",
+      "directory": "bookmarks-cold",
+      "original_receipt_sha256": "482caba72c71bd81739719736fb91b25ecca3014d88955025c9972e49c935b55",
+      "original_manifest_sha256": "30a6b5a80c4c923f1fcd11e3b1d46f2f6dc7e6c870a126fadb4c790657fe417e",
+      "original_status": "passed",
+      "original_functional_pass": true,
+      "original_error": null,
+      "original_closure_error": null,
+      "native_exit_code": 0,
+      "strict_launcher_validity": {
+        "unsupported_features_checked": true,
+        "diagnostics_clean": false,
+        "functional_output_checked": false
+      },
+      "trace_records": 544,
+      "trace_bytes": 41945,
+      "complete_refreshes": 19,
+      "trace_sha256": "2009a6efc0e25eed1ae7e88c7df06dd88eb1fdfbb35ea396c3a16558ba646bd7",
+      "native_frames_verified": 11,
+      "actual_progress_raw_hex": "0000010016004a020000",
+      "actual_progress": {
+        "spine_index": 0,
+        "page_number": 1,
+        "page_count": 22,
+        "visible_text_offset": 586
+      },
+      "whole_official_app1_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+      "initial_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "initial_sd_sha256": "830d7bf4a26056d82a3ea4c2dc6badb52c2e64526a645b914147056799881cdb",
+      "initial_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "closed_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "closed_card_sha256": "e2635965c7f62f24ba65dfdb538c5813b5a62e229f168a4ac040a66021a8dec0",
+      "closed_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "native_scope_flags": {
+        "timing-calibrated": false,
+        "physical-effects-modelled": false
+      },
+      "machine_unsupported_reads": 47,
+      "machine_unsupported_writes": 54,
+      "original_checks_passed": true,
+      "original_check_count": 16
+    },
+    {
+      "workflow": "clippings",
+      "phase": "warm",
+      "directory": "clippings-warm",
+      "original_receipt_sha256": "29d2f3d2ffd9430a8e6e4f5e1bfe41b4f0cbc4702a1ecf10962cae308b12df6c",
+      "original_manifest_sha256": "5d35b69ee8a9514d641e347f7499a1c05fc98aa33e0a5d65446d88f7f4218666",
+      "original_status": "passed",
+      "original_functional_pass": true,
+      "original_error": null,
+      "original_closure_error": null,
+      "native_exit_code": 0,
+      "strict_launcher_validity": {
+        "unsupported_features_checked": true,
+        "diagnostics_clean": false,
+        "functional_output_checked": false
+      },
+      "trace_records": 903,
+      "trace_bytes": 69988,
+      "complete_refreshes": 37,
+      "trace_sha256": "6469cf1fa9af84d9492985165d621ff5743d49480835e8adfeda1cd0754adb06",
+      "native_frames_verified": 26,
+      "actual_progress_raw_hex": "00000000160000000000",
+      "actual_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 22,
+        "visible_text_offset": 0
+      },
+      "whole_official_app1_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+      "initial_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "initial_sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+      "initial_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "closed_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "closed_card_sha256": "31e1219b6a56bf9fa2f3052beed042e200da11822654b0a0c8d29073655603c3",
+      "closed_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "native_scope_flags": {
+        "timing-calibrated": false,
+        "physical-effects-modelled": false
+      },
+      "machine_unsupported_reads": 47,
+      "machine_unsupported_writes": 54,
+      "original_checks_passed": true,
+      "original_check_count": 21
+    },
+    {
+      "workflow": "clippings",
+      "phase": "cold",
+      "directory": "clippings-cold",
+      "original_receipt_sha256": "9f8f4b2c69669df6f9af6567632c43d4b63292aee534e8c78af5f1a13818c9c7",
+      "original_manifest_sha256": "3acb84202e569554d37fc18851c69b11de104837aed58930bec491ed2c0a77d6",
+      "original_status": "passed",
+      "original_functional_pass": true,
+      "original_error": null,
+      "original_closure_error": null,
+      "native_exit_code": 0,
+      "strict_launcher_validity": {
+        "unsupported_features_checked": true,
+        "diagnostics_clean": false,
+        "functional_output_checked": false
+      },
+      "trace_records": 274,
+      "trace_bytes": 20939,
+      "complete_refreshes": 11,
+      "trace_sha256": "c2c54dece2504c36a7ede90a7801917bde2e4488684174a987b08d4994d84ff0",
+      "native_frames_verified": 4,
+      "actual_progress_raw_hex": "00000000160000000000",
+      "actual_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 22,
+        "visible_text_offset": 0
+      },
+      "whole_official_app1_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+      "initial_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "initial_sd_sha256": "31e1219b6a56bf9fa2f3052beed042e200da11822654b0a0c8d29073655603c3",
+      "initial_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "closed_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "closed_card_sha256": "55c530e38916dbb0e812c3aa571ba4f223fc5bc34330b4b62fe22187c376401a",
+      "closed_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "native_scope_flags": {
+        "timing-calibrated": false,
+        "physical-effects-modelled": false
+      },
+      "machine_unsupported_reads": 47,
+      "machine_unsupported_writes": 54,
+      "original_checks_passed": true,
+      "original_check_count": 14
+    },
+    {
+      "workflow": "fonts",
+      "phase": "warm",
+      "directory": "fonts-warm",
+      "original_receipt_sha256": "2349e48bc7d853f142447170970d6c87127db6983f811cbf54e121bb1f1f8153",
+      "original_manifest_sha256": "a5bf6f460b3d37b2e257586f8b07220fde5372d7721a4fd0fcc6c078ef406149",
+      "original_status": "passed",
+      "original_functional_pass": true,
+      "original_error": null,
+      "original_closure_error": null,
+      "native_exit_code": 0,
+      "strict_launcher_validity": {
+        "unsupported_features_checked": true,
+        "diagnostics_clean": false,
+        "functional_output_checked": false
+      },
+      "trace_records": 842,
+      "trace_bytes": 65278,
+      "complete_refreshes": 42,
+      "trace_sha256": "fa9bdeaab26fb606843d39935b7c6f8a6cd2c68c87897b6b4534255d6ee09366",
+      "native_frames_verified": 23,
+      "actual_progress_raw_hex": "00000000190000000000",
+      "actual_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 25,
+        "visible_text_offset": 0
+      },
+      "whole_official_app1_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+      "initial_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "initial_sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+      "initial_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "closed_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "closed_card_sha256": "db0850495d4e7025d549fa6c29656c4eb43fa7722d7340a03c3856a18f23501a",
+      "closed_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "native_scope_flags": {
+        "timing-calibrated": false,
+        "physical-effects-modelled": false
+      },
+      "machine_unsupported_reads": 47,
+      "machine_unsupported_writes": 54,
+      "original_checks_passed": true,
+      "original_check_count": 17
+    },
+    {
+      "workflow": "fonts",
+      "phase": "cold",
+      "directory": "fonts-cold",
+      "original_receipt_sha256": "9226e009cded42053555f80c9a2d1536ebcc71e2fe59b0e00dc9e64757c5a5fb",
+      "original_manifest_sha256": "f3d827206cb19d12763e933f6a47f5db32d6571df9ab2d5cfff83929a6a637c2",
+      "original_status": "passed",
+      "original_functional_pass": true,
+      "original_error": null,
+      "original_closure_error": null,
+      "native_exit_code": 0,
+      "strict_launcher_validity": {
+        "unsupported_features_checked": true,
+        "diagnostics_clean": false,
+        "functional_output_checked": false
+      },
+      "trace_records": 274,
+      "trace_bytes": 20939,
+      "complete_refreshes": 11,
+      "trace_sha256": "0be98ed7962971ee8461f56eee7aee2ea46ba878f3dcaf5a1a723b3f68487de9",
+      "native_frames_verified": 4,
+      "actual_progress_raw_hex": "00000000190000000000",
+      "actual_progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 25,
+        "visible_text_offset": 0
+      },
+      "whole_official_app1_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+      "initial_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "initial_sd_sha256": "db0850495d4e7025d549fa6c29656c4eb43fa7722d7340a03c3856a18f23501a",
+      "initial_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "closed_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "closed_card_sha256": "f66fe68af54fb7bb5d3158b2e4adc1d8d3c71f82c56689f1d35013b04b28e47f",
+      "closed_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "native_scope_flags": {
+        "timing-calibrated": false,
+        "physical-effects-modelled": false
+      },
+      "machine_unsupported_reads": 47,
+      "machine_unsupported_writes": 54,
+      "original_checks_passed": true,
+      "original_check_count": 14
+    }
+  ],
+  "original_master_flags": {
+    "binary_build_commit_verified": false,
+    "guest_firmware_modified": false,
+    "guest_progress_or_settings_or_saved_items_seeded": false,
+    "all_functions_verified": false,
+    "complete_machine_verified": false,
+    "physical_timing_calibrated": false,
+    "speed_selection_allowed": false
+  },
+  "browser_rendering_verified": false,
+  "packaged_launcher_executed": false,
+  "complete_machine_verified": false,
+  "all_functions_verified": false,
+  "physical_timing_calibrated": false,
+  "speed_selection_allowed": false,
+  "original_source_or_receipts_modified": false,
+  "native_or_guest_execution_repeated": false,
+  "page_index_convention": "Stored page indices are zero based; bookmarks index1 is visible2/22, clipping index0 is visible1/22, font index0 is visible1/25.",
+  "scope": "Actual frozen v2 native 1.6.1 bookmark, clipping/export and builtin font workflows with independent fresh CPU restoration. Original failed v1/stock-progress/capacity proofs remain separate and unchanged."
+}

@@ -58,6 +58,8 @@ host observer; the original verdict remains recorded.
 | [Official online update](evidence/ota-v161-61927-2026-10-05.json) | Genuine install, reboot, reading and storage-only cold restoration across three CPUs |
 | [HTTP panel](evidence/http-panel-61927-2026-10-05.json) | 57 checks, eleven native/HTTP frames and two cleanly stopped CPUs |
 | [Original footnotes](evidence/footnotes-61927-summary-2026-10-05.json) | Four CPUs, actual disk-restored link and zero changed pixels on five restores |
+| [1.6.1 reader functions](evidence/reader-functions-v161-61927-2026-10-05.json) | Bookmarks, clippings and fonts: six fresh CPUs, 102 checks, 91 frames, exact written data and full-frame restoration |
+| [Corrected capacity](evidence/capacity-61927-corrected-2026-10-05.json) | Guest 650 mAh commits, stock restart retention and book turn/save/reopen passed locally; original CI failure retained |
 | [1.6.0 core functions](evidence/core-functions-v160-61927-2026-10-05.json) | Bookmarks, clippings and fonts functional pass; original strict failures remain false |
 
 ## Historical evidence

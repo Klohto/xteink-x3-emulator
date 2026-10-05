@@ -9,8 +9,9 @@ The working emulator and launcher are on `main`. The offline download starts
 official CrossInk v1.6.0 with a fresh card. A genuine online upgrade to official
 v1.6.1 now passes: download, flash, warm reboot, EPUB reading, saved progress and
 restoration on a fresh CPU. The sealed launcher also reads, saves and restores
-the actual upgraded firmware and storage. Both UART programming paths check
-every written byte. See the [current execution record](docs/main-handoff-2026-10-05.md).
+the actual upgraded firmware and storage. Current 1.6.1 bookmarks, clippings and font workflows also pass creation,
+navigation, saving and exact restoration across six fresh CPUs. Both UART
+programming paths check every written byte. See the [current execution record](docs/main-handoff-2026-10-05.md).
 
 ## Download and run
 
