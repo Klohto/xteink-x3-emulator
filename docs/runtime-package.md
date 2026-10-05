@@ -25,6 +25,22 @@ To preserve your reading across a new CPU, stop the first run and use:
 python3 launch.py --resume /absolute/path/to/previous/run
 ```
 
+The [verified main download and v1.6.1 execution](crossink-v161-validation-2026-10-05.md)
+identify the exact sealed archive and native binary. Its default is still
+v1.6.0. To open the actual guest-upgraded v1.6.1 reader, download that run's
+`x3-ota-cold-reader-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5`
+artifact, extract it separately, and run:
+
+```sh
+python3 launch.py --resume /absolute/path/to/extracted-ota/cold-saved-reader/run
+```
+
+The shipped launcher was executed with that exact input. It turned pages,
+saved page 2 and restored every framebuffer pixel on a fresh packaged launch
+using only the actual written flash/card/eFuse. Default v1.6.0 Home launch and
+its HTTP/native frame binding passed separately. In stock X3 Settings,
+Left/Right navigate rows and Up/Down switch categories.
+
 Each invocation creates new writable copies. Original bundled inputs and the
 previous run remain intact. `--run-dir PATH` selects a new output directory;
 `--seconds N` sets a host-time stop limit. Completed runs also save

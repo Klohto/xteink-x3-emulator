@@ -2,10 +2,48 @@
 
 `scripts/test-crossink-battery-capacity.py` exercises the real SDK capacity-load
 branch in the unchanged official CrossInk v1.6.1 application, followed by a stock
-software restart and book reading in the same emulator process. The script and
-host refusal tests are prepared. Their presence does not establish that the
-native or unchanged-firmware run has passed; only a closed execution receipt can
-establish that result.
+software restart and book reading in the same emulator process. The closed
+`cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5` main CI execution passes this case
+using the actual flash and eFuse retained by its passing three-CPU online OTA
+run. Host refusal tests remain separate from this unchanged-firmware execution.
+
+The original [CI run 37309789519](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37309789519)
+completed the capacity step and preserved its closed artifact
+`x3-crossink-v161-battery-capacity-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5`
+(ID `11345814241`). Independent review re-read the original receipt, accepted
+OTA inputs, twelve pinned source files, native manifest, ROM and serial logs,
+flash, eFuse, card, complete panel trace and all 21 captured PGM files. The native
+CPU exited with code 0; every recorded acceptance check is true.
+
+| Actual observation | Design / Learned FCC / FCC (mAh) | Operation status | Data Memory commits | Reinitializations |
+| --- | --- | --- | --- | --- |
+| Running pre-commit snapshot | 3000 / 3000 / 3000 | 6 | 0 | 0 |
+| Guest capacity-load completion | 650 / 650 / 650 | 6 | 2 | 1 |
+| After stock software restart | 650 / 650 / 650 | 6 | 2 | 1 |
+| After book reading and reopen | 650 / 650 / 650 | 6 | 2 | 1 |
+
+The initial observation was running at virtual time `18,902,155 ns`; it was not
+paused before CPU execution. The actual ROM reported `POWERON` followed by one
+`RTC_SW_CPU_RST`, and the unchanged guest entered source-defined network target
+2. The capacity-completion marker occurred once. Gauge injections, capacity
+rejections and gauge unsupported accesses stayed zero. The stopped card retained
+spine 0, page 1 of 22. Forward reading changed 111,850 content pixels; turning
+back and reopening page 1 each restored the expected content with zero changed
+content pixels. All 1,092 native trace records were accounted for, with the
+trace file still linked to its native descriptor.
+
+The original capacity receipt SHA256 is
+`9efb7aa390d79dd17efa15ffb66ff277d9ebddb76727570df1b48a1724f0a303`.
+Its 8,565,424-byte published ZIP matches GitHub's SHA256 digest
+`56bf050792308ea2d262b06d5337eab4f36671a16ecedb81730d6cbd2356bba4`.
+The exact native ELF SHA256 is
+`1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e`;
+the paired ESP32-C3 ROM SHA256 is
+`0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99`.
+This receipt verifies this digital guest workflow and same-process retention.
+Physical fuel gauging, cross-process gauge persistence, hardware timing, speed
+selection, complete machine fidelity and all CrossInk functions remain
+unverified.
 
 The input must be a closed, passing three-CPU execution of
 `test-crossink-online-ota.py`. The shared OTA guard binds the original receipt,

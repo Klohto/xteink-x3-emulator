@@ -1,13 +1,18 @@
 # Run and inspect the working emulator
 
-The emulator on `main` executes unchanged official CrossInk v1.6.0. Its front
-panel sends real ADC/GPIO inputs and serves the native grayscale framebuffer.
+The emulator on `main` executes unchanged official CrossInk. The offline
+bundle starts v1.6.0; a genuine online upgrade to v1.6.1 and the shipped
+launcher's reading/save/cold restoration now pass. Its front panel sends
+real ADC/GPIO inputs and serves the native grayscale framebuffer.
 
-Download the runtime artifact from the latest successful **main**
-[Tests run](https://github.com/Klohto/xteink-x3-emulator/actions/workflows/tests.yml).
+Download the runtime artifact from the [verified main Tests run](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37309789519).
 Extract the ZIP and enclosed `.tar.gz`, then run `python3 launch.py` from the
 extracted directory on Ubuntu 24.04 x86-64. Required distro libraries, input
 checks and options are in [runtime-package.md](runtime-package.md).
+
+The [current v1.6.1 record](crossink-v161-validation-2026-10-05.md) gives the
+exact archive/native hashes, genuine update proof and the separately executed
+packaged `--resume` command for its actual guest-written v1.6.1 media.
 
 Open the printed loopback address. Enter confirms, Backspace goes back, arrows
 navigate and P operates Power. Home → Browse → `test.epub` opens the original
@@ -24,6 +29,10 @@ and `python3 launch.py --sd /tmp/my-card.img`. Repeat `--file` for more books.
 
 Every portrait pixel maps exactly to a rotated native pixel. GIF playback
 is paced for inspection; it provides no timing evidence.
+
+The current [v1.6.1 reading and cold restore](evidence/handoff/crossink-v161-reading.gif)
+uses the exact native binary and closed receipts in the current execution
+record. The following demonstrations retain their historical v1.6.0 identities:
 
 | Demonstration | Executed guest behavior |
 | --- | --- |
@@ -45,7 +54,7 @@ is paced for inspection; it provides no timing evidence.
 | Other CrossInk functions | [Function ledger](function-coverage.md): exact backend identities and original success/failure flags |
 | Board model | [Native gate](native-ccmp-validation.md): 123 device cases, source pin, patch and ELF hashes |
 
-The local native ELF in these demonstrations is
+The historical native ELF in these demonstrations is
 `504f14e45bfa818889204225827821da56299112645a1e35f66ba9121f854f50`.
 The official application is
 `4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644`.
@@ -62,7 +71,8 @@ native refresh count and output errors.
 Reading success does not erase unsupported model diagnostics. Browser rendering
 has not been independently verified here; loopback HTTP and guest effects have.
 Physical X3 speed, panel optics, RF and analog behavior remain uncalibrated.
-Full online OTA still encounters its observed TLS trust failure. Known stock
+The earlier proxy TLS failure remains preserved; the new genuine direct-network
+online upgrade passes with original guest trust. Known stock
 UI/protocol failures are recorded in [stock-firmware-limitations.md](stock-firmware-limitations.md).
 All-functions and hardware-equivalence flags remain false, and timing-based
 firmware selection stays disabled.

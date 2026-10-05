@@ -36,12 +36,19 @@ NEUTRAL_NS = 800_000_000
 CAPTURE_ATTEMPTS = 3
 
 
-def require_saved_page1(progress: dict, section: dict) -> None:
+def require_saved_page(progress: dict, section: dict, expected_page: int) -> None:
+    if type(expected_page) is not int or expected_page < 0:
+        raise PanelError("expected saved reader page must be a nonnegative integer")
     if (type(progress.get("spine_index")) is not int or progress["spine_index"] != 0
-            or type(progress.get("page_number")) is not int or progress["page_number"] != 1
+            or type(progress.get("page_number")) is not int or progress["page_number"] != expected_page
             or section.get("version") != 83
-            or type(section.get("page_count")) is not int or section["page_count"] < 2):
-        raise PanelError("HTTP panel requires the actual saved spine-zero/page-one reader and finalized v83 section")
+            or type(section.get("page_count")) is not int or section["page_count"] <= expected_page):
+        raise PanelError("HTTP panel requires the actual saved spine-zero/page-"
+            + str(expected_page) + " reader and finalized v83 section: " + json.dumps(progress))
+
+
+def require_saved_page1(progress: dict, section: dict) -> None:
+    require_saved_page(progress, section, 1)
 
 
 def bound_reference(directory: Path, report: dict, label: str) -> bytes:
@@ -302,33 +309,39 @@ def workflow(replay, client, expected, *, warm):
     replay.check("real_cpu_runs_unchanged_v161", bool(status), status)
     section = OTA["decode_v161_section"](replay.read(replay.helpers["cache_path"]() + "/sections/0.bin"))
     initial = progress(replay)
-    require_saved_page1(initial, section)
-    replay.check("initial_card_has_actual_saved_page1_and_v83", True, {"progress": initial, "section": section})
+    initial_page = 1 if warm else 2
+    require_saved_page(initial, section, initial_page)
+    replay.check(f"initial_card_has_actual_saved_page{initial_page}_and_v83", True,
+        {"progress": initial, "section": section})
     with panel_session(replay) as panel:
         panel.document()
         panel.capture("http-v161-home")
-        page1 = panel.tap("confirm", "http-reader-saved-page1", "Open the actual previously saved reader from Home")
-        content_equal(replay, "http_open_restores_carried_saved_content", expected, page1)
+        opened = panel.tap("confirm", f"http-reader-saved-page{initial_page}",
+            "Open the actual previously saved reader from Home")
+        content_equal(replay, "http_open_restores_carried_saved_content", expected, opened)
+        final_page = opened
         if warm:
-            page0 = panel.tap("up", "http-reader-page0", "Physical side Up reads the previous real page")
-            replay.check("http_up_changes_actual_guest_content", replay.helpers["changed_content_pixels"](page1, page0) >= 1000)
-            forward = panel.tap("down", "http-reader-page1-forward", "Physical side Down returns to saved page1")
-            content_equal(replay, "http_forward_restores_actual_page1", page1, forward)
+            page2 = panel.tap("down", "http-reader-page2-forward", "Physical side Down reads the next real page")
+            replay.check("http_down_changes_actual_guest_content", replay.helpers["changed_content_pixels"](opened, page2) >= 1000)
+            returned = panel.tap("up", "http-reader-page1-restored", "Physical side Up restores carried page1")
+            content_equal(replay, "http_back_turn_restores_actual_page1", opened, returned)
+            final_page = panel.tap("down", "http-reader-page2-for-save", "Read page2 before saving actual reader progress")
+            content_equal(replay, "http_forward_restores_actual_page2", page2, final_page)
         panel.tap("back", "http-home-progress-saved", "Back exits the actual reader and persists progress")
         saved_home = replay.experiment.wait("real Home after HTTP Back", lambda:
             OTA["running_version"](replay, client, "1.6.1"))
         replay.check("http_back_returns_to_actual_home", bool(saved_home), saved_home)
         saved = progress(replay)
-        require_saved_page1(saved, section)
-        replay.check("http_exit_persisted_actual_page1", True, saved)
+        require_saved_page(saved, section, 2)
+        replay.check("http_exit_persisted_actual_page2", True, saved)
         if warm:
-            reopened = panel.tap("confirm", "http-reader-page1-reopened", "Reopen guest-written page1 on the same CPU")
-            content_equal(replay, "http_warm_reopen_restores_saved_page1", page1, reopened)
+            reopened = panel.tap("confirm", "http-reader-page2-reopened", "Reopen guest-written page2 on the same CPU")
+            content_equal(replay, "http_warm_reopen_restores_saved_page2", final_page, reopened)
             panel.tap("back", "http-home-after-reopen", "Flush warm reopen before closing the real CPU")
             reopened_home = replay.experiment.wait("real Home after HTTP reopen exit", lambda:
                 OTA["running_version"](replay, client, "1.6.1"))
             replay.check("http_reopen_exit_returns_to_actual_home", bool(reopened_home), reopened_home)
-            require_saved_page1(progress(replay), section)
+            require_saved_page(progress(replay), section, 2)
         replay.check("http_original_book_unchanged", replay.read("/test.epub") == make_test_epub())
 
 
@@ -374,7 +387,7 @@ def main(argv=None):
         OTA["write_json"](args.output / "validation.json", report)
         if not first["functional_pass"]:
             raise PanelError("warm actual HTTP reading/save/reopen failed; closed receipt retained")
-        expected = bound_reference(warm, first, "http-reader-page1-reopened")
+        expected = bound_reference(warm, first, "http-reader-page2-reopened")
         cold_flash, cold_card, cold_efuse, cold_provenance = closed_media(warm, first)
         report["cold_written_input"] = cold_provenance
         second = OTA["execute_cpu"](args, args.output / "http-cold", cold_flash, cold_card,

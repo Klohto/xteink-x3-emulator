@@ -6,7 +6,19 @@ performs association, key derivation/installation, framing, replay checks and
 DHCP. Independent external peers communicate through actual raw packets;
 they do not replace guest functions or write guest memory.
 
-## Selected source and native gate
+## Current main backend
+
+The current main board patch is
+`57e84e1257ec865b134b8614bbcc9a57312f1f3ad1cb0fbf7d09065c84894989`,
+patched source tree `4fb14508af13898f7bc046074b83b5580653783e`.
+Its 130 native cases across twelve suites include the historical CCMP tests,
+six bounded gauge capacity tests and actual translated execution after flash
+MMU remaps. The [current v1.6.1 record](crossink-v161-validation-2026-10-05.md)
+identifies the exact sealed ELF and genuine OTA/reading executions. The
+123-case records below remain the original historical proofs; their secure
+Wi-Fi scopes are not relabelled as new firmware runs.
+
+## Historical 123-case source and native gate
 
 | Identity | Value |
 | --- | --- |
@@ -104,7 +116,7 @@ Scope flags never establish general encryption or clear a refusal.
 
 ## Selection and limits
 
-These gates select 123 locally and in `patches/qemu/xteink-x3.patch`; the
+These historical gates selected 123 locally and in `patches/qemu/xteink-x3.patch`; the
 superseded duplicate candidate patch is removed. The installed 119 backend,
 patch and selection record remain preserved for rollback. Compiler/library
 versions can change ELF bytes; source pins define the reproducible build.

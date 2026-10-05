@@ -5,6 +5,12 @@ identities. Private binary media and wire captures are excluded:
 
 | File | Closed actual firmware evidence |
 | --- | --- |
+| [cache-remap-current-ota-2026-10-05.json](cache-remap-current-ota-2026-10-05.json) | Current 130-case native artifact and genuine three-CPU official v1.6.1 update/read/save/cold restore |
+| [footnotes-cd95-summary-2026-10-05.json](footnotes-cd95-summary-2026-10-05.json) | Four actual v1.6.1 CPUs; exact origin pixels and genuine disk-restored note return |
+| [battery-capacity-cd95-2026-10-05.json](battery-capacity-cd95-2026-10-05.json) | Guest 3000→650 load, stock restart retention and book reading/save/reopen |
+| [packaged-v161-cd95-2026-10-05.json](packaged-v161-cd95-2026-10-05.json) | Actual sealed launch and fresh packaged resume, saved page 2 and identical full framebuffer |
+| [http-v161-cd95-2026-10-05.json](http-v161-cd95-2026-10-05.json) | Separate strict HTTP inputs, exact native frames and two-CPU saved-page-2 restoration |
+| [v161-return-progress-stock-failure-2026-10-05.json](v161-return-progress-stock-failure-2026-10-05.json) | Preserved actual page-1 return/page-0 save defect, independently reproduced in CI |
 | [secure-wifi-2026-10-04.json](secure-wifi-2026-10-04.json) | 119 password Save, fresh handshake on a new CPU, Forget Cancel/Confirm |
 | [network-settings-2026-10-04.json](network-settings-2026-10-04.json) | RX114 real OPDS/KOReader keyboard editors and cold persistence/Delete |
 | [koreader-binary-2026-10-04.json](koreader-binary-2026-10-04.json) | RX114 genuine metadata/progress upload and exact-pixel Apply |

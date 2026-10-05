@@ -1,0 +1,544 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "source_commit": "cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5",
+  "github_tests_run": 37309789519,
+  "scope": "Actual sealed packaged launch.py; unchanged CrossInk 1.6.1 read, turn, save page 2 and restore in a fresh CPU, from genuine passing online OTA media.",
+  "derived_from_original_closed_receipts": true,
+  "original_package_root_receipt": {
+    "name": "packaged-v161/validation.json",
+    "bytes": 390309,
+    "sha256": "a1909458680199996e678f9a7344b5b9796756286f57b7e9db34c21d86e95b3b"
+  },
+  "private_original_execution_archive": {
+    "name": "x3-packaged-maincd-private-proof-20261005.tar.gz",
+    "bytes": 28926474,
+    "sha256": "f119fabf5e7e8f88cc0c7360010e03d8f812489dfee5d0707614d0f5a867da6f"
+  },
+  "archive_inventory": {
+    "name": "x3-maincd-archive-inventories-20261005.json",
+    "bytes": 51875,
+    "sha256": "b9956abf5759ee73011d522d23cc2040a95e3d6eb82c664e751a5a6850553bed"
+  },
+  "shipped_runtime": {
+    "name": "xteink-x3-crossink-linux-x86_64.tar.gz",
+    "bytes": 72260254,
+    "sha256": "468030df5beb7e52b4a0996e1d436c897748b421d01008eddb888e449cd40fd2",
+    "bundle_name": "xteink-x3-crossink-v1.6.0-linux-x86_64",
+    "bundle_seal": {
+      "name": "bundle.json",
+      "bytes": 12783,
+      "sha256": "e16dcea5ab0e6e519f835dc3262250ab94fb5d52d6652fa4ab813e89d23037e2"
+    },
+    "launch_script_sha256": "a8498bd6274e76dcdd66a041a1241c3a230e9dce6756e70ab8237c8d91884da9",
+    "native_elf_sha256": "1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e",
+    "real_ESP32_C3_ROM_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "board_patch_sha256": "57e84e1257ec865b134b8614bbcc9a57312f1f3ad1cb0fbf7d09065c84894989",
+    "qemu_upstream_revision": "febae182e132e4055529be423a818225ebddaa3a",
+    "qemu_patched_source_tree": "4fb14508af13898f7bc046074b83b5580653783e",
+    "qemu_source_archive_sha256": "c69ed8e105a2e42bfae6ca1a4afd6d8b6df4aa9e8b29f4226a08504b64ea87c5",
+    "bundle_files_count": 45,
+    "all_bundle_file_sizes_and_hashes_rechecked": true,
+    "packaged_reported_native_device_cases_passed": 130,
+    "native_device_tests_rerun_by_this_summary": false,
+    "runtime_part_artifacts": [
+      {
+        "artifact_id": 11345645884,
+        "name": "x3-runtime-part-1-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5",
+        "bytes": 25166563,
+        "sha256": "ce7c1aa35d342f5b1c259bcf18a94da130841ad4d4286ff8bedb50abd4415ba3"
+      },
+      {
+        "artifact_id": 11345595950,
+        "name": "x3-runtime-part-2-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5",
+        "bytes": 25165972,
+        "sha256": "5791cae7992a826b78ea31ae40c400b2476f781e8649905674813693cfb17dd7"
+      },
+      {
+        "artifact_id": 11345700896,
+        "name": "x3-runtime-part-3-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5",
+        "bytes": 21928754,
+        "sha256": "f3f610a79187970334d462da00df3df2a806ff073524790d06cf12a73a64779a"
+      }
+    ]
+  },
+  "genuine_online_OTA_input": {
+    "original_ota_receipt_sha256": "63d2f92f13471742187891a5351c36fa3878a3dfcfe9cccff98556b01dd8818d",
+    "carried_run_manifest_sha256": "9ee9b0c5412d4f8e6d967b6811b5bb9092531771552308116b1fb4e35692e4a4",
+    "carried_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+    "carried_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+    "carried_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "official_v161_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+    "actual_ota_selection": {
+      "slots": [
+        {
+          "slot": 0,
+          "sequence": 1,
+          "state": 4294967295,
+          "crc32": 1195612314,
+          "valid": true
+        },
+        {
+          "slot": 1,
+          "sequence": 2,
+          "state": 2,
+          "crc32": 1442199412,
+          "valid": true
+        }
+      ],
+      "active_slot": 1,
+      "app_index": 1,
+      "app_offset": 6619136
+    },
+    "source_master_receipt": {
+      "name": "online-ota/validation.json",
+      "bytes": 678231,
+      "sha256": "63d2f92f13471742187891a5351c36fa3878a3dfcfe9cccff98556b01dd8818d"
+    },
+    "source_closed_manifest": {
+      "name": "online-ota/cold-saved-reader/run/run.json",
+      "bytes": 70350,
+      "sha256": "9ee9b0c5412d4f8e6d967b6811b5bb9092531771552308116b1fb4e35692e4a4"
+    },
+    "source_closed_media_sha256": {
+      "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "sd.img": "f00b662e5c83606197d124615e41102366b94e75ebcb73e857df333a425a9aa2",
+      "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+    },
+    "source_master_passed": true,
+    "source_three_CPUs_functional_pass": true,
+    "source_online_installation_exercised": true,
+    "guest_firmware_modified": false,
+    "TLS_trust_modified": false,
+    "source_artifact_archives": [
+      {
+        "name": "x3-ota-reader-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5.zip",
+        "bytes": 12368286,
+        "sha256": "7b342c1786c24e3965f402341be7ec32a05fda4226bcc6230d0148e66aa4aba8",
+        "github_artifact_id": 11346405566,
+        "github_artifact_name": "x3-ota-reader-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5"
+      },
+      {
+        "name": "x3-ota-receipts-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5.zip",
+        "bytes": 4217233,
+        "sha256": "514ffb6d509f68916e5622941e287022519c006dad943fe9ded7babb33ffdc79",
+        "github_artifact_id": 11346191241,
+        "github_artifact_name": "x3-ota-receipts-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5"
+      },
+      {
+        "name": "x3-ota-update-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5.zip",
+        "bytes": 12374175,
+        "sha256": "5146010d7ec670ee61e478a067ac5fe13a0e4ddeb4f418aa64e31c35082877dd",
+        "github_artifact_id": 11345973157,
+        "github_artifact_name": "x3-ota-update-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5"
+      },
+      {
+        "name": "x3-ota-cold-reader-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5.zip",
+        "bytes": 12252430,
+        "sha256": "4ce19187a6b251b7c05ff1fc55884defe3ab79bfe444dcacda2ee0e70987c80f",
+        "github_artifact_id": 11345968133,
+        "github_artifact_name": "x3-ota-cold-reader-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5"
+      }
+    ]
+  },
+  "packaged_v161_CPUs": [
+    {
+      "cpu": 1,
+      "status": "passed",
+      "functional_pass": true,
+      "original_child_receipt": {
+        "name": "cpu-1/validation.json",
+        "bytes": 203185,
+        "sha256": "3dd89e2342f317649e623724606f78d0c933d0f55ecb1c7f4840358ccd116de8"
+      },
+      "original_closed_manifest": {
+        "name": "cpu-1/run/run.json",
+        "bytes": 150613,
+        "sha256": "29ade1f09d4ef160946c62e0aefad12fe9ed8cdc47c4a8c9ae0398289c7da4cf"
+      },
+      "original_recording_receipt": {
+        "name": "cpu-1/run/runtime-recording.json",
+        "bytes": 288,
+        "sha256": "db94c722d1f26cb6f36b6821ef4673effc026f21cc0f25ac999e647836603c10"
+      },
+      "input_closed_manifest_sha256": "9ee9b0c5412d4f8e6d967b6811b5bb9092531771552308116b1fb4e35692e4a4",
+      "input_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "f00b662e5c83606197d124615e41102366b94e75ebcb73e857df333a425a9aa2",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "closed_final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "66206cc7c8aa3b5a040ecd2cd385525ffec233f988cc4b0dfb0cd43875485198",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "USB_firmware": "1.6.1",
+      "initial_progress": {
+        "spine_index": 0,
+        "page_number": 1,
+        "page_count": 22,
+        "visible_text_offset": 586
+      },
+      "saved_progress": {
+        "spine_index": 0,
+        "page_number": 2,
+        "page_count": 22,
+        "visible_text_offset": 1213
+      },
+      "checks": {
+        "packaged_html_served": true,
+        "official_v161_usb_home": true,
+        "carried_real_progress_is_expected": true,
+        "home_HTTP_matches_native": true,
+        "real-saved-reader_HTTP_matches_native": true,
+        "original_v83_section_exists": true,
+        "reader-next-page_HTTP_matches_native": true,
+        "real_book_page_turn_changes_content": true,
+        "reader-previous-page_HTTP_matches_native": true,
+        "previous_turn_restores_content": true,
+        "reader-page-to-save_HTTP_matches_native": true,
+        "home-after-reading-save_HTTP_matches_native": true,
+        "actual_guest_saved_new_page": true,
+        "packaged_launcher_clean_stop": true,
+        "packaged_closed_native_recording_passed": true,
+        "actual_media_copied_without_changes": true,
+        "actual_carried_efuse_matches": true,
+        "actual_packaged_ELF_matches_bound_OTA": true,
+        "written_media_equals_closed_manifest_final_hashes": true,
+        "stopped_manifest_remains_identical_after_media_hashing": true,
+        "fresh_POWERON_has_no_unexpected_extra_reset": true,
+        "no_panic_or_sd_fault": true
+      },
+      "captures": [
+        {
+          "label": "home",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "ec60e437e3a3e66402ae2f1c41489354047afa2378fd3a67b4edc0e0528b4d18",
+          "HTTP_frame_file_sha256": "ec60e437e3a3e66402ae2f1c41489354047afa2378fd3a67b4edc0e0528b4d18",
+          "pixel_sha256": "837b2ea6b92c4df39930091793083bfdb887c21dff5cc91362d4fda18f8d46a9",
+          "frame_count": 4,
+          "pixel_crc32": 3213831730,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        },
+        {
+          "label": "real-saved-reader",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+          "HTTP_frame_file_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+          "pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+          "frame_count": 9,
+          "pixel_crc32": 1098605927,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        },
+        {
+          "label": "reader-next-page",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "fd56a78c3a67ab1df0389f5963eca5fa4da2bedde87c4ad76223b6ab12808c24",
+          "HTTP_frame_file_sha256": "fd56a78c3a67ab1df0389f5963eca5fa4da2bedde87c4ad76223b6ab12808c24",
+          "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "frame_count": 11,
+          "pixel_crc32": 3729598029,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        },
+        {
+          "label": "reader-previous-page",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "0e36092c0e7512ce349ec8a82cf19bd05d33f0f82a81b622415ee7a9728d4880",
+          "HTTP_frame_file_sha256": "0e36092c0e7512ce349ec8a82cf19bd05d33f0f82a81b622415ee7a9728d4880",
+          "pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+          "frame_count": 13,
+          "pixel_crc32": 1098605927,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        },
+        {
+          "label": "reader-page-to-save",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "e61aff3609b1ebe2c9a17e3415a5523370fb17a155b506cdd26f592f8c42509f",
+          "HTTP_frame_file_sha256": "e61aff3609b1ebe2c9a17e3415a5523370fb17a155b506cdd26f592f8c42509f",
+          "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "frame_count": 15,
+          "pixel_crc32": 3729598029,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        },
+        {
+          "label": "home-after-reading-save",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584",
+          "HTTP_frame_file_sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584",
+          "pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "frame_count": 17,
+          "pixel_crc32": 2843903662,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        }
+      ],
+      "launcher_return_code": 0,
+      "closed_manifest_status": "stopped",
+      "native_exit_code": 0,
+      "actual_ROM_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "recording": {
+        "trace_sequence_contiguous": true,
+        "trace_virtual_time_monotonic": true,
+        "all_native_refreshes_recorded": true,
+        "trace_matches_run_manifest": true,
+        "native_output_errors_zero": true,
+        "events": 583,
+        "frame_complete_events": 17,
+        "native_refreshes": 17,
+        "passed": true
+      }
+    },
+    {
+      "cpu": 2,
+      "status": "passed",
+      "functional_pass": true,
+      "original_child_receipt": {
+        "name": "cpu-2/validation.json",
+        "bytes": 124430,
+        "sha256": "9b48fe881ddd734bfeb3be9b018c549152fdf179f4d05b56d2eca98a3c41587a"
+      },
+      "original_closed_manifest": {
+        "name": "cpu-2/run/run.json",
+        "bytes": 95420,
+        "sha256": "1cd64c113937e972761ddef2f06d1125dcb3fa2943bdb10a0cd526b22679aec8"
+      },
+      "original_recording_receipt": {
+        "name": "cpu-2/run/runtime-recording.json",
+        "bytes": 288,
+        "sha256": "4eb7e731a91f9df8b1a87e2954f67da4d49cacd0b579100019ad7b2754e6e55d"
+      },
+      "input_closed_manifest_sha256": "29ade1f09d4ef160946c62e0aefad12fe9ed8cdc47c4a8c9ae0398289c7da4cf",
+      "input_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "66206cc7c8aa3b5a040ecd2cd385525ffec233f988cc4b0dfb0cd43875485198",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "closed_final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "4b08ee9ace415537b0da130f7afc89a9d44e4c771f586d2a5152db0c088eb73f",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "USB_firmware": "1.6.1",
+      "initial_progress": {
+        "spine_index": 0,
+        "page_number": 2,
+        "page_count": 22,
+        "visible_text_offset": 1213
+      },
+      "saved_progress": {
+        "spine_index": 0,
+        "page_number": 2,
+        "page_count": 22,
+        "visible_text_offset": 1213
+      },
+      "checks": {
+        "resume_input_equals_previous_closed_final_media": true,
+        "resume_manifest_equals_previous_closed_manifest": true,
+        "packaged_html_served": true,
+        "official_v161_usb_home": true,
+        "carried_real_progress_is_expected": true,
+        "home_HTTP_matches_native": true,
+        "real-saved-reader_HTTP_matches_native": true,
+        "original_v83_section_exists": true,
+        "new_packaged_cpu_restores_saved_page_content": true,
+        "home-after-reading-save_HTTP_matches_native": true,
+        "actual_guest_saved_new_page": true,
+        "packaged_launcher_clean_stop": true,
+        "packaged_closed_native_recording_passed": true,
+        "actual_media_copied_without_changes": true,
+        "actual_carried_efuse_matches": true,
+        "actual_packaged_ELF_matches_bound_OTA": true,
+        "written_media_equals_closed_manifest_final_hashes": true,
+        "stopped_manifest_remains_identical_after_media_hashing": true,
+        "fresh_POWERON_has_no_unexpected_extra_reset": true,
+        "no_panic_or_sd_fault": true
+      },
+      "captures": [
+        {
+          "label": "home",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "822db1b542684f8f88e495862e53496d8f83013d1fe637b896fe2c2421ddbe97",
+          "HTTP_frame_file_sha256": "822db1b542684f8f88e495862e53496d8f83013d1fe637b896fe2c2421ddbe97",
+          "pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "frame_count": 4,
+          "pixel_crc32": 2843903662,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        },
+        {
+          "label": "real-saved-reader",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+          "HTTP_frame_file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+          "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "frame_count": 9,
+          "pixel_crc32": 3729598029,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        },
+        {
+          "label": "home-after-reading-save",
+          "width": 792,
+          "height": 528,
+          "native_frame_file_sha256": "b9fe7aa09436045b07dc135ac0c3b206fbe885a03e85561c4f9042862ba005a5",
+          "HTTP_frame_file_sha256": "b9fe7aa09436045b07dc135ac0c3b206fbe885a03e85561c4f9042862ba005a5",
+          "pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "frame_count": 11,
+          "pixel_crc32": 2843903662,
+          "trace_complete": true,
+          "HTTP_header_count_and_crc_match_frozen_native_capture": true,
+          "HTTP_pixels_equal_native_pixels": true,
+          "accepted_attempt": 1
+        }
+      ],
+      "launcher_return_code": 0,
+      "closed_manifest_status": "stopped",
+      "native_exit_code": 0,
+      "actual_ROM_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "recording": {
+        "trace_sequence_contiguous": true,
+        "trace_virtual_time_monotonic": true,
+        "all_native_refreshes_recorded": true,
+        "trace_matches_run_manifest": true,
+        "native_output_errors_zero": true,
+        "events": 274,
+        "frame_complete_events": 11,
+        "native_refreshes": 11,
+        "passed": true
+      }
+    }
+  ],
+  "full_frame_cold_restore_identity": {
+    "saved_page": 2,
+    "chapter_page_count": 22,
+    "visible_text_offset": 1213,
+    "comparison": "All 418176 luminance pixels before save and after new CPU resume.",
+    "width": 792,
+    "height": 528,
+    "changed_pixels": 0,
+    "identical": true,
+    "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+    "saved_capture": "cpu-1:reader-page-to-save",
+    "restored_capture": "cpu-2:real-saved-reader"
+  },
+  "separate_default_v160": {
+    "scope": "One fresh launch with shipped virgin flash/card: USB Home, served HTML and frozen native/HTTP Home frame, clean stop. This check does not establish default-v160 reading.",
+    "original_root_receipt": {
+      "name": "default160/validation.json",
+      "bytes": 53946,
+      "sha256": "0f011df3e7a6305d2faef708e96f3427d69cf4b43dc8e961678cdd9cb155dae4"
+    },
+    "original_closed_manifest": {
+      "name": "default160/run/run.json",
+      "bytes": 45880,
+      "sha256": "be11808dcc1fbd07668fd2539e0ddf8befb639589e0b78bc61d645f6cf7808a7"
+    },
+    "original_recording_receipt": {
+      "name": "default160/run/runtime-recording.json",
+      "bytes": 285,
+      "sha256": "9a17b9fa06dcb02619ae1fa1e7d20b0919471f1d21228b382a83da1703b34f51"
+    },
+    "status": "passed",
+    "functional_pass": true,
+    "checks": {
+      "unchanged_default160_USB_Home": true,
+      "packaged_HTML_served": true,
+      "HTTP_frame_bound_to_frozen_native_capture": true,
+      "clean_packaged_launcher_stop": true,
+      "shipped_runtime_recording_passed": true,
+      "unchanged_virgin_flash_input": true,
+      "unchanged_virgin_card_input": true,
+      "no_panic_or_SD_failure": true
+    },
+    "USB_firmware": "1.6.0",
+    "home_pixel_sha256": "e578cc6b8de54475dd0509362996561163ceb43ecd21b99b04b6343fbe029d11",
+    "trace_complete": true,
+    "recording": {
+      "trace_sequence_contiguous": true,
+      "trace_virtual_time_monotonic": true,
+      "all_native_refreshes_recorded": true,
+      "trace_matches_run_manifest": true,
+      "native_output_errors_zero": true,
+      "events": 92,
+      "frame_complete_events": 4,
+      "native_refreshes": 4,
+      "passed": true
+    }
+  },
+  "host_observer": {
+    "harness_sha256": "11064b4c5258c3e35ba70232fc960354e0c568af036139652f8f71b116abe340",
+    "probe_source_sha256": {
+      "smoke-crossink.py": "dc522481b4817ea26ed899e66b2c1b6c5f5fe5a4c6b01b43b261945236da8510",
+      "test-crossink-online-ota.py": "8879fd9a418e6044efa35045f032d05b6cc99be9fa7cfbaa30ab85390090fb57",
+      "test-crossink-v161-footnotes.py": "1a4d72900303b48d473c7a60f42fc9bc72034470d625b91c28b5f46ec4d64830"
+    },
+    "preserved_in_existing_private_execution_archive": true,
+    "button_transport": "packaged same-origin HTTP /api/tap",
+    "QMP_scope": "Observation, freezing native capture and package lifecycle; reading button pulses use packaged HTTP."
+  },
+  "actual_native_visuals": [
+    {
+      "name": "crossink-v161-packaged-reading.gif",
+      "bytes": 219178,
+      "sha256": "80a5e934e1a561edcb0663a0a5132dfdd7be4baffdbe3919d3d3c95fd37ed83b"
+    },
+    {
+      "name": "crossink-v161-saved-page-restored.png",
+      "bytes": 46631,
+      "sha256": "e61e01d2273e790fec821f668815b1b1732703b6dc08f1a30e0568f8a2de9279"
+    },
+    {
+      "name": "preview-provenance.json",
+      "bytes": 4049,
+      "sha256": "2c16be5f143cbe737fa1cd02186b8ea11e28b5ed1599d4e8b8c433a336a1552c"
+    }
+  ],
+  "visual_transform": "Actual HTTP pixels rotated to portrait; external labels only. GIF playback is paced, not measured hardware speed.",
+  "verified_limits": {
+    "guest_firmware_modified": false,
+    "browser_rendering_verified": false,
+    "physical_timing_calibrated": false,
+    "speed_selection_allowed": false,
+    "all_functions_verified": false,
+    "complete_machine_verified": false
+  }
+}

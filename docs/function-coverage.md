@@ -14,6 +14,20 @@ the entrypoint exists but this ledger has no complete execution proof.
 `stock_x3_disabled` means the original X3 image cannot expose that function.
 No timing result is calibrated to a physical X3.
 
+## CrossInk 1.6.1 continuation
+
+The [current execution record](crossink-v161-validation-2026-10-05.md)
+identifies main commit `cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5`,
+native ELF `1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e`,
+unchanged official v1.6.1 application and exact closed receipt hashes. Genuine
+online download/install/warm reboot, v83 EPUB turns/save/reopen, a fresh-CPU
+saved-page restore and the actual packaged launcher read/save/resume pass.
+The original-footnote return and genuine one-entry disk-restored link also pass
+on four closed CPUs. These v1.6.1 scopes supplement the dated v1.6.0 inventory;
+they do not relabel its other function proofs or establish all permutations.
+The newly observed [stock return-to-saved-page progress defect](stock-firmware-limitations.md#separate-crossink-161-observations)
+retains its original failed verdict separately.
+
 ## Fresh continuation proofs
 
 The historical inventory and execution ledger below retain their original

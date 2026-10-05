@@ -1,0 +1,685 @@
+{
+  "schema_version": 1,
+  "classification": "closed actual two-CPU loopback HTTP panel execution on unchanged OTA-written stock CrossInk 1.6.1",
+  "status": "passed",
+  "functional_pass": true,
+  "original_complete_root": "/tmp/x3-v161-panel-cd95c1f3-run03",
+  "original_root_receipt_sha256": "b33dadf7eef8c0e73385f0c89dae2e6a677ae157a4624fc3d97891e7046ce6a2",
+  "inspected_source_snapshot": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+  "official_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+  "ui_source_sha256": {
+    "x3emu/ui.py": "2291258056470fd21e34ba9a0c1fb34678ed0cca2fce77a3dfcb540378aa30f8",
+    "x3emu/assets/panel.html": "71bf33752829713cb20831bf73464dcf7d624d44a451c9195563108642dbe48b",
+    "scripts/test-crossink-v161-panel.py": "fc466654a38944e3f78823df23fd82feee435f4085d362e9aec5f66571f37666"
+  },
+  "execution_coordinator_recorded_loaded_startup_helper_sha256": "063b1d1f157afee15837d27b0f44ff2843810321afae2fe9a8443a4d296b4784",
+  "subsequent_receipt_only_startup_helper_sha256_not_executed": "b5cf884b8c4eb0380d500b59f524af3f63b6c55c1e234d5c289ea300611cf64c",
+  "ota_written_input": {
+    "original_ota_receipt_sha256": "63d2f92f13471742187891a5351c36fa3878a3dfcfe9cccff98556b01dd8818d",
+    "carried_run_manifest_sha256": "9ee9b0c5412d4f8e6d967b6811b5bb9092531771552308116b1fb4e35692e4a4",
+    "carried_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+    "carried_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+    "carried_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "official_v161_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+    "actual_ota_selection": {
+      "slots": [
+        {
+          "slot": 0,
+          "sequence": 1,
+          "state": 4294967295,
+          "crc32": 1195612314,
+          "valid": true
+        },
+        {
+          "slot": 1,
+          "sequence": 2,
+          "state": 2,
+          "crc32": 1442199412,
+          "valid": true
+        }
+      ],
+      "active_slot": 1,
+      "app_index": 1,
+      "app_offset": 6619136
+    },
+    "carried_card_sha256": "f00b662e5c83606197d124615e41102366b94e75ebcb73e857df333a425a9aa2",
+    "actual_saved_progress": {
+      "spine_index": 0,
+      "page_number": 1,
+      "page_count": 22,
+      "visible_text_offset": 586
+    },
+    "actual_finalized_section": {
+      "version": 83,
+      "page_count": 22,
+      "page_lut_offset": 43719,
+      "bytes": 43987,
+      "sha256": "e269081be8ceeac9e51ea11e6a59ba1152d7d2f09f189d867d8fb9e4f5006705"
+    },
+    "reference_capture_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+    "original_epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+  },
+  "cold_written_input": {
+    "warm_manifest_sha256": "ee192c0260a84b0366c9b8cb7defa6d4586e2ae8c6db19d352f9533be2000526",
+    "actual_written_media_sha256": {
+      "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "sd.img": "129e78332485e1edfcd1ff7a2ec8c33f399cd019511d77d76205c493b565aa79",
+      "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+    }
+  },
+  "cpus": [
+    {
+      "name": "http-warm",
+      "status": "passed",
+      "functional_pass": true,
+      "cpu_receipt_sha256": "f7bc816928461c5427fa64c946da3881c7118555a43979b790c27d7e91d80199",
+      "run_manifest_sha256": "ee192c0260a84b0366c9b8cb7defa6d4586e2ae8c6db19d352f9533be2000526",
+      "backend": {
+        "name": "espressif-qemu-x3",
+        "path": "/workspace/scratch/0c5ba1033bc8/x3-maincd-runtime/bundle/xteink-x3-crossink-linux-x86_64/backend/bin/qemu-system-riscv32",
+        "version": "QEMU emulator version 9.2.2\nCopyright (c) 2003-2024 Fabrice Bellard and the QEMU Project developers",
+        "sha256": "1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e"
+      },
+      "native_exit_code": 0,
+      "initial_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "initial_sd_sha256": "f00b662e5c83606197d124615e41102366b94e75ebcb73e857df333a425a9aa2",
+      "initial_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "129e78332485e1edfcd1ff7a2ec8c33f399cd019511d77d76205c493b565aa79",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "actual_raw_progress_hex": "000002001600bd040000",
+      "actual_decoded_progress": {
+        "spine_index": 0,
+        "page_number": 2,
+        "page_count": 22,
+        "visible_text_offset": 1213
+      },
+      "checks": {
+        "initial_poweron_and_stock_x3_usb_response": true,
+        "real_cpu_runs_unchanged_v161": true,
+        "initial_card_has_actual_saved_page1_and_v83": true,
+        "static_panel_document_served_unchanged": true,
+        "http-v161-home_http_matches_frozen_native": true,
+        "http-reader-saved-page1_exact_native_http_pulse": true,
+        "http-reader-saved-page1_http_matches_frozen_native": true,
+        "http_open_restores_carried_saved_content": true,
+        "http-reader-page2-forward_exact_native_http_pulse": true,
+        "http-reader-page2-forward_http_matches_frozen_native": true,
+        "http_down_changes_actual_guest_content": true,
+        "http-reader-page1-restored_exact_native_http_pulse": true,
+        "http-reader-page1-restored_http_matches_frozen_native": true,
+        "http_back_turn_restores_actual_page1": true,
+        "http-reader-page2-for-save_exact_native_http_pulse": true,
+        "http-reader-page2-for-save_http_matches_frozen_native": true,
+        "http_forward_restores_actual_page2": true,
+        "http-home-progress-saved_exact_native_http_pulse": true,
+        "http-home-progress-saved_http_matches_frozen_native": true,
+        "http_back_returns_to_actual_home": true,
+        "http_exit_persisted_actual_page2": true,
+        "http-reader-page2-reopened_exact_native_http_pulse": true,
+        "http-reader-page2-reopened_http_matches_frozen_native": true,
+        "http_warm_reopen_restores_saved_page2": true,
+        "http-home-after-reopen_exact_native_http_pulse": true,
+        "http-home-after-reopen_http_matches_frozen_native": true,
+        "http_reopen_exit_returns_to_actual_home": true,
+        "http_original_book_unchanged": true,
+        "real_http_service_stopped_cleanly": true,
+        "no_guest_panic_or_sd_failure": true,
+        "launcher_stopped_cleanly": true,
+        "closed_native_panel_trace_complete": true,
+        "uncalibrated_speed_selection_stays_disabled": true,
+        "launcher_initial_storage_matches_carried_inputs": true,
+        "carried_efuse_hash_matches_launcher_input": true,
+        "actual_initial_poweron_rom_boot": true
+      },
+      "http_frame_bindings": {
+        "http-v161-home": {
+          "native_frame_label": "http-v161-home-attempt-1",
+          "http_frame_path": "frames/http-v161-home-attempt-1-http.pgm",
+          "frame_count": 4,
+          "pixel_crc32": 3213831730,
+          "http_file_sha256": "ec60e437e3a3e66402ae2f1c41489354047afa2378fd3a67b4edc0e0528b4d18",
+          "http_pixel_sha256": "837b2ea6b92c4df39930091793083bfdb887c21dff5cc91362d4fda18f8d46a9",
+          "native_capture_file_sha256": "ec60e437e3a3e66402ae2f1c41489354047afa2378fd3a67b4edc0e0528b4d18",
+          "every_http_pixel_matches_native": true
+        },
+        "http-reader-saved-page1": {
+          "native_frame_label": "http-reader-saved-page1-attempt-1",
+          "http_frame_path": "frames/http-reader-saved-page1-attempt-1-http.pgm",
+          "frame_count": 9,
+          "pixel_crc32": 1098605927,
+          "http_file_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+          "http_pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+          "native_capture_file_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+          "every_http_pixel_matches_native": true
+        },
+        "http-reader-page2-forward": {
+          "native_frame_label": "http-reader-page2-forward-attempt-1",
+          "http_frame_path": "frames/http-reader-page2-forward-attempt-1-http.pgm",
+          "frame_count": 11,
+          "pixel_crc32": 3729598029,
+          "http_file_sha256": "fd56a78c3a67ab1df0389f5963eca5fa4da2bedde87c4ad76223b6ab12808c24",
+          "http_pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "native_capture_file_sha256": "fd56a78c3a67ab1df0389f5963eca5fa4da2bedde87c4ad76223b6ab12808c24",
+          "every_http_pixel_matches_native": true
+        },
+        "http-reader-page1-restored": {
+          "native_frame_label": "http-reader-page1-restored-attempt-1",
+          "http_frame_path": "frames/http-reader-page1-restored-attempt-1-http.pgm",
+          "frame_count": 13,
+          "pixel_crc32": 1098605927,
+          "http_file_sha256": "0e36092c0e7512ce349ec8a82cf19bd05d33f0f82a81b622415ee7a9728d4880",
+          "http_pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+          "native_capture_file_sha256": "0e36092c0e7512ce349ec8a82cf19bd05d33f0f82a81b622415ee7a9728d4880",
+          "every_http_pixel_matches_native": true
+        },
+        "http-reader-page2-for-save": {
+          "native_frame_label": "http-reader-page2-for-save-attempt-1",
+          "http_frame_path": "frames/http-reader-page2-for-save-attempt-1-http.pgm",
+          "frame_count": 15,
+          "pixel_crc32": 3729598029,
+          "http_file_sha256": "e61aff3609b1ebe2c9a17e3415a5523370fb17a155b506cdd26f592f8c42509f",
+          "http_pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "native_capture_file_sha256": "e61aff3609b1ebe2c9a17e3415a5523370fb17a155b506cdd26f592f8c42509f",
+          "every_http_pixel_matches_native": true
+        },
+        "http-home-progress-saved": {
+          "native_frame_label": "http-home-progress-saved-attempt-1",
+          "http_frame_path": "frames/http-home-progress-saved-attempt-1-http.pgm",
+          "frame_count": 17,
+          "pixel_crc32": 2843903662,
+          "http_file_sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584",
+          "http_pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "native_capture_file_sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584",
+          "every_http_pixel_matches_native": true
+        },
+        "http-reader-page2-reopened": {
+          "native_frame_label": "http-reader-page2-reopened-attempt-1",
+          "http_frame_path": "frames/http-reader-page2-reopened-attempt-1-http.pgm",
+          "frame_count": 22,
+          "pixel_crc32": 3729598029,
+          "http_file_sha256": "213b17632a2df9fb7ac5e2cc4c6f6b6a1f8a821e6f158e82e59ef0681c8876da",
+          "http_pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "native_capture_file_sha256": "213b17632a2df9fb7ac5e2cc4c6f6b6a1f8a821e6f158e82e59ef0681c8876da",
+          "every_http_pixel_matches_native": true
+        },
+        "http-home-after-reopen": {
+          "native_frame_label": "http-home-after-reopen-attempt-1",
+          "http_frame_path": "frames/http-home-after-reopen-attempt-1-http.pgm",
+          "frame_count": 24,
+          "pixel_crc32": 2843903662,
+          "http_file_sha256": "c6ac619fa5778cecef8b46e8406afbba46108b7ab1da150fdb05e9de527641e3",
+          "http_pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "native_capture_file_sha256": "c6ac619fa5778cecef8b46e8406afbba46108b7ab1da150fdb05e9de527641e3",
+          "every_http_pixel_matches_native": true
+        }
+      },
+      "http_actions": [
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "confirm",
+          "purpose": "Open the actual previously saved reader from Home",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "confirm"
+            ],
+            "pending_release": true,
+            "t_ns": 5071092072,
+            "applied_buttons": 2,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 5471092072,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 5884168377,
+          "neutral_interval_start_t_ns": 3851708099,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        },
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "down",
+          "purpose": "Physical side Down reads the next real page",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "down"
+            ],
+            "pending_release": true,
+            "t_ns": 9905552020,
+            "applied_buttons": 32,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 10305552020,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 10721949010,
+          "neutral_interval_start_t_ns": 8681758540,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        },
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "up",
+          "purpose": "Physical side Up restores carried page1",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "up"
+            ],
+            "pending_release": true,
+            "t_ns": 13513799227,
+            "applied_buttons": 16,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 13913799227,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 14329094158,
+          "neutral_interval_start_t_ns": 12294915071,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        },
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "down",
+          "purpose": "Read page2 before saving actual reader progress",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "down"
+            ],
+            "pending_release": true,
+            "t_ns": 17124539343,
+            "applied_buttons": 32,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 17524539343,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 17940145413,
+          "neutral_interval_start_t_ns": 15903156987,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        },
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "back",
+          "purpose": "Back exits the actual reader and persists progress",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "back"
+            ],
+            "pending_release": true,
+            "t_ns": 20789701391,
+            "applied_buttons": 1,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 21189701391,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 21609565478,
+          "neutral_interval_start_t_ns": 19565909665,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        },
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "confirm",
+          "purpose": "Reopen guest-written page2 on the same CPU",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "confirm"
+            ],
+            "pending_release": true,
+            "t_ns": 24666745701,
+            "applied_buttons": 2,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 25066745701,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 25481923541,
+          "neutral_interval_start_t_ns": 23441702514,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        },
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "back",
+          "purpose": "Flush warm reopen before closing the real CPU",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "back"
+            ],
+            "pending_release": true,
+            "t_ns": 29456215542,
+            "applied_buttons": 1,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 29856215542,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 30272038222,
+          "neutral_interval_start_t_ns": 28234992454,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        }
+      ],
+      "closed_panel_trace": {
+        "unsupported-count": 0,
+        "protocol-errors": 0,
+        "refresh-count": 24,
+        "busy-active": false,
+        "spi-bytes": 2985828,
+        "command-count": 547,
+        "waveform-crc": 874060891,
+        "framebuffer-crc": 2843903662,
+        "waveform-supported": true,
+        "timing-calibrated": false,
+        "physical-effects-modelled": false,
+        "output-errors": 0,
+        "trace-events-attempted": 767,
+        "trace-events-flushed": 767,
+        "trace-bytes-flushed": 59273,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 24,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 59273,
+        "trace-fd-position": 59273,
+        "trace-fd-inode": 917584,
+        "trace-path-size": 59273,
+        "trace-path-inode": 917584,
+        "trace-file-linked": true,
+        "file_bytes": 59273,
+        "file_records": 767,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "initial_stock_usb_status": {
+        "protocol": "1",
+        "device": "x3-x4",
+        "firmware": "1.6.1",
+        "free": "93632",
+        "largest": "45044"
+      },
+      "rom_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "changed_ink_pixels": {
+        "http_open_restores_carried_saved_content": 0,
+        "http_back_turn_restores_actual_page1": 0,
+        "http_forward_restores_actual_page2": 0,
+        "http_warm_reopen_restores_saved_page2": 0
+      }
+    },
+    {
+      "name": "http-cold",
+      "status": "passed",
+      "functional_pass": true,
+      "cpu_receipt_sha256": "d140fddea1af680287f7592eda7a898b264172eb108c30d21afeb9ba7764be69",
+      "run_manifest_sha256": "e28e0a83d9985e7e11e637381e09f190da930d9cc6499e1d6f3a224e15d33966",
+      "backend": {
+        "name": "espressif-qemu-x3",
+        "path": "/workspace/scratch/0c5ba1033bc8/x3-maincd-runtime/bundle/xteink-x3-crossink-linux-x86_64/backend/bin/qemu-system-riscv32",
+        "version": "QEMU emulator version 9.2.2\nCopyright (c) 2003-2024 Fabrice Bellard and the QEMU Project developers",
+        "sha256": "1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e"
+      },
+      "native_exit_code": 0,
+      "initial_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "initial_sd_sha256": "129e78332485e1edfcd1ff7a2ec8c33f399cd019511d77d76205c493b565aa79",
+      "initial_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "final_media_sha256": {
+        "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+        "sd.img": "3902c1a63aa35956499f3a5fc74e1cd842233b0c80d8ba8604b7386bc850ba2b",
+        "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "actual_raw_progress_hex": "000002001600bd040000",
+      "actual_decoded_progress": {
+        "spine_index": 0,
+        "page_number": 2,
+        "page_count": 22,
+        "visible_text_offset": 1213
+      },
+      "checks": {
+        "initial_poweron_and_stock_x3_usb_response": true,
+        "real_cpu_runs_unchanged_v161": true,
+        "initial_card_has_actual_saved_page2_and_v83": true,
+        "static_panel_document_served_unchanged": true,
+        "http-v161-home_http_matches_frozen_native": true,
+        "http-reader-saved-page2_exact_native_http_pulse": true,
+        "http-reader-saved-page2_http_matches_frozen_native": true,
+        "http_open_restores_carried_saved_content": true,
+        "http-home-progress-saved_exact_native_http_pulse": true,
+        "http-home-progress-saved_http_matches_frozen_native": true,
+        "http_back_returns_to_actual_home": true,
+        "http_exit_persisted_actual_page2": true,
+        "http_original_book_unchanged": true,
+        "real_http_service_stopped_cleanly": true,
+        "no_guest_panic_or_sd_failure": true,
+        "launcher_stopped_cleanly": true,
+        "closed_native_panel_trace_complete": true,
+        "uncalibrated_speed_selection_stays_disabled": true,
+        "launcher_initial_storage_matches_carried_inputs": true,
+        "carried_efuse_hash_matches_launcher_input": true,
+        "actual_initial_poweron_rom_boot": true
+      },
+      "http_frame_bindings": {
+        "http-v161-home": {
+          "native_frame_label": "http-v161-home-attempt-1",
+          "http_frame_path": "frames/http-v161-home-attempt-1-http.pgm",
+          "frame_count": 4,
+          "pixel_crc32": 2843903662,
+          "http_file_sha256": "822db1b542684f8f88e495862e53496d8f83013d1fe637b896fe2c2421ddbe97",
+          "http_pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "native_capture_file_sha256": "822db1b542684f8f88e495862e53496d8f83013d1fe637b896fe2c2421ddbe97",
+          "every_http_pixel_matches_native": true
+        },
+        "http-reader-saved-page2": {
+          "native_frame_label": "http-reader-saved-page2-attempt-1",
+          "http_frame_path": "frames/http-reader-saved-page2-attempt-1-http.pgm",
+          "frame_count": 9,
+          "pixel_crc32": 3729598029,
+          "http_file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+          "http_pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "native_capture_file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+          "every_http_pixel_matches_native": true
+        },
+        "http-home-progress-saved": {
+          "native_frame_label": "http-home-progress-saved-attempt-1",
+          "http_frame_path": "frames/http-home-progress-saved-attempt-1-http.pgm",
+          "frame_count": 11,
+          "pixel_crc32": 2843903662,
+          "http_file_sha256": "b9fe7aa09436045b07dc135ac0c3b206fbe885a03e85561c4f9042862ba005a5",
+          "http_pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "native_capture_file_sha256": "b9fe7aa09436045b07dc135ac0c3b206fbe885a03e85561c4f9042862ba005a5",
+          "every_http_pixel_matches_native": true
+        }
+      },
+      "http_actions": [
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "confirm",
+          "purpose": "Open the actual previously saved reader from Home",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "confirm"
+            ],
+            "pending_release": true,
+            "t_ns": 5171680479,
+            "applied_buttons": 2,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 5571680479,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 5993937824,
+          "neutral_interval_start_t_ns": 3942838317,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        },
+        {
+          "transport": "same-origin loopback HTTP",
+          "button": "back",
+          "purpose": "Back exits the actual reader and persists progress",
+          "scheduled_virtual_hold_ns": 400000000,
+          "native_response": {
+            "buttons": [
+              "back"
+            ],
+            "pending_release": true,
+            "t_ns": 10117850247,
+            "applied_buttons": 1,
+            "applied_power": false,
+            "ADC_release_deadline_ns": 10517850247,
+            "power_pulse_ns": null
+          },
+          "released_t_ns": 10932521440,
+          "neutral_interval_start_t_ns": 8895706082,
+          "minimum_neutral_interval_ns": 800000000,
+          "guest_hook": false
+        }
+      ],
+      "closed_panel_trace": {
+        "unsupported-count": 0,
+        "protocol-errors": 0,
+        "refresh-count": 11,
+        "busy-active": false,
+        "spi-bytes": 1309485,
+        "command-count": 186,
+        "waveform-crc": 874060891,
+        "framebuffer-crc": 2843903662,
+        "waveform-supported": true,
+        "timing-calibrated": false,
+        "physical-effects-modelled": false,
+        "output-errors": 0,
+        "trace-events-attempted": 274,
+        "trace-events-flushed": 274,
+        "trace-bytes-flushed": 20949,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 11,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 20949,
+        "trace-fd-position": 20949,
+        "trace-fd-inode": 917811,
+        "trace-path-size": 20949,
+        "trace-path-inode": 917811,
+        "trace-file-linked": true,
+        "file_bytes": 20949,
+        "file_records": 274,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "initial_stock_usb_status": {
+        "protocol": "1",
+        "device": "x3-x4",
+        "firmware": "1.6.1",
+        "free": "93632",
+        "largest": "45044"
+      },
+      "rom_reset_observations": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "changed_ink_pixels": {
+        "http_open_restores_carried_saved_content": 0
+      }
+    }
+  ],
+  "original_stock_same_page_return_regression_remains_failed": true,
+  "binary_build_commit_verified": false,
+  "guest_firmware_modified": false,
+  "guest_settings_or_progress_seeded": false,
+  "browser_rendering_verified": false,
+  "packaged_launcher_executed": false,
+  "complete_machine_verified": false,
+  "all_functions_verified": false,
+  "physical_timing_calibrated": false,
+  "speed_selection_allowed": false,
+  "presentation_capture": {
+    "native_frame": {
+      "width": 792,
+      "height": 528,
+      "file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+      "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+      "dark_pixels": 63830,
+      "light_pixels": 354346,
+      "path": "frames/http-reader-saved-page2-attempt-1.pgm",
+      "t_ns": 8793716767,
+      "frame_count": 9,
+      "minimum_quiet_interval_ns": 1000000000,
+      "quiet_interval_start_t_ns": 7777993208,
+      "observed_quiet_interval_ns": 1015723559,
+      "quiet_verified_with": "frozen QMP refresh counter and BUSY state",
+      "pixel_crc32": 3729598029,
+      "dump_refresh_count": 9,
+      "trace_frame_count": 9,
+      "trace_complete": true,
+      "output_accounting_supported": true,
+      "output_accounting": {
+        "output-errors": 0,
+        "trace-events-attempted": 242,
+        "trace-events-flushed": 242,
+        "trace-bytes-flushed": 18451,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-frames-written": 9,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0,
+        "trace-fd-size": 18451,
+        "trace-fd-position": 18451,
+        "trace-fd-inode": 917811,
+        "trace-path-size": 18451,
+        "trace-path-inode": 917811,
+        "trace-file-linked": true,
+        "file_bytes": 18451,
+        "file_records": 242,
+        "sequence_complete": true,
+        "file_observer_supported": true,
+        "file_observer_consistent": true,
+        "complete": true
+      },
+      "last_frame_complete_t_ns": 7777448574
+    },
+    "native_http_binding": {
+      "native_frame_label": "http-reader-saved-page2-attempt-1",
+      "http_frame_path": "frames/http-reader-saved-page2-attempt-1-http.pgm",
+      "frame_count": 9,
+      "pixel_crc32": 3729598029,
+      "http_file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+      "http_pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+      "native_capture_file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+      "every_http_pixel_matches_native": true
+    },
+    "png_sha256": "87bc5240aabfea96cf74e959ad7b49c51ca8699139bf4a2d1d22ca338e25a1c3",
+    "png_is_only_format_conversion": true,
+    "browser_screenshot": false,
+    "portrait_png_sha256": "96dbeb0b5b2b9dc8a7b7d4c5a49549a4441c8ede00f55bd1a8fede4da651acd7",
+    "portrait_png_rotation_clockwise_degrees": 90,
+    "portrait_png_dimensions": [
+      528,
+      792
+    ]
+  }
+}

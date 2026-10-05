@@ -1,0 +1,76 @@
+{
+  "source_commit": "cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5",
+  "master_receipt_sha256": "63d2f92f13471742187891a5351c36fa3878a3dfcfe9cccff98556b01dd8818d",
+  "native_sha256": "1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e",
+  "timing_evidence": false,
+  "transform": "lossless 90-degree clockwise rotation; identical adjacent reopen/cold frames merged with combined display duration",
+  "source_frames": [
+    {
+      "cpu": "cold-written-v161",
+      "frame": "v161-reader-page0-probe1",
+      "source_pgm_sha256": "f2e30e0d1d65b60bda2832e623238351edc0b72c5fba854f9195df249eece3d5",
+      "source_pixels_sha256": "c392c52a0a6da292668af74aabb0cb5c2b5d4dec8b53b8ebca09efacadce625f",
+      "receipt_sha256": "039220095c8cddba8d7d283ff8ab56e4a0297ab6104429f6162c56b7184d2317"
+    },
+    {
+      "cpu": "cold-written-v161",
+      "frame": "002-v161-reader-page1",
+      "source_pgm_sha256": "1aceb104ef3fe17f7542b99ced999a4a10e03c16b3123cd9bf76d801b8b61299",
+      "source_pixels_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+      "receipt_sha256": "039220095c8cddba8d7d283ff8ab56e4a0297ab6104429f6162c56b7184d2317"
+    },
+    {
+      "cpu": "cold-written-v161",
+      "frame": "003-v161-reader-page0-restored",
+      "source_pgm_sha256": "0f2bef6dd89123ae9e33e486209b5642fcdf9441d799caff87501628845b4112",
+      "source_pixels_sha256": "c392c52a0a6da292668af74aabb0cb5c2b5d4dec8b53b8ebca09efacadce625f",
+      "receipt_sha256": "039220095c8cddba8d7d283ff8ab56e4a0297ab6104429f6162c56b7184d2317"
+    },
+    {
+      "cpu": "cold-written-v161",
+      "frame": "004-v161-reader-page1-again",
+      "source_pgm_sha256": "3064d34a7e7ffd564c91c1d8f023dedd08b63c26ce3e7a345e28deef314e21c2",
+      "source_pixels_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+      "receipt_sha256": "039220095c8cddba8d7d283ff8ab56e4a0297ab6104429f6162c56b7184d2317"
+    },
+    {
+      "cpu": "cold-written-v161",
+      "frame": "005-v161-home-saved",
+      "source_pgm_sha256": "6e161742cb50de7e465ba439e5cae774be67bb1d80295eafeb03266f0d4b0756",
+      "source_pixels_sha256": "837b2ea6b92c4df39930091793083bfdb887c21dff5cc91362d4fda18f8d46a9",
+      "receipt_sha256": "039220095c8cddba8d7d283ff8ab56e4a0297ab6104429f6162c56b7184d2317"
+    },
+    {
+      "cpu": "cold-written-v161",
+      "frame": "006-v161-page1-reopened",
+      "source_pgm_sha256": "6a8c4737b69eb0ff48cd49e8f20fe83b5743efb8b3dcfddfe9b086883a2dca39",
+      "source_pixels_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+      "receipt_sha256": "039220095c8cddba8d7d283ff8ab56e4a0297ab6104429f6162c56b7184d2317"
+    },
+    {
+      "cpu": "cold-saved-reader",
+      "frame": "001-v161-page1-restored-new-cpu",
+      "source_pgm_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+      "source_pixels_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+      "receipt_sha256": "636d9589f21834b14b142f35690d463eb47dfbe4cecfd8bc2396579731e6daf1"
+    }
+  ],
+  "gif_frame_count": 6,
+  "files": [
+    {
+      "name": "crossink-v161-page0.png",
+      "size": 21256,
+      "sha256": "0dd47ffd574b94f9406dc129a372a2dcdd4c4ad98c16bf0505c750dcc5716cc3"
+    },
+    {
+      "name": "crossink-v161-reading.gif",
+      "size": 137279,
+      "sha256": "45c11c018eaa96f570972081fd99557516c3d6ee026ce28b9e805d6ffa5e2ec9"
+    },
+    {
+      "name": "crossink-v161-cold-page1.png",
+      "size": 21765,
+      "sha256": "dea605d063371115a43acc9838b44a95559c93e658af925bd59c4c8f4a8aeab1"
+    }
+  ]
+}

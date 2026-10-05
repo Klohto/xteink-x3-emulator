@@ -175,6 +175,8 @@ def closed_run_checks(directory: Path, report: dict, smoke: dict) -> None:
     report["rom_reset_observations"] = resets
     report["serial_reset_observations"] = reasons
     report["early_usb_serial_poweron_diagnostic_missing"] = not reasons or reasons[0] != "POWERON"
+    report["hardware_detect_serial_observation"] = hardware_detect_serial_observation(serial)
+    report.setdefault("early_usb_hardware_detect_observation", hardware_detect_serial_observation(serial))
     if report.get("ota_install_authorized"):
         report["ota_completion_serial_observation"] = ota_completion_serial_observation(serial)
     report["checks"]["actual_initial_poweron_rom_boot"] = bool(resets) and resets[0] == {"code": 1, "name": "POWERON"} and "ESP-ROM:esp32c3" in rom
@@ -183,6 +185,33 @@ def closed_run_checks(directory: Path, report: dict, smoke: dict) -> None:
 def ota_completion_serial_observation(serial: str) -> dict:
     rows = [row for row in serial.splitlines() if "Update completed:" in row]
     return {"observed": bool(rows), "missing": not rows, "original_rows": rows}
+
+
+def hardware_detect_serial_observation(serial: str) -> dict:
+    rows = [row for row in serial.splitlines() if "Hardware detect: X3" in row]
+    return {"observed": bool(rows), "missing": not rows, "original_rows": rows}
+
+
+def responding_stock_x3_boot(client, rom: str) -> dict | bool:
+    """Require actual POWERON plus the unchanged guest's responding USB status.
+
+    Early USB diagnostic rows can precede attachment. Neither an early log
+    alone nor a response from a different device/version proves this boot.
+    Each workflow additionally requires its exact running firmware version.
+    """
+    resets = rom_reset_observations(rom)
+    if ("ESP-ROM:esp32c3" not in rom or not resets
+            or resets[0] != {"code": 1, "name": "POWERON"}):
+        return False
+    try:
+        status = client.status()
+    except USBTransferError as error:
+        if str(error) in ("ERR:not_on_home", "CrossInk USB response timed out"):
+            return False
+        raise
+    return status if (status.get("protocol") == "1"
+                      and status.get("device") in ("X3", "x3-x4")
+                      and status.get("firmware") in ("1.6.0", TARGET_VERSION)) else False
 
 
 def execute_cpu(args, directory: Path, flash: Path, card: Path, *, efuse: Path | None,
@@ -228,7 +257,12 @@ def execute_cpu(args, directory: Path, flash: Path, card: Path, *, efuse: Path |
                         and json.loads((directory / "run/run.json").read_text())["status"] == "running")
         qmp = QMPClient(directory / "run/qmp.sock")
         qmp.set_buttons(0)
-        experiment.wait("actual X3 hardware boot", lambda: "Hardware detect: X3" in experiment.log_text("serial.log"))
+        status = experiment.wait("actual POWERON and responding stock X3 USB status",
+                                 lambda: responding_stock_x3_boot(client, experiment.log_text("rom.log")))
+        report["initial_stock_usb_status"] = status
+        report["checks"]["initial_poweron_and_stock_x3_usb_response"] = bool(status)
+        report["early_usb_hardware_detect_observation"] = hardware_detect_serial_observation(
+            experiment.log_text("serial.log"))
         replay = network["Replay"](smoke, experiment, qmp, report, directory)
         work(replay, client)
         report["completed"] = True

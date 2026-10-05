@@ -1,0 +1,176 @@
+{
+  "all_functions_verified": false,
+  "artifact": {
+    "id": 11346123956,
+    "name": "x3-crossink-v161-footnotes-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5",
+    "zip_sha256": "93c42ec140f6fad38abd12f20c9b0049437f8b550f184c30a91819fb68ffcaad",
+    "zip_size_bytes": 33513840
+  },
+  "backend_sha256": "1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e",
+  "binary_build_commit_verified": false,
+  "complete_machine_verified": false,
+  "compressed_original_receipt_sha256": "fd6a0075799d92e14c9e0acd3b4637499aceac45e207b306e8916cb3a5b06710",
+  "cpu_summary": [
+    {
+      "frames_verified": 13,
+      "links_bin_hex": null,
+      "name": "return-cold-warm",
+      "native_trace_records": 840,
+      "progress": {
+        "page_count": 23,
+        "page_number": 0,
+        "spine_index": 0,
+        "visible_text_offset": 0
+      },
+      "receipt_sha256": "a8fcad8b18162ecd38da12496ab5ca55c425c80a52720c319748d0d9785d4734",
+      "run_manifest_sha256": "9d04b35a20c21d6a0081a2636851c9832f3d8368a311f13d20f624d887520fc7",
+      "trace_complete": true
+    },
+    {
+      "frames_verified": 4,
+      "links_bin_hex": null,
+      "name": "return-cold-cold",
+      "native_trace_records": 274,
+      "progress": {
+        "page_count": 23,
+        "page_number": 0,
+        "spine_index": 0,
+        "visible_text_offset": 0
+      },
+      "receipt_sha256": "0fd37bd5190e8dc51f140cf4d5c25ca64da038953dc407045a2e19393605cde1",
+      "run_manifest_sha256": "ae0e3463597938846c0da9b87870abe8d1dbbb8a016950c2ba43bad99abe0c44",
+      "trace_complete": true
+    },
+    {
+      "frames_verified": 19,
+      "links_bin_hex": "0100000000",
+      "name": "durable-single-link-warm",
+      "native_trace_records": 1063,
+      "progress": {
+        "page_count": 23,
+        "page_number": 22,
+        "spine_index": 0,
+        "visible_text_offset": 13263
+      },
+      "receipt_sha256": "86b092198694f6e1dc0e34df8b2b7a21c4634584a075a5bd217484627e29c722",
+      "run_manifest_sha256": "e9e2b91c01e635e18a15e3e1e5fe836ab8bb983e97669de3f4996b03196c493d",
+      "trace_complete": true
+    },
+    {
+      "frames_verified": 5,
+      "links_bin_hex": null,
+      "name": "durable-single-link-cold",
+      "native_trace_records": 441,
+      "progress": {
+        "page_count": 23,
+        "page_number": 0,
+        "spine_index": 0,
+        "visible_text_offset": 0
+      },
+      "receipt_sha256": "952c4c8182eb4e2ebc3db9c8bd6c8b1ede4914b5c80f0eb418c3768fde4f8c2f",
+      "run_manifest_sha256": "77beb7b4876cb8ad78c79077c6cc3d95cb74bc122ccd85d36aa85fff743049bd",
+      "trace_complete": true
+    }
+  ],
+  "evidence_limit": "durable workflow repeats original-note OCR labels; final second-entry OCR capture is the cold reference, while unique physical tap captures and all native events remain retained; no claim that every first OCR probe survives",
+  "exact_raw_pixel_comparisons": {
+    "durable_control_origin": {
+      "actual_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53",
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53"
+    },
+    "fresh_cpu_disk_link_back_origin": {
+      "actual_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53",
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53"
+    },
+    "fresh_cpu_origin": {
+      "actual_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53",
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53"
+    },
+    "fresh_cpu_saved_note": {
+      "actual_pixel_sha256": "b455c0a4f96c361037ea5b7b52a037fe2fed73918b4f17880b92f8389ccb1ce3",
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "b455c0a4f96c361037ea5b7b52a037fe2fed73918b4f17880b92f8389ccb1ce3"
+    },
+    "return_back_to_origin": {
+      "actual_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53",
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53"
+    }
+  },
+  "functional_pass": true,
+  "guest_firmware_modified": false,
+  "guest_progress_or_settings_seeded": false,
+  "independent_closed_review_passed": true,
+  "native_complete_frames": 99,
+  "native_contiguous_trace_records": 2618,
+  "original_ota_input": {
+    "actual_ota_selection": {
+      "active_slot": 1,
+      "app_index": 1,
+      "app_offset": 6619136,
+      "slots": [
+        {
+          "crc32": 1195612314,
+          "sequence": 1,
+          "slot": 0,
+          "state": 4294967295,
+          "valid": true
+        },
+        {
+          "crc32": 1442199412,
+          "sequence": 2,
+          "slot": 1,
+          "state": 2,
+          "valid": true
+        }
+      ]
+    },
+    "carried_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+    "carried_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+    "carried_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "carried_run_manifest_sha256": "9ee9b0c5412d4f8e6d967b6811b5bb9092531771552308116b1fb4e35692e4a4",
+    "official_v161_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+    "original_ota_receipt_sha256": "63d2f92f13471742187891a5351c36fa3878a3dfcfe9cccff98556b01dd8818d"
+  },
+  "physical_timing_calibrated": false,
+  "repository_commit": "cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5",
+  "retained_frame_metadata_entries": 41,
+  "root_receipt_sha256": "02a6858898c1eb25df5613069da1d01d2766690c9a30129e1e9fd0a0b1185148",
+  "schema_version": 1,
+  "scope": "unchanged official CrossInk v1.6.1: original one-note return/persist/new-CPU origin; one-entry durable note resume/new-CPU disk-restored Back origin",
+  "script_sha256": "1a4d72900303b48d473c7a60f42fc9bc72034470d625b91c28b5f46ec4d64830",
+  "source_sha256": {
+    "lib/Epub/Epub/Section.cpp": "7760b7b7e516767f58c909b9c2e7490ce0d1de83896922bd2cb4752b6f66f4fd",
+    "src/CrossPointSettings.h": "cb54c07310df751890cf4e4ec5069ba90cab1db390ad25240ae820afbdc5731f",
+    "src/MappedInputManager.cpp": "52600d9835f62d940153352dd4c8864badd7a795a97b207c8ae99af67d955ef8",
+    "src/activities/reader/EpubLinkReturnState.cpp": "9d8d340d883d88cbc79950734e56813cc7f8e09f74030892d7d027ace3ee16a7",
+    "src/activities/reader/EpubLinkReturnState.h": "00a33a610bac4ab89e013289fc5f476b0ab2fdcc6b4429d8e460db61da9d5122",
+    "src/activities/reader/EpubReaderActivity.cpp": "2cae0773ceb5ba8e5d7a51e5582d21b71a319c408204e6bca67f2160adf966be",
+    "src/activities/reader/EpubReaderDrawerActivity.cpp": "df2a90c8db22c8c3bc11bf07b8ab65ca94c7b26520b2eee193505fd005bbd3ef",
+    "src/activities/reader/EpubReaderFootnoteSelectActivity.cpp": "747c7a51ccb55cbe2b35fbc44aed0a3d56236ae878b61b0890e430df9013b822",
+    "src/activities/reader/EpubReaderMenuModel.h": "41e4035743e2f776c56aff50dc5588ab101b000f8f159fd7638ad26b8189163f",
+    "src/activities/reader/ReaderProgressSaveDebouncer.h": "4c9f51773e7feb90605fda5aa1e8d139e3c1d2c248e12f03d3f366dc242432aa",
+    "src/activities/reader/ReaderUtils.h": "fbeb9d10c860156b36c3ac517e3ec72e11b9dbc8fe781cc08224ba62b1ce54fb"
+  },
+  "speed_selection_allowed": false,
+  "status": "passed",
+  "tests_sha256": "261270ff72d8be4bcf107a5740cd5357047843ee73cc2372bee96395c4e2232b",
+  "three_entry_stack_verified": false,
+  "unchanged_false_v160_receipt": {
+    "guest_origin_persistence_correct": false,
+    "hardware_reproduced": false,
+    "receipt_sha256": "114b7012b1ce6cbacaf3dc628c374c2deef29393dff4cb06e24326efc8e94c2f",
+    "release": "v1.6.0",
+    "source_analysis_sha256": "fe66165a3f96cc7d9a10018b7c24e1cce9f263a38142585303c023780d74072f",
+    "unchanged_original_status": true
+  },
+  "unchanged_original_epub": {
+    "bytes": 10941,
+    "sha256": "d236e1d5f295d5d014a77ecc520ca3f729762204efec6d8337e0caef12bfd5c2"
+  },
+  "workflow_run_id": 37309789519,
+  "workflow_url": "https://github.com/Klohto/xteink-x3-emulator/actions/runs/37309789519"
+}

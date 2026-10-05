@@ -5,16 +5,18 @@ front panel, real button inputs, writable flash and persistent SD storage. The
 CPU executes the actual mask ROM, bootloader, FreeRTOS application and drivers.
 The panel displays the native grayscale framebuffer.
 
-The working emulator and launcher are on `main`. Actual CrossInk v1.6.0 boots,
-indexes an EPUB, turns pages, saves progress and restores the saved page on a
-new CPU. Both the ROM downloader and the pinned official modern RAM flasher
-program its complete bootable flash, with every byte checked afterward.
+The working emulator and launcher are on `main`. The offline download starts
+official CrossInk v1.6.0 with a fresh card. A genuine online upgrade to official
+v1.6.1 now passes: download, flash, warm reboot, EPUB reading, saved progress and
+restoration on a fresh CPU. The sealed launcher also reads, saves and restores
+the actual upgraded firmware and storage. Both UART programming paths check
+every written byte. See the [current execution record](docs/crossink-v161-validation-2026-10-05.md).
 
 ## Download and run
 
-Open the latest successful **main** run of
-[Tests](https://github.com/Klohto/xteink-x3-emulator/actions/workflows/tests.yml)
-and download its `xteink-x3-crossink-linux-x86_64-<commit>` artifact. Unzip the
+Open the [verified main run](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37309789519)
+and download its `xteink-x3-crossink-linux-x86_64-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5`
+artifact. Unzip the
 artifact, extract the enclosed `.tar.gz`, and run from the extracted directory
 on **Ubuntu 24.04 x86-64**:
 
@@ -35,6 +37,18 @@ run directory. Resume from those written files:
 python3 launch.py --resume /absolute/path/to/previous/run
 ```
 
+To start the verified **v1.6.1** instead, also download
+`x3-ota-cold-reader-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5`
+from that same run, extract its ZIP separately, and use:
+
+```sh
+python3 launch.py --resume /absolute/path/to/extracted-ota/cold-saved-reader/run
+```
+
+This is the actual guest-written update and saved reader, with no CPU state
+snapshot. The launcher creates new writable copies. In Settings, Left/Right
+select rows and Up/Down switch categories, following the X3's original mapping.
+
 To use your own books:
 
 ```sh
@@ -54,6 +68,10 @@ These are lossless captures of the actual emulated panel, rotated for portrait
 viewing. GIF playback is paced for inspection and is not a speed measurement.
 
 ![CrossInk page turns, saving and restoration](docs/evidence/handoff/working-crossink-reading.gif)
+
+The [v1.6.1 execution record](docs/crossink-v161-validation-2026-10-05.md)
+adds captures from the genuine upgrade. The demonstration above and its linked
+bookmarks, clippings and fonts runs retain their original v1.6.0 identities.
 
 [Bookmarks](docs/evidence/handoff/working-crossink-bookmarks.gif),
 [clippings](docs/evidence/handoff/working-crossink-clippings.gif), and
@@ -143,8 +161,8 @@ and original verdicts. Original failures and known
 Complete hardware equivalence and exhaustive function coverage are not
 established. Physical CPU/cache costs, SD latency, RF, panel optics, power and
 analog sensors need real X3 measurements. The earlier online OTA probe retains
-its observed proxy TLS trust failure; full online OTA remains unverified until
-the direct-network gate passes. BLE and parts of protection/debug hardware
+its observed proxy TLS trust failure; the new direct-network upgrade and
+reading run passed with original firmware and trust. BLE and parts of protection/debug hardware
 remain incomplete. The bounded encrypted Wi-Fi profile does not cover every
 cipher or radio behavior.
 

@@ -51,12 +51,41 @@ four executed remaps. The previous failed execution receipt remains preserved.
 The source-only [native and execution evidence](evidence/cache-remap-native-2026-10-05.json)
 records both receipt hashes and the precise backend identities.
 
-[CI run 37304701622](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37304701622)
-reports that the unchanged CrossInk online OTA gate passed. Independent readback
-of its closed CrossInk execution receipt is pending. The small native fixture
-establishes cache execution correctness for these remaps; it does not establish
-CrossInk's full workflow. Footnote execution, timing calibration, hardware
-equivalence and exhaustive function coverage are not claimed by this record.
+The historical 23333a8a CI run reports OTA success, but its large master receipt was not independently materialized here. That original readback limit remains recorded. The newly closed current run below is a separate execution on its own exact ELF.
+
+The closed OTA artifacts from main commit
+`cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5` now independently establish the
+corrected CrossInk workflow on backend
+`1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e`.
+[CI run 37309789519](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37309789519)
+also passes the same 130-case native gate, including the executed remap case.
+Independent readback of original native artifact `11345368437` verified all
+12 TAP plans, their hashes and 130 contiguous successes; the evidence records
+the original manifest, results and readback receipt hashes.
+The board patch and patched source tree remain the recorded `57e84e…` and
+`4fb145…`; the original `23333a8a` independent TCG positive control and earlier
+negative control retain their own ELF and receipt identities.
+
+Independent readback verified the master receipt, all three closed CPU
+manifests, actual flash/card/eFuse and log hashes, complete native traces and
+all 26 captured frame hashes and CRCs. The unchanged v1.6.0 guest installed all
+6,311,824 official v1.6.1 bytes at app1 `0x650000`, retained the entire app0
+partition and bootloader/partition table, selected app1 through CRC-valid OTA
+sequence 2, then booted and responded as v1.6.1. The recorded live DROM/IROM
+MMU pages are `0x65` and `0x97`, matching the official image layout.
+
+Two fresh CPUs then used the actual written media. The reader committed the
+v83 section, turned a real page, saved page 1 of a 22-page chapter, reopened it
+and restored it after another fresh CPU boot. The page turn changed 111,850
+content pixels; turning Back, reopening and the fresh-CPU resume each differed
+by zero content pixels. The three complete traces contain 1,257, 847 and 274
+events with 74, 29 and 11 native refreshes respectively. The source-only
+[current OTA and reader evidence](evidence/cache-remap-current-ota-2026-10-05.json)
+binds these results to the exact current artifacts.
+
+This is a closed functional OTA/reader result. Original unsupported diagnostics
+remain separately recorded, and the record makes no claim of exhaustive
+function coverage, footnote execution, hardware equivalence or calibrated speed.
 
 Primary contracts:
 [pinned C3 cache implementation](https://github.com/espressif/qemu/blob/febae182e132e4055529be423a818225ebddaa3a/hw/misc/esp32c3_cache.c),

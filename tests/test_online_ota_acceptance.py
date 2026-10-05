@@ -5,6 +5,7 @@ import importlib.util
 from pathlib import Path
 import struct
 import unittest
+from unittest.mock import Mock
 
 SPEC = importlib.util.spec_from_file_location("online_ota", Path(__file__).parents[1] / "scripts/test-crossink-online-ota.py")
 OTA = importlib.util.module_from_spec(SPEC)
@@ -27,6 +28,38 @@ def finalized_section():
 
 
 class OnlineOtaAcceptanceTests(unittest.TestCase):
+    def test_missing_early_hardware_log_requires_actual_poweron_and_stock_status(self):
+        rom = "ESP-ROM:esp32c3-api1-20210207\nrst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
+        status = {"protocol": "1", "device": "X3", "firmware": "1.6.1"}
+        client = Mock()
+        client.status.return_value = status
+        self.assertIs(OTA.responding_stock_x3_boot(client, rom), status)
+        self.assertEqual(OTA.hardware_detect_serial_observation("actual later USB rows\n"),
+                         {"observed": False, "missing": True, "original_rows": []})
+        row = "[159312] [INF] [MAIN] Hardware detect: X3"
+        self.assertEqual(OTA.hardware_detect_serial_observation(row + "\n"),
+                         {"observed": True, "missing": False, "original_rows": [row]})
+        for invalid in ("", rom.replace("esp32c3", "esp32"), rom.replace("0x1 (POWERON)", "0xc (RTC_SW_CPU_RST)")):
+            client.reset_mock()
+            with self.subTest(rom=invalid):
+                self.assertFalse(OTA.responding_stock_x3_boot(client, invalid))
+                client.status.assert_not_called()
+
+    def test_boot_status_refuses_wrong_identity_version_protocol_and_no_response(self):
+        rom = "ESP-ROM:esp32c3-api1-20210207\nrst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
+        client = Mock()
+        for key, value in (("protocol", "2"), ("device", "X4"), ("firmware", "1.6.2")):
+            client.status.return_value = {"protocol": "1", "device": "X3", "firmware": "1.6.1", key: value}
+            with self.subTest(key=key):
+                self.assertFalse(OTA.responding_stock_x3_boot(client, rom))
+        for error in ("ERR:not_on_home", "CrossInk USB response timed out"):
+            client.status.side_effect = OTA.USBTransferError(error)
+            with self.subTest(error=error):
+                self.assertFalse(OTA.responding_stock_x3_boot(client, rom))
+        client.status.side_effect = OTA.USBTransferError("CrossInk USB stream disconnected")
+        with self.assertRaisesRegex(OTA.USBTransferError, "disconnected"):
+            OTA.responding_stock_x3_boot(client, rom)
+
     def test_lost_stock_usb_completion_log_is_preserved_as_missing(self):
         serial = ("[154640] [INF] [BOOT] otadata: wrote slot=1 seq=2 -> app1\n"
                   "rst:0xc (RTC_SW_CPU_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"

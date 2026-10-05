@@ -135,6 +135,18 @@ class V161PanelAcceptanceTests(unittest.TestCase):
             with self.subTest(progress=actual_progress, section=actual_section), self.assertRaises(PANEL.PanelError):
                 PANEL.require_saved_page1(actual_progress, actual_section)
 
+    def test_final_written_page_two_cannot_use_old_page_one_or_short_section(self):
+        progress, section = {"spine_index": 0, "page_number": 2}, {"version": 83, "page_count": 22}
+        PANEL.require_saved_page(progress, section, 2)
+        for actual_progress, actual_section, expected in ((progress | {"page_number": 1}, section, 2),
+                (progress | {"page_number": 0}, section, 2),
+                (progress, section | {"page_count": 2}, 2),
+                (progress, section | {"version": 77}, 2),
+                (progress, section, True), (progress, section, -1)):
+            with self.subTest(progress=actual_progress, section=actual_section, expected=expected), \
+                    self.assertRaises(PANEL.PanelError):
+                PANEL.require_saved_page(actual_progress, actual_section, expected)
+
     def test_altered_written_card_or_detached_manifest_blocks_fresh_cpu(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)

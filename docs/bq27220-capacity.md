@@ -77,12 +77,15 @@ are functional assumptions: entry 2 seconds and exit 1 second. Their configurabl
 native properties are `config-enter-ns` and `config-exit-ns`; no benchmark may
 use them as calibrated gauge speed.
 
-Validation prepared: six permanent native MMIO/I2C tests for loading, security,
+Validation passed on the current 130-case native backend: six permanent
+MMIO/I2C tests for loading, security,
 checksum/length, ignored early selections, opaque-data rejection, reset retention
 and interrupted-load completion. Four Python tests validate typed fixture routing,
 normalization, manifest provenance and CLI behavior. Python fake-backend checks
-cover host integration only; actual native and unchanged-firmware execution
-results must be recorded separately after the selected backend is rebuilt.
+cover host integration only. The separately closed
+[unchanged-firmware capacity execution](battery-capacity-guest-validation.md)
+verifies actual 3000→650 loading, stock restart retention and reading/save/reopen
+on the accepted OTA-written v1.6.1 with the exact current native ELF.
 
 The unchanged-firmware acceptance workflow is documented in
 [battery capacity guest validation](battery-capacity-guest-validation.md).

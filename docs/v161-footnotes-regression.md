@@ -1,9 +1,42 @@
 # CrossInk 1.6.1 footnote persistence regression
 
-The prepared harness runs unchanged official CrossInk 1.6.1 from the actual
-flash written by a closed, passing online OTA experiment. Preparation and
-host checks are not execution proof. Results remain pending until that OTA
-output is available and these workflows close successfully.
+The four-CPU gate passed on `cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5` in
+[Actions run 37309789519](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37309789519).
+It ran unchanged official CrossInk 1.6.1 from the actual flash written by the
+closed, passing three-CPU online OTA experiment. Independent review verified
+the original receipts, stopped native manifests, real storage, all retained
+capture hashes and complete contiguous native traces. The exact original
+receipt is retained in `docs/evidence/functions-latest/footnotes-cd95c1f3.json.gz`
+(decompressed SHA-256 `02a6858898c1eb25df5613069da1d01d2766690c9a30129e1e9fd0a0b1185148`).
+
+
+Stored spine and page numbers below are zero-based. The actual warm return
+exited at spine 0, page 0 of 23; its fresh CPU reopened
+identical native pixels and saved page 0 again. The durable workflow's long
+Back exit saved spine 0, page 22 of 23 and the five-byte one-entry return record
+`01 00 00 00 00`. The next CPU consumed that real record, reopened the note
+with identical native pixels, and short Back restored the original page with
+zero changed pixels. Its final card saved spine 0/page 0 and contained no
+`links.bin`. All four native CPUs stopped with exit 0. Their 99 completed
+native frames are covered by 2,618 contiguous trace records; 41 retained
+capture metadata entries were independently checked against the actual bytes.
+
+| CPU | Saved position after exit | Saved link record after exit | Trace records |
+| --- | --- | --- | ---: |
+| Return workflow | Spine 0, page 0/23 | Absent | 840 |
+| Fresh origin CPU | Spine 0, page 0/23 | Absent | 274 |
+| Durable note workflow | Spine 0, page 22/23 | One origin, spine 0/page 0 | 1,063 |
+| Fresh durable-link CPU | Spine 0, page 0/23 | Absent | 441 |
+
+The artifact is `11346123956`, ZIP SHA-256
+`93c42ec140f6fad38abd12f20c9b0049437f8b550f184c30a91819fb68ffcaad`
+(33,513,840 bytes). The original passing online OTA root is SHA-256
+`63d2f92f13471742187891a5351c36fa3878a3dfcfe9cccff98556b01dd8818d`;
+the exact native ELF is
+`1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e`.
+Each fresh CPU's recorded input hashes match its preceding CPU's actual
+closed final media, including the SD card. The official app1 bytes, selected
+mask ROM, original eFuses and original book bytes were retained.
 
 The unchanged original `make_advanced_epub()` is 10,941 bytes, SHA-256
 `d236e1d5f295d5d014a77ecc520ca3f729762204efec6d8337e0caef12bfd5c2`.

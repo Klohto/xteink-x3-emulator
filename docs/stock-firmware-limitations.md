@@ -29,6 +29,22 @@ Original failures and their false conditions remain preserved. No emulator
 workaround rewrites these payloads, URLs, positions or firmware instructions.
 Complete-machine acceptance and speed-selection authorization remain false.
 
+## Separate CrossInk 1.6.1 observations
+
+The v1.6.1 original-footnote return and disk-restored link workflows now pass
+on the current native backend; the dated v1.6.0 failure F above remains its
+original observation. That does not establish all progress-save paths.
+
+A new closed HTTP run resumes independently saved page 1, turns Up to page 0,
+then Down to page 1 with identical native framebuffer pixels. Back returns
+Home but writes page 0/22/offset 0. The inspected stock reader skips debouncer
+observation when the rendered page equals `lastSavedPage`; exit then flushes
+the stale pending position. This source-consistent explanation is an inference,
+not a physical X3 reproduction. The original failed receipt stays false in
+[the exact evidence](evidence/v161-return-progress-stock-failure-2026-10-05.json).
+Separate durable reading checks require 1→2→1→2, save page 2, and restore it
+on a new CPU. They do not repair or promote the failed return-to-saved-page path.
+
 ## Receipts
 
 Paths beginning `local/runs/` identify retained, stopped original cohorts;
@@ -79,7 +95,10 @@ environment's HTTPS proxy CA, absent from its original trust bundle. Host
 trust of that CA does not establish stock guest compatibility. The opaque
 wire and verification evidence is described in
 [network-validation.md](network-validation.md#remaining-fidelity-and-service-boundaries).
-No CA or substitute manifest was injected.
+No CA or substitute manifest was injected. The newly closed
+[direct-network OTA run](crossink-v161-validation-2026-10-05.md) passes original
+metadata trust, official download/flash, warm boot, reading and cold restoration.
+The proxy refusal is preserved as a separate environment observation.
 
 The earlier [crypto audit](evidence/wifi-crypto-audit.json) recorded secure
 Wi-Fi as a native gap. Subsequent [native CCMP validation](native-ccmp-validation.md)

@@ -3,8 +3,10 @@
 `scripts/test-crossink-online-ota.py` runs the unchanged CrossInk v1.6.0 X3/X4
 release through **Check for Updates**, installation of the official v1.6.1
 release, a normal guest restart, book reading on a fresh CPU, and restoration
-of the newly saved reader position on a third fresh CPU. Adding this gate is
-not itself a successful guest run; its closed receipt determines the result.
+of the newly saved reader position on a third fresh CPU. The actual closed
+three-CPU run now passes; [its execution record](crossink-v161-validation-2026-10-05.md)
+binds the exact original receipts, native binary and written media. The host
+release preflight remains separate from genuine guest installation.
 
 The official `/releases/latest` API returned stable v1.6.1 when reviewed on
 5 October 2026. It was published on 4 October at 03:00:41 UTC. The exact
@@ -77,7 +79,12 @@ reset sequence.
 The USB console attaches before the full QMP startup snapshot. Real ROM reset
 records independently establish initial `POWERON` and the two expected software
 resets (reason `0x3` or `0xc`). Original USB startup diagnostic rows and any
-missing early row are retained separately. The first CI attempt's unattached
+missing early row are retained separately. Initial boot requires that actual
+ROM `POWERON` and a responding unchanged USB status with protocol `1`, X3
+identity and reviewed firmware version. Each workflow then checks its exact
+expected version. The transient `Hardware detect: X3` USB row may precede
+attachment; its exact observed rows and missing flag remain diagnostic evidence.
+The first CI attempt's unattached
 console failure is preserved; moving the host connection does not change
 firmware, network endpoints or trust.
 
@@ -100,5 +107,5 @@ trace, native framebuffer CRCs, captures, logs and original launcher manifest.
 `validation.json` reports functional success separately from the original
 strict native diagnostics. Unsupported accesses, physical timing, RF and
 complete machine fidelity are not promoted to passed by a successful update.
-The eight host tests cover refusal/schema/capture/reset and missing-log binding; they do not execute
+The ten host tests cover refusal/schema/capture/reset, USB boot identity and missing-log binding; they do not execute
 firmware or stand in for the guest integration result.
