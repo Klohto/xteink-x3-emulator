@@ -24,6 +24,26 @@ jobs:
         run: python -m pip install cryptography==46.0.0
       - name: Check image, storage, runtime and clock behaviour
         run: python -m unittest discover -s tests -v
+  image_experiment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Check the palette and BMP output
+        run: |
+          python -m pip install -e '.[image-experiment]'
+          python -m unittest discover -s tests -p test_image_experiment.py -v
+      - name: Generate the image study and SD card
+        run: python -m x3emu.image_experiment --output "$RUNNER_TEMP/x3-image-study"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: x3-image-study-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-image-study
+          retention-days: 30
   native:
     runs-on: ubuntu-24.04
     timeout-minutes: 90

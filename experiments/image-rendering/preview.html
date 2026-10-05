@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X3 image rendering experiment</title>
+<style>
+:root{color-scheme:light;--ink:#222b29;--muted:#616b67;--paper:#f5f3ee;--line:#d5d9d1;--accent:#31584b}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px system-ui,sans-serif}main{max-width:1520px;margin:auto;padding:32px 28px}h1{font:normal 38px Georgia,serif;margin:8px 0 12px}h2{font-size:16px;margin:0 0 8px}.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}p{line-height:1.5}.lead{max-width:850px;color:var(--muted)}.toolbar{display:flex;gap:20px;flex-wrap:wrap;align-items:end;margin:26px 0 22px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}select,button{font:inherit;border:1px solid var(--line);border-radius:5px;background:white;color:var(--ink);padding:9px 12px;cursor:pointer}button:hover{border-color:var(--accent)}button:focus-visible,select:focus-visible{outline:3px solid #90b8a7;outline-offset:2px}button[aria-pressed=true]{background:var(--accent);color:white}button:disabled{opacity:.5;cursor:default}.group{display:flex;gap:6px}.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:18px}.card{min-width:0}.device{padding:9px;background:#dbddd6;border-radius:9px;border:1px solid #bdc3b9}.device img{display:block;width:100%;height:auto;background:white}.caption{min-height:57px;font-size:13px;color:var(--muted)}.actions{display:flex;gap:5px;flex-wrap:wrap}.actions button{font-size:13px;padding:7px 9px}.thumb .device{width:152px;margin:auto}.thumb .device img{width:132px;height:198px;image-rendering:pixelated}.thumb h2,.thumb .caption,.thumb .actions{text-align:center;justify-content:center}.reference{display:flex;gap:18px;align-items:flex-start;margin:30px 0;border-top:1px solid var(--line);padding-top:22px}.reference img{width:132px;height:198px;object-fit:cover}.reference p{max-width:680px;margin-top:7px}.note{font-size:13px;color:var(--muted)}#choice{font-size:14px;min-height:23px;color:var(--accent)}dialog{border:1px solid var(--line);border-radius:10px;max-width:95vw;max-height:95vh;padding:18px;background:var(--paper)}dialog::backdrop{background:#101c18b3}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:-18px;background:var(--paper);padding:10px 0}.inspected{display:block;width:528px;height:792px;image-rendering:pixelated;max-width:none}.zoomed{width:1056px;height:1584px}footer{font-size:12px;color:var(--muted);padding-top:14px;border-top:1px solid var(--line)}@media(max-width:1050px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:650px){main{padding:22px 16px}h1{font-size:30px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px}.toolbar{gap:14px}.caption{min-height:75px}.reference{gap:12px}}@media(max-width:370px){.grid{grid-template-columns:1fr}}
+</style>
+<main>
+<div class="eyebrow">Xteink X3 / image study</div>
+<h1>Compare images on the X3.</h1>
+<p class="lead">Compare the same artwork with five rendering methods. The full screen has 528 × 792 pixels and four gray levels. Inspect an option at one screen pixel per browser pixel to see its texture.</p>
+<div class="toolbar">
+ <div><label for="sample">Sample</label><select id="sample"></select></div>
+ <div><label>Size</label><div class="group"><button id="full" aria-pressed="true">Full screen</button><button id="thumb" aria-pressed="false">Cover thumbnail</button></div></div>
+ <div><label>View</label><div class="group"><button id="native" aria-pressed="false">CrossInk capture</button><button id="target" aria-pressed="true">Converted image</button></div></div>
+ <button id="save">Save choices</button><button id="reset">Clear choices</button>
+</div>
+<p id="context" class="note" role="status"></p>
+<div id="grid" class="grid"></div>
+<p id="choice" aria-live="polite"></p>
+<div class="reference"><img id="reference" alt="Source artwork"><div><h2>Source artwork</h2><p>Use the source to check which details survive. Choose the texture and contrast you prefer. Your selections stay in this browser.</p><p class="note">The emulator shows the intended digital output. A physical X3 check is needed to judge ink tone and ghosting.</p></div></div>
+<footer>This study compares appearance. Check your selected images on the physical X3.</footer>
+</main>
+<dialog id="inspect"><div class="dialog-head"><h2 id="inspect-title"></h2><div class="group"><button id="zoom" aria-pressed="false">Zoom 2×</button><button id="close">Close</button></div></div><img id="inspect-image" class="inspected" alt="Image at its native resolution"></dialog>
+<script>
+const study=__EXPERIMENT_DATA__;
+const select=document.querySelector('#sample'),grid=document.querySelector('#grid'),context=document.querySelector('#context'),dialog=document.querySelector('#inspect');
+const allNative=study.samples.every(s=>s.variants.every(v=>v.native));
+let mode=allNative?'native':'target',thumbnail=false,choices={};
+try{choices=JSON.parse(localStorage.getItem('x3-image-study-choices')||'{}')}catch{}
+for(const sample of study.samples){const option=document.createElement('option');option.value=sample.id;option.textContent=sample.name;select.append(option)}
+function render(){
+ const sample=study.samples.find(s=>s.id===select.value),choiceKey=sample.id+':'+(thumbnail?'thumbnail':'full');grid.replaceChildren();grid.classList.toggle('thumb',thumbnail);document.querySelector('#reference').src=sample.source;
+ document.querySelector('#full').setAttribute('aria-pressed',!thumbnail);document.querySelector('#thumb').setAttribute('aria-pressed',thumbnail);
+ document.querySelector('#native').disabled=thumbnail||!allNative;document.querySelector('#native').setAttribute('aria-pressed',mode==='native'&&!thumbnail);document.querySelector('#target').setAttribute('aria-pressed',mode==='target'||thumbnail);
+ context.textContent=thumbnail?'132 × 198 pixels. Each thumbnail is converted at this size.':mode==='native'?'Captures from unchanged CrossInk firmware running on the emulator.':'Converted targets at 528 × 792 pixels.';
+ for(const method of study.methods){const variant=sample.variants.find(v=>v.method===method.id),card=document.createElement('article');card.className='card';card.dataset.method=method.id;
+  const heading=document.createElement('h2');heading.textContent=method.name;
+  const frame=document.createElement('div');frame.className='device';const img=document.createElement('img');img.src=thumbnail?variant.thumbnail:mode==='native'?variant.native:variant.target;img.alt=sample.name+' · '+method.name;img.width=thumbnail?132:528;img.height=thumbnail?198:792;frame.append(img);
+  const caption=document.createElement('p');caption.className='caption';caption.textContent=method.description;
+  const actions=document.createElement('div');actions.className='actions';const inspect=document.createElement('button');inspect.textContent='Inspect';inspect.addEventListener('click',()=>{document.querySelector('#inspect-title').textContent=method.name;const enlarged=document.querySelector('#inspect-image');enlarged.src=img.src;enlarged.style.width=thumbnail?'132px':'528px';enlarged.style.height=thumbnail?'198px':'792px';enlarged.classList.remove('zoomed');document.querySelector('#zoom').setAttribute('aria-pressed','false');dialog.showModal()});
+  const choose=document.createElement('button');choose.textContent=choices[choiceKey]===method.id?'Selected':'Choose';choose.setAttribute('aria-pressed',choices[choiceKey]===method.id);choose.addEventListener('click',()=>{choices[choiceKey]=method.id;try{localStorage.setItem('x3-image-study-choices',JSON.stringify(choices))}catch{}render()});actions.append(inspect,choose);card.append(heading,frame,caption,actions);grid.append(card);
+ }
+ const chosen=study.methods.find(m=>m.id===choices[choiceKey]);document.querySelector('#choice').textContent=chosen?'Your choice for '+sample.name+' at this size: '+chosen.name:'';
+}
+select.addEventListener('change',render);document.querySelector('#full').onclick=()=>{thumbnail=false;render()};document.querySelector('#thumb').onclick=()=>{thumbnail=true;render()};document.querySelector('#native').onclick=()=>{mode='native';render()};document.querySelector('#target').onclick=()=>{mode='target';render()};document.querySelector('#close').onclick=()=>dialog.close();document.querySelector('#zoom').onclick=()=>{const img=document.querySelector('#inspect-image'),pressed=document.querySelector('#zoom').getAttribute('aria-pressed')==='true';img.style.width=(thumbnail?132:528)*(pressed?1:2)+'px';img.style.height=(thumbnail?198:792)*(pressed?1:2)+'px';document.querySelector('#zoom').setAttribute('aria-pressed',!pressed)};
+document.querySelector('#reset').onclick=()=>{choices={};try{localStorage.removeItem('x3-image-study-choices')}catch{}render()};document.querySelector('#save').onclick=()=>{const blob=new Blob([JSON.stringify({choices,study_source:study.git_head_at_generation},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='x3-image-choices.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};render();
+</script>
+</html>

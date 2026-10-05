@@ -1,0 +1,13 @@
+{
+  "generator": "image_gen (built-in)",
+  "sources": [
+    {
+      "name": "mist",
+      "prompt": "Use case: illustration-story\nAsset type: original illustration for an e-reader cover rendering experiment.\nCreate a portrait illustration, 2:3 aspect ratio. An ink and watercolor landscape of layered mountains, a winding river, a small bridge and pine trees. A small traveler on the bridge gives scale. Soft pale mist fills the upper half; finely drawn needles and rocks fill the lower half. Use a rich range of light and dark tones with smooth washes and crisp line work, in muted blue, moss green and warm cream. Flat full-page artwork, no paper photograph or device mockup. Leave a clear light area at the top for a title that will be added by code. No text, logos, borders or watermark. This will test grayscale conversion, so include subtle middle tones and some fine detail."
+    },
+    {
+      "name": "botanical",
+      "prompt": "Use case: illustration-story\nAsset type: original illustration for an e-reader cover rendering experiment.\nCreate a portrait illustration, 2:3 aspect ratio. A detailed botanical art nouveau arrangement of curling leaves, fern fronds, delicate flowers and one moth centered among them. Fine ink contours, broad matte areas of color and softly shaded petals. Muted ochre, pale sage and deep blue ink on a warm ivory background. Balanced book-cover composition with a light clear area near the top for a title that will be added by code. Include both thin decorative lines and large shaded forms. Flat full-page artwork. No text, logos, borders, device mockup or watermark."
+    }
+  ]
+}
