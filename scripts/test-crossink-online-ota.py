@@ -52,7 +52,7 @@ SOURCE_PATHS = (
     "src/network/OtaUpdater.cpp", "src/network/OtaBootSwitch.cpp",
     "src/network/FirmwareFlasher.cpp", "src/activities/settings/OtaUpdateActivity.cpp",
     "src/network/HttpDownloader.cpp", "src/main.cpp", "src/SettingsList.h",
-    "src/network/UsbSerialFileTransfer.cpp",
+    "src/network/UsbSerialFileTransfer.cpp", "src/activities/network/WifiSelectionActivity.cpp",
 )
 
 
@@ -173,7 +173,9 @@ def closed_run_checks(directory: Path, report: dict, smoke: dict) -> None:
     reasons = re.findall(r"Reset diagnostic: reset=\d+\((\w+)\)", serial)
     resets = rom_reset_observations(rom)
     report["rom_reset_observations"] = resets
+    report["rom_reset_original_rows"] = [row for row in rom.splitlines() if re.match(r"^rst:0x[0-9a-fA-F]+ ", row)]
     report["serial_reset_observations"] = reasons
+    report["serial_reset_original_rows"] = [row for row in serial.splitlines() if "Reset diagnostic:" in row]
     report["early_usb_serial_poweron_diagnostic_missing"] = not reasons or reasons[0] != "POWERON"
     report["hardware_detect_serial_observation"] = hardware_detect_serial_observation(serial)
     report.setdefault("early_usb_hardware_detect_observation", hardware_detect_serial_observation(serial))
@@ -212,6 +214,77 @@ def responding_stock_x3_boot(client, rom: str) -> dict | bool:
     return status if (status.get("protocol") == "1"
                       and status.get("device") in ("X3", "x3-x4")
                       and status.get("firmware") in ("1.6.0", TARGET_VERSION)) else False
+
+
+def fresh_open_wifi_connection(serial: bytes, start_offset: int) -> dict:
+    """Bind original SDK association/DHCP/status evidence to this selection.
+
+    The reviewed v1.6.0 Wi-Fi activity emits these from the actual Arduino
+    callbacks and WiFi.status(). Its summary row can be lost independently.
+    No previous connection, wrong AP/IP, or later failure satisfies this gate.
+    """
+    if (isinstance(start_offset, bool) or not isinstance(start_offset, int)
+            or not 0 <= start_offset <= len(serial)):
+        raise OnlineOtaError("Wi-Fi observation requires the captured serial byte offset")
+    fresh = serial[start_offset:].decode("utf-8", errors="replace")
+    rows = fresh.splitlines()
+    attempts = [(index, match) for index, row in enumerate(rows)
+                if (match := re.search(r"Connecting to ssid=([^\s]+) auto=(\d+) saved=(\d+) encrypted=(\d+) passProvided=(\d+)", row))]
+    index, attempt = attempts[-1] if attempts else (-1, None)
+    following = rows[index + 1:] if attempt else []
+    associated = [row for row in following if re.search(r"STA event: connected to AP\b", row)]
+    addresses = [(row, match) for row in following
+                 if (match := re.search(r"STA event: got IP ([0-9.]+)\b", row))]
+    polls = [row for row in following if re.search(r"Connection poll:.*\bstatus=3/CONNECTED\b", row)]
+    summaries = [row for row in following if "Connected to ssid=" in row]
+    failures = [row for row in following
+                if re.search(r"STA event: (?:disconnected|lost IP)\b|Connection (?:failed|timeout|timed out)|"
+                             r"Connection poll:[^\n]*status=[0-9]+/(?:CONNECT_FAILED|CONNECTION_LOST|NO_SSID_AVAIL)\b", row)]
+    # Callback and UI-loop status observations may arrive in either order.
+    verified = bool(attempt and attempt.groups() == ("X3EMU", "0", "0", "0", "0")
+                    and associated and addresses and addresses[-1][1].group(1) == "10.0.2.15"
+                    and polls and not failures and all(re.search(
+                        r"Connected to ssid=X3EMU ip=10\.0\.2\.15(?:\s|$)", row) for row in summaries))
+    return {"verified": verified, "serial_start_byte_offset": start_offset,
+            "serial_end_byte_offset": len(serial),
+            "original_attempt_row": rows[index] if attempt else None,
+            "original_association_rows": associated,
+            "original_dhcp_rows": [row for row, match in addresses],
+            "original_connected_status_rows": polls,
+            "original_failure_rows": failures,
+            "summary_observed": bool(summaries), "summary_missing": not summaries,
+            "original_summary_rows": summaries}
+
+
+def select_online_wifi(replay, network: dict) -> None:
+    """Observe the unchanged open AP selection without requiring its summary."""
+    observe_scan = network["scan_callback_observation"]
+    replay.experiment.wait("real WiFi scan completion", lambda:
+        observe_scan(replay.experiment.log_text("serial.log"))["completed_callbacks"] > replay.scan_count)
+    previous = replay.scan_count
+    observed = observe_scan(replay.experiment.log_text("serial.log"))
+    replay.scan_count = observed["completed_callbacks"]
+    replay.check("real_wifi_scan_completed", replay.scan_count > previous, observed)
+    replay.capture("wifi-scan-complete")
+    serial_path = replay.experiment.run_dir / "serial.log"
+    offset = serial_path.stat().st_size
+    replay.experiment.press(replay.qmp, "confirm", purpose="select the scanned open X3EMU network")
+    def connected():
+        observation = fresh_open_wifi_connection(serial_path.read_bytes(), offset)
+        replay.report["wifi_connection_serial_observation"] = observation
+        replay.save()
+        return observation if observation["verified"] else False
+    observation = replay.experiment.wait("new actual SDK AP association, DHCP and CONNECTED status", connected)
+    replay.check("real_wifi_connected", observation["verified"], observation)
+
+
+def ota_software_reset_observation(rom: str, previous_reset_count: int) -> dict:
+    resets = rom_reset_observations(rom)
+    verified = (previous_reset_count == 2 and len(resets) == 3
+                and "ESP-ROM:esp32c3" in rom and resets[0] == {"code": 1, "name": "POWERON"}
+                and all(row["code"] in (3, 12) for row in resets[1:]))
+    return {"verified": verified, "previous_reset_count": previous_reset_count,
+            "actual_rom_resets": resets}
 
 
 def execute_cpu(args, directory: Path, flash: Path, card: Path, *, efuse: Path | None,
@@ -327,21 +400,29 @@ def online_workflow(replay, client, target: bytes, initial: bytes, usb_helpers: 
     replay.tap("up", "sd-update-row", "Wrap System header to final SD Firmware Update")
     replay.tap("up", "official-online-update-row", "Select preceding real Check for Updates action")
     replay.experiment.press(replay.qmp, "confirm", purpose="run unmodified release updater at original api.github.com URL")
-    replay.select_wifi()
+    select_online_wifi(replay, network)
     replay.capture_text("official-new-version-confirmation", ["New update available", "Current Version", "1.6.0", "New Version", TARGET_TAG])
+    connection = fresh_open_wifi_connection((replay.experiment.run_dir / "serial.log").read_bytes(),
+        replay.report["wifi_connection_serial_observation"]["serial_start_byte_offset"])
+    replay.report["wifi_connection_serial_observation"] = connection
+    replay.check("real_wifi_connection_retained_through_official_manifest", connection["verified"], connection)
     replay.check("original_guest_accepted_official_latest_manifest", True,
                  {"origin": MANIFEST_URL, "trust": "unchanged guest esp_crt_bundle_attach", "response_substitution": False})
-    serial_before = replay.experiment.log_text("serial.log")
     rom_before = replay.experiment.log_text("rom.log")
-    detects, boots = serial_before.count("Hardware detect: X3"), rom_before.count("ESP-ROM:esp32c3")
+    previous_resets = len(rom_reset_observations(rom_before))
+    serial_path = replay.experiment.run_dir / "serial.log"
+    install_serial_offset = serial_path.stat().st_size
     replay.report["ota_install_authorized"] = True
     replay.experiment.press(replay.qmp, "confirm", purpose="authorize real official v1.6.1 download, validated staging and OTA app1 installation")
     # Stock restart can discard the final pending USB log line. The real ROM
     # reset, responding target firmware and exact storage/MMU checks prove OTA.
     replay.experiment.wait("real CPU reset after OTA app switch", lambda:
-                           replay.experiment.log_text("rom.log").count("ESP-ROM:esp32c3") > boots
-                           and replay.experiment.log_text("serial.log").count("Hardware detect: X3") > detects)
+        ota_software_reset_observation(replay.experiment.log_text("rom.log"), previous_resets)["verified"])
     status = replay.experiment.wait("new v1.6.1 Home USB status", lambda: running_version(replay, client, TARGET_VERSION))
+    replay.report["ota_restart_rom_observation"] = ota_software_reset_observation(
+        replay.experiment.log_text("rom.log"), previous_resets)
+    replay.report["ota_restart_hardware_detect_observation"] = hardware_detect_serial_observation(
+        serial_path.read_bytes()[install_serial_offset:].decode("utf-8", errors="replace"))
     replay.check("guest_reboot_runs_official_v161", bool(status), status)
     replay.capture("official-v161-home-after-ota")
     replay.qmp.execute("stop")

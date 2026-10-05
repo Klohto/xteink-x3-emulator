@@ -53,6 +53,20 @@ The default per-CPU host limit is 1800 seconds and each bounded wait allows
 
 ## What a passing receipt proves
 
+The OTA-specific Wi-Fi observer pins the original v1.6.0
+`WifiSelectionActivity.cpp` to SHA-256
+`fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac`.
+It preserves the fresh scan, unchanged selection button and original SDK
+association, DHCP `10.0.2.15` and `3/CONNECTED` status observations from the
+new open `X3EMU` attempt. Previous attempts, different AP/IP/flags and later
+failure cannot satisfy this check. IP callbacks and UI status polling may
+arrive in either order. The optional final connection summary is retained
+literally with an explicit missing flag; historical network replay is unchanged.
+The original failed final-main attempt remains failed: its stopped native
+panel already displayed official `1.6.1` availability and its RTC showed NTP
+success, but the host waited for that missing summary. A fresh complete OTA
+run is still required after the observer correction.
+
 The guest uses normal native WiFi/libslirp egress. There is no local DNS,
 NTP, HTTP or TLS fixture, opaque relay, route override, endpoint rewrite or
 guest patch. Hosts with configured HTTP/HTTPS/all proxies, `LD_PRELOAD` or
@@ -91,7 +105,10 @@ firmware, network endpoints or trust.
 The stock restart can also discard the pending `Update completed` USB line.
 Its exact observed rows and explicit missing flag are retained separately.
 OTA completion requires the real ROM reset, responding stock `1.6.1` USB
-protocol, and every storage, mapping and reset check described above.
+protocol, and every storage, mapping and reset check described above. It
+requires the exact third source-defined ROM software reset, rather than a
+new transient `Hardware detect: X3` USB row. Original reset rows and the
+post-install hardware diagnostic's observed/missing rows remain retained.
 
 A second CPU boots from those written flash/card/eFuse bytes, reads the
 untouched EPUB, turns pages, saves page 1 and reopens it. Its completed EPUB
@@ -107,5 +124,6 @@ trace, native framebuffer CRCs, captures, logs and original launcher manifest.
 `validation.json` reports functional success separately from the original
 strict native diagnostics. Unsupported accesses, physical timing, RF and
 complete machine fidelity are not promoted to passed by a successful update.
-The ten host tests cover refusal/schema/capture/reset, USB boot identity and missing-log binding; they do not execute
+The seventeen host tests cover refusal/schema/capture/reset, USB boot identity,
+fresh SDK connection evidence and missing-log binding; they do not execute
 firmware or stand in for the guest integration result.

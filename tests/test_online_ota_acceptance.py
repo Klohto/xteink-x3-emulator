@@ -27,7 +27,91 @@ def finalized_section():
     return data
 
 
+def connected_wifi_rows():
+    return [
+        "[27684] [INF] [WIFI] Connecting to ssid=X3EMU auto=0 saved=0 encrypted=0 passProvided=0 heap=134772",
+        "[30255] [INF] [WIFI] STA event: connected to AP",
+        "[31264] [INF] [WIFI] STA event: got IP 10.0.2.15",
+        "[31265] [INF] [WIFI] Connection poll: elapsed=3581ms status=3/CONNECTED rssi=-40",
+    ]
+
+
+def wifi_serial(rows):
+    return ("\n".join(rows) + "\n").encode("utf-8")
+
+
 class OnlineOtaAcceptanceTests(unittest.TestCase):
+    def test_fresh_sdk_connection_preserves_missing_or_literal_summary(self):
+        rows = connected_wifi_rows()
+        result = OTA.fresh_open_wifi_connection(wifi_serial(rows), 0)
+        self.assertTrue(result["verified"])
+        self.assertTrue(result["summary_missing"])
+        self.assertEqual(result["original_summary_rows"], [])
+        self.assertEqual(result["original_attempt_row"], rows[0])
+        self.assertEqual(result["original_dhcp_rows"], [rows[2]])
+        summary = "[31266] [INF] [WIFI] Connected to ssid=X3EMU ip=10.0.2.15 rssi=-40"
+        result = OTA.fresh_open_wifi_connection(wifi_serial(rows + [summary]), 0)
+        self.assertTrue(result["verified"])
+        self.assertFalse(result["summary_missing"])
+        self.assertEqual(result["original_summary_rows"], [summary])
+
+    def test_old_connection_cannot_satisfy_new_selection(self):
+        old = wifi_serial(connected_wifi_rows())
+        self.assertFalse(OTA.fresh_open_wifi_connection(old, len(old))["verified"])
+        new = wifi_serial([connected_wifi_rows()[0]])
+        self.assertFalse(OTA.fresh_open_wifi_connection(old + new, len(old))["verified"])
+        self.assertTrue(OTA.fresh_open_wifi_connection(old + old, len(old))["verified"])
+
+    def test_connection_refuses_incomplete_evidence_wrong_ap_ip_status_or_flags(self):
+        rows = connected_wifi_rows()
+        invalid = [rows[:index] + rows[index + 1:] for index in range(len(rows))]
+        invalid += [[row.replace("ssid=X3EMU", "ssid=other") for row in rows],
+                    [row.replace("10.0.2.15", "192.168.44.2") for row in rows],
+                    [row.replace("10.0.2.15", "0.0.0.0") for row in rows],
+                    [row.replace("status=3/CONNECTED", "status=0/IDLE") for row in rows]]
+        invalid += [[row.replace(flag + "=0", flag + "=1") for row in rows]
+                    for flag in ("auto", "saved", "encrypted", "passProvided")]
+        invalid += [rows + ["Connected to ssid=other ip=10.0.2.15"],
+                    rows + ["Connected to ssid=X3EMU ip=0.0.0.0"]]
+        for altered in invalid:
+            with self.subTest(rows=altered):
+                self.assertFalse(OTA.fresh_open_wifi_connection(wifi_serial(altered), 0)["verified"])
+
+    def test_later_failure_or_new_incomplete_attempt_refuses_previous_success(self):
+        rows = connected_wifi_rows()
+        failures = ["STA event: disconnected reason=2(AUTH_EXPIRE)", "STA event: lost IP",
+                    "Connection failed: ssid=X3EMU status=4/CONNECT_FAILED elapsed=4000ms",
+                    "Connection timed out: ssid=X3EMU elapsed=4000ms lastStatus=6/DISCONNECTED",
+                    "Connection poll: elapsed=4000ms status=5/CONNECTION_LOST rssi=0"]
+        for failure in failures:
+            result = OTA.fresh_open_wifi_connection(wifi_serial(rows + [failure]), 0)
+            with self.subTest(failure=failure):
+                self.assertFalse(result["verified"])
+                self.assertEqual(result["original_failure_rows"], [failure])
+        self.assertFalse(OTA.fresh_open_wifi_connection(wifi_serial(rows + [rows[0]]), 0)["verified"])
+
+    def test_ip_callback_and_ui_status_can_arrive_in_either_order(self):
+        rows = connected_wifi_rows()
+        self.assertTrue(OTA.fresh_open_wifi_connection(wifi_serial(rows), 0)["verified"])
+        self.assertTrue(OTA.fresh_open_wifi_connection(wifi_serial(rows[:2] + rows[2:][::-1]), 0)["verified"])
+
+    def test_connection_offset_must_be_an_actual_bound_byte_position(self):
+        serial = wifi_serial(connected_wifi_rows())
+        for offset in (True, -1, len(serial) + 1, "0"):
+            with self.subTest(offset=offset), self.assertRaisesRegex(OTA.OnlineOtaError, "byte offset"):
+                OTA.fresh_open_wifi_connection(serial, offset)
+
+    def test_ota_completion_requires_only_the_exact_third_source_software_reset(self):
+        first = "ESP-ROM:esp32c3-api1-20210207\nrst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
+        software = "ESP-ROM:esp32c3-api1-20210207\nrst:0xc (RTC_SW_CPU_RST),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
+        rom = first + software + software
+        self.assertTrue(OTA.ota_software_reset_observation(rom, 2)["verified"])
+        for altered, previous in ((first + software, 2), (rom + software, 2), (rom, 1),
+                                  (rom.replace("0x1 (POWERON)", "0xc (RTC_SW_CPU_RST)"), 2),
+                                  (first + software + first, 2)):
+            with self.subTest(rom=altered, previous=previous):
+                self.assertFalse(OTA.ota_software_reset_observation(altered, previous)["verified"])
+
     def test_missing_early_hardware_log_requires_actual_poweron_and_stock_status(self):
         rom = "ESP-ROM:esp32c3-api1-20210207\nrst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)\n"
         status = {"protocol": "1", "device": "X3", "firmware": "1.6.1"}
