@@ -85,7 +85,8 @@ normalization, manifest provenance and CLI behavior. Python fake-backend checks
 cover host integration only. The separately closed
 [unchanged-firmware capacity execution](battery-capacity-guest-validation.md)
 verifies actual 3000→650 loading, stock restart retention and reading/save/reopen
-on the accepted OTA-written v1.6.1 with the exact current native ELF.
+on the accepted cd95 OTA-written v1.6.1 with native ELF
+`1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e`.
 
 The unchanged-firmware acceptance workflow is documented in
 [battery capacity guest validation](battery-capacity-guest-validation.md).

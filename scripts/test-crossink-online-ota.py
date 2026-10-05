@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import math
 import os
@@ -18,10 +19,13 @@ from pathlib import Path
 import re
 import runpy
 import signal
+import shutil
 import socket
 import struct
 import subprocess
 import sys
+import time
+import zlib
 from urllib.request import Request, urlopen
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -140,6 +144,224 @@ def free_port() -> int:
         return listener.getsockname()[1]
 
 
+def user_netdev_from_hmp(text: str) -> str:
+    """Discover this run's user backend; never assume QEMU's generated name."""
+    if not isinstance(text, str):
+        raise OnlineOtaError("original HMP network observation is not text")
+    rows = [row for row in text.splitlines() if "type=user" in row]
+    if len(rows) != 1:
+        raise OnlineOtaError("network capture requires exactly one original user netdev")
+    match = re.search(r"([^\s:]+):\s+.*\btype=user(?:,|\s|$)", rows[0])
+    if not match:
+        raise OnlineOtaError("original HMP user netdev row has no usable identifier")
+    return match.group(1)
+
+
+def inspect_network_pcap(path: Path) -> dict:
+    """Validate every native Ethernet PCAP record without decrypting TLS."""
+    packets = payload_bytes = 0
+    first = previous = None
+    with path.open("rb") as source:
+        header = source.read(24)
+        if len(header) != 24 or struct.unpack("<IHHIIII", header) != (0xa1b2c3d4, 2, 4, 0, 0, 65535, 1):
+            raise OnlineOtaError("native network PCAP header is not reviewed Ethernet v2.4/65535")
+        while record := source.read(16):
+            if len(record) != 16:
+                raise OnlineOtaError("native network PCAP has a truncated record header")
+            seconds, micros, captured, original = struct.unpack("<IIII", record)
+            timestamp = seconds * 1_000_000 + micros
+            if micros >= 1_000_000 or (previous is not None and timestamp < previous):
+                raise OnlineOtaError("native network PCAP timestamps are invalid or out of order")
+            if not 14 <= captured <= 65535 or captured != original:
+                raise OnlineOtaError("native network PCAP contains truncated or invalid Ethernet bytes")
+            packet = source.read(captured)
+            if len(packet) != captured:
+                raise OnlineOtaError("native network PCAP has a truncated packet payload")
+            first = timestamp if first is None else first
+            previous = timestamp
+            packets += 1
+            payload_bytes += captured
+    return {"sha256": file_sha256(path), "bytes": path.stat().st_size,
+            "packet_records": packets, "packet_payload_bytes": payload_bytes,
+            "first_timestamp_us": first, "last_timestamp_us": previous,
+            "linktype": 1, "snaplen": 65535, "all_records_complete": True}
+
+
+def attach_online_network_capture(replay) -> None:
+    """Add only QEMU's pass-through filter, before original guest Wi-Fi actions."""
+    path = (replay.output / "network.pcap").absolute()
+    if path.exists() or path.is_symlink() or not path.parent.is_dir():
+        raise OnlineOtaError("network capture must use a fresh private output file")
+    observation = {"path": path.relative_to(replay.output.absolute()).as_posix(),
+                   "qmp_operations": [], "attached": False,
+                   "guest_network_or_trust_changed": False,
+                   "scope": "native Wi-Fi Ethernet/user-network boundary, both directions"}
+    replay.report["network_capture"] = observation
+    def command(name, arguments):
+        result = replay.qmp.execute(name, arguments)
+        observation["qmp_operations"].append({"execute": name, "arguments": arguments, "result": result})
+        replay.save()
+        return result
+    text = command("human-monitor-command", {"command-line": "info network"})
+    observation["original_hmp_network"] = text
+    netdev = user_netdev_from_hmp(text)
+    observation["discovered_netdev"] = netdev
+    properties = {"qom-type": "filter-dump", "id": "x3-net-capture", "netdev": netdev,
+                  "file": str(path), "maxlen": 65535}
+    observation["requested_object_properties"] = properties
+    observation["setup_host_epoch_seconds_before"] = time.time()
+    observation["setup_host_monotonic_ns_before"] = time.monotonic_ns()
+    observation["host_timezone"] = {"names": list(time.tzname), "standard_seconds_west_utc": time.timezone,
+        "daylight_seconds_west_utc": time.altzone, "daylight_active": time.localtime().tm_isdst}
+    observation["setup_virtual_time_ns_before"] = command("qom-get", {"path": "/machine", "property": "virtual-time-ns"})
+    command("object-add", properties)
+    observation["setup_virtual_time_ns_after"] = command("qom-get", {"path": "/machine", "property": "virtual-time-ns"})
+    observation["setup_host_epoch_seconds_after"] = time.time()
+    observation["setup_host_monotonic_ns_after"] = time.monotonic_ns()
+    object_path = "/objects/x3-net-capture"
+    supported = command("qom-list", {"path": object_path})
+    required = {"netdev", "file", "maxlen", "queue", "status"}
+    if not required.issubset({item["name"] for item in supported}):
+        raise OnlineOtaError("native network filter lacks the reviewed observation properties")
+    observed = {key: command("qom-get", {"path": object_path, "property": key}) for key in sorted(required)}
+    observation["observed_object_properties"] = observed
+    if observed != {"netdev": netdev, "file": str(path), "maxlen": 65535, "queue": "all", "status": "on"}:
+        raise OnlineOtaError("native network filter properties differ from unchanged pass-through capture")
+    observation["initial_pcap"] = inspect_network_pcap(path)
+    stat = path.stat()
+    observation["initial_file_identity"] = {"device": stat.st_dev, "inode": stat.st_ino}
+    logging_path = "/machine/wifi"
+    before = command("qom-get", {"path": logging_path, "property": "rx-context-logging"})
+    command("qom-set", {"path": logging_path, "property": "rx-context-logging", "value": True})
+    after = command("qom-get", {"path": logging_path, "property": "rx-context-logging"})
+    observation["native_rx_context_logging"] = {"original": before, "observed_after": after,
+        "source_semantics": "existing diagnostic log switch; packet policy and DMA unchanged"}
+    if not isinstance(before, bool) or after is not True:
+        raise OnlineOtaError("native RX diagnostic log switch did not retain its observed value")
+    observation["attached"] = True
+    replay.save()
+
+
+def ota_text_matches(text: str, expected: list[str]) -> bool:
+    normalized = " ".join(re.findall(r"[a-z0-9]+", text.lower()))
+    return all(" ".join(re.findall(r"[a-z0-9]+", label.lower())) in normalized for label in expected)
+
+
+def terminal_update_failed_text(text: str) -> bool:
+    """The pinned OTA FAILED render has Update/title, Update failed and Back."""
+    lines = {" ".join(re.findall(r"[a-z0-9]+", row.lower())) for row in text.splitlines()}
+    return {"update", "update failed", "back"}.issubset(lines)
+
+
+def completed_passive_panel(data: bytes, trace: bytes, smoke: dict, minimum_frame_count: int) -> dict | bool:
+    """A complete current dump and contiguous native trace, without CPU control."""
+    try:
+        if not trace.endswith(b"\n"):
+            return False
+        width, height, pixels = smoke["read_pgm"](data)
+        if (width, height) != (792, 528):
+            return False
+        events = [json.loads(row) for row in trace.splitlines()]
+        if not events or any(not isinstance(event, dict) or type(event.get("seq")) is not int
+                             or event["seq"] != index for index, event in enumerate(events, 1)):
+            return False
+        frames = [event for event in events if event.get("event") == "frame-complete"]
+        count = re.search(rb"\brefresh=(\d+)\b", data[:data.find(b"\n255\n")])
+        crc = zlib.crc32(pixels)
+        if not count or not frames or int(count[1]) != len(frames) or len(frames) <= minimum_frame_count or frames[-1].get("value") != crc:
+            return False
+        return {**smoke["frame_info"](data), "frame_count": len(frames), "pixel_crc32": crc,
+                "native_frame_complete": frames[-1], "trace_snapshot_sha256": hashlib.sha256(trace).hexdigest(),
+                "trace_snapshot_bytes": len(trace), "trace_snapshot_records": len(events),
+                "observation_transport": "completed native files; no QMP CPU stop"}
+    except (ValueError, smoke["SmokeError"]):
+        return False
+
+
+def passive_and_frozen_match(passive: dict, frozen: dict) -> bool:
+    keys = ("frame_count", "pixel_crc32", "pixel_sha256")
+    return all(key in passive and key in frozen and passive[key] == frozen[key] for key in keys) and frozen.get("trace_complete") is True
+
+
+def passive_clock_correspondence(qmp) -> dict:
+    """Bound a read-only native clock query with host times; never pause CPU."""
+    before = {"epoch_seconds": time.time(), "monotonic_ns": time.monotonic_ns()}
+    virtual = qmp.execute("qom-get", {"path": "/machine", "property": "virtual-time-ns"})
+    after = {"epoch_seconds": time.time(), "monotonic_ns": time.monotonic_ns()}
+    return {"host_before": before, "observed_native_virtual_ns": virtual, "host_after": after,
+            "cpu_stop_requested": False, "event_causality_or_guest_rtc_claimed": False}
+
+
+class OnlineOtaPanelObserver:
+    """Observe network progress passively, freeze only an already terminal panel."""
+    def __init__(self, replay, label, minimum_frame_count):
+        self.replay, self.label, self.attempt = replay, label, 0
+        self.minimum_frame_count = minimum_frame_count
+        self.last_passive_hash = None
+
+    def ocr(self, path, metadata, expected):
+        from PIL import Image
+        executable = shutil.which("tesseract")
+        if executable is None:
+            raise OnlineOtaError("Tesseract is required for original OTA result verification")
+        observations = []
+        original = Image.open(self.replay.output / path)
+        for angle in (90, 270, 0, 180):
+            stream = io.BytesIO()
+            original.rotate(angle, expand=True).save(stream, format="PNG")
+            result = subprocess.run([executable, "stdin", "stdout", "--psm", "6"], input=stream.getvalue(),
+                                    capture_output=True, timeout=45, check=True)
+            text = result.stdout.decode("utf-8", errors="replace")
+            observations.append({"rotation": angle, "text": text})
+            evidence = {"frame": path, "pixel_sha256": metadata["pixel_sha256"], "native_capture": metadata,
+                        "observations": observations, "ocr_executable_sha256": file_sha256(executable)}
+            if terminal_update_failed_text(text):
+                evidence["expected_original_labels"] = ["Update", "Update failed", "Back"]
+                return "failed", evidence
+            if expected and ota_text_matches(text, expected):
+                evidence["expected_original_labels"] = list(expected)
+                return "expected", evidence
+        return None, {"latest_frame": path, "observations": observations, "native_capture": metadata}
+
+    def probe(self, expected=()):
+        data = (self.replay.experiment.run_dir / "panel.pbm").read_bytes()
+        trace = (self.replay.experiment.run_dir / "panel.jsonl").read_bytes()
+        passive = completed_passive_panel(data, trace, self.replay.helpers, self.minimum_frame_count)
+        if not passive or passive["pixel_sha256"] == self.last_passive_hash:
+            return False
+        self.last_passive_hash = passive["pixel_sha256"]
+        self.attempt += 1
+        path = f"frames/{self.label}-passive{self.attempt}.pgm"
+        (self.replay.output / path).write_bytes(data)
+        passive["path"] = path
+        passive["clock_correspondence"] = passive_clock_correspondence(self.replay.qmp)
+        status, evidence = self.ocr(path, passive, expected)
+        self.replay.report.setdefault("passive_result_panel_ocr", {}).setdefault(self.label, []).append(evidence)
+        self.replay.report["online_result_observer_cpu_control"] = {"stop_during_network_progress": False,
+            "freeze_only_after_source_terminal_labels_observed": True}
+        self.replay.save()
+        if status is None:
+            return False
+        frozen = self.replay.capture(f"{self.label}-terminal{self.attempt}")
+        frozen_status, frozen_evidence = self.ocr(frozen["path"], frozen, expected)
+        observation = {"passive": evidence, "frozen": frozen_evidence,
+                       "native_pixels_count_crc_trace_match": passive_and_frozen_match(passive, frozen)}
+        self.replay.report.setdefault("result_panel_ocr", {})[self.label] = observation
+        self.replay.save()
+        if frozen_status != status or not observation["native_pixels_count_crc_trace_match"]:
+            # A newer/mismatched frame cannot establish the earlier terminal state.
+            self.last_passive_hash = None
+            return False
+        if status == "failed":
+            self.replay.report["original_terminal_update_failure"] = {
+                "source_state": "OtaUpdateActivity::FAILED", "unchanged_original_labels": True,
+                "passive_original_capture": evidence, "frozen_native_capture": frozen_evidence,
+                "native_pixels_count_crc_trace_match": True}
+            self.replay.save()
+            raise OnlineOtaError("original guest reached terminal Update failed panel")
+        return frozen
+
+
 def rom_reset_observations(rom: str) -> list[dict]:
     """Read the native ROM's reset reasons, independent of USB attachment."""
     return [{"code": int(code, 16), "name": name} for code, name in
@@ -168,6 +390,20 @@ def closed_run_checks(directory: Path, report: dict, smoke: dict) -> None:
         "carried_efuse_hash_matches_launcher_input": report["initial_efuse_sha256"] is None
             or manifest.get("input", {}).get("efuse", {}).get("sha256") == report["initial_efuse_sha256"],
     })
+    if report.get("network_capture", {}).get("attached"):
+        capture = report["network_capture"]
+        path = directory / capture["path"]
+        capture["closed_pcap"] = inspect_network_pcap(path)
+        stat = path.stat()
+        capture["closed_file_identity"] = {"device": stat.st_dev, "inode": stat.st_ino}
+        capture["file_identity_preserved"] = not path.is_symlink() and capture["closed_file_identity"] == capture["initial_file_identity"]
+        logs = "\n".join((directory / name).read_text(errors="replace")
+            for name in ("run/diagnostics.log", "run/backend.log", "launcher.log"))
+        capture["original_dump_error_rows"] = [row for row in logs.splitlines()
+            if "network dump write error" in row or "net dump write error" in row]
+        report["checks"]["closed_pass_through_network_capture_complete"] = (
+            capture["file_identity_preserved"] and not capture["original_dump_error_rows"]
+            and capture["closed_pcap"]["packet_records"] > 0)
     serial = (directory / "run/serial.log").read_text(errors="replace")
     rom = (directory / "run/rom.log").read_text(errors="replace")
     reasons = re.findall(r"Reset diagnostic: reset=\d+\((\w+)\)", serial)
@@ -374,7 +610,7 @@ def execute_cpu(args, directory: Path, flash: Path, card: Path, *, efuse: Path |
                 experiment.log_text("rom.log") + "\n" + experiment.log_text("serial.log")) is None
         try:
             closed_run_checks(directory, report, smoke)
-        except (OSError, ValueError, KeyError, smoke["SmokeError"]) as error:
+        except (OnlineOtaError, OSError, ValueError, KeyError, smoke["SmokeError"]) as error:
             report["closure_error"] = str(error)
         report["functional_pass"] = bool(report.get("completed") and not report.get("error")
             and not report.get("shutdown_error") and not report.get("closure_error") and all(report["checks"].values()))
@@ -396,12 +632,16 @@ def running_version(replay, client, version: str) -> dict | bool:
 def online_workflow(replay, client, target: bytes, initial: bytes, usb_helpers: dict, network: dict) -> None:
     status = replay.experiment.wait("unchanged v1.6.0 Home USB status", lambda: running_version(replay, client, "1.6.0"))
     replay.check("original_running_version_v160", bool(status), status)
+    attach_online_network_capture(replay)
     network["settings_tab_ui"](replay, "system")
     replay.tap("up", "sd-update-row", "Wrap System header to final SD Firmware Update")
     replay.tap("up", "official-online-update-row", "Select preceding real Check for Updates action")
+    manifest_minimum_frames = replay.experiment.refresh_count(replay.qmp)
     replay.experiment.press(replay.qmp, "confirm", purpose="run unmodified release updater at original api.github.com URL")
     select_online_wifi(replay, network)
-    replay.capture_text("official-new-version-confirmation", ["New update available", "Current Version", "1.6.0", "New Version", TARGET_TAG])
+    observer = OnlineOtaPanelObserver(replay, "official-new-version-confirmation", manifest_minimum_frames)
+    replay.experiment.wait("original official update availability or terminal error panel", lambda:
+        observer.probe(["New update available", "Current Version", "1.6.0", "New Version", TARGET_TAG]))
     connection = fresh_open_wifi_connection((replay.experiment.run_dir / "serial.log").read_bytes(),
         replay.report["wifi_connection_serial_observation"]["serial_start_byte_offset"])
     replay.report["wifi_connection_serial_observation"] = connection
@@ -412,12 +652,18 @@ def online_workflow(replay, client, target: bytes, initial: bytes, usb_helpers: 
     previous_resets = len(rom_reset_observations(rom_before))
     serial_path = replay.experiment.run_dir / "serial.log"
     install_serial_offset = serial_path.stat().st_size
+    install_minimum_frames = replay.experiment.refresh_count(replay.qmp)
     replay.report["ota_install_authorized"] = True
     replay.experiment.press(replay.qmp, "confirm", purpose="authorize real official v1.6.1 download, validated staging and OTA app1 installation")
     # Stock restart can discard the final pending USB log line. The real ROM
     # reset, responding target firmware and exact storage/MMU checks prove OTA.
-    replay.experiment.wait("real CPU reset after OTA app switch", lambda:
-        ota_software_reset_observation(replay.experiment.log_text("rom.log"), previous_resets)["verified"])
+    install_observer = OnlineOtaPanelObserver(replay, "original-install-result", install_minimum_frames)
+    def reset_or_terminal_error():
+        if ota_software_reset_observation(replay.experiment.log_text("rom.log"), previous_resets)["verified"]:
+            return True
+        install_observer.probe()
+        return False
+    replay.experiment.wait("real CPU reset after OTA app switch or original terminal error panel", reset_or_terminal_error)
     status = replay.experiment.wait("new v1.6.1 Home USB status", lambda: running_version(replay, client, TARGET_VERSION))
     replay.report["ota_restart_rom_observation"] = ota_software_reset_observation(
         replay.experiment.log_text("rom.log"), previous_resets)

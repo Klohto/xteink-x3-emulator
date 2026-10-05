@@ -2,14 +2,26 @@
 
 import copy
 import importlib.util
+import json
 from pathlib import Path
 import struct
+import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock
 
 SPEC = importlib.util.spec_from_file_location("online_ota", Path(__file__).parents[1] / "scripts/test-crossink-online-ota.py")
 OTA = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(OTA)
+SMOKE = OTA.runpy.run_path(str(Path(__file__).parents[1] / "scripts/smoke-crossink.py"))
+
+
+def passive_frame_fixture():
+    pixels = bytes([255]) * (792 * 528)
+    pgm = b"P5\n# refresh=1\n792 528\n255\n" + pixels
+    event = {"seq": 1, "t_ns": 1, "event": "frame-complete", "value": OTA.zlib.crc32(pixels)}
+    trace = (json.dumps(event) + "\n").encode()
+    return pgm, trace
 
 
 def official_metadata():
@@ -41,6 +53,127 @@ def wifi_serial(rows):
 
 
 class OnlineOtaAcceptanceTests(unittest.TestCase):
+    def test_netdev_discovery_refuses_missing_ambiguous_or_malformed_user_backend(self):
+        text = "esp32c3.wifi.0: index=0,type=nic\r\n \\ #net037: index=0,type=user,net=10.0.2.0,restrict=off\r\n"
+        self.assertEqual(OTA.user_netdev_from_hmp(text), "#net037")
+        for invalid in ("", "type=user", text + text, None, text.replace("type=user,", "type=socket,")):
+            with self.subTest(text=invalid), self.assertRaises(OTA.OnlineOtaError):
+                OTA.user_netdev_from_hmp(invalid)
+
+    def test_network_pcap_refuses_truncation_bad_lengths_and_time_order(self):
+        header = struct.pack("<IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
+        packet = b"\0" * 14
+        record = struct.pack("<IIII", 10, 123, 14, 14) + packet
+        invalid = [header[:-1], header + record[:-1], header + record[:8],
+                   header + struct.pack("<IIII", 10, 0, 14, 15) + packet,
+                   header + struct.pack("<IIII", 10, 1_000_000, 14, 14) + packet,
+                   header + struct.pack("<IIII", 10, 0, 13, 13) + packet[:13],
+                   header + record + struct.pack("<IIII", 9, 0, 14, 14) + packet,
+                   header.replace(struct.pack("<I", 65535), struct.pack("<I", 128))]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "network.pcap"
+            path.write_bytes(header + record)
+            result = OTA.inspect_network_pcap(path)
+            self.assertEqual(result["packet_records"], 1)
+            self.assertEqual(result["packet_payload_bytes"], 14)
+            self.assertTrue(result["all_records_complete"])
+            for data in invalid:
+                path.write_bytes(data)
+                with self.subTest(data=data), self.assertRaises(OTA.OnlineOtaError):
+                    OTA.inspect_network_pcap(path)
+
+    def test_filter_capture_binds_actual_discovered_id_properties_and_fresh_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            replay = Mock(output=Path(directory), report={})
+            props = {"netdev": "#net037", "file": str(Path(directory) / "network.pcap"), "maxlen": 65535, "queue": "all", "status": "on"}
+            logging = {"enabled": False}
+            def command(name, args):
+                if name == "human-monitor-command":
+                    return "esp32c3.wifi.0: index=0,type=nic\n #net037: index=0,type=user,net=10.0.2.0\n"
+                if name == "object-add":
+                    Path(args["file"]).write_bytes(struct.pack("<IHHIIII", 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1))
+                    return {}
+                if name == "qom-list":
+                    return [{"name": key} for key in props]
+                if name == "qom-set":
+                    logging["enabled"] = args["value"]
+                    return {}
+                if args["property"] == "virtual-time-ns":
+                    return 0
+                if args["property"] == "rx-context-logging":
+                    return logging["enabled"]
+                return props[args["property"]]
+            replay.qmp.execute.side_effect = command
+            OTA.attach_online_network_capture(replay)
+            capture = replay.report["network_capture"]
+            self.assertTrue(capture["attached"])
+            self.assertEqual(capture["observed_object_properties"], props)
+            self.assertEqual(capture["discovered_netdev"], "#net037")
+            replay.qmp.execute.reset_mock()
+            with self.assertRaisesRegex(OTA.OnlineOtaError, "fresh private"):
+                OTA.attach_online_network_capture(replay)
+            replay.qmp.execute.assert_not_called()
+
+    def test_terminal_error_requires_original_complete_labels_not_incidental_text(self):
+        self.assertTrue(OTA.terminal_update_failed_text("80%\nUpdate\nUpdate failed\n« Back\n"))
+        for text in ("Update failed", "Update\nFailed\nBack", "The update failed\nBack", "Update\nUpdate failed\nCancel"):
+            with self.subTest(text=text):
+                self.assertFalse(OTA.terminal_update_failed_text(text))
+        self.assertFalse(OTA.ota_text_matches("Update\nUpdate failed\nBack", ["New update available", "Current Version", "1.6.0", "New Version", "v1.6.1"]))
+
+    def test_passive_snapshot_refuses_incomplete_stale_or_mismatched_dump_trace(self):
+        pgm, trace = passive_frame_fixture()
+        self.assertTrue(OTA.completed_passive_panel(pgm, trace, SMOKE, 0))
+        invalid = [(pgm[:-1], trace), (pgm, trace[:-1]), (pgm, trace.replace(b'"seq": 1', b'"seq": 2')),
+                   (pgm.replace(b"refresh=1", b"refresh=2"), trace), (pgm[:-1] + b"\0", trace),
+                   (pgm, trace + trace)]
+        for data, records in invalid:
+            with self.subTest(bytes=len(data), trace=records):
+                self.assertFalse(OTA.completed_passive_panel(data, records, SMOKE, 0))
+        self.assertFalse(OTA.completed_passive_panel(pgm, trace, SMOKE, 1))
+
+    def test_passive_frozen_binding_requires_native_crc_pixels_count_and_complete_trace(self):
+        pgm, trace = passive_frame_fixture()
+        passive = OTA.completed_passive_panel(pgm, trace, SMOKE, 0)
+        frozen = {**passive, "trace_complete": True}
+        self.assertTrue(OTA.passive_and_frozen_match(passive, frozen))
+        self.assertFalse(OTA.passive_and_frozen_match({}, {"trace_complete": True}))
+        for key, value in (("frame_count", 2), ("pixel_crc32", 0), ("pixel_sha256", "wrong"), ("trace_complete", False)):
+            with self.subTest(key=key):
+                self.assertFalse(OTA.passive_and_frozen_match(passive, {**frozen, key: value}))
+
+    def test_network_progress_observer_does_not_freeze_or_accept_partial_labels(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory); (output / "run").mkdir(); (output / "frames").mkdir()
+            pgm, trace = passive_frame_fixture()
+            (output / "run/panel.pbm").write_bytes(pgm); (output / "run/panel.jsonl").write_bytes(trace)
+            replay = Mock(output=output, report={}, helpers=SMOKE, experiment=SimpleNamespace(run_dir=output / "run"))
+            observer = OTA.OnlineOtaPanelObserver(replay, "original-result", 0)
+            observer.ocr = Mock(return_value=(None, {"text": "Checking for update"}))
+            self.assertFalse(observer.probe(["New update available", "v1.6.1"]))
+            replay.capture.assert_not_called()
+            replay.qmp.execute.assert_called_once_with("qom-get", {"path": "/machine", "property": "virtual-time-ns"})
+            self.assertFalse(replay.report["online_result_observer_cpu_control"]["stop_during_network_progress"])
+
+    def test_original_terminal_panel_requires_matching_frozen_source_labels(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory); (output / "run").mkdir(); (output / "frames").mkdir()
+            pgm, trace = passive_frame_fixture()
+            (output / "run/panel.pbm").write_bytes(pgm); (output / "run/panel.jsonl").write_bytes(trace)
+            replay = Mock(output=output, report={}, helpers=SMOKE, experiment=SimpleNamespace(run_dir=output / "run"))
+            frame = {**OTA.completed_passive_panel(pgm, trace, SMOKE, 0), "path": "terminal.pgm", "trace_complete": True}
+            replay.capture.return_value = frame
+            observer = OTA.OnlineOtaPanelObserver(replay, "original-result", 0)
+            observer.ocr = Mock(side_effect=[("failed", {"text": "Update failed"}), (None, {"text": "Checking for update"})])
+            self.assertFalse(observer.probe())
+            self.assertNotIn("original_terminal_update_failure", replay.report)
+            observer.ocr.side_effect = [("failed", {"text": "Update failed"}), ("failed", {"text": "Update failed"})]
+            with self.assertRaisesRegex(OTA.OnlineOtaError, "original guest reached terminal"):
+                observer.probe()
+            evidence = replay.report["original_terminal_update_failure"]
+            self.assertEqual(evidence["source_state"], "OtaUpdateActivity::FAILED")
+            self.assertTrue(evidence["native_pixels_count_crc_trace_match"])
+
     def test_fresh_sdk_connection_preserves_missing_or_literal_summary(self):
         rows = connected_wifi_rows()
         result = OTA.fresh_open_wifi_connection(wifi_serial(rows), 0)

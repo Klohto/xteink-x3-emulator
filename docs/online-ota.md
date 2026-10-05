@@ -67,6 +67,49 @@ panel already displayed official `1.6.1` availability and its RTC showed NTP
 success, but the host waited for that missing summary. A fresh complete OTA
 run is still required after the observer correction.
 
+The two original `450409e2` attempts remain failed. The first recorded an NTP
+timeout followed by TLS transport reset `-0x0050`; the second successfully
+set the RTC from NTP and then recorded TLS connection EOF `-0x7280`. Both
+displayed the unchanged **Update failed** screen before installation. These
+errors establish failed transport, not a certificate-time diagnosis.
+
+The OTA observer reads completed native PGM and contiguous trace snapshots
+while network work continues, copies the original bytes and runs OCR without
+pausing the CPU. A dump must match the trace's latest completed frame count
+and pixel CRC, and must follow the actual update action. Partial, mismatched
+or earlier frames cannot satisfy it. Only after the original confirmation or
+source-defined failure labels appear does it obtain a normal frozen native
+capture and recheck the same labels, count, pixels, CRC and complete trace.
+The original **Update / Update failed / Back** terminal screen now closes the
+failed run promptly. Every positive manifest, installation, reset, storage
+and reading requirement remains. Historical replay is unchanged.
+
+The earlier observer repeatedly stopped and resumed the CPU and read native
+properties while the network request was in flight. Host peers and user
+networking can continue during those pauses. That was a possible observation
+perturbation; it is not established as the cause of either TLS failure. OCR
+itself already ran after the CPU resumed.
+
+Before the original online Wi-Fi actions, the diagnostic uses existing QMP
+to retain `info network`, discover the run's sole user netdev and attach
+QEMU's existing `filter-dump` object. It records requested and observed
+`netdev`, file, snap length, both-direction queue and enabled status. The
+filter copies Ethernet packets and passes delivery onward; it does not
+replace DNS, NTP, TLS, HTTP or routing. The existing `rx-context-logging`
+switch records native RX diagnostics without changing packet or DMA policy.
+Original property values, requests and responses are retained.
+
+After clean shutdown, the receipt binds `network.pcap` to its relative path,
+SHA-256, byte count and every complete Ethernet packet record. Truncation,
+invalid lengths/timestamps, file replacement and native dump-write errors
+remain failures. Host UTC/monotonic and native virtual clock bounds plus the
+host timezone are retained. PCAP timestamps combine the dump's host-based
+start time with virtual elapsed time; they are not the guest RTC. This
+captures the native Wi-Fi/user-network Ethernet boundary, not RF or the host
+external wire. TLS application bytes remain encrypted and an incoming reset
+alone cannot identify which external hop caused it. Diagnostic file/log
+overhead is uncalibrated; no physical speed equivalence is claimed.
+
 The guest uses normal native WiFi/libslirp egress. There is no local DNS,
 NTP, HTTP or TLS fixture, opaque relay, route override, endpoint rewrite or
 guest patch. Hosts with configured HTTP/HTTPS/all proxies, `LD_PRELOAD` or
@@ -124,6 +167,7 @@ trace, native framebuffer CRCs, captures, logs and original launcher manifest.
 `validation.json` reports functional success separately from the original
 strict native diagnostics. Unsupported accesses, physical timing, RF and
 complete machine fidelity are not promoted to passed by a successful update.
-The seventeen host tests cover refusal/schema/capture/reset, USB boot identity,
-fresh SDK connection evidence and missing-log binding; they do not execute
-firmware or stand in for the guest integration result.
+The host tests cover refusal/schema/capture/reset, USB boot identity, fresh
+SDK connection evidence, missing-log binding, complete PCAP records and
+passive-to-frozen terminal frame binding. They do not execute firmware or
+stand in for the guest integration result.
