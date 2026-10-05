@@ -12,6 +12,15 @@ configure a synthetic starting gauge before CPU execution. Each accepts an
 integer from 0 to 65535. Omitting both adds no new QEMU arguments, preserving
 normal runs with older backends. The runner always selects the X3 machine.
 
+The device type contains a dot, so these inputs use QEMU's explicit global
+syntax: `driver=xteink.x3-i2c-sensor,property=initial-design-capacity-mah,value=3000`.
+The pinned QEMU parser splits shorthand at the first dot; shorthand silently
+leaves the starting capacity at its default and emits an invalid-class warning.
+The first capacity-native CI run caught that integration failure before OTA;
+it remains a failed run. A separate execution on the prior backend confirmed
+the parser correction with the existing RTC epoch property. That check does
+not establish capacity loading on the new backend.
+
 For the real SDK load branch, initialize both to 3000. The model must then expose
 3000 until guest transactions commit the two checksummed capacity words. Ordinary
 register words are little endian; Data Memory capacity words are big endian.

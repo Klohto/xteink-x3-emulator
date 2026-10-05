@@ -10781,7 +10781,7 @@ index 0000000..d0e3e78
 +}
 diff --git a/tests/qtest/esp32c3-i2c-test.c b/tests/qtest/esp32c3-i2c-test.c
 new file mode 100644
-index 0000000..0077c3d
+index 0000000..82a47ad
 --- /dev/null
 +++ b/tests/qtest/esp32c3-i2c-test.c
 @@ -0,0 +1,749 @@
@@ -11277,10 +11277,10 @@ index 0000000..0077c3d
 +    const char *machine = g_getenv("X3_QTEST_MACHINE");
 +    QTestState *qts = qtest_initf(
 +        "-machine %s,xteink-x3=true -nodefaults "
-+        "-global xteink.x3-i2c-sensor.initial-design-capacity-mah=%u "
-+        "-global xteink.x3-i2c-sensor.initial-learned-fcc-mah=%u "
-+        "-global xteink.x3-i2c-sensor.initial-security=%u "
-+        "-global xteink.x3-i2c-sensor.initial-config-update=%s",
++        "-global driver=xteink.x3-i2c-sensor,property=initial-design-capacity-mah,value=%u "
++        "-global driver=xteink.x3-i2c-sensor,property=initial-learned-fcc-mah,value=%u "
++        "-global driver=xteink.x3-i2c-sensor,property=initial-security,value=%u "
++        "-global driver=xteink.x3-i2c-sensor,property=initial-config-update,value=%s",
 +        machine ? machine : "esp32c3", design, learned, security,
 +        cfg ? "on" : "off");
 +    disable_boot_watchdog(qts);

@@ -542,7 +542,7 @@ def build_command(config: RunConfig) -> list[str]:
         "-d", "unimp,guest_errors", "-D", str(config.output / "diagnostics.log"),
     ]
     for prop, value in initial_gauge.items():
-        command += ["-global", f"xteink.x3-i2c-sensor.{prop}={value}"]
+        command += ["-global", f"driver=xteink.x3-i2c-sensor,property={prop},value={value}"]
     if config.usb_port is None:
         command += ["-serial", f"file:{config.output / 'serial.log'}"]
     else:

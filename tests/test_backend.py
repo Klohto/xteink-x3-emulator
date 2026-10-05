@@ -213,15 +213,15 @@ class BackendRunTests(unittest.TestCase):
 
     def test_initial_gauge_capacities_are_opt_in_and_survive_normalization(self):
         default_argv = build_command(self.config())
-        self.assertFalse(any("xteink.x3-i2c-sensor.initial-" in arg for arg in default_argv))
+        self.assertFalse(any("driver=xteink.x3-i2c-sensor,property=initial-" in arg for arg in default_argv))
         config = self.config(initial_gauge_design_capacity_mah=0,
                              initial_gauge_learned_fcc_mah=65535)
         normalized = config.resolved()
         self.assertEqual(normalized.initial_gauge_design_capacity_mah, 0)
         self.assertEqual(normalized.initial_gauge_learned_fcc_mah, 65535)
         argv = build_command(normalized)
-        self.assertIn("xteink.x3-i2c-sensor.initial-design-capacity-mah=0", argv)
-        self.assertIn("xteink.x3-i2c-sensor.initial-learned-fcc-mah=65535", argv)
+        self.assertIn("driver=xteink.x3-i2c-sensor,property=initial-design-capacity-mah,value=0", argv)
+        self.assertIn("driver=xteink.x3-i2c-sensor,property=initial-learned-fcc-mah,value=65535", argv)
         self.assertIn("esp32c3,xteink-x3=true", argv[argv.index("-machine") + 1])
 
     def test_initial_gauge_capacity_rejects_non_uint16_values(self):

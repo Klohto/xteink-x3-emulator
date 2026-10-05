@@ -63,7 +63,7 @@ def decode_link_stack(data: bytes, *, spine_count: int = 6) -> list[dict]:
     return result
 
 
-def validate_ota_input(output: Path, backend: Path) -> tuple[Path, Path, dict]:
+def validate_ota_input(output: Path, backend: Path, rom_dir: Path) -> tuple[Path, Path, dict]:
     receipt_path = output / "validation.json"
     receipt = json.loads(receipt_path.read_text())
     cpus = receipt.get("cpus", [])
@@ -86,6 +86,11 @@ def validate_ota_input(output: Path, backend: Path) -> tuple[Path, Path, dict]:
         raise FootnoteError("carried flash differs from the stopped OTA manifest's final hash")
     if file_sha256(run / "sd.img") != manifest.get("storage", {}).get("final_sd_sha256"):
         raise FootnoteError("carried OTA source card differs from the stopped manifest's final hash")
+    if file_sha256(efuse) != manifest.get("artifact_sha256", {}).get("efuse.bin"):
+        raise FootnoteError("carried eFuse differs from the stopped OTA manifest's final artifact hash")
+    rom = rom_dir / "esp32c3-rom.bin"
+    if file_sha256(rom) != manifest.get("rom", {}).get("sha256"):
+        raise FootnoteError("mask ROM differs from the actual passing OTA boot ROM")
     data = flash.read_bytes()
     if len(data) != 16 * 1024 * 1024:
         raise FootnoteError("carried OTA flash must be the actual complete 16MiB image")
@@ -100,6 +105,7 @@ def validate_ota_input(output: Path, backend: Path) -> tuple[Path, Path, dict]:
         "original_ota_receipt_sha256": file_sha256(receipt_path),
         "carried_run_manifest_sha256": file_sha256(run / "run.json"),
         "carried_flash_sha256": file_sha256(flash), "carried_efuse_sha256": file_sha256(efuse),
+        "carried_rom_sha256": file_sha256(rom),
         "official_v161_application_sha256": hashlib.sha256(app).hexdigest(),
         "actual_ota_selection": selection,
     }
@@ -147,7 +153,17 @@ def home_and_open(replay, client, *, virgin: bool, note: bool = False):
                                if note else ["The reader", "checks the clock"])
 
 
-def follow_original_note(replay):
+def note_forward_destination(current, finalized_page_count):
+    """Full-section pageTurn uses finalized pages, not a saved build watermark."""
+    spine, page = current["spine_index"], current["page_number"]
+    if (type(spine) is not int or spine < 0 or type(page) is not int or page < 0
+            or type(finalized_page_count) is not int or finalized_page_count <= page):
+        raise FootnoteError("note forward decision requires an in-range finalized section page")
+    return {"spine_index": spine, "page_number": page + 1} if page + 1 < finalized_page_count else {
+        "spine_index": spine + 1, "page_number": 0}
+
+
+def follow_original_note(replay, *, exercise_boundary):
     replay.tap("confirm", "reader-more-tab", "Open unchanged v1.6.1 button reader menu, initial More tab")
     # X3 menuButton(Up) maps to the physical Left front button; from header
     # backward movement selects the last More row, Footnotes, in this fixture.
@@ -156,25 +172,36 @@ def follow_original_note(replay):
     note = replay.tap("confirm", "original-note-anchor", "Single source-collected #note-1 link jumps directly, without a fabricated list dialog")
     current = progress(replay)
     replay.check("same_file_original_note_jump_saved_nonzero_page", current["spine_index"] == 0 and current["page_number"] > 0, current)
-    if current["page_number"] + 1 < current.get("page_count", 0):
+    section = finalized_section(replay)
+    destination = note_forward_destination(current, section["page_count"])
+    boundary = destination["spine_index"] != current["spine_index"]
+    if not boundary:
         note = replay.tap("down", "original-note-final-page", "Perform the former failing lifecycle's next-page action in the note context")
-    else:
-        before = replay.experiment.refresh_count(replay.qmp)
-        replay.experiment.press(replay.qmp, "down", purpose="original next-page action at final note page: observe the actual boundary")
-        replay.experiment.wait("note boundary input neutral interval", lambda:
-            replay.experiment.clock(replay.qmp) >= replay.experiment.steps[-1]["release_observed_t_ns"] + 500_000_000)
-        after = replay.experiment.refresh_count(replay.qmp)
-        replay.check("note_final_page_boundary_does_not_turn", after == before, {"before": before, "after": after})
-        note = replay.capture("original-note-final-page-no-refresh")
     note = replay.capture_text("original-note-final-paragraph", ["Fixture note 1", "the clock belongs to the reader"])
-    return pixels(replay, note), progress(replay)
+    original_note_pixels = pixels(replay, note)
+    if boundary and exercise_boundary:
+        replay.tap("down", "original-note-next-spine", "Former lifecycle Down at finalized full-section end advances to the actual next spine")
+    if not boundary or exercise_boundary:
+        def saved_destination():
+            actual = progress(replay)
+            return actual if all(actual[key] == value for key, value in destination.items()) else False
+        actual = replay.experiment.wait("guest saves source-directed full-section forward destination", saved_destination)
+        replay.check("original_note_down_saves_source_directed_destination", True, {
+            "before": current, "finalized_page_count": section["page_count"],
+            "expected": destination, "actual": actual, "crosses_spine": boundary})
+    else:
+        actual = progress(replay)
+        replay.check("durable_original_note_boundary_down_skipped", actual == current, {
+            "saved_note": actual, "source_forward_destination": destination,
+            "reason": "durable note resume keeps the original note; Down would leave its full section"})
+    return original_note_pixels, actual
 
 
 def return_workflow(replay, client):
     original = pixels(replay, home_and_open(replay, client, virgin=True))
     initial = progress(replay)
     replay.check("original_reader_origin_page0", initial["spine_index"] == 0 and initial["page_number"] == 0, initial)
-    note, _ = follow_original_note(replay)
+    note, _ = follow_original_note(replay, exercise_boundary=True)
     replay.check("original_note_has_different_real_pixels", replay.helpers["changed_pixels"](original, note) > 1000)
     returned = pixels(replay, replay.tap("back", "original-footnote-origin-return", "Back restores the original reading position"))
     check_pixels(replay, "back_restores_exact_original_pixels", original, returned)
@@ -196,10 +223,10 @@ def cold_origin_workflow(replay, client, expected):
 
 def stack_save_workflow(replay, client):
     origin = pixels(replay, home_and_open(replay, client, virgin=True))
-    follow_original_note(replay)
+    follow_original_note(replay, exercise_boundary=False)
     replay.tap("back", "stack-origin-control", "Control: original Back works before re-entering its link")
     check_pixels(replay, "stack_control_exact_origin", origin, pixels(replay, replay.capture("stack-origin-reference")))
-    note, saved = follow_original_note(replay)
+    note, saved = follow_original_note(replay, exercise_boundary=False)
     # Default long Back is File Browser, with a source-defined 1000ms hold.
     # It exits the full-section reader without consuming its Back stack.
     before = replay.experiment.refresh_count(replay.qmp)
@@ -261,7 +288,7 @@ def main(argv=None):
         for path, expected in SOURCE_HASHES.items():
             if file_sha256(args.source / path) != expected:
                 raise FootnoteError("reviewed v1.6.1 source pin differs: " + path)
-        flash, efuse, provenance = validate_ota_input(args.ota_output, args.backend)
+        flash, efuse, provenance = validate_ota_input(args.ota_output, args.backend, args.rom_dir)
         report["ota_written_input"] = provenance
         book = make_advanced_epub()
         if hashlib.sha256(book).hexdigest() != FIXTURE_SHA256:
