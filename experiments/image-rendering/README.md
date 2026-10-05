@@ -67,6 +67,18 @@ steps, so the browser can also compare conversions on a host with Python alone.
 The BMP files under `device/` can be copied to an X3 SD card for a physical
 comparison. `card.img` is a generated FAT16 card for the emulator.
 
+To include color and grayscale controls in the SD card comparison, run:
+
+```sh
+python -m x3emu.image_package --input artifacts/image-study --output artifacts/x3-device-images-with-controls.zip
+```
+
+Unzip the archive and copy `X3-image-study/` to the SD card. Each sample folder
+contains a 24-bit color control, an 8-bit grayscale control, and the five
+processed BMPs. Both controls use the source at the same screen dimensions.
+CrossInk converts and dithers the controls. Use the previous and next image
+buttons to compare the files after each gray refresh completes.
+
 ## Scope
 
 The captures check digital pixel output. Physical ink tone and ghosting need
