@@ -16,16 +16,32 @@ No timing result is calibrated to a physical X3.
 
 ## CrossInk 1.6.1 continuation
 
-The [current execution record](crossink-v161-validation-2026-10-05.md)
-identifies main commit `cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5`,
-native ELF `1f12964a3794e489c3776af9f4ffe7ab54d255c2b3a37e2b3ac3461f910cae2e`,
-unchanged official v1.6.1 application and exact closed receipt hashes. Genuine
-online download/install/warm reboot, v83 EPUB turns/save/reopen, a fresh-CPU
-saved-page restore and the actual packaged launcher read/save/resume pass.
-The original-footnote return and genuine one-entry disk-restored link also pass
-on four closed CPUs. These v1.6.1 scopes supplement the dated v1.6.0 inventory;
-they do not relabel its other function proofs or establish all permutations.
-The newly observed [stock return-to-saved-page progress defect](stock-firmware-limitations.md#separate-crossink-161-observations)
+The [current handoff](main-handoff-2026-10-05.md) identifies the actual
+main619 native ELF, unchanged official 1.6.1 application and closed receipts.
+Genuine download/install/warm reboot, version-83 EPUB turns/save/reopen,
+fresh-CPU saved-page restoration, four-CPU original-footnote return and the
+actual shipped launcher read/save/resume passed on this binary. The separate
+HTTP gate passed all 57 checks and eleven exact native/HTTP frame bindings.
+The [earlier cd95 record](crossink-v161-validation-2026-10-05.md) retains its
+original source, native and receipt identities.
+
+The 1.6.1 source replaces the old X3 EPUB menu with
+`EpubReaderDrawerActivity`: More, Location, Settings and Font navigation differs
+from 1.6.0. Per-book reader settings use version 10 with an exact 157-byte
+snapshot and override mask. The new portable
+`scripts/test-crossink-v161-functions.py` pins nineteen inspected source files
+and exercises genuine bookmark, clipping and font writes on fresh cards,
+then carries only closed written flash/card/eFuse into a fresh CPU. It requires
+the original passing three-CPU OTA receipt and every child check; no saved
+items, progress or settings are seeded. Its current actual execution is
+pending closure, so its corresponding 1.6.1 feature verdicts are not claimed.
+
+Current 1.6.0 [bookmarks, clippings and fonts](evidence/core-functions-v160-61927-2026-10-05.json)
+passed their functional outputs on this same native ELF, with four clean CPU
+exits. Original `strict_pass=false` and command exit 1 are retained because
+unsupported model diagnostics were recorded. These results supplement this
+dated inventory and do not relabel it as exhaustive 1.6.1 execution.
+The observed [stock return-to-saved-page progress defect](stock-firmware-limitations.md#separate-crossink-161-observations)
 retains its original failed verdict separately.
 
 ## Fresh continuation proofs

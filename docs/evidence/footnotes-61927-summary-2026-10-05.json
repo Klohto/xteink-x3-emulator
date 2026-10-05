@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "status": "independently_verified_passed",
+  "scope": "Unmodified official CrossInk v1.6.1 footnote return, durable single link, long and short Back, and fresh CPU restoration after genuine official OTA on current main619 native",
+  "original_artifact": {
+    "artifact_id": 11355250914,
+    "artifact_name": "x3-crossink-v161-footnotes-61927c41475a5f1ddb5454adf0db79657b30a563",
+    "artifact_size_bytes": 33532842,
+    "artifact_sha256": "0428b7eb69575ed0fa0434a05f0a0f1378f2649fd0ac62e305e3926b1c2e0dcd",
+    "source_commit": "61927c41475a5f1ddb5454adf0db79657b30a563",
+    "workflow_run_id": 37329050494,
+    "workflow_run_attempt": 1,
+    "native_job_id": 111827126570,
+    "created_at": "2026-10-05T15:26:15Z",
+    "safe_paths_verified": true,
+    "symlink_entries": 0,
+    "zip_members": 100,
+    "original_uncompressed_bytes": 492195877
+  },
+  "original_root_receipt_sha256": "9ffca5305a6cb886021c84a3509941b6631ceff4e356ff71ce70f08b58d95342",
+  "original_root_gzip_sha256": "2541dd0ea0a90f66a57c56386ed4156db2e654bad41a7f9cf22a06fddd66227f",
+  "original_root_bytes": 1101142,
+  "original_root_gzip_bytes": 91730,
+  "independent_readback_receipt_sha256": "c34dba64e1a590c17a3f9f4e2e1ac63da77a4471cb74117a1bee570cf0f62c32",
+  "root_receipt_sha256": "9ffca5305a6cb886021c84a3509941b6631ceff4e356ff71ce70f08b58d95342",
+  "original_ota": {
+    "original_ota_receipt_sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011",
+    "carried_run_manifest_sha256": "05842d09af0082b0fffbb9448715f8667075aefd7639928b8db1d04497ecec78",
+    "carried_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+    "carried_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+    "carried_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "official_v161_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+    "actual_ota_selection": {
+      "slots": [
+        {
+          "slot": 0,
+          "sequence": 1,
+          "state": 4294967295,
+          "crc32": 1195612314,
+          "valid": true
+        },
+        {
+          "slot": 1,
+          "sequence": 2,
+          "state": 2,
+          "crc32": 1442199412,
+          "valid": true
+        }
+      ],
+      "active_slot": 1,
+      "app_index": 1,
+      "app_offset": 6619136
+    }
+  },
+  "backend_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "cpus": [
+    {
+      "name": "return-cold-warm",
+      "receipt_sha256": "478c1366b8995709806d5a2bcc8ce483c7a40a16cfdfcff965895d16909d2ae0",
+      "run_manifest_sha256": "674fce121961fbd0ecfc68fe2499cbcc6fe52169334a36cfea1f5ebb0388b105",
+      "frames_verified": 13,
+      "native_trace_records": 840,
+      "native_complete_frames": 33,
+      "flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "card_sha256": "90bf284f35ed9046829a8b87d99ee7f6369483aec1573c00bc7a777e4a2fe6d7",
+      "efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "back_holds_ns": [
+        400000000,
+        400000000
+      ],
+      "native_exit_code": 0,
+      "progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 23,
+        "visible_text_offset": 0
+      },
+      "links_bin_hex": null,
+      "trace_complete": true
+    },
+    {
+      "name": "return-cold-cold",
+      "receipt_sha256": "193abe7485e282e7264d68638fcae220b5297008f83550cce3ca88c5c3e0e503",
+      "run_manifest_sha256": "7e42cac12e44f0badc7bfb540d08052396b66ab5b448cf492690eefabb4ee00f",
+      "frames_verified": 4,
+      "native_trace_records": 274,
+      "native_complete_frames": 11,
+      "flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "card_sha256": "ef682a923199d09faeab1be7af87abc1a3f94ac5fd57c34841131fd8c0f3c711",
+      "efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "back_holds_ns": [
+        400000000
+      ],
+      "native_exit_code": 0,
+      "progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 23,
+        "visible_text_offset": 0
+      },
+      "links_bin_hex": null,
+      "trace_complete": true
+    },
+    {
+      "name": "durable-single-link-warm",
+      "receipt_sha256": "ab06e31910656daddb7321ae765406ae5ddd172d28b1e994f404da6a471dcd0d",
+      "run_manifest_sha256": "49d314e0944d8e8b2f623eb0d83212f66926af25b5e0f2a52a49dcc0ed2f0884",
+      "frames_verified": 19,
+      "native_trace_records": 1063,
+      "native_complete_frames": 38,
+      "flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "card_sha256": "4d7eeb751ae7b7723a98684205e810bb78f55ccdb8ec27e269bbd774d1895380",
+      "efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "back_holds_ns": [
+        400000000,
+        1200000000
+      ],
+      "native_exit_code": 0,
+      "progress": {
+        "spine_index": 0,
+        "page_number": 22,
+        "page_count": 23,
+        "visible_text_offset": 13263
+      },
+      "links_bin_hex": "0100000000",
+      "trace_complete": true
+    },
+    {
+      "name": "durable-single-link-cold",
+      "receipt_sha256": "b6018c9c6e79a5888e04ca0421156c752add50accb46122f7dcd97156af1f051",
+      "run_manifest_sha256": "47ea06996b99997dd143f351ecc6ad944f8cc834190094647fa27b80c1300282",
+      "frames_verified": 5,
+      "native_trace_records": 441,
+      "native_complete_frames": 17,
+      "flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "card_sha256": "9ade0fe001f9760e1681318cd31382e05552feec052079a48d0c5373cfaf9d25",
+      "efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "back_holds_ns": [
+        400000000,
+        400000000
+      ],
+      "native_exit_code": 0,
+      "progress": {
+        "spine_index": 0,
+        "page_number": 0,
+        "page_count": 23,
+        "visible_text_offset": 0
+      },
+      "links_bin_hex": null,
+      "trace_complete": true
+    }
+  ],
+  "raw_pixel_comparisons": {
+    "return_back_to_origin": {
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53",
+      "actual_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53"
+    },
+    "fresh_cpu_origin": {
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53",
+      "actual_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53"
+    },
+    "durable_control_origin": {
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53",
+      "actual_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53"
+    },
+    "fresh_cpu_saved_note": {
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "b455c0a4f96c361037ea5b7b52a037fe2fed73918b4f17880b92f8389ccb1ce3",
+      "actual_pixel_sha256": "b455c0a4f96c361037ea5b7b52a037fe2fed73918b4f17880b92f8389ccb1ce3"
+    },
+    "fresh_cpu_disk_link_back_origin": {
+      "changed_pixels": 0,
+      "expected_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53",
+      "actual_pixel_sha256": "4690c2611eb47a72288a162670fa020549227163cbec4f7a152eecf85b43bd53"
+    }
+  },
+  "actual_original_note_differs_from_origin_pixels": 62731,
+  "virgin_cards_contained_only_original_test_epub": true,
+  "independent_closed_review_passed": true,
+  "all_functions_verified": false,
+  "source_sha256": {
+    "src/activities/reader/EpubReaderActivity.cpp": "2cae0773ceb5ba8e5d7a51e5582d21b71a319c408204e6bca67f2160adf966be",
+    "src/activities/reader/EpubReaderDrawerActivity.cpp": "df2a90c8db22c8c3bc11bf07b8ab65ca94c7b26520b2eee193505fd005bbd3ef",
+    "src/activities/reader/EpubLinkReturnState.cpp": "9d8d340d883d88cbc79950734e56813cc7f8e09f74030892d7d027ace3ee16a7",
+    "src/activities/reader/EpubLinkReturnState.h": "00a33a610bac4ab89e013289fc5f476b0ab2fdcc6b4429d8e460db61da9d5122",
+    "src/activities/reader/ReaderProgressSaveDebouncer.h": "4c9f51773e7feb90605fda5aa1e8d139e3c1d2c248e12f03d3f366dc242432aa",
+    "src/activities/reader/EpubReaderMenuModel.h": "41e4035743e2f776c56aff50dc5588ab101b000f8f159fd7638ad26b8189163f",
+    "src/activities/reader/EpubReaderFootnoteSelectActivity.cpp": "747c7a51ccb55cbe2b35fbc44aed0a3d56236ae878b61b0890e430df9013b822",
+    "src/MappedInputManager.cpp": "52600d9835f62d940153352dd4c8864badd7a795a97b207c8ae99af67d955ef8",
+    "lib/Epub/Epub/Section.cpp": "7760b7b7e516767f58c909b9c2e7490ce0d1de83896922bd2cb4752b6f66f4fd",
+    "src/CrossPointSettings.h": "cb54c07310df751890cf4e4ec5069ba90cab1db390ad25240ae820afbdc5731f",
+    "src/activities/reader/ReaderUtils.h": "fbeb9d10c860156b36c3ac517e3ec72e11b9dbc8fe781cc08224ba62b1ce54fb"
+  },
+  "unchanged_original_epub": {
+    "sha256": "d236e1d5f295d5d014a77ecc520ca3f729762204efec6d8337e0caef12bfd5c2",
+    "bytes": 10941
+  },
+  "three_entry_stack_verified": false,
+  "three_entry_stack_reason": "unchanged original fixture has independent same-file notes, no genuine reachable three-link chain",
+  "guest_firmware_modified": false,
+  "guest_progress_or_settings_seeded": false,
+  "binary_build_commit_verified": false,
+  "complete_machine_verified": false,
+  "speed_selection_allowed": false,
+  "script_sha256": "1a4d72900303b48d473c7a60f42fc9bc72034470d625b91c28b5f46ec4d64830",
+  "ota_observer_sha256": "4f93320ca5d8198dd0ad04a66e341ac9ce66b2a91b70c783e9816ee5e37475ec",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "native_sealed_runtime_binding_receipt_sha256": "181e4dae98dd4710785894f6a49c6966517e540d8d21e1b91c96c0bc46cbc1dc",
+  "physical_timing_calibrated": false,
+  "repository_commit": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "workflow_run_id": 37329050494,
+  "workflow_run_attempt": 1,
+  "verified_totals": {
+    "closed_cpus": 4,
+    "native_trace_records": 2618,
+    "native_complete_frames": 99,
+    "captured_frames_verified": 41
+  },
+  "inspected_source_snapshot_commit": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+  "semantic_inspected_code_parent": "1b11560278f12d50fa01291a6d1fe581b0f5630b",
+  "source_inspection_is_binary_build_commit_proof": false,
+  "accepted_positive_traffic_summary_sha256": "0f192a592c2eddfe81dce5917eaeaf101528c8701045b50212c2cf02a214bc57",
+  "limitations": [
+    "The actual persisted link stack has one origin entry; no real reachable three-link chain was exercised.",
+    "The shared OCR label may overwrite earlier entry-probe bytes. The final successful second entry is the stored cold-restoration reference; uniquely named input captures and original native event logs remain.",
+    "Native timing and synthetic device entropy are uncalibrated; these checks do not prove all functions or complete physical hardware equivalence."
+  ],
+  "native_or_guest_execution_repeated_for_audit": false
+}

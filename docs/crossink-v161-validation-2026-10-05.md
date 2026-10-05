@@ -1,4 +1,7 @@
-# CrossInk 1.6.1 on the working X3 emulator
+# Earlier cd95 CrossInk 1.6.1 execution
+
+This record retains the original cd95 binary and receipts. The [latest verified
+main download](main-handoff-2026-10-05.md) has its own executed runtime and proofs.
 
 Unchanged CrossInk now completes a genuine official online upgrade, book
 reading and saved-page restoration on the corrected native backend. The

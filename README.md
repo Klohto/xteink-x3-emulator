@@ -10,12 +10,12 @@ official CrossInk v1.6.0 with a fresh card. A genuine online upgrade to official
 v1.6.1 now passes: download, flash, warm reboot, EPUB reading, saved progress and
 restoration on a fresh CPU. The sealed launcher also reads, saves and restores
 the actual upgraded firmware and storage. Both UART programming paths check
-every written byte. See the [current execution record](docs/crossink-v161-validation-2026-10-05.md).
+every written byte. See the [current execution record](docs/main-handoff-2026-10-05.md).
 
 ## Download and run
 
-Open the [verified main run](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37309789519)
-and download its `xteink-x3-crossink-linux-x86_64-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5`
+Open the [verified main run](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37329050494)
+and download its `xteink-x3-crossink-linux-x86_64-61927c41475a5f1ddb5454adf0db79657b30a563`
 artifact. Unzip the
 artifact, extract the enclosed `.tar.gz`, and run from the extracted directory
 on **Ubuntu 24.04 x86-64**:
@@ -38,11 +38,11 @@ python3 launch.py --resume /absolute/path/to/previous/run
 ```
 
 To start the verified **v1.6.1** instead, also download
-`x3-ota-cold-reader-cpu-cd95c1f3f01249b72dd5a9645f2c7bd25fe6bde5`
-from that same run, extract its ZIP separately, and use:
+`x3-ota-cold-reader-cpu-61927c41475a5f1ddb5454adf0db79657b30a563`
+from that same run, unzip it into a directory named `cold-saved-reader`, and use:
 
 ```sh
-python3 launch.py --resume /absolute/path/to/extracted-ota/cold-saved-reader/run
+python3 launch.py --resume /absolute/path/to/cold-saved-reader/run
 ```
 
 This is the actual guest-written update and saved reader, with no CPU state
@@ -67,11 +67,11 @@ flash, output directories, dependencies and corresponding QEMU source.
 These are lossless captures of the actual emulated panel, rotated for portrait
 viewing. GIF playback is paced for inspection and is not a speed measurement.
 
-![CrossInk page turns, saving and restoration](docs/evidence/handoff/working-crossink-reading.gif)
+![CrossInk 1.6.1 page turns, saving and fresh-process restoration](docs/evidence/handoff/crossink-v161-packaged-reading.gif)
 
-The [v1.6.1 execution record](docs/crossink-v161-validation-2026-10-05.md)
-adds captures from the genuine upgrade. The demonstration above and its linked
-bookmarks, clippings and fonts runs retain their original v1.6.0 identities.
+The [v1.6.1 execution record](docs/main-handoff-2026-10-05.md)
+binds this demonstration to the actual shipped launcher and genuine updated firmware.
+The linked bookmarks, clippings and fonts demonstrations below retain their original v1.6.0 identities.
 
 [Bookmarks](docs/evidence/handoff/working-crossink-bookmarks.gif),
 [clippings](docs/evidence/handoff/working-crossink-clippings.gif), and

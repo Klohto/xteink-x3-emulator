@@ -23,6 +23,7 @@ from x3emu.backend import DEFAULT_BACKEND, file_sha256
 from x3emu.sdcard import create_fat16_card, make_test_epub
 
 FOOTNOTES = runpy.run_path(str(PROJECT / "scripts/test-crossink-v161-footnotes.py"))
+NETWORK = runpy.run_path(str(PROJECT / "scripts/test-crossink-network.py"))
 OTA = FOOTNOTES["OTA"]
 BatteryError = OTA["OnlineOtaError"]
 SDK_SOURCE = "699370183fa3a0e33c9cb83a36f701bbb6022095"
@@ -150,6 +151,62 @@ def software_reset_sequence(rows: list) -> None:
         raise BatteryError("stock Check for Updates must produce exactly one observed C3 software reset")
 
 
+def stock_restart_observation(rom: str, serial: bytes, prefix_bytes: int, prefix_sha256: str) -> dict:
+    """Bind the source-defined restart to log bytes captured before Confirm.
+
+    The minimal-boot logger row is diagnostic: the real ROM software reset,
+    fresh RTC target witness and completed source scan establish the action.
+    """
+    if (not isinstance(serial, bytes) or type(prefix_bytes) is not int
+            or not 0 <= prefix_bytes <= len(serial)
+            or not isinstance(prefix_sha256, str)
+            or hashlib.sha256(serial[:prefix_bytes]).hexdigest() != prefix_sha256):
+        raise BatteryError("stock restart serial prefix changed after the physical Confirm input")
+    before = serial[:prefix_bytes].decode(errors="replace")
+    fresh = serial[prefix_bytes:].decode(errors="replace")
+    text = serial.decode(errors="replace")
+    route_rows = [line for line in fresh.splitlines() if "Post-GPIO diagnostic:" in line]
+    exact_route = re.compile(r"^.*Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=2\s*$")
+    minimal_rows = [line for line in text.splitlines() if "Minimal network boot ready:" in line]
+    before_minimal = [line for line in before.splitlines() if "Minimal network boot ready:" in line]
+    exact_minimal = re.compile(r"^.*Minimal network boot ready: target=2 free=[0-9]+ maxAlloc=[0-9]+\s*$")
+    scan_rows = [line for line in fresh.splitlines() if any(marker in line for marker in (
+        "WiFi scan complete: rawNetworks=", "WiFi scan usable networks=",
+        "WiFi released before network list mode=0"))]
+    scan_before = NETWORK["scan_callback_observation"](before)
+    scan_fresh = NETWORK["scan_callback_observation"](fresh)
+    scan_after = NETWORK["scan_callback_observation"](text)
+    rows = OTA["rom_reset_observations"](rom)
+    try:
+        software_reset_sequence(rows)
+        reset_valid = True
+    except BatteryError:
+        reset_valid = False
+    route_valid = (len(route_rows) == 1 and fresh.count("Post-GPIO diagnostic:") == 1
+        and exact_route.fullmatch(route_rows[0]) is not None)
+    scan_valid = (scan_fresh["completed_callbacks"] == 1
+        and scan_after["completed_callbacks"] == scan_before["completed_callbacks"] + 1
+        and scan_fresh["usable_network_lines"] == 1
+        and scan_fresh["released_before_list_lines"] == 1
+        and all(scan_fresh[name] <= 1 for name in (
+            "raw_completion_lines", "usable_network_lines", "released_before_list_lines"))
+        and bool(scan_rows) and route_valid
+        and all(fresh.index(row) > fresh.index(route_rows[0]) for row in scan_rows))
+    minimal_valid = (not before_minimal and len(minimal_rows) <= 1
+        and text.count("Minimal network boot ready:") == len(minimal_rows)
+        and all(exact_minimal.fullmatch(row) is not None for row in minimal_rows))
+    return {"verified": bool(reset_valid and route_valid and scan_valid and minimal_valid),
+        "rom_resets": rows, "serial_prefix_bytes": prefix_bytes, "serial_prefix_sha256": prefix_sha256,
+        "fresh_post_gpio_rows": route_rows, "fresh_scan_rows": scan_rows,
+        "before_scan_callback_observation": scan_before, "fresh_scan_callback_observation": scan_fresh,
+        "after_scan_callback_observation": scan_after,
+        "before_network_target2_markers": len(before_minimal),
+        "after_network_target2_markers": len(minimal_rows),
+        "minimal_network_boot_rows": minimal_rows,
+        "minimal_network_boot_line_observed": bool(minimal_rows),
+        "minimal_network_boot_line_missing": not minimal_rows}
+
+
 def validate_restart_input(cpu: dict) -> None:
     battery = cpu["battery"]
     observations = cpu.get("observations", {})
@@ -165,16 +222,42 @@ def validate_restart_input(cpu: dict) -> None:
     if (trigger["scheduled_hold_ns"] != 400_000_000
             or trigger["release_deadline_t_ns"] != trigger["press_t_ns"] + trigger["scheduled_hold_ns"]
             or trigger["request_t_ns"] > trigger["press_t_ns"]
-            or trigger["release_observed_t_ns"] < trigger["press_t_ns"]
+            or trigger["release_observed_t_ns"] < trigger["release_deadline_t_ns"]
             or trigger.get("release_transport") != "ADC QEMU_CLOCK_VIRTUAL timer"):
         raise BatteryError("stock restart input is not the recorded short native ADC pulse")
     route = observations.get("stock_network_boot_target2", {})
-    if (route.get("confirm_input") != trigger or route.get("rom_resets") != cpu["rom_reset_observations"]
+    if not isinstance(route, dict):
+        raise BatteryError("stock restart observation is missing")
+    scan_before = route.get("before_scan_callback_observation", {})
+    scan_fresh = route.get("fresh_scan_callback_observation", {})
+    scan_after = route.get("after_scan_callback_observation", {})
+    marker_count = route.get("after_network_target2_markers")
+    if (route.get("verified") is not True
+            or route.get("confirm_input") != trigger or route.get("rom_resets") != cpu["rom_reset_observations"]
             or route.get("before_rom_resets") != [{"code": 1, "name": "POWERON"}]
             or type(route.get("before_network_target2_markers")) is not int
-            or type(route.get("after_network_target2_markers")) is not int
+            or type(marker_count) is not int or marker_count not in (0, 1)
             or route.get("before_network_target2_markers") != 0
-            or route.get("after_network_target2_markers") != 1
+            or route.get("minimal_network_boot_line_observed") is not bool(marker_count)
+            or route.get("minimal_network_boot_line_missing") is not (not bool(marker_count))
+            or not isinstance(route.get("minimal_network_boot_rows"), list)
+            or len(route["minimal_network_boot_rows"]) != marker_count
+            or type(route.get("serial_prefix_bytes")) is not int or route["serial_prefix_bytes"] <= 0
+            or not isinstance(route.get("serial_prefix_sha256"), str)
+            or re.fullmatch(r"[0-9a-f]{64}", route["serial_prefix_sha256"]) is None
+            or not isinstance(route.get("fresh_post_gpio_rows"), list)
+            or len(route["fresh_post_gpio_rows"]) != 1
+            or not isinstance(route["fresh_post_gpio_rows"][0], str)
+            or re.fullmatch(r".*Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=2\s*",
+                            route["fresh_post_gpio_rows"][0]) is None
+            or not isinstance(route.get("fresh_scan_rows"), list) or not route["fresh_scan_rows"]
+            or not isinstance(scan_before, dict) or not isinstance(scan_fresh, dict) or not isinstance(scan_after, dict)
+            or type(scan_before.get("completed_callbacks")) is not int
+            or scan_before.get("completed_callbacks", -1) < 0
+            or type(scan_after.get("completed_callbacks")) is not int
+            or type(scan_fresh.get("completed_callbacks")) is not int
+            or scan_fresh.get("completed_callbacks") != 1
+            or scan_after.get("completed_callbacks") != scan_before.get("completed_callbacks") + 1
             or type(route.get("observed_t_ns")) is not int
             or not battery["loaded"]["t_ns"] <= trigger["press_t_ns"] <= route["observed_t_ns"]
                    <= battery["after_stock_software_restart"]["t_ns"]):
@@ -252,12 +335,18 @@ def validate_closed_native_evidence(cpu: dict, directory: Path, smoke: dict) -> 
         raise BatteryError("software reset receipt differs from the actual ROM output")
     routes = re.findall(r"Post-GPIO diagnostic: device=X3 usb=(\d+) silentReboot=(\d+) silentTarget=(\d+)", serial)
     resets = re.findall(r"Reset diagnostic: reset=\d+\((\w+)\)", serial)
+    recorded_route = cpu.get("observations", {}).get("stock_network_boot_target2", {})
+    if not isinstance(recorded_route, dict):
+        raise BatteryError("actual guest logs are disconnected from the stock restart observation")
+    observed_route = stock_restart_observation(rom, (run / "serial.log").read_bytes(),
+        recorded_route.get("serial_prefix_bytes"), recorded_route.get("serial_prefix_sha256"))
     if (len(routes) != 2 or [row[1:] for row in routes] != [("0", "0"), ("1", "2")]
             or any(row[0] not in ("0", "1") for row in routes)
             or resets not in (["POWERON", "SW"], ["SW"])
-            or serial.count("Minimal network boot ready: target=2") != 1
+            or observed_route["verified"] is not True
+            or any(recorded_route.get(name) != value for name, value in observed_route.items())
             or serial.count(COMPLETION_MARKER) != 1
-            or serial.index(COMPLETION_MARKER) > serial.index("Minimal network boot ready: target=2")
+            or COMPLETION_MARKER not in (run / "serial.log").read_bytes()[:observed_route["serial_prefix_bytes"]].decode(errors="replace")
             or smoke["FATAL_LOG"].search(rom + "\n" + serial) is not None):
         raise BatteryError("actual guest logs do not establish capacity completion followed by stock route 0-to-2 software restart")
     panel = manifest.get("final_state", {}).get("panel", {})
@@ -342,21 +431,22 @@ def capacity_workflow(replay, client, network):
     replay.capture("battery-calibrated-v161-home")
     select_stock_capacity_restart(replay, network)
     before_rom = OTA["rom_reset_observations"](replay.experiment.log_text("rom.log"))
-    before_network = replay.experiment.log_text("serial.log").count("Minimal network boot ready: target=2")
-    before_scan = network["scan_callback_observation"](replay.experiment.log_text("serial.log"))["completed_callbacks"]
+    before_serial = (replay.experiment.run_dir / "serial.log").read_bytes()
+    prefix_bytes = len(before_serial)
+    prefix_sha256 = hashlib.sha256(before_serial).hexdigest()
+    before_scan = network["scan_callback_observation"](before_serial.decode(errors="replace"))["completed_callbacks"]
     replay.experiment.press(replay.qmp, "confirm", purpose="Stock Settings Check for Updates calls ESP.restart; no host reset command")
     trigger = replay.experiment.steps[-1]
     replay.check("stock_check_updates_confirm_input", trigger["button"] == "confirm", trigger)
-    replay.experiment.wait("actual stock C3 software boot", lambda:
-        len(OTA["rom_reset_observations"](replay.experiment.log_text("rom.log"))) > len(before_rom)
-        and "Minimal network boot ready: target=2" in replay.experiment.log_text("serial.log"))
-    rows = OTA["rom_reset_observations"](replay.experiment.log_text("rom.log"))
-    software_reset_sequence(rows)
-    replay.check("stock_network_boot_target2", True, {"rom_resets": rows, "confirm_input": trigger,
-        "before_rom_resets": before_rom, "before_network_target2_markers": before_network,
-        "after_network_target2_markers": replay.experiment.log_text("serial.log").count("Minimal network boot ready: target=2"),
+    def restarted():
+        observed = stock_restart_observation(replay.experiment.log_text("rom.log"),
+            (replay.experiment.run_dir / "serial.log").read_bytes(), prefix_bytes, prefix_sha256)
+        return observed if observed["verified"] else False
+    route = replay.experiment.wait("actual stock C3 software boot, fresh target2 and completed scan", restarted)
+    replay.check("stock_network_boot_target2", True, route | {"confirm_input": trigger,
+        "before_rom_resets": before_rom,
         "observed_t_ns": replay.experiment.clock(replay.qmp),
-        "timestamp_source": "QEMU_CLOCK_VIRTUAL when the actual ROM and guest boot log were observed"})
+        "timestamp_source": "QEMU_CLOCK_VIRTUAL when actual ROM, fresh target2 and completed scan were observed"})
     replay.experiment.wait("stock WiFi picker scan before user cancellation", lambda:
         network["scan_callback_observation"](replay.experiment.log_text("serial.log"))["completed_callbacks"] > before_scan)
     replay.capture("battery-software-restart-wifi-picker")
@@ -410,7 +500,7 @@ def main(argv=None) -> int:
         card = args.output / "virgin-original-book-card.img"
         create_fat16_card(card, {"/test.epub": book})
         smoke = runpy.run_path(str(PROJECT / "scripts/smoke-crossink.py"))
-        network = runpy.run_path(str(PROJECT / "scripts/test-crossink-network.py"))
+        network = NETWORK
         if smoke["Fat16Card"](card).read_file("/test.epub") != book:
             raise BatteryError("virgin original fixture FAT roundtrip failed")
         args.initial_gauge_design_capacity_mah = 3000

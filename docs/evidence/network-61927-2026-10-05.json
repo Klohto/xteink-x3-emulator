@@ -1,0 +1,820 @@
+{
+  "schema_version": 1,
+  "status": "independent_positive_traffic_readback_passed",
+  "tested_commit": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "repository_tree": "6aedaa2c8e2b9b8bea49ab324f327cc79734abf2",
+  "workflow_run_id": 37329050494,
+  "workflow_run_attempt": 1,
+  "native_job_id": 111827126570,
+  "original_master_receipt_sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011",
+  "original_online_cpu_receipt_sha256": "76fe37065479f155f03aab1cccb611422b3241b1f134d2d96c7ca86d5a79ffd7",
+  "original_run_manifest_sha256": "e13c73feb8941c01517926f9239917b49a8713493cab81609431008f45a447cc",
+  "original_artifact_inventory_sha256": "7a0fad087e8373a6424df3b5a3088580a240d2f6c701f26c29417b9199741731",
+  "backend_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "source_observer_sha256": "4f93320ca5d8198dd0ad04a66e341ac9ce66b2a91b70c783e9816ee5e37475ec",
+  "network_capture": {
+    "sha256": "c5ff8b06cd5c46db6f0b480bbff8aaad99f13ec95683f22a0cf39b7c20cfc5eb",
+    "bytes": 6976986,
+    "packet_records": 8838,
+    "packet_payload_bytes": 6835554,
+    "first_timestamp_us": 1791212781099316,
+    "last_timestamp_us": 1791212958562750,
+    "linktype": 1,
+    "snaplen": 65535,
+    "all_records_complete": true,
+    "discovered_netdev": "#net051",
+    "observed_queue": "all",
+    "observed_status": "on",
+    "file_identity_preserved": true,
+    "dump_write_error_rows": []
+  },
+  "readback_reports": {
+    "ethernet_udp_sha256": "c3b93cfb63151beaf618aeb1081484aaea004ca098be65b1896a99004e7e57f1",
+    "tcp_tls_sha256": "c4e1b24667fa065a98cace632935ad161ba8dc1706b5db5d745386a9ddd03e7d",
+    "closed_three_cpu_sha256": "a0bdfd4657f95aa1985c40bc7f6e4d00d5e799aa918f98ca646bb015b53b7779",
+    "native_sealed_binding_sha256": "181e4dae98dd4710785894f6a49c6966517e540d8d21e1b91c96c0bc46cbc1dc"
+  },
+  "datagrams": [
+    {
+      "packet": 1,
+      "native_virtual_seconds": 33.099316,
+      "source": [
+        "0.0.0.0",
+        68
+      ],
+      "destination": [
+        "255.255.255.255",
+        67
+      ],
+      "dhcp": {
+        "operation": 1,
+        "transaction_id": 2860097156,
+        "client_ip": "0.0.0.0",
+        "offered_ip": "0.0.0.0",
+        "client_hardware_address_hex": "025833454401",
+        "message_type": 1
+      }
+    },
+    {
+      "packet": 2,
+      "native_virtual_seconds": 33.099388,
+      "source": [
+        "10.0.2.2",
+        67
+      ],
+      "destination": [
+        "255.255.255.255",
+        68
+      ],
+      "dhcp": {
+        "operation": 2,
+        "transaction_id": 2860097156,
+        "client_ip": "0.0.0.0",
+        "offered_ip": "10.0.2.15",
+        "client_hardware_address_hex": "025833454401",
+        "message_type": 2,
+        "server_id": "10.0.2.2",
+        "dns_servers": [
+          "10.0.2.3"
+        ]
+      }
+    },
+    {
+      "packet": 3,
+      "native_virtual_seconds": 33.105256,
+      "source": [
+        "0.0.0.0",
+        68
+      ],
+      "destination": [
+        "255.255.255.255",
+        67
+      ],
+      "dhcp": {
+        "operation": 1,
+        "transaction_id": 2860097156,
+        "client_ip": "0.0.0.0",
+        "offered_ip": "0.0.0.0",
+        "client_hardware_address_hex": "025833454401",
+        "message_type": 3,
+        "server_id": "10.0.2.2"
+      }
+    },
+    {
+      "packet": 4,
+      "native_virtual_seconds": 33.105267,
+      "source": [
+        "10.0.2.2",
+        67
+      ],
+      "destination": [
+        "255.255.255.255",
+        68
+      ],
+      "dhcp": {
+        "operation": 2,
+        "transaction_id": 2860097156,
+        "client_ip": "0.0.0.0",
+        "offered_ip": "10.0.2.15",
+        "client_hardware_address_hex": "025833454401",
+        "message_type": 5,
+        "server_id": "10.0.2.2",
+        "dns_servers": [
+          "10.0.2.3"
+        ]
+      }
+    },
+    {
+      "packet": 10,
+      "native_virtual_seconds": 34.223976,
+      "source": [
+        "10.0.2.15",
+        32750
+      ],
+      "destination": [
+        "10.0.2.3",
+        53
+      ],
+      "dns": {
+        "id": 59260,
+        "response": false,
+        "rcode": 0,
+        "truncated_flag": false,
+        "questions": [
+          {
+            "name": "pool.ntp.org",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": []
+      }
+    },
+    {
+      "packet": 11,
+      "native_virtual_seconds": 34.461656,
+      "source": [
+        "10.0.2.3",
+        53
+      ],
+      "destination": [
+        "10.0.2.15",
+        32750
+      ],
+      "dns": {
+        "id": 59260,
+        "response": true,
+        "rcode": 0,
+        "truncated_flag": false,
+        "questions": [
+          {
+            "name": "pool.ntp.org",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": [
+          {
+            "name": "pool.ntp.org",
+            "type": 1,
+            "class": 1,
+            "ttl": 130,
+            "value": "23.186.168.133"
+          },
+          {
+            "name": "pool.ntp.org",
+            "type": 1,
+            "class": 1,
+            "ttl": 130,
+            "value": "142.248.80.92"
+          },
+          {
+            "name": "pool.ntp.org",
+            "type": 1,
+            "class": 1,
+            "ttl": 130,
+            "value": "69.89.207.199"
+          },
+          {
+            "name": "pool.ntp.org",
+            "type": 1,
+            "class": 1,
+            "ttl": 130,
+            "value": "45.83.234.123"
+          }
+        ]
+      }
+    },
+    {
+      "packet": 14,
+      "native_virtual_seconds": 34.471412,
+      "source": [
+        "10.0.2.15",
+        52302
+      ],
+      "destination": [
+        "23.186.168.133",
+        123
+      ],
+      "ntp": {
+        "leap": 0,
+        "version": 4,
+        "mode": 3,
+        "stratum": 0,
+        "reference_id_hex": "00000000",
+        "origin": {
+          "seconds_1900": 0,
+          "fraction_u32": 0,
+          "unix_seconds_era0": null
+        },
+        "receive": {
+          "seconds_1900": 0,
+          "fraction_u32": 0,
+          "unix_seconds_era0": null
+        },
+        "transmit": {
+          "seconds_1900": 0,
+          "fraction_u32": 0,
+          "unix_seconds_era0": null
+        }
+      }
+    },
+    {
+      "packet": 15,
+      "native_virtual_seconds": 34.547232,
+      "source": [
+        "23.186.168.133",
+        123
+      ],
+      "destination": [
+        "10.0.2.15",
+        52302
+      ],
+      "ntp": {
+        "leap": 0,
+        "version": 4,
+        "mode": 4,
+        "stratum": 2,
+        "reference_id_hex": "84a36006",
+        "origin": {
+          "seconds_1900": 0,
+          "fraction_u32": 0,
+          "unix_seconds_era0": null
+        },
+        "receive": {
+          "seconds_1900": 4000201637,
+          "fraction_u32": 3140710387,
+          "unix_seconds_era0": 1791212837
+        },
+        "transmit": {
+          "seconds_1900": 4000201637,
+          "fraction_u32": 3140989990,
+          "unix_seconds_era0": 1791212837
+        }
+      }
+    },
+    {
+      "packet": 17,
+      "native_virtual_seconds": 35.350688,
+      "source": [
+        "10.0.2.15",
+        15265
+      ],
+      "destination": [
+        "10.0.2.3",
+        53
+      ],
+      "dns": {
+        "id": 449,
+        "response": false,
+        "rcode": 0,
+        "truncated_flag": false,
+        "questions": [
+          {
+            "name": "api.github.com",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": []
+      }
+    },
+    {
+      "packet": 18,
+      "native_virtual_seconds": 35.363949,
+      "source": [
+        "10.0.2.3",
+        53
+      ],
+      "destination": [
+        "10.0.2.15",
+        15265
+      ],
+      "dns": {
+        "id": 449,
+        "response": true,
+        "rcode": 0,
+        "truncated_flag": false,
+        "questions": [
+          {
+            "name": "api.github.com",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": [
+          {
+            "name": "api.github.com",
+            "type": 1,
+            "class": 1,
+            "ttl": 4,
+            "value": "140.82.114.6"
+          }
+        ]
+      }
+    },
+    {
+      "packet": 70,
+      "native_virtual_seconds": 45.726232,
+      "source": [
+        "10.0.2.15",
+        8627
+      ],
+      "destination": [
+        "10.0.2.3",
+        53
+      ],
+      "dns": {
+        "id": 42682,
+        "response": false,
+        "rcode": 0,
+        "truncated_flag": false,
+        "questions": [
+          {
+            "name": "github.com",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": []
+      }
+    },
+    {
+      "packet": 71,
+      "native_virtual_seconds": 45.728376,
+      "source": [
+        "10.0.2.3",
+        53
+      ],
+      "destination": [
+        "10.0.2.15",
+        8627
+      ],
+      "dns": {
+        "id": 42682,
+        "response": true,
+        "rcode": 0,
+        "truncated_flag": false,
+        "questions": [
+          {
+            "name": "github.com",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": [
+          {
+            "name": "github.com",
+            "type": 1,
+            "class": 1,
+            "ttl": 13,
+            "value": "140.82.113.4"
+          }
+        ]
+      }
+    },
+    {
+      "packet": 102,
+      "native_virtual_seconds": 46.275202,
+      "source": [
+        "10.0.2.15",
+        2641
+      ],
+      "destination": [
+        "10.0.2.3",
+        53
+      ],
+      "dns": {
+        "id": 39341,
+        "response": false,
+        "rcode": 0,
+        "truncated_flag": false,
+        "questions": [
+          {
+            "name": "release-assets.githubusercontent.com",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": []
+      }
+    },
+    {
+      "packet": 103,
+      "native_virtual_seconds": 46.275921,
+      "source": [
+        "10.0.2.3",
+        53
+      ],
+      "destination": [
+        "10.0.2.15",
+        2641
+      ],
+      "dns": {
+        "id": 39341,
+        "response": true,
+        "rcode": 0,
+        "truncated_flag": false,
+        "questions": [
+          {
+            "name": "release-assets.githubusercontent.com",
+            "type": 1,
+            "class": 1
+          }
+        ],
+        "answers": [
+          {
+            "name": "release-assets.githubusercontent.com",
+            "type": 1,
+            "class": 1,
+            "ttl": 163,
+            "value": "185.199.108.133"
+          },
+          {
+            "name": "release-assets.githubusercontent.com",
+            "type": 1,
+            "class": 1,
+            "ttl": 163,
+            "value": "185.199.110.133"
+          },
+          {
+            "name": "release-assets.githubusercontent.com",
+            "type": 1,
+            "class": 1,
+            "ttl": 163,
+            "value": "185.199.111.133"
+          },
+          {
+            "name": "release-assets.githubusercontent.com",
+            "type": 1,
+            "class": 1,
+            "ttl": 163,
+            "value": "185.199.109.133"
+          }
+        ]
+      }
+    }
+  ],
+  "tcp_tls_flows": [
+    {
+      "endpoints": [
+        [
+          "10.0.2.15",
+          60475
+        ],
+        [
+          "140.82.114.6",
+          443
+        ]
+      ],
+      "directions": [
+        {
+          "direction": "guest_to_slirp",
+          "packets": 23,
+          "unique_payload_bytes": 525,
+          "missing_sequence_ranges": [],
+          "conflicting_overlap_bytes": 0,
+          "repeated_payload_segments": 0,
+          "tls_record_count": 5,
+          "tls_record_type_counts": {
+            "22": 3,
+            "20": 1,
+            "23": 1
+          },
+          "unparsed_tls_record_tail_bytes": 0,
+          "hellos": [
+            {
+              "legacy_version": "0303",
+              "server_names": [
+                "api.github.com"
+              ]
+            }
+          ],
+          "plaintext_alerts": [],
+          "opaque_alert_record_count": 0,
+          "fin_rst_events": [
+            {
+              "packet": 63,
+              "flags": [
+                "FIN",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 67,
+              "flags": [
+                "RST",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 68,
+              "flags": [
+                "RST",
+                "ACK"
+              ]
+            }
+          ]
+        },
+        {
+          "direction": "slirp_to_guest",
+          "packets": 26,
+          "unique_payload_bytes": 19216,
+          "missing_sequence_ranges": [],
+          "conflicting_overlap_bytes": 0,
+          "repeated_payload_segments": 0,
+          "tls_record_count": 19,
+          "tls_record_type_counts": {
+            "22": 5,
+            "20": 1,
+            "23": 12,
+            "21": 1
+          },
+          "unparsed_tls_record_tail_bytes": 0,
+          "hellos": [
+            {
+              "legacy_version": "0303",
+              "selected_cipher": "c02b"
+            }
+          ],
+          "plaintext_alerts": [],
+          "opaque_alert_record_count": 1,
+          "fin_rst_events": [
+            {
+              "packet": 66,
+              "flags": [
+                "FIN",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 69,
+              "flags": [
+                "RST"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "endpoints": [
+        [
+          "10.0.2.15",
+          60476
+        ],
+        [
+          "140.82.113.4",
+          443
+        ]
+      ],
+      "directions": [
+        {
+          "direction": "guest_to_slirp",
+          "packets": 14,
+          "unique_payload_bytes": 440,
+          "missing_sequence_ranges": [],
+          "conflicting_overlap_bytes": 0,
+          "repeated_payload_segments": 0,
+          "tls_record_count": 3,
+          "tls_record_type_counts": {
+            "22": 1,
+            "23": 2
+          },
+          "unparsed_tls_record_tail_bytes": 0,
+          "hellos": [
+            {
+              "legacy_version": "0303",
+              "server_names": [
+                "github.com"
+              ]
+            }
+          ],
+          "plaintext_alerts": [],
+          "opaque_alert_record_count": 0,
+          "fin_rst_events": [
+            {
+              "packet": 95,
+              "flags": [
+                "FIN",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 99,
+              "flags": [
+                "RST",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 100,
+              "flags": [
+                "RST",
+                "ACK"
+              ]
+            }
+          ]
+        },
+        {
+          "direction": "slirp_to_guest",
+          "packets": 16,
+          "unique_payload_bytes": 8551,
+          "missing_sequence_ranges": [],
+          "conflicting_overlap_bytes": 0,
+          "repeated_payload_segments": 0,
+          "tls_record_count": 13,
+          "tls_record_type_counts": {
+            "22": 1,
+            "20": 1,
+            "23": 11
+          },
+          "unparsed_tls_record_tail_bytes": 0,
+          "hellos": [
+            {
+              "legacy_version": "0303",
+              "selected_cipher": "1301",
+              "selected_version": "0304"
+            }
+          ],
+          "plaintext_alerts": [],
+          "opaque_alert_record_count": 0,
+          "fin_rst_events": [
+            {
+              "packet": 98,
+              "flags": [
+                "FIN",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 101,
+              "flags": [
+                "RST"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "endpoints": [
+        [
+          "10.0.2.15",
+          60477
+        ],
+        [
+          "185.199.108.133",
+          443
+        ]
+      ],
+      "directions": [
+        {
+          "direction": "guest_to_slirp",
+          "packets": 4329,
+          "unique_payload_bytes": 1309,
+          "missing_sequence_ranges": [],
+          "conflicting_overlap_bytes": 0,
+          "repeated_payload_segments": 0,
+          "tls_record_count": 3,
+          "tls_record_type_counts": {
+            "22": 1,
+            "23": 2
+          },
+          "unparsed_tls_record_tail_bytes": 0,
+          "hellos": [
+            {
+              "legacy_version": "0303",
+              "server_names": [
+                "release-assets.githubusercontent.com"
+              ]
+            }
+          ],
+          "plaintext_alerts": [],
+          "opaque_alert_record_count": 0,
+          "fin_rst_events": [
+            {
+              "packet": 8830,
+              "flags": [
+                "FIN",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 8834,
+              "flags": [
+                "RST",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 8835,
+              "flags": [
+                "RST",
+                "ACK"
+              ]
+            }
+          ]
+        },
+        {
+          "direction": "slirp_to_guest",
+          "packets": 4403,
+          "unique_payload_bytes": 6326123,
+          "missing_sequence_ranges": [],
+          "conflicting_overlap_bytes": 0,
+          "repeated_payload_segments": 0,
+          "tls_record_count": 397,
+          "tls_record_type_counts": {
+            "22": 1,
+            "23": 396
+          },
+          "unparsed_tls_record_tail_bytes": 0,
+          "hellos": [
+            {
+              "legacy_version": "0303",
+              "selected_cipher": "1301",
+              "selected_version": "0304"
+            }
+          ],
+          "plaintext_alerts": [],
+          "opaque_alert_record_count": 0,
+          "fin_rst_events": [
+            {
+              "packet": 8833,
+              "flags": [
+                "FIN",
+                "ACK"
+              ]
+            },
+            {
+              "packet": 8836,
+              "flags": [
+                "RST"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "rx_diagnostics": {
+    "source_log": "run/diagnostics.log",
+    "log_sha256": "a1b690865c812214aacecbdee9cfadec1e17c5d76ebf1a6c32cf48333760b134",
+    "bounded_control_rows": 128,
+    "control_log_cap": 128,
+    "control_log_cap_reached": true,
+    "first_control_virtual_ns": 24831694478,
+    "last_control_virtual_ns": 45776737848,
+    "logged_dma_failure_rows": 0,
+    "native_bad_dma": 0,
+    "native_tx_length_errors": 0,
+    "native_rx_filter_dropped": 0,
+    "native_ethernet_tx": 4384,
+    "native_ethernet_rx": 4454,
+    "native_rx_dropped": 416,
+    "native_rx_disabled_dropped": 416,
+    "individual_disabled_drop_packets_identified": false
+  },
+  "passive_observer_readback": {
+    "capture_count": 50,
+    "original_pgm_pixels_crc_and_contiguous_closed_trace_prefixes_verified": true,
+    "host_monotonic_native_virtual_clock_correspondences": 50,
+    "completed_terminal_pixels_ocr_match_frozen_capture": true,
+    "cpu_stop_during_network_progress_requested_by_observer": false
+  },
+  "pcap_timestamp_basis": "Pinned net/dump.c start_ts=mktime(qemu_get_timedate) plus QEMU_CLOCK_VIRTUAL microseconds; this actual UTC attachment occurred wholly within host epoch1791212748",
+  "clock_domain_contract_sha256": "a3c297b5a4835a6f7f1927ca03557a775129a64d26e9208b8acbbe75ccfbd839",
+  "packet_capture_scope": "guest\u2194QEMU user-network/Slirp Ethernet; not RF or host external wire",
+  "tls_decrypted": false,
+  "opaque_alert_semantics_verified": false,
+  "external_server_responsibility_proven": false,
+  "prior_failure_cause_identified": false,
+  "pause_changes_proven_causal": false,
+  "guest_firmware_modified": false,
+  "guest_network_or_trust_changed": false,
+  "all_functions_verified": false,
+  "physical_timing_calibrated": false,
+  "speed_selection_allowed": false,
+  "native_or_guest_execution_repeated": false
+}

@@ -1,5 +1,14 @@
 # Genuine online OTA
 
+The current [main619 original execution](evidence/ota-v161-61927-2026-10-05.json)
+passed genuine online installation and book reading across three CPUs on native
+ELF `1cf9ac9b…714e`. Original root SHA256:
+`2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011`.
+The [native network evidence](evidence/network-61927-2026-10-05.json) preserves
+real Ethernet traffic and passive observations without claiming a cause for
+previous transport failures. See the [current download and handoff](main-handoff-2026-10-05.md).
+
+
 `scripts/test-crossink-online-ota.py` runs the unchanged CrossInk v1.6.0 X3/X4
 release through **Check for Updates**, installation of the official v1.6.1
 release, a normal guest restart, book reading on a fresh CPU, and restoration

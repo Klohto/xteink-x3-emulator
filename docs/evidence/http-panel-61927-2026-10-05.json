@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "source_commit": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "workflow_run_id": 37329050494,
+  "original_artifact_id": 11354839841,
+  "original_artifact_name": "x3-crossink-v161-panel-61927c41475a5f1ddb5454adf0db79657b30a563",
+  "original_artifact_created_at": "2026-10-05T15:36:47Z",
+  "original_artifact_bytes": 24826396,
+  "original_artifact_sha256": "a5a2e14d05bd21acc6f69bb3e4f130805940c8e35d5db10bf0657ebe8222f4b0",
+  "original_root_receipt_sha256": "3f2b6df7e2602c4b5d27a8cc4aaedb8719b9f0e4ff4ce95de54043fcc6271194",
+  "original_gate_status": "passed",
+  "original_gate_functional_pass": true,
+  "independent_readback_status": "passed",
+  "independent_readback_sha256": "a095abaa108821f74fafbce5f987d90f03a1edd53955defcf04b3976bd3956a8",
+  "independent_reader_source_sha256": "ee76dd7b20e44c1aeddb8424e59fd46f9df581b4d69fbc5acce39ed6b4f24e41",
+  "actual_cpus": [
+    {
+      "directory": "http-warm",
+      "original_receipt_sha256": "c63f287333f99f41dcfe643f9bc6279541c9050b0576f7bbd484be1ef5c0f2dd",
+      "original_manifest_sha256": "b00b683d4afe2cf2627fab35ca187f64c45fabc64f505a48188526988e4f0646",
+      "native_backend_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+      "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+      "clean_exit_code": 0,
+      "checks": 36,
+      "native_trace_sha256": "1c76a4908b7d88cab9c096fdfd4830d0ae3f3bb1d7beeac0a3384e98d68bec4d",
+      "trace_records": 767,
+      "trace_bytes": 59369,
+      "native_complete_refreshes": 24,
+      "busy_active": false,
+      "native_error_counters": {
+        "protocol-errors": 0,
+        "output-errors": 0,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0
+      },
+      "whole_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+      "closed_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "closed_card_sha256": "84ebece2027f8d8e2ea3e312998c764f9cd31533797779096da38c91ba59f87d",
+      "actual_progress_raw_hex": "000002001600bd040000",
+      "actual_progress": {
+        "spine_index": 0,
+        "page_number": 2,
+        "page_count": 22,
+        "visible_text_offset": 1213
+      },
+      "actual_finalized_section": {
+        "version": 83,
+        "page_count": 22,
+        "page_lut_offset": 43719,
+        "bytes": 43987,
+        "sha256": "e269081be8ceeac9e51ea11e6a59ba1152d7d2f09f189d867d8fb9e4f5006705"
+      },
+      "http_buttons": [
+        "confirm",
+        "down",
+        "up",
+        "down",
+        "back",
+        "confirm",
+        "back"
+      ],
+      "native_adc_hold_ns": 400000000,
+      "http_frame_bindings": {
+        "http-v161-home": {
+          "native_frame_count": 4,
+          "pixel_crc32": 3213831730,
+          "pixel_sha256": "837b2ea6b92c4df39930091793083bfdb887c21dff5cc91362d4fda18f8d46a9",
+          "every_pixel_equal": true
+        },
+        "http-reader-saved-page1": {
+          "native_frame_count": 9,
+          "pixel_crc32": 1098605927,
+          "pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+          "every_pixel_equal": true
+        },
+        "http-reader-page2-forward": {
+          "native_frame_count": 11,
+          "pixel_crc32": 3729598029,
+          "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "every_pixel_equal": true
+        },
+        "http-reader-page1-restored": {
+          "native_frame_count": 13,
+          "pixel_crc32": 1098605927,
+          "pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+          "every_pixel_equal": true
+        },
+        "http-reader-page2-for-save": {
+          "native_frame_count": 15,
+          "pixel_crc32": 3729598029,
+          "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "every_pixel_equal": true
+        },
+        "http-home-progress-saved": {
+          "native_frame_count": 17,
+          "pixel_crc32": 2843903662,
+          "pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "every_pixel_equal": true
+        },
+        "http-reader-page2-reopened": {
+          "native_frame_count": 22,
+          "pixel_crc32": 3729598029,
+          "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "every_pixel_equal": true
+        },
+        "http-home-after-reopen": {
+          "native_frame_count": 24,
+          "pixel_crc32": 2843903662,
+          "pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "every_pixel_equal": true
+        }
+      }
+    },
+    {
+      "directory": "http-cold",
+      "original_receipt_sha256": "8bafb9401fd987cbbe120894b30e9b0d6b879a5718eb4ba0492d092f359b94ce",
+      "original_manifest_sha256": "cb4b99bd8eb76c2039bceca2e0493636bb69c296a00204b7941d4fd7ab0c3a21",
+      "native_backend_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+      "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+      "clean_exit_code": 0,
+      "checks": 21,
+      "native_trace_sha256": "c2aa9f81316710cc897a9dfed38cfeb1a07cb88212f6c67b9109d456bae8537c",
+      "trace_records": 274,
+      "trace_bytes": 21035,
+      "native_complete_refreshes": 11,
+      "busy_active": false,
+      "native_error_counters": {
+        "protocol-errors": 0,
+        "output-errors": 0,
+        "trace-write-errors": 0,
+        "trace-flush-errors": 0,
+        "trace-close-errors": 0,
+        "dump-open-errors": 0,
+        "dump-write-errors": 0,
+        "dump-flush-errors": 0,
+        "dump-close-errors": 0
+      },
+      "whole_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+      "closed_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "closed_card_sha256": "2a245b77f85b50cf81a85648d7e1ac4ae157491db6865dd3c423b64723745080",
+      "actual_progress_raw_hex": "000002001600bd040000",
+      "actual_progress": {
+        "spine_index": 0,
+        "page_number": 2,
+        "page_count": 22,
+        "visible_text_offset": 1213
+      },
+      "actual_finalized_section": {
+        "version": 83,
+        "page_count": 22,
+        "page_lut_offset": 43719,
+        "bytes": 43987,
+        "sha256": "e269081be8ceeac9e51ea11e6a59ba1152d7d2f09f189d867d8fb9e4f5006705"
+      },
+      "http_buttons": [
+        "confirm",
+        "back"
+      ],
+      "native_adc_hold_ns": 400000000,
+      "http_frame_bindings": {
+        "http-v161-home": {
+          "native_frame_count": 4,
+          "pixel_crc32": 2843903662,
+          "pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "every_pixel_equal": true
+        },
+        "http-reader-saved-page2": {
+          "native_frame_count": 9,
+          "pixel_crc32": 3729598029,
+          "pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+          "every_pixel_equal": true
+        },
+        "http-home-progress-saved": {
+          "native_frame_count": 11,
+          "pixel_crc32": 2843903662,
+          "pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+          "every_pixel_equal": true
+        }
+      }
+    }
+  ],
+  "actual_cpu_count": 2,
+  "actual_checks": 57,
+  "actual_http_native_equal_frame_pairs": 11,
+  "original_ota_input": {
+    "original_ota_receipt_sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011",
+    "carried_run_manifest_sha256": "05842d09af0082b0fffbb9448715f8667075aefd7639928b8db1d04497ecec78",
+    "carried_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+    "carried_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+    "carried_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "official_v161_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+    "actual_ota_selection": {
+      "slots": [
+        {
+          "slot": 0,
+          "sequence": 1,
+          "state": 4294967295,
+          "crc32": 1195612314,
+          "valid": true
+        },
+        {
+          "slot": 1,
+          "sequence": 2,
+          "state": 2,
+          "crc32": 1442199412,
+          "valid": true
+        }
+      ],
+      "active_slot": 1,
+      "app_index": 1,
+      "app_offset": 6619136
+    },
+    "carried_card_sha256": "792cfc3b2dcface7ddf33bf3c9bd63f424f3917e768783b555865acad4799cc3",
+    "actual_saved_progress": {
+      "spine_index": 0,
+      "page_number": 1,
+      "page_count": 22,
+      "visible_text_offset": 586
+    },
+    "actual_finalized_section": {
+      "version": 83,
+      "page_count": 22,
+      "page_lut_offset": 43719,
+      "bytes": 43987,
+      "sha256": "e269081be8ceeac9e51ea11e6a59ba1152d7d2f09f189d867d8fb9e4f5006705"
+    },
+    "reference_capture_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+    "original_epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+  },
+  "original_warm_to_fresh_cpu_input": {
+    "warm_manifest_sha256": "b00b683d4afe2cf2627fab35ca187f64c45fabc64f505a48188526988e4f0646",
+    "actual_written_media_sha256": {
+      "flash.bin": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "sd.img": "84ebece2027f8d8e2ea3e312998c764f9cd31533797779096da38c91ba59f87d",
+      "efuse.bin": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+    }
+  },
+  "stored_page_index_convention": "zero based; stored index2 is visible footer3/22",
+  "actual_stored_page_index_flow": [
+    1,
+    2,
+    1,
+    2
+  ],
+  "actual_changed_ink_pixels": {
+    "forward": 83893,
+    "back_to_page1": 0,
+    "forward_to_page2": 0,
+    "warm_reopen": 0,
+    "cold_restore": 0
+  },
+  "original_ota_saved_page1_restored_ink_delta": 0,
+  "fresh_cpu_entire_framebuffer_pixels_equal": true,
+  "ui_source_sha256": {
+    "x3emu/ui.py": "2291258056470fd21e34ba9a0c1fb34678ed0cca2fce77a3dfcb540378aa30f8",
+    "x3emu/assets/panel.html": "71bf33752829713cb20831bf73464dcf7d624d44a451c9195563108642dbe48b",
+    "scripts/test-crossink-v161-panel.py": "fc466654a38944e3f78823df23fd82feee435f4085d362e9aec5f66571f37666"
+  },
+  "inspected_crossink_source_snapshot": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+  "reviewed_crossink_source_sha256": {
+    "src/activities/reader/EpubReaderActivity.cpp": "2cae0773ceb5ba8e5d7a51e5582d21b71a319c408204e6bca67f2160adf966be",
+    "src/MappedInputManager.cpp": "52600d9835f62d940153352dd4c8864badd7a795a97b207c8ae99af67d955ef8",
+    "lib/Epub/Epub/Section.cpp": "7760b7b7e516767f58c909b9c2e7490ce0d1de83896922bd2cb4752b6f66f4fd",
+    "src/CrossPointSettings.h": "cb54c07310df751890cf4e4ec5069ba90cab1db390ad25240ae820afbdc5731f"
+  },
+  "original_receipt_flags": {
+    "binary_build_commit_verified": false,
+    "guest_firmware_modified": false,
+    "guest_settings_or_progress_seeded": false,
+    "browser_rendering_verified": false,
+    "packaged_launcher_executed": false,
+    "complete_machine_verified": false,
+    "all_functions_verified": false,
+    "physical_timing_calibrated": false,
+    "speed_selection_allowed": false
+  },
+  "scope": "Actual original native HTTP panel/book reading two-CPU proof only; no browser JavaScript execution or packaged launcher is claimed by this gate. Separate capacity failure and previously documented stock1\u21920\u21921 progress failure remain separate."
+}

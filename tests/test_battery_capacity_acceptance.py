@@ -34,6 +34,24 @@ def initial_manifest():
             "machine": {"virtual-time-ns": 40_000_000}, "status": {"running": True}}}
 
 
+def restart_logs(*, minimal=True):
+    """Synthetic source rows for host guard tests, never a native receipt."""
+    before = ("Post-GPIO diagnostic: device=X3 usb=1 silentReboot=0 silentTarget=0\n"
+        "Reset diagnostic: reset=1(POWERON)\nX3 battery capacity check finished\n").encode()
+    after = ("Reset diagnostic: reset=3(SW)\n"
+        "Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=2\n"
+        + ("Minimal network boot ready: target=2 free=121144 maxAlloc=108544\n" if minimal else "")
+        + "WiFi scan complete: rawNetworks=0\nWiFi scan usable networks=0 hidden=0 duplicates=0\n"
+        "WiFi released before network list mode=0 started=0\n").encode()
+    rom = "rst:0x1 (POWERON),boot:0x8\nrst:0xc (RTC_SW_CPU_RST),boot:0x8\n"
+    return rom, before, after
+
+
+def restart_observation(*, minimal=True):
+    rom, before, after = restart_logs(minimal=minimal)
+    return BATTERY.stock_restart_observation(rom, before + after, len(before), hashlib.sha256(before).hexdigest())
+
+
 def completed_cpu():
     """Synthetic host guard input, deliberately not a native execution receipt."""
     manifest = initial_manifest()
@@ -62,9 +80,8 @@ def completed_cpu():
         ("after_stock_software_restart", "warm_software_reset_gauge_state_retained"),
         ("after_real_book_reading", "post_reset_reader_did_not_repeat_capacity_writes"))}
     observations.update({"stock_check_updates_confirm_input": trigger,
-        "stock_network_boot_target2": {"rom_resets": resets, "confirm_input": trigger,
+        "stock_network_boot_target2": restart_observation() | {"confirm_input": trigger,
             "before_rom_resets": [{"code": 1, "name": "POWERON"}],
-            "before_network_target2_markers": 0, "after_network_target2_markers": 1,
             "observed_t_ns": 11_500_000_000}})
     return {"functional_pass": True, "completed": True, "run_manifest": manifest,
         "battery": snapshots | {"actual_precalibration_native_state": manifest["initial_state"],
@@ -170,6 +187,7 @@ class BatteryCapacityAcceptanceTests(unittest.TestCase):
         value = completed_cpu(); value["button_steps"] = []; variants.append(value)
         value = completed_cpu(); value["button_steps"] *= 2; variants.append(value)
         value = completed_cpu(); value["observations"]["stock_check_updates_confirm_input"]["button"] = "back"; variants.append(value)
+        value = completed_cpu(); value["observations"]["stock_check_updates_confirm_input"]["release_observed_t_ns"] = 10_700_000_000; variants.append(value)
         value = completed_cpu(); value["observations"]["stock_network_boot_target2"]["observed_t_ns"] = 10_000_000_000; variants.append(value)
         value = completed_cpu(); value["observations"]["stock_network_boot_target2"]["after_network_target2_markers"] = 2; variants.append(value)
         for index, cpu in enumerate(variants):
@@ -185,6 +203,77 @@ class BatteryCapacityAcceptanceTests(unittest.TestCase):
                 BATTERY.software_reset_sequence(rows)
         BATTERY.software_reset_sequence([{"code": 1, "name": "POWERON"}, {"code": 3, "name": "SW_RESET"}])
         BATTERY.software_reset_sequence([{"code": 1, "name": "POWERON"}, {"code": 12, "name": "RTC_SW_CPU_RST"}])
+
+    def test_optional_minimal_logger_row_needs_exact_fresh_route_reset_and_completed_scan(self):
+        for minimal in (True, False):
+            observed = restart_observation(minimal=minimal)
+            self.assertIs(observed["verified"], True)
+            self.assertIs(observed["minimal_network_boot_line_observed"], minimal)
+            self.assertIs(observed["minimal_network_boot_line_missing"], not minimal)
+            self.assertEqual(observed["after_network_target2_markers"], int(minimal))
+            cpu = completed_cpu()
+            original = cpu["observations"]["stock_network_boot_target2"]
+            original.update(observed)
+            BATTERY.validate_completed_cpu(cpu)
+
+    def test_stale_wrong_duplicate_or_conflicting_restart_rows_are_refused(self):
+        rom, before, after = restart_logs(minimal=False)
+        prefix = hashlib.sha256(before).hexdigest()
+        variants = {
+            "wrong target": after.replace(b"silentTarget=2", b"silentTarget=6"),
+            "wrong security token": after.replace(b"silentReboot=1", b"silentReboot=0"),
+            "wrong USB state": after.replace(b"usb=0", b"usb=1"),
+            "other device": after.replace(b"device=X3", b"device=X4"),
+            "duplicate route": after + b"Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=2\n",
+            "conflicting route": after + b"Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=6\n",
+            "two routes in one log line": after.replace(b"Post-GPIO diagnostic:", b"Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=6 Post-GPIO diagnostic:"),
+            "contradicting summary": after + b"Minimal network boot ready: target=6\n",
+            "partial summary": after + b"Minimal network boot ready: target=2\n",
+            "two summaries in one log line": after + b"Minimal network boot ready: target=6 Minimal network boot ready: target=2 free=121144 maxAlloc=108544\n",
+            "duplicate summary": after + b"Minimal network boot ready: target=2\n" * 2,
+            "no scan": after.split(b"WiFi scan complete:")[0],
+            "raw scan entry without callback completion": after.split(b"WiFi scan usable networks=")[0],
+            "duplicate scan": after + b"WiFi scan complete: rawNetworks=0\n",
+            "scan before route": b"WiFi scan complete: rawNetworks=0\n" + after.replace(b"WiFi scan complete: rawNetworks=0\n", b""),
+        }
+        for name, changed in variants.items():
+            with self.subTest(name=name):
+                self.assertIs(BATTERY.stock_restart_observation(rom, before + changed, len(before), prefix)["verified"], False)
+        # Correct route and scan bytes already present before the physical input
+        # cannot be reused as a fresh action witness.
+        stale = before + after
+        self.assertIs(BATTERY.stock_restart_observation(rom, stale, len(stale), hashlib.sha256(stale).hexdigest())["verified"], False)
+        self.assertIs(BATTERY.stock_restart_observation(rom + "rst:0xc (RTC_SW_CPU_RST),boot:0x8\n", before + after, len(before), prefix)["verified"], False)
+        self.assertIs(BATTERY.stock_restart_observation(rom.replace("RTC_SW_CPU_RST", "RTCWDT_RTC_RST"), before + after, len(before), prefix)["verified"], False)
+
+    def test_byte_prefix_binding_and_scan_callback_diagnostics_remain_literal(self):
+        rom, before, after = restart_logs(minimal=False)
+        for length, digest in ((True, hashlib.sha256(before).hexdigest()),
+                               (len(before) + len(after) + 1, hashlib.sha256(before).hexdigest()),
+                               (len(before), "0" * 64)):
+            with self.subTest(length=length), self.assertRaisesRegex(BATTERY.BatteryError, "serial prefix changed"):
+                BATTERY.stock_restart_observation(rom, before + after, length, digest)
+        no_raw = after.replace(b"WiFi scan complete: rawNetworks=0\n", b"")
+        observed = BATTERY.stock_restart_observation(rom, before + no_raw, len(before), hashlib.sha256(before).hexdigest())
+        self.assertIs(observed["verified"], True)
+        self.assertIs(observed["fresh_scan_callback_observation"]["raw_completion_line_missing"], True)
+        incomplete = no_raw.replace(b"WiFi released before network list mode=0 started=0\n", b"")
+        self.assertIs(BATTERY.stock_restart_observation(rom, before + incomplete, len(before), hashlib.sha256(before).hexdigest())["verified"], False)
+
+    def test_restart_metadata_cannot_disconnect_optional_line_flags_or_source_witness(self):
+        variants = []
+        for key, value in (("verified", False), ("minimal_network_boot_line_observed", False),
+                           ("minimal_network_boot_line_missing", True), ("serial_prefix_bytes", True),
+                           ("serial_prefix_sha256", "swapped"), ("fresh_post_gpio_rows", []),
+                           ("fresh_scan_rows", []), ("fresh_scan_callback_observation", None),
+                           ("before_scan_callback_observation", {"completed_callbacks": True}),
+                           ("after_scan_callback_observation", {"completed_callbacks": 2})):
+            cpu = completed_cpu()
+            cpu["observations"]["stock_network_boot_target2"][key] = value
+            variants.append((key, cpu))
+        for name, cpu in variants:
+            with self.subTest(name=name), self.assertRaises(BATTERY.BatteryError):
+                BATTERY.validate_completed_cpu(cpu)
 
     def test_exact_git_blob_source_guard_refuses_changed_driver_bytes(self):
         self.assertEqual(BATTERY.git_blob(b"hello\n"), "ce013625030ba8dba906f756967f9e9ca394464a")
@@ -266,11 +355,8 @@ class BatteryCapacityAcceptanceTests(unittest.TestCase):
         for failure in ("serial", "sd", "manifest", "short-flash", "wrong-source-route", "extra-software-reset"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory); run = root / "run"; run.mkdir()
-                serial = ("Post-GPIO diagnostic: device=X3 usb=1 silentReboot=0 silentTarget=0\n"
-                    "Reset diagnostic: reset=1(POWERON)\nX3 battery capacity check finished\n"
-                    "Post-GPIO diagnostic: device=X3 usb=1 silentReboot=1 silentTarget=2\n"
-                    "Reset diagnostic: reset=3(SW)\nMinimal network boot ready: target=2\n")
-                rom = "rst:0x1 (POWERON),boot:0x8\nrst:0xc (RTC_SW_CPU_RST),boot:0x8\n"
+                rom, prefix, fresh = restart_logs()
+                serial = (prefix + fresh).decode()
                 for name, data in (("serial.log", serial.encode()), ("rom.log", rom.encode()),
                                    ("panel.jsonl", b""), ("panel.pbm", b"not a native panel"),
                                    ("efuse.bin", bytes(336)), ("sd.img", b"host refusal SD")):
@@ -288,7 +374,8 @@ class BatteryCapacityAcceptanceTests(unittest.TestCase):
                     ("serial.log", "rom.log", "panel.jsonl", "panel.pbm", "efuse.bin")},
                     "storage": {"final_flash_sha256": digest("flash.bin"), "final_sd_sha256": digest("sd.img")}}
                 cpu = {"run_manifest": manifest, "rom_reset_observations": [
-                    {"code": 1, "name": "POWERON"}, {"code": 12, "name": "RTC_SW_CPU_RST"}]}
+                    {"code": 1, "name": "POWERON"}, {"code": 12, "name": "RTC_SW_CPU_RST"}],
+                    "observations": {"stock_network_boot_target2": restart_observation()}}
                 (run / "run.json").write_text(json.dumps(manifest))
                 if failure == "serial":
                     (run / "serial.log").write_text(serial + "changed after closure\n")

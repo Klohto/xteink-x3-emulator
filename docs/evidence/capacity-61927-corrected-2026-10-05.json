@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "result": "passed",
+  "execution_kind": "fresh local corrected observer, unmodified official CrossInk v1.6.1 on exact accepted619 CI native",
+  "base_commit": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "executing_observer_sha256": "3ac35cca42f506afbe43291f72b619fd1824f5d49d6a54b4e5ec86f50d41405b",
+  "native_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "source_patch_sha256": "57e84e1257ec865b134b8614bbcc9a57312f1f3ad1cb0fbf7d09065c84894989",
+  "native_patched_tree": "4fb14508af13898f7bc046074b83b5580653783e",
+  "original_root_receipt_sha256": "5c1f7220a8480e11c0408d06e5dc45f3d7966f53376609f6438958365efc3b9a",
+  "original_child_receipt_sha256": "1707c4bd2c7e37e609f91745f7ed86c43f6d3019aeb4ce87f507a5f7641da58d",
+  "original_closed_manifest_sha256": "d34718e1cd4f39e38bce38dd858ec7d3028daf8b432bfcaf145b5976ff8e6a4a",
+  "independent_readback_sha256": "9f2e6e0c09f20e5cf0a975c0192c32bb2f59b4012117c6b35101df14da96734d",
+  "accepted_original_ota_receipt_sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011",
+  "guest_application": {
+    "version": "v1.6.1",
+    "bytes": 6311824,
+    "offset": "0x650000",
+    "sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+    "modified": false,
+    "final_selection": {
+      "slots": [
+        {
+          "slot": 0,
+          "sequence": 1,
+          "state": 4294967295,
+          "crc32": 1195612314,
+          "valid": true
+        },
+        {
+          "slot": 1,
+          "sequence": 2,
+          "state": 2,
+          "crc32": 1442199412,
+          "valid": true
+        }
+      ],
+      "active_slot": 1,
+      "app_index": 1,
+      "app_offset": 6619136
+    }
+  },
+  "actual_precommit_virtual_time_ns": 1785715,
+  "gauge_states": {
+    "initial": {
+      "design-capacity-mah": 3000,
+      "learned-fcc-mah": 3000,
+      "full-charge-capacity-mah": 3000,
+      "operation-status": 6,
+      "capacity-data-writes": 0,
+      "capacity-reinitializations": 0,
+      "capacity-rejections": 0,
+      "injection-count": 0,
+      "unsupported-accesses": 0
+    },
+    "loaded": {
+      "t_ns": 11740570861,
+      "design-capacity-mah": 650,
+      "learned-fcc-mah": 650,
+      "full-charge-capacity-mah": 650,
+      "operation-status": 6,
+      "capacity-data-writes": 2,
+      "capacity-reinitializations": 1,
+      "capacity-rejections": 0,
+      "injection-count": 0,
+      "unsupported-accesses": 0
+    },
+    "after_stock_software_restart": {
+      "t_ns": 39532109417,
+      "design-capacity-mah": 650,
+      "learned-fcc-mah": 650,
+      "full-charge-capacity-mah": 650,
+      "operation-status": 6,
+      "capacity-data-writes": 2,
+      "capacity-reinitializations": 1,
+      "capacity-rejections": 0,
+      "injection-count": 0,
+      "unsupported-accesses": 0
+    },
+    "after_real_book_reading": {
+      "t_ns": 69891961024,
+      "design-capacity-mah": 650,
+      "learned-fcc-mah": 650,
+      "full-charge-capacity-mah": 650,
+      "operation-status": 6,
+      "capacity-data-writes": 2,
+      "capacity-reinitializations": 1,
+      "capacity-rejections": 0,
+      "injection-count": 0,
+      "unsupported-accesses": 0
+    },
+    "final": {
+      "design-capacity-mah": 650,
+      "learned-fcc-mah": 650,
+      "full-charge-capacity-mah": 650,
+      "operation-status": 6,
+      "capacity-data-writes": 2,
+      "capacity-reinitializations": 1,
+      "capacity-rejections": 0,
+      "injection-count": 0,
+      "unsupported-accesses": 0
+    }
+  },
+  "physical_confirm": {
+    "button": "confirm",
+    "mask": 2,
+    "press_t_ns": 31737550567,
+    "scheduled_hold_ns": 400000000,
+    "release_deadline_t_ns": 32137550567,
+    "release_observed_t_ns": 32247740893,
+    "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+  },
+  "stock_software_reset": {
+    "rom_resets": [
+      {
+        "code": 1,
+        "name": "POWERON"
+      },
+      {
+        "code": 12,
+        "name": "RTC_SW_CPU_RST"
+      }
+    ],
+    "serial_prefix_bytes": 1606,
+    "serial_prefix_sha256": "b457d850e360c0de32d086abd251c5e730872519182fbf43b5393f92e6d109c3",
+    "fresh_route_rows": [
+      "[33556] [INF] [BOOT] Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=2"
+    ],
+    "fresh_scan_rows": [
+      "[36990] [INF] [WIFI] WiFi scan complete: rawNetworks=0",
+      "[36991] [INF] [WIFI] WiFi scan usable networks=0 hidden=0 duplicates=0",
+      "[37041] [INF] [WIFI] WiFi released before network list mode=0 free=134888 maxAlloc=94196"
+    ],
+    "optional_minimal_line_observed": true,
+    "optional_minimal_line_missing": false
+  },
+  "actual_reading": {
+    "original_epub_sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75",
+    "virgin_card_contained_only_test_epub": true,
+    "saved_progress": {
+      "spine_index": 0,
+      "page_number": 1,
+      "page_count": 22,
+      "visible_text_offset": 586
+    },
+    "changed_content_pixels": {
+      "turn": 111850,
+      "back": 0,
+      "reopen": 0
+    },
+    "native_frames": {
+      "v161-reader-page0": {
+        "frame": "frames/v161-reader-page0-probe1.pgm",
+        "pixel_sha256": "c392c52a0a6da292668af74aabb0cb5c2b5d4dec8b53b8ebca09efacadce625f"
+      },
+      "v161-reader-page1": {
+        "frame": "frames/009-v161-reader-page1.pgm",
+        "pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51"
+      },
+      "v161-reader-page0-restored": {
+        "frame": "frames/010-v161-reader-page0-restored.pgm",
+        "pixel_sha256": "c392c52a0a6da292668af74aabb0cb5c2b5d4dec8b53b8ebca09efacadce625f"
+      },
+      "v161-page1-reopened": {
+        "frame": "frames/013-v161-page1-reopened.pgm",
+        "pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51"
+      }
+    }
+  },
+  "closed_native_evidence": {
+    "native_exit_code": 0,
+    "all_21_checks_true": true,
+    "trace_events": 1092,
+    "completed_frames": 43,
+    "independently_checked_captures": 21,
+    "trace_complete_and_linked": true,
+    "artifacts": {
+      "flash.bin": {
+        "bytes": 16777216,
+        "sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583"
+      },
+      "sd.img": {
+        "bytes": 67108864,
+        "sha256": "0473810f0228fe0431384eaabda5467eed60335c4664160c32e3dfa6ce712d52"
+      },
+      "efuse.bin": {
+        "bytes": 336,
+        "sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      "serial.log": {
+        "bytes": 5751,
+        "sha256": "fdfea89139283441d6e8c1df084c61ab6c6eb9f8a83cacfd4d2162bef067a71d"
+      },
+      "rom.log": {
+        "bytes": 479,
+        "sha256": "3495c80c31aa38a52f95d27a3991a0c3c0f184ed6354c8b4a0d3c57bdc7ea7d4"
+      },
+      "panel.jsonl": {
+        "bytes": 84854,
+        "sha256": "12fe3219924b276df331dc4e835baacc2bc8e46b0eafe6197cc3e925ad47ad08"
+      },
+      "panel.pbm": {
+        "bytes": 418310,
+        "sha256": "e6c3d6567c5501b75f86d0cbcf3fa659bc6beeddc65b4a8ba2c3dd1e06dbe9ff"
+      }
+    }
+  },
+  "reviewed_source_snapshot": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+  "reviewed_sdk_snapshot": "699370183fa3a0e33c9cb83a36f701bbb6022095",
+  "exact_reviewed_source_files": {
+    "crossink/src/main.cpp": {
+      "git_blob": "d0da1720493f6429961a1bad49d9f8912dbc1fc2",
+      "sha256": "a0c695549ae1fa3a1d64aa8bb6c3952315d245e6f9cab288dc42636d437c9b59",
+      "bytes": 80305
+    },
+    "crossink/src/MappedInputManager.cpp": {
+      "git_blob": "7bebab0479ceed93bb0edac8db0981100469cd28",
+      "sha256": "52600d9835f62d940153352dd4c8864badd7a795a97b207c8ae99af67d955ef8",
+      "bytes": 45341
+    },
+    "crossink/lib/hal/HalPowerManager.cpp": {
+      "git_blob": "1ad79f071dd73f1f67f0667868801cddce7c057d",
+      "sha256": "b9a96a1f3e977dde33bae5b98f0dadec2dfbdd77e2a848183fb0ecd00b7541a6",
+      "bytes": 8257
+    },
+    "crossink/lib/hal/HalPowerManager.h": {
+      "git_blob": "12e68a76e2aa3faf401c2dea3374120c206fe250",
+      "sha256": "ab22549a8d33bddab6012c4f07ddb2dc85d91f942a1042b33782d2c8bc57dfa1",
+      "bytes": 3437
+    },
+    "crossink/src/SettingsList.h": {
+      "git_blob": "c82071e0036747a25a859855a9dfcc333c4cb1c2",
+      "sha256": "d3a28a3baf728f121217ae149e749f2484e33468a9e3302a927eedecff44b163",
+      "bytes": 52600
+    },
+    "crossink/src/activities/settings/SettingsActivity.cpp": {
+      "git_blob": "060bb5b885afbb6fd9a07520bdf7f4a66c1aa33b",
+      "sha256": "d24b9bbc98482ea796df7a86275b3faa681c1e01fef700d617dbbcce07d0a0c6",
+      "bytes": 74711
+    },
+    "crossink/src/activities/settings/OtaUpdateActivity.cpp": {
+      "git_blob": "e0c8642e96060f23ebf06dbf25b71deb348b0574",
+      "sha256": "4af69bfb59d56410db7c4c6654f5639f8128d301d7a89f442386ef47ad73d899",
+      "bytes": 10587
+    },
+    "crossink/src/activities/network/WifiSelectionActivity.cpp": {
+      "git_blob": "9078ab8f586d3a07c562056028b645e5316eecca",
+      "sha256": "fbf391feb3b0ee170f2cf58664283ce846b6525137e6267e8c26977cf6cd99ac",
+      "bytes": 55916
+    },
+    "crossink/src/activities/ActivityManager.cpp": {
+      "git_blob": "1d36e43e38216dbfe2ebd8d949b023158afc7bbe",
+      "sha256": "9704378c8d31e82ec7e75a734a5f9fefefdfa88fc64908999e0b6551d0f71c06",
+      "bytes": 56128
+    },
+    "sdk/libs/hardware/BatteryMonitor/src/BatteryMonitor.cpp": {
+      "git_blob": "f8a450ea1fccc30ec75ddf081a8086f8fe8c9295",
+      "sha256": "59b4519eee98d321a0f7ea317a75e05c31632cadbae7c9c02b14164484b9f19e",
+      "bytes": 31230
+    },
+    "sdk/libs/hardware/BatteryMonitor/test/host/test_bq27220_capacity.cpp": {
+      "git_blob": "277ee3fde13442b53d00d96709b41865ba12ffd6",
+      "sha256": "2bb5f72d1760d6f63bf6d737ca9d7a9cbda9830bcaf778368ab11bba82bc10fb",
+      "bytes": 9517
+    },
+    "sdk/libs/hardware/BoardConfig/include/BoardConfig.h": {
+      "git_blob": "bcbbf593ab03a9a4331a4d1b0c654cf4ced7800a",
+      "sha256": "4f04bd3b32b18e0e0caf1ef39d03b71e52d450cf034a1a9df0c02f4f7ea1d241",
+      "bytes": 114412
+    }
+  },
+  "preserved_original_ci_failure": {
+    "root_receipt_sha256": "793ce508f2d05eabc2d00ed585d7426f5c50b90f662dee87fb8bea2af911cc47",
+    "status": "failed",
+    "literal_optional_line_missing": true,
+    "relabelled": false,
+    "cause_of_missing_log_established": false
+  },
+  "scope": {
+    "guest_capacity_transactions_verified": true,
+    "same_process_stock_software_reset_retention_verified": true,
+    "post_reset_actual_reader_verified": true,
+    "host_gauge_writes": false,
+    "native_modified_for_replay": false,
+    "guest_firmware_modified": false,
+    "cross_process_gauge_persistence_verified": false,
+    "physical_gauge_verified": false,
+    "complete_machine_verified": false,
+    "all_functions_verified": false,
+    "binary_build_commit_verified": false,
+    "timing_calibrated": false,
+    "speed_selection_allowed": false
+  }
+}

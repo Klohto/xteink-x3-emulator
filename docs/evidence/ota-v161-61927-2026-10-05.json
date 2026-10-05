@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "kind": "source_only_original_current_online_ota_summary",
+  "source_commit": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "workflow_run_id": 37329050494,
+  "native_job_id": 111827126570,
+  "run_attempt": 1,
+  "original_master_sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011",
+  "functional_pass": true,
+  "genuine_online_installation_exercised": true,
+  "actual_native_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "original_source_snapshot": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "target_inspected_source_snapshot": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+  "target_snapshot_claimed_as_embedded_build_commit": false,
+  "actual_target_application_descriptor": {
+    "secure_version": 0,
+    "version": "1b11560",
+    "project_name": "CrossInk",
+    "compile_time": "02:33:19",
+    "compile_date": "Oct  4 2026",
+    "esp_idf_version": "5.5.2.260206",
+    "elf_sha256": "581c63b943f843c96216addcf7bfde46676072ff228e7e36fe73d9cdd46c8fc1"
+  },
+  "official_metadata_origin": "https://api.github.com/repos/uxjulia/CrossInk/releases/latest",
+  "metadata_trust": "unchanged original esp_crt_bundle_attach",
+  "payload_authenticity": "original trusted-manifest SHA256 with unchanged wolfSSL payload transport",
+  "official_target_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+  "app1_offset": 6619136,
+  "whole_original_app0_partition_unchanged": true,
+  "original_bootloader_partition_table_unchanged": true,
+  "staging_deleted": true,
+  "crc_selects_app1": true,
+  "original_recorded_mmu_mappings": [
+    {
+      "region": "DROM",
+      "expected_app1_page": 101,
+      "observed_page": 101
+    },
+    {
+      "region": "IROM",
+      "expected_app1_page": 151,
+      "observed_page": 151
+    }
+  ],
+  "children": [
+    {
+      "name": "online-upgrade",
+      "receipt_sha256": "76fe37065479f155f03aab1cccb611422b3241b1f134d2d96c7ca86d5a79ffd7",
+      "run_manifest_sha256": "e13c73feb8941c01517926f9239917b49a8713493cab81609431008f45a447cc",
+      "native_exit_code": 0,
+      "rom_reset_rows": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        },
+        {
+          "code": 12,
+          "name": "RTC_SW_CPU_RST"
+        },
+        {
+          "code": 12,
+          "name": "RTC_SW_CPU_RST"
+        }
+      ],
+      "native_trace_records": 1257,
+      "native_refresh_count": 74,
+      "verified_bound_captures": 11,
+      "flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "sd_sha256": "28d6883ceb8845c601c2627c8aca0bafc720b0b55a92fcf6001ac0ce5b618261",
+      "efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "ota_selection": {
+        "slots": [
+          {
+            "slot": 0,
+            "sequence": 1,
+            "state": 4294967295,
+            "crc32": 1195612314,
+            "valid": true
+          },
+          {
+            "slot": 1,
+            "sequence": 2,
+            "state": 2,
+            "crc32": 1442199412,
+            "valid": true
+          }
+        ],
+        "active_slot": 1,
+        "app_index": 1,
+        "app_offset": 6619136
+      }
+    },
+    {
+      "name": "cold-written-v161",
+      "receipt_sha256": "b4f7efbabbf4aceb10f9c78f24ff627032af5f474928ae45886ca937007ae619",
+      "run_manifest_sha256": "e44ce893258e52e04edc10b222710a8426f3906b83c690298af1e9c6e149bb3b",
+      "native_exit_code": 0,
+      "rom_reset_rows": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "native_trace_records": 847,
+      "native_refresh_count": 29,
+      "verified_bound_captures": 9,
+      "flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "sd_sha256": "6902bd65985209b1ca6fc72a79999ab1dc0b83094976d3b9a7b7775d1a91dc06",
+      "efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "ota_selection": {
+        "slots": [
+          {
+            "slot": 0,
+            "sequence": 1,
+            "state": 4294967295,
+            "crc32": 1195612314,
+            "valid": true
+          },
+          {
+            "slot": 1,
+            "sequence": 2,
+            "state": 2,
+            "crc32": 1442199412,
+            "valid": true
+          }
+        ],
+        "active_slot": 1,
+        "app_index": 1,
+        "app_offset": 6619136
+      },
+      "raw_progress_hex": "0000010016004a020000",
+      "progress": {
+        "spine_index": 0,
+        "page_number": 1,
+        "page_count": 22,
+        "visible_text_offset": 586
+      },
+      "finalized_section": {
+        "version": 83,
+        "page_count": 22,
+        "page_lut_offset": 43719,
+        "bytes": 43987,
+        "sha256": "e269081be8ceeac9e51ea11e6a59ba1152d7d2f09f189d867d8fb9e4f5006705"
+      }
+    },
+    {
+      "name": "cold-saved-reader",
+      "receipt_sha256": "b221e181ceb2295232e55595b866e89f022cdf94647152eb133cf50f1a7de03d",
+      "run_manifest_sha256": "05842d09af0082b0fffbb9448715f8667075aefd7639928b8db1d04497ecec78",
+      "native_exit_code": 0,
+      "rom_reset_rows": [
+        {
+          "code": 1,
+          "name": "POWERON"
+        }
+      ],
+      "native_trace_records": 274,
+      "native_refresh_count": 11,
+      "verified_bound_captures": 3,
+      "flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+      "sd_sha256": "792cfc3b2dcface7ddf33bf3c9bd63f424f3917e768783b555865acad4799cc3",
+      "efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+      "ota_selection": {
+        "slots": [
+          {
+            "slot": 0,
+            "sequence": 1,
+            "state": 4294967295,
+            "crc32": 1195612314,
+            "valid": true
+          },
+          {
+            "slot": 1,
+            "sequence": 2,
+            "state": 2,
+            "crc32": 1442199412,
+            "valid": true
+          }
+        ],
+        "active_slot": 1,
+        "app_index": 1,
+        "app_offset": 6619136
+      },
+      "raw_progress_hex": "0000010016004a020000",
+      "progress": {
+        "spine_index": 0,
+        "page_number": 1,
+        "page_count": 22,
+        "visible_text_offset": 586
+      },
+      "finalized_section": {
+        "version": 83,
+        "page_count": 22,
+        "page_lut_offset": 43719,
+        "bytes": 43987,
+        "sha256": "e269081be8ceeac9e51ea11e6a59ba1152d7d2f09f189d867d8fb9e4f5006705"
+      }
+    }
+  ],
+  "verified_native_capture_count": 23,
+  "cold_reader_changed_raw_pixels": 0,
+  "cold_reader_changed_ink_pixels": 0,
+  "closed_pass_through_ethernet_capture": {
+    "sha256": "c5ff8b06cd5c46db6f0b480bbff8aaad99f13ec95683f22a0cf39b7c20cfc5eb",
+    "bytes": 6976986,
+    "packet_records": 8838,
+    "packet_payload_bytes": 6835554,
+    "first_timestamp_us": 1791212781099316,
+    "last_timestamp_us": 1791212958562750,
+    "linktype": 1,
+    "snaplen": 65535,
+    "all_records_complete": true
+  },
+  "closed_original_artifacts": [
+    {
+      "id": 11354815644,
+      "name": "x3-ota-receipts-61927c41475a5f1ddb5454adf0db79657b30a563",
+      "size_bytes": 4241177,
+      "sha256": "065eefded79bf9061088e248c2d50f1659438dace605d6ec77356a6c55ef1bd8"
+    },
+    {
+      "id": 11354611095,
+      "name": "x3-ota-update-cpu-61927c41475a5f1ddb5454adf0db79657b30a563",
+      "size_bytes": 19172420,
+      "sha256": "a862ee8af0263b86d83079c86d14397af35a65e2a6b6105e681ba39a893ea1c1"
+    },
+    {
+      "id": 11354685910,
+      "name": "x3-ota-reader-cpu-61927c41475a5f1ddb5454adf0db79657b30a563",
+      "size_bytes": 12373963,
+      "sha256": "a7e01069d677acacbf82a181cea60cc99abf21f6b51eb14e1e2d0d5d37faab70"
+    },
+    {
+      "id": 11354566165,
+      "name": "x3-ota-cold-reader-cpu-61927c41475a5f1ddb5454adf0db79657b30a563",
+      "size_bytes": 12254722,
+      "sha256": "d203ddd2200f6b3d9f2c4b5545091bd0886e76ff33dc1d135726fda12b578c42"
+    }
+  ],
+  "independent_closed_review_sha256": "9ee030e4c4bccf234505ac9428438fd3d623563229abb6b43ee8ae7285ca0e80",
+  "guest_network_or_trust_modified": false,
+  "earlier_tls_failure_cause_claimed": false,
+  "complete_machine_verified": false,
+  "all_functions_verified": false,
+  "physical_timing_calibrated": false,
+  "speed_selection_allowed": false
+}

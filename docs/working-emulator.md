@@ -5,12 +5,12 @@ bundle starts v1.6.0; a genuine online upgrade to v1.6.1 and the shipped
 launcher's reading/save/cold restoration now pass. Its front panel sends
 real ADC/GPIO inputs and serves the native grayscale framebuffer.
 
-Download the runtime artifact from the [verified main Tests run](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37309789519).
+Download the runtime artifact from the [verified main Tests run](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37329050494).
 Extract the ZIP and enclosed `.tar.gz`, then run `python3 launch.py` from the
 extracted directory on Ubuntu 24.04 x86-64. Required distro libraries, input
 checks and options are in [runtime-package.md](runtime-package.md).
 
-The [current v1.6.1 record](crossink-v161-validation-2026-10-05.md) gives the
+The [current v1.6.1 record](main-handoff-2026-10-05.md) gives the
 exact archive/native hashes, genuine update proof and the separately executed
 packaged `--resume` command for its actual guest-written v1.6.1 media.
 
@@ -30,7 +30,7 @@ and `python3 launch.py --sd /tmp/my-card.img`. Repeat `--file` for more books.
 Every portrait pixel maps exactly to a rotated native pixel. GIF playback
 is paced for inspection; it provides no timing evidence.
 
-The current [v1.6.1 reading and cold restore](evidence/handoff/crossink-v161-reading.gif)
+The current [v1.6.1 reading and cold restore](evidence/handoff/crossink-v161-packaged-reading.gif)
 uses the exact native binary and closed receipts in the current execution
 record. The following demonstrations retain their historical v1.6.0 identities:
 
@@ -43,7 +43,24 @@ record. The following demonstrations retain their historical v1.6.0 identities:
 
 ![Actual CrossInk reading page](evidence/handoff/page0-native.png)
 
-## Evidence
+## Current backend evidence
+
+The current download is built from main `61927c41475a5f1ddb5454adf0db79657b30a563`,
+with native ELF `1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e`.
+The [current handoff](main-handoff-2026-10-05.md) binds its source, package,
+original receipts and genuine updated storage. Its native 130 tests and both
+400-test Python jobs passed. The overall CI run failed at the separate capacity
+host observer; the original verdict remains recorded.
+
+| Current execution | Closed result |
+| --- | --- |
+| [Shipped launcher](evidence/packaged-v161-61927-2026-10-05.json) | Fresh default 1.6.0 Home; two actual 1.6.1 read/save/resume processes; all 418176 restored pixels identical |
+| [Official online update](evidence/ota-v161-61927-2026-10-05.json) | Genuine install, reboot, reading and storage-only cold restoration across three CPUs |
+| [HTTP panel](evidence/http-panel-61927-2026-10-05.json) | 57 checks, eleven native/HTTP frames and two cleanly stopped CPUs |
+| [Original footnotes](evidence/footnotes-61927-summary-2026-10-05.json) | Four CPUs, actual disk-restored link and zero changed pixels on five restores |
+| [1.6.0 core functions](evidence/core-functions-v160-61927-2026-10-05.json) | Bookmarks, clippings and fonts functional pass; original strict failures remain false |
+
+## Historical evidence
 
 | Execution | Exact source and verdict |
 | --- | --- |

@@ -1,0 +1,1962 @@
+{
+  "schema_version": 1,
+  "source_commit": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "github_tests_run": 37329050494,
+  "github_tests_attempt": 1,
+  "scope": "Exact member names, types, sizes and SHA256; no member content or credentials.",
+  "original_OTA_archives": [
+    {
+      "name": "x3-ota-receipts-61927c41475a5f1ddb5454adf0db79657b30a563-11354815644.zip",
+      "bytes": 4241177,
+      "sha256": "065eefded79bf9061088e248c2d50f1659438dace605d6ec77356a6c55ef1bd8",
+      "format": "zip",
+      "github_artifact_id": 11354815644,
+      "github_artifact_name": "x3-ota-receipts-61927c41475a5f1ddb5454adf0db79657b30a563",
+      "member_count": 4,
+      "members": [
+        {
+          "name": "official-latest-host-preflight.json",
+          "type": "file",
+          "bytes": 14525,
+          "sha256": "be388d6a632d02e8288b4bfb96b02d327a23263b21486c83a734b6a8e23888f3"
+        },
+        {
+          "name": "validation.json",
+          "type": "file",
+          "bytes": 856623,
+          "sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011"
+        },
+        {
+          "name": "host-only-official-update/firmware-x3-x4-v1.6.1.bin",
+          "type": "file",
+          "bytes": 6311824,
+          "sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2"
+        },
+        {
+          "name": "virgin-book-card.img",
+          "type": "file",
+          "bytes": 67108864,
+          "sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427"
+        }
+      ]
+    },
+    {
+      "name": "x3-ota-update-cpu-61927c41475a5f1ddb5454adf0db79657b30a563-11354611095.zip",
+      "bytes": 19172420,
+      "sha256": "a862ee8af0263b86d83079c86d14397af35a65e2a6b6105e681ba39a893ea1c1",
+      "format": "zip",
+      "github_artifact_id": 11354611095,
+      "github_artifact_name": "x3-ota-update-cpu-61927c41475a5f1ddb5454adf0db79657b30a563",
+      "member_count": 76,
+      "members": [
+        {
+          "name": "frames/001-settings-row.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "03a177cbb95d72e405a0e272aa4bc417e3a27a494be7c4fd348b1c8973fa69ab"
+        },
+        {
+          "name": "frames/002-settings.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "3559cd8ee4ba000cef990bbb1207a6bdd1fdedf9845c1706ea3826479bc5ca31"
+        },
+        {
+          "name": "frames/003-tab-reader.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "ac92f529c6dcef3b83a3f5d188613ebab487c128d0c58ad1c65242ed8454d016"
+        },
+        {
+          "name": "frames/004-tab-controls.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "1f52891d55cbdd11148dcced8d7ffc8c78e392c9ead3d15e9118289db9bc87b1"
+        },
+        {
+          "name": "frames/005-tab-system.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "bf995d6bf666010d808bfa66045b6b2eb33fdea6d22b6442a239b3b1b679a09f"
+        },
+        {
+          "name": "frames/006-sd-update-row.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "4c4f98fd019e419018e700756acfd54d7dfeb5d6af21b54715e9b8d99ec71d80"
+        },
+        {
+          "name": "frames/007-official-online-update-row.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "97ee7ec5207829615ef88dcee14d353e61b86b7981ba56fed2b4f4f35d4d4ac2"
+        },
+        {
+          "name": "frames/home.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e"
+        },
+        {
+          "name": "frames/official-new-version-confirmation-passive1.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "e1cafc590d06ca49c41522e46728a53048be352d40a9f05aa58c8e246c747ae6"
+        },
+        {
+          "name": "frames/official-new-version-confirmation-passive2.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "51ac3ef5dc0898536e141db1fb5d75a3fb3a87e3ff3153e9f3d8da75d19afed9"
+        },
+        {
+          "name": "frames/official-new-version-confirmation-passive3.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "3f80c11c1333fa54a17d2192ec926aae4d2277950b92c57246b881dd4da3a858"
+        },
+        {
+          "name": "frames/official-new-version-confirmation-terminal3.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "3f80c11c1333fa54a17d2192ec926aae4d2277950b92c57246b881dd4da3a858"
+        },
+        {
+          "name": "frames/official-v161-home-after-ota.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "e04ac3be54b63370c65014b9ef15870a1da77715f64f2ce72c5dd940a1601956"
+        },
+        {
+          "name": "frames/original-install-result-passive1.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "7a1158e427bef28fe0f04010235ff270bd819a9dc112083197202a42438df694"
+        },
+        {
+          "name": "frames/original-install-result-passive10.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "ec58d671b30592eccc40c97e86b00054fa2689ef207ad26371cf4a6f9cd7d4bf"
+        },
+        {
+          "name": "frames/original-install-result-passive11.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "a7ee42f8baf49a0e331948b04a7766716751fb9cd3bb4e79886a2deab5764fa2"
+        },
+        {
+          "name": "frames/original-install-result-passive12.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "13d7c76995fd093f8486610843dfd95e2d9931a446f5accc67b02ec36f4a1688"
+        },
+        {
+          "name": "frames/original-install-result-passive13.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "7a898e7d0083cf6bb444973dcf9996b80792621ed8879fa8d77336e034eef564"
+        },
+        {
+          "name": "frames/original-install-result-passive15.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "b577664b3a07cdb5facb54a0f10d831bdee8e2cd38b6a8f3197df44aa85f86ed"
+        },
+        {
+          "name": "frames/original-install-result-passive14.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "88aecccb3c1d645da33449f0540d4d91e05cf29f9cc68f1acb2f1de73cbf0149"
+        },
+        {
+          "name": "frames/original-install-result-passive16.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "5e571f053c6a57e58eccc48e314864fb1a1abb1a72aefa1bd11cd0bd97539be6"
+        },
+        {
+          "name": "frames/original-install-result-passive17.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "a76c392beeb12f6a60f1360eabfe19b66369734dc7d7f6527862dbb67bc3123c"
+        },
+        {
+          "name": "frames/original-install-result-passive18.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "f725d969e85836e139a2db1b12493c6c077a75deb660080de5718a72dd950ee7"
+        },
+        {
+          "name": "frames/original-install-result-passive19.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "dfc1c39a099b42d26489a9ba9f38c5a8fb9d6be0a75fdf87718dad3772b7a9be"
+        },
+        {
+          "name": "frames/original-install-result-passive2.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "4fdd8c2532e0e61ee9f7c0108f28bea5dd4d3392e4976e3df1f35af9528f5635"
+        },
+        {
+          "name": "frames/original-install-result-passive20.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "181167d21c95bf7e823f79bcc7087356413268ed63d6c223a6b9113f256797a9"
+        },
+        {
+          "name": "frames/original-install-result-passive21.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "4b53c0d5931b4505e45b40c9deb02a88364b0f1c911602986fb3ce2286fcb4e8"
+        },
+        {
+          "name": "frames/original-install-result-passive22.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "0c48d9fc5ce7f4ddeca9d2c92e1fa8442613037e395e5272f980d6f5f6c7b4bd"
+        },
+        {
+          "name": "frames/original-install-result-passive23.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "feaff72526e948efaf17a5badb0613e5c67009b39b4adde8b84dd19a25f73bb4"
+        },
+        {
+          "name": "frames/original-install-result-passive24.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "bd54a403df8614b9b820ebfd11165dab359bd1937d8cfe66949e773e98ab238f"
+        },
+        {
+          "name": "frames/original-install-result-passive25.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "e0d36ee5076267b93b208415f5bc98fa025da998e701c4a6bb0ec08f12899236"
+        },
+        {
+          "name": "frames/original-install-result-passive26.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "24278e7b52f83aa4717daae9a5498bee7d48f7677c1618b828b09a31ac75934f"
+        },
+        {
+          "name": "frames/original-install-result-passive27.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "2e56080e9b555d70df4d5a90bf6c72ee1b132ccee8fe4ab102ae8ac3a461c3ff"
+        },
+        {
+          "name": "frames/original-install-result-passive28.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "d6333d515c018afd9b961f0f41f4330b8366387bc67ef2e727af3acd0de4b7b3"
+        },
+        {
+          "name": "frames/original-install-result-passive29.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "eaddbcaca3eba4853b352efe4263de97c148c201547675f59b99bd1b9f4d7354"
+        },
+        {
+          "name": "frames/original-install-result-passive3.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "a490666c97214333d529b5ebcd7ec51cd14f94b0f0081c808e4efeab37388352"
+        },
+        {
+          "name": "frames/original-install-result-passive30.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "dfd1ea2b736c0658d718b919369626d86ac4e7be985d1fb3cfc9933010906691"
+        },
+        {
+          "name": "frames/original-install-result-passive31.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "111102f02dbd388371afef0429bbe16f9d784516a7210f821204fdfc8ec5c448"
+        },
+        {
+          "name": "frames/original-install-result-passive32.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "35cc54156b777d45f296cc581de839dd157c1f5671137cb9dd8d27641d0a82b4"
+        },
+        {
+          "name": "frames/original-install-result-passive33.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "f47fa312c0ee7eccf9d795a8b6239005d6f53aa7bca30db23ca28c4d0a28c78b"
+        },
+        {
+          "name": "frames/original-install-result-passive34.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "28e286f435652eb6458954f8bf14b71768cac5d1b470968cd0867dd5911b14a1"
+        },
+        {
+          "name": "frames/original-install-result-passive35.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "feca8b2257b8f13d920d83595d2536bb0fda50373450b9f6f3fc8c2e76f16638"
+        },
+        {
+          "name": "frames/original-install-result-passive36.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "1dbe3110cb2af1b9304361465a5dacdd9a09c9d6c55cbf5b3b18def8051e00f4"
+        },
+        {
+          "name": "frames/original-install-result-passive37.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "98998d76ae0ccaf7653dde3af6ccacbed0be8dd34a2017599bd5cfa3c78f73f3"
+        },
+        {
+          "name": "frames/original-install-result-passive38.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "2bb46ea58d8e9ec40d78ed06549fccc6671c6cd93c203a26c74b51b2f92296a8"
+        },
+        {
+          "name": "frames/original-install-result-passive39.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "a72fa2ede28a04c9e9b69abbd37b601bafc608af4c626493eb9cfd66bbbbee0d"
+        },
+        {
+          "name": "frames/original-install-result-passive4.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "8dd51842154f7a268414927f4b0504e1b77da3f68a7b98968d20da1eae9bf683"
+        },
+        {
+          "name": "frames/original-install-result-passive40.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "6433da6e92a7bf140a3ce4208ba2243390d3ab445d74b03033f5fb229df3bd78"
+        },
+        {
+          "name": "frames/original-install-result-passive41.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "59b1f6d695de95dee2749f0b052d5668639b9bf79b197906e4865d354770c126"
+        },
+        {
+          "name": "frames/original-install-result-passive42.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "c6d5a41ade374fa6f618b58ccee73b5a887886780e57909f34bcc6f2625bb85b"
+        },
+        {
+          "name": "frames/original-install-result-passive43.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "d67c5847ad657f9ec804e9f63605aee09d128028652c82dffe06d5d0801ddc7a"
+        },
+        {
+          "name": "frames/original-install-result-passive44.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "96949c078230cd7c45d1daa9f7d2e6bd49220436784cfab08ace17031f58f0b4"
+        },
+        {
+          "name": "frames/original-install-result-passive45.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "a058def9b717fe02a4546fb853852bdcb1402eefb3cb33a6bbb557eeeaf4f98e"
+        },
+        {
+          "name": "frames/original-install-result-passive46.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "7ff58c8e89d770a5c1d9b23d09b4787a094e3cea2647abfe3ba201ec804e93cb"
+        },
+        {
+          "name": "frames/original-install-result-passive47.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "0bca41c2b0b4615284523981b693d3fdd034d4ddc65b2ad0f8e10b08de1f53df"
+        },
+        {
+          "name": "frames/original-install-result-passive5.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "681339987c037c1e8984af5970e2108232e52394ee363cf41795ca07a4ec97f5"
+        },
+        {
+          "name": "frames/original-install-result-passive6.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "6a9d7a026b25d2de1edcb09aaf57f011de0390ff341cd6b39a438785cd3df5bd"
+        },
+        {
+          "name": "frames/original-install-result-passive7.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "b5dde4a25e382320410b706e974a479f1fcd829ffab89e2183cfc88426d07729"
+        },
+        {
+          "name": "frames/original-install-result-passive8.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "559dc22a949a6c1dbd2ac6bb33ba9716285db67af699c7e0fe66764f488bc9a0"
+        },
+        {
+          "name": "frames/original-install-result-passive9.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "77204d07b0fc1ff3ae80cb308cc5d66c40e3b7fba1a8f753013fdbd558b3d429"
+        },
+        {
+          "name": "frames/wifi-scan-complete.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "49aa17ae1eeaecb92dfcaf557d2ffe36231579886cf00e13b8b10cd1a7f712b2"
+        },
+        {
+          "name": "launcher.log",
+          "type": "file",
+          "bytes": 150826,
+          "sha256": "e13c73feb8941c01517926f9239917b49a8713493cab81609431008f45a447cc"
+        },
+        {
+          "name": "network.pcap",
+          "type": "file",
+          "bytes": 6976986,
+          "sha256": "c5ff8b06cd5c46db6f0b480bbff8aaad99f13ec95683f22a0cf39b7c20cfc5eb"
+        },
+        {
+          "name": "run/backend.log",
+          "type": "file",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "run/diagnostics.log",
+          "type": "file",
+          "bytes": 2606866,
+          "sha256": "a1b690865c812214aacecbdee9cfadec1e17c5d76ebf1a6c32cf48333760b134"
+        },
+        {
+          "name": "run/efuse.bin",
+          "type": "file",
+          "bytes": 336,
+          "sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+        },
+        {
+          "name": "run/flash.bin",
+          "type": "file",
+          "bytes": 16777216,
+          "sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583"
+        },
+        {
+          "name": "run/panel.jsonl",
+          "type": "file",
+          "bytes": 98565,
+          "sha256": "98168d73873fedd63ca71164526b4d8dd07dd14500cdc7a3bce75492bedd22ac"
+        },
+        {
+          "name": "run/panel.pbm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "e04ac3be54b63370c65014b9ef15870a1da77715f64f2ce72c5dd940a1601956"
+        },
+        {
+          "name": "run/rom.log",
+          "type": "file",
+          "bytes": 860,
+          "sha256": "9abcec34776bb2fed4ed0020fa98d82f377e4f91b54a837f1223fd33cec48e2f"
+        },
+        {
+          "name": "run/run.json",
+          "type": "file",
+          "bytes": 150826,
+          "sha256": "e13c73feb8941c01517926f9239917b49a8713493cab81609431008f45a447cc"
+        },
+        {
+          "name": "run/sd.img",
+          "type": "file",
+          "bytes": 67108864,
+          "sha256": "28d6883ceb8845c601c2627c8aca0bafc720b0b55a92fcf6001ac0ce5b618261"
+        },
+        {
+          "name": "run/serial.log",
+          "type": "file",
+          "bytes": 6457,
+          "sha256": "7b34bcf723ad0bc164605d39e4043454eb9aa8cf2b54fc2b39579e0872148ef5"
+        },
+        {
+          "name": "usb-wire/usb-guest-to-host.bin",
+          "type": "file",
+          "bytes": 6370,
+          "sha256": "f028e1762312a2fe67f83da2279991c240529ebaaf80f103d730ccb83739268e"
+        },
+        {
+          "name": "usb-wire/usb-host-to-guest.bin",
+          "type": "file",
+          "bytes": 25,
+          "sha256": "080ea854b932be1e1cfad6b1ae05c8753798368853e54f56ffeeba557798ce35"
+        },
+        {
+          "name": "validation.json",
+          "type": "file",
+          "bytes": 381234,
+          "sha256": "76fe37065479f155f03aab1cccb611422b3241b1f134d2d96c7ca86d5a79ffd7"
+        }
+      ]
+    },
+    {
+      "name": "x3-ota-reader-cpu-61927c41475a5f1ddb5454adf0db79657b30a563-11354685910.zip",
+      "bytes": 12373963,
+      "sha256": "a7e01069d677acacbf82a181cea60cc99abf21f6b51eb14e1e2d0d5d37faab70",
+      "format": "zip",
+      "github_artifact_id": 11354685910,
+      "github_artifact_name": "x3-ota-reader-cpu-61927c41475a5f1ddb5454adf0db79657b30a563",
+      "member_count": 23,
+      "members": [
+        {
+          "name": "frames/001-v161-browser.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "320bf2846768d8f67611db00d58159846491be76c1787c8cd83c8a1000d59ffa"
+        },
+        {
+          "name": "frames/002-v161-reader-page1.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "1aceb104ef3fe17f7542b99ced999a4a10e03c16b3123cd9bf76d801b8b61299"
+        },
+        {
+          "name": "frames/003-v161-reader-page0-restored.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "0f2bef6dd89123ae9e33e486209b5642fcdf9441d799caff87501628845b4112"
+        },
+        {
+          "name": "frames/004-v161-reader-page1-again.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "3064d34a7e7ffd564c91c1d8f023dedd08b63c26ce3e7a345e28deef314e21c2"
+        },
+        {
+          "name": "frames/005-v161-home-saved.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "6e161742cb50de7e465ba439e5cae774be67bb1d80295eafeb03266f0d4b0756"
+        },
+        {
+          "name": "frames/006-v161-page1-reopened.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "6a8c4737b69eb0ff48cd49e8f20fe83b5743efb8b3dcfddfe9b086883a2dca39"
+        },
+        {
+          "name": "frames/007-v161-home-after-reopen.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "e9191e61a8c8c668cdb1de80c901c3fa1e84efd283204ec4b1e0b22a03e4026d"
+        },
+        {
+          "name": "frames/v161-cold-home.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "edaa43107ca5cdcf2fa23690e69756e3769a26932ff36b60d00b6288c79b3ca5"
+        },
+        {
+          "name": "frames/v161-reader-page0-probe1.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "f2e30e0d1d65b60bda2832e623238351edc0b72c5fba854f9195df249eece3d5"
+        },
+        {
+          "name": "launcher.log",
+          "type": "file",
+          "bytes": 174180,
+          "sha256": "e44ce893258e52e04edc10b222710a8426f3906b83c690298af1e9c6e149bb3b"
+        },
+        {
+          "name": "run/backend.log",
+          "type": "file",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "run/efuse.bin",
+          "type": "file",
+          "bytes": 336,
+          "sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+        },
+        {
+          "name": "run/flash.bin",
+          "type": "file",
+          "bytes": 16777216,
+          "sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583"
+        },
+        {
+          "name": "run/panel.jsonl",
+          "type": "file",
+          "bytes": 65630,
+          "sha256": "61bfdc5d9b975330cf11b97fd616804e2bc53ea9b8a87271b1e66b96a70bc990"
+        },
+        {
+          "name": "run/panel.pbm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "e9191e61a8c8c668cdb1de80c901c3fa1e84efd283204ec4b1e0b22a03e4026d"
+        },
+        {
+          "name": "run/diagnostics.log",
+          "type": "file",
+          "bytes": 6134,
+          "sha256": "ac7d220b0378dbbcca89b37cb6abb2d1032ec9c52890bc8199407633f38207a6"
+        },
+        {
+          "name": "run/rom.log",
+          "type": "file",
+          "bytes": 236,
+          "sha256": "8f0476f1665a79e054970e13b193ec91a2f048bf0b0c102414f82d6677583158"
+        },
+        {
+          "name": "run/run.json",
+          "type": "file",
+          "bytes": 174180,
+          "sha256": "e44ce893258e52e04edc10b222710a8426f3906b83c690298af1e9c6e149bb3b"
+        },
+        {
+          "name": "run/sd.img",
+          "type": "file",
+          "bytes": 67108864,
+          "sha256": "6902bd65985209b1ca6fc72a79999ab1dc0b83094976d3b9a7b7775d1a91dc06"
+        },
+        {
+          "name": "run/serial.log",
+          "type": "file",
+          "bytes": 2834,
+          "sha256": "7a30e6112942dfaa74335d74ddfad5fa92504a88a395437892ee2b4b06294bc6"
+        },
+        {
+          "name": "usb-wire/usb-guest-to-host.bin",
+          "type": "file",
+          "bytes": 1068,
+          "sha256": "49b74bd6a69416b158855a5140e4a9f973f39b5f4eb04fe3517515418c1b603a"
+        },
+        {
+          "name": "usb-wire/usb-host-to-guest.bin",
+          "type": "file",
+          "bytes": 15,
+          "sha256": "8fe066f6a52c3348d210e607313519dde23d1d2fefbd1f5c9ec32c0db1655db3"
+        },
+        {
+          "name": "validation.json",
+          "type": "file",
+          "bytes": 239840,
+          "sha256": "b4f7efbabbf4aceb10f9c78f24ff627032af5f474928ae45886ca937007ae619"
+        }
+      ]
+    },
+    {
+      "name": "x3-ota-cold-reader-cpu-61927c41475a5f1ddb5454adf0db79657b30a563-11354566165.zip",
+      "bytes": 12254722,
+      "sha256": "d203ddd2200f6b3d9f2c4b5545091bd0886e76ff33dc1d135726fda12b578c42",
+      "format": "zip",
+      "github_artifact_id": 11354566165,
+      "github_artifact_name": "x3-ota-cold-reader-cpu-61927c41475a5f1ddb5454adf0db79657b30a563",
+      "member_count": 17,
+      "members": [
+        {
+          "name": "frames/001-v161-page1-restored-new-cpu.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e"
+        },
+        {
+          "name": "frames/002-v161-third-cpu-home-final.pgm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "a6da4b57ff8737821afa5580387eb1bb1d189f8f55d6853846f93a29596d5f8e"
+        },
+        {
+          "name": "frames/v161-third-cpu-home.pgm",
+          "type": "file",
+          "bytes": 418309,
+          "sha256": "ec60e437e3a3e66402ae2f1c41489354047afa2378fd3a67b4edc0e0528b4d18"
+        },
+        {
+          "name": "launcher.log",
+          "type": "file",
+          "bytes": 80831,
+          "sha256": "05842d09af0082b0fffbb9448715f8667075aefd7639928b8db1d04497ecec78"
+        },
+        {
+          "name": "run/backend.log",
+          "type": "file",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "run/diagnostics.log",
+          "type": "file",
+          "bytes": 6134,
+          "sha256": "ac7d220b0378dbbcca89b37cb6abb2d1032ec9c52890bc8199407633f38207a6"
+        },
+        {
+          "name": "run/efuse.bin",
+          "type": "file",
+          "bytes": 336,
+          "sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+        },
+        {
+          "name": "run/flash.bin",
+          "type": "file",
+          "bytes": 16777216,
+          "sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583"
+        },
+        {
+          "name": "run/panel.jsonl",
+          "type": "file",
+          "bytes": 20956,
+          "sha256": "d1a94ad2a1273d3707bba06671e379304110b37e0ceea6396264dd2a74d3bc96"
+        },
+        {
+          "name": "run/panel.pbm",
+          "type": "file",
+          "bytes": 418310,
+          "sha256": "a6da4b57ff8737821afa5580387eb1bb1d189f8f55d6853846f93a29596d5f8e"
+        },
+        {
+          "name": "run/rom.log",
+          "type": "file",
+          "bytes": 236,
+          "sha256": "8f0476f1665a79e054970e13b193ec91a2f048bf0b0c102414f82d6677583158"
+        },
+        {
+          "name": "run/run.json",
+          "type": "file",
+          "bytes": 80831,
+          "sha256": "05842d09af0082b0fffbb9448715f8667075aefd7639928b8db1d04497ecec78"
+        },
+        {
+          "name": "run/sd.img",
+          "type": "file",
+          "bytes": 67108864,
+          "sha256": "792cfc3b2dcface7ddf33bf3c9bd63f424f3917e768783b555865acad4799cc3"
+        },
+        {
+          "name": "run/serial.log",
+          "type": "file",
+          "bytes": 1484,
+          "sha256": "c7c5e3daa6a7ff6b7d69ae675684fa89655ac69fdd02cc5d70c9502bcf2bed6f"
+        },
+        {
+          "name": "usb-wire/usb-guest-to-host.bin",
+          "type": "file",
+          "bytes": 1022,
+          "sha256": "b886911ea05161dc992c00fd7223110aa1aa74252737010dfec7ef128e1b2727"
+        },
+        {
+          "name": "usb-wire/usb-host-to-guest.bin",
+          "type": "file",
+          "bytes": 15,
+          "sha256": "8fe066f6a52c3348d210e607313519dde23d1d2fefbd1f5c9ec32c0db1655db3"
+        },
+        {
+          "name": "validation.json",
+          "type": "file",
+          "bytes": 120963,
+          "sha256": "b221e181ceb2295232e55595b866e89f022cdf94647152eb133cf50f1a7de03d"
+        }
+      ]
+    }
+  ],
+  "shipped_runtime_archive": {
+    "name": "xteink-x3-crossink-linux-x86_64.tar.gz",
+    "bytes": 72261278,
+    "sha256": "d55fd01e366d3e5849997e54db3ff784a360ede6fc72451bef4eb19e902f34b1",
+    "format": "tar.gz",
+    "member_count": 46,
+    "members": [
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/README.txt",
+        "type": "file",
+        "bytes": 1431,
+        "sha256": "1896adca02876b33ccbac2310e955955468000ab86c40208c355d641c53cc1ce"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/backend/bin/qemu-system-riscv32",
+        "type": "file",
+        "bytes": 68642872,
+        "sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/backend/share/qemu/esp32c3-rom.bin",
+        "type": "file",
+        "bytes": 393216,
+        "sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/boards/xteink-x3.toml",
+        "type": "file",
+        "bytes": 1620,
+        "sha256": "2eec5b9440fbcb452e8c98987e61bd354b59c962708241231a7e5e82739606d6"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/bundle.json",
+        "type": "file",
+        "bytes": 12783,
+        "sha256": "150b667625dad23677d747b8230c616cdb25550d19ad5e7679af755bc9ab3f40"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/inputs/card.img",
+        "type": "file",
+        "bytes": 67108864,
+        "sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/inputs/flash.bin",
+        "type": "file",
+        "bytes": 16777216,
+        "sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/inputs/test.epub",
+        "type": "file",
+        "bytes": 8878,
+        "sha256": "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/launch.py",
+        "type": "file",
+        "bytes": 13345,
+        "sha256": "a8498bd6274e76dcdd66a041a1241c3a230e9dce6756e70ab8237c8d91884da9"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/CrossInk-LICENSE",
+        "type": "file",
+        "bytes": 1067,
+        "sha256": "7212963b5b1b5ee34ca158163356beb1e6945dd2cc5d320f1fe7573c424ea640"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/LICENSE",
+        "type": "file",
+        "bytes": 1064,
+        "sha256": "17dea5079d9905fbbc8323cde7bfffd0f24185949c43a5daad5177022b796588"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/NOTICE",
+        "type": "file",
+        "bytes": 1968,
+        "sha256": "1a45b9f057b415f84085d808bd12ec5df1296808ad14bd9583f2a585c84290ff"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/libs/book/ContentProtection/third_party/miniz/LICENSE",
+        "type": "file",
+        "bytes": 1162,
+        "sha256": "6f20fa7672b00e2e975c291df737cf227addf3ad32e36fef3fe0f416e4664d3d"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/libs/book/FreeInkBook/third_party/expat/COPYING",
+        "type": "file",
+        "bytes": 1144,
+        "sha256": "31b15de82aa19a845156169a17a5488bf597e561b2c318d159ed583139b25e87"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/libs/book/FreeInkBook/third_party/hyphen-patterns/LICENSE",
+        "type": "file",
+        "bytes": 403,
+        "sha256": "6838a8f0527a1d944e73a4d2a4d3fc4117c40da5f0eed0c489738fc391a5cd77"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/libs/book/FreeInkBook/third_party/miniz/LICENSE",
+        "type": "file",
+        "bytes": 1162,
+        "sha256": "6f20fa7672b00e2e975c291df737cf227addf3ad32e36fef3fe0f416e4664d3d"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/libs/book/FreeInkBook/third_party/pngle/LICENSE",
+        "type": "file",
+        "bytes": 1065,
+        "sha256": "f965b67dece0b41367e5b66ba8b6787a93381e61d81121dbb5d87f6b2f330b39"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/libs/font/FreeInkFont/third_party/freetype/FTL.TXT",
+        "type": "file",
+        "bytes": 6743,
+        "sha256": "08c135755dd589039470f1fdbb400daaabaaa50d0b366d19cebff4d22986baa1"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/FreeInk-SDK/libs/font/FreeInkFont/third_party/freetype/LICENSE.TXT",
+        "type": "file",
+        "bytes": 2074,
+        "sha256": "2e3bbb7d7c5c396368dd0853a790ec29ce5b8647163dde42a0493fb0d6556b2b"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/libslirp-copyright",
+        "type": "file",
+        "bytes": 4660,
+        "sha256": "72bbbaf2539f2ad3a568da80758a6417b119bee5b19b988f8d99e2b3b80ae4a3"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/qemu/COPYING",
+        "type": "file",
+        "bytes": 17992,
+        "sha256": "6f04ae8364d0079a192b14635f4b1da294ce18724c034c39a6a41d1b09df6100"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/qemu/COPYING.LIB",
+        "type": "file",
+        "bytes": 26530,
+        "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/qemu/LICENSE",
+        "type": "file",
+        "bytes": 1177,
+        "sha256": "139c64b7a9ae62858ff969aae622ecfcf4f1519655bd92d2e70a1a2fb615690e"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/qemu/README.md",
+        "type": "file",
+        "bytes": 1653,
+        "sha256": "4db8a36447a747ac6d466afd1cda48c00e5735cd7b51d231efd68b86b79bba9f"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/licenses/qemu/esp32sim-MIT.txt",
+        "type": "file",
+        "bytes": 1122,
+        "sha256": "3eb8b3c7f4244294480c879aa3aa50ad6c83770e41ca3727373d5fc3bec3aab3"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/source/docs/build.md",
+        "type": "file",
+        "bytes": 8849,
+        "sha256": "37376510b432d89c3c2b8853acae2ca7306b96759429c15df71faf81f78cb4f4"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/source/docs/firmware-evidence.md",
+        "type": "file",
+        "bytes": 9356,
+        "sha256": "b587e88e1876f795fde1ef5d5728cd1aecce761cc335c989333feb8d49d6812d"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/source/docs/runtime-package.md",
+        "type": "file",
+        "bytes": 7077,
+        "sha256": "3fd2f0eed8e4dd421b666d2ed23bd98339520bd21f2ccd9e57b4fcb1118bd7c6"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/source/patches/qemu/xteink-x3.patch",
+        "type": "file",
+        "bytes": 656163,
+        "sha256": "57e84e1257ec865b134b8614bbcc9a57312f1f3ad1cb0fbf7d09065c84894989"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/source/qemu-source.tar.gz",
+        "type": "file",
+        "bytes": 41812080,
+        "sha256": "c69ed8e105a2e42bfae6ca1a4afd6d8b6df4aa9e8b29f4226a08504b64ea87c5"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/source/scripts/build-qemu.sh",
+        "type": "file",
+        "bytes": 10868,
+        "sha256": "071871d3e02f6e1990739da96248c3effdc3066479bb7f91639e97023a6669ec"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/source/scripts/verify-qemu-subprojects.py",
+        "type": "file",
+        "bytes": 5081,
+        "sha256": "a287bc6abf5c21d070860c5a1b9c842dacd6e192560bb12f0995439471c04e9a"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/__init__.py",
+        "type": "file",
+        "bytes": 169,
+        "sha256": "30d127acfbeecf163116a6fdfeb97e4ee6621e727212c5475354669b56bab9d4"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/__main__.py",
+        "type": "file",
+        "bytes": 11259,
+        "sha256": "74aa342cd55c1a040e9c27458ae3cb2991b7ea14281924711bf0b1f1f5e92a83"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/assets/panel.html",
+        "type": "file",
+        "bytes": 7843,
+        "sha256": "71bf33752829713cb20831bf73464dcf7d624d44a451c9195563108642dbe48b"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/backend.py",
+        "type": "file",
+        "bytes": 53912,
+        "sha256": "2aadca339fe82eb23ac4b4d4dd4adb86ce377c1581425539eb09426cc84643af"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/clock.py",
+        "type": "file",
+        "bytes": 3810,
+        "sha256": "2d37012e1a3fb1c44cf761b48f1f766d1b56af6200cdfbe246199e736fb33f4f"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/efuse.py",
+        "type": "file",
+        "bytes": 1863,
+        "sha256": "a882949c2e8d299bf5847f5e4892bd1f5ffea8c39cb28163e830935e16b61530"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/esptool_stub.py",
+        "type": "file",
+        "bytes": 2283,
+        "sha256": "87e29fffdb3c391285d3f037cace509169a2baf6451278a1d4400139aa2bff1b"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/firmware.py",
+        "type": "file",
+        "bytes": 7167,
+        "sha256": "75a768cdd3bf229f6a3a8a4cd274be6c9c33958ce7d0ca908591d225ac998c9b"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/fixtures.py",
+        "type": "file",
+        "bytes": 23812,
+        "sha256": "a18b740ca7c4266f87b64f77f1587808766dc93a37776fd559c3020157369710"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/flash.py",
+        "type": "file",
+        "bytes": 15975,
+        "sha256": "4b64c564ecd1b236cb7eedca7eceb9f75d6e0d674c66e991d65c515ea63dc3ae"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/sdcard.py",
+        "type": "file",
+        "bytes": 17750,
+        "sha256": "c0de603bd3178b9f61f5182f89adb15a3c7270c44f65202e84de09517b9e8740"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/storage.py",
+        "type": "file",
+        "bytes": 1003,
+        "sha256": "d0976fce3154ad257873a97c4d9e2abc0fe3c2c61aa9eb6ab57053f2d7f06956"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/ui.py",
+        "type": "file",
+        "bytes": 14344,
+        "sha256": "2291258056470fd21e34ba9a0c1fb34678ed0cca2fce77a3dfcb540378aa30f8"
+      },
+      {
+        "name": "xteink-x3-crossink-linux-x86_64/x3emu/usb_transfer.py",
+        "type": "file",
+        "bytes": 10017,
+        "sha256": "bbb41134b6cbf17ed73b2f0dc262ebedfdb6a7125875e0f02b9396db3b643374"
+      }
+    ]
+  },
+  "private_packaged_execution_archive": {
+    "name": "x3-packaged-v161-main619-private-proof.tar.gz",
+    "bytes": 29161759,
+    "sha256": "2270ebcd00d3e881739bb7fa67759e87d1a9a90babf9d1e7323d9ad219552e44",
+    "format": "tar.gz",
+    "member_count": 153,
+    "members": [
+      {
+        "name": "x3-packaged-v161-live-main619-20261005",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/capture-attempts.json",
+        "type": "file",
+        "bytes": 11513,
+        "sha256": "8de4d7c91306f91dd41199ea2756832b55b196766a5a0112bea61e8a141ebb45"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/home-after-reading-save-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/home-attempt01.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "ec60e437e3a3e66402ae2f1c41489354047afa2378fd3a67b4edc0e0528b4d18"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/http-home-after-reading-save-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/http-home-attempt01.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "ec60e437e3a3e66402ae2f1c41489354047afa2378fd3a67b4edc0e0528b4d18"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/http-reader-next-page-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "fd56a78c3a67ab1df0389f5963eca5fa4da2bedde87c4ad76223b6ab12808c24"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/http-reader-page-to-save-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "e61aff3609b1ebe2c9a17e3415a5523370fb17a155b506cdd26f592f8c42509f"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/http-reader-previous-page-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "0e36092c0e7512ce349ec8a82cf19bd05d33f0f82a81b622415ee7a9728d4880"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/http-real-saved-reader-attempt01.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/reader-next-page-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "fd56a78c3a67ab1df0389f5963eca5fa4da2bedde87c4ad76223b6ab12808c24"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/reader-page-to-save-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "e61aff3609b1ebe2c9a17e3415a5523370fb17a155b506cdd26f592f8c42509f"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/reader-previous-page-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "0e36092c0e7512ce349ec8a82cf19bd05d33f0f82a81b622415ee7a9728d4880"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/frames/real-saved-reader-attempt01.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/http-wire.json",
+        "type": "file",
+        "bytes": 11131,
+        "sha256": "d63acf56d20593309a3293fac564bf139f3acbda9470e41c013bdbe80a0856d8"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/packaged-launcher.log",
+        "type": "file",
+        "bytes": 506,
+        "sha256": "69fed62a03028860c3d9f6243a6ca6374ddaf668a683c3605e855e3ee1d0db72"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/backend.log",
+        "type": "file",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/bundle-preflight.json",
+        "type": "file",
+        "bytes": 6532,
+        "sha256": "c88a2fba55e58c5323a62877b45d4ec3ebd145507becbf9a62e5f6564536f589"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/diagnostics.log",
+        "type": "file",
+        "bytes": 6134,
+        "sha256": "ac7d220b0378dbbcca89b37cb6abb2d1032ec9c52890bc8199407633f38207a6"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/efuse.bin",
+        "type": "file",
+        "bytes": 336,
+        "sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/flash.bin",
+        "type": "file",
+        "bytes": 16777216,
+        "sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/launcher.stdout.log",
+        "type": "file",
+        "bytes": 152074,
+        "sha256": "412319a34d261374fbf6d4c9f5e8d91c44f5f5a3c951973420ebe242636212e7"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/panel.jsonl",
+        "type": "file",
+        "bytes": 44838,
+        "sha256": "7341b5a7514e3b7a84f3af61fa228c47717a8d43add3750c5b9caaa7a7fd51ef"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/panel.pbm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/qmp-control.in",
+        "type": "fifo",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/qmp-control.out",
+        "type": "fifo",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/qmp.sock",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/rom.log",
+        "type": "file",
+        "bytes": 236,
+        "sha256": "8f0476f1665a79e054970e13b193ec91a2f048bf0b0c102414f82d6677583158"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/run.json",
+        "type": "file",
+        "bytes": 152074,
+        "sha256": "412319a34d261374fbf6d4c9f5e8d91c44f5f5a3c951973420ebe242636212e7"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/runtime-recording.json",
+        "type": "file",
+        "bytes": 288,
+        "sha256": "db94c722d1f26cb6f36b6821ef4673effc026f21cc0f25ac999e647836603c10"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/sd.img",
+        "type": "file",
+        "bytes": 67108864,
+        "sha256": "ebdbf92983aeb04b69bbfe9487ed9df098eb307216621f917791b012e589fdc1"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/run/serial.log",
+        "type": "file",
+        "bytes": 2252,
+        "sha256": "f9e6c58cea2b31e7abf13b7e8f67d1961c769fcf77a4286d8f9c34b225959283"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/usb-wire",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/usb-wire/usb-guest-to-host.bin",
+        "type": "file",
+        "bytes": 1022,
+        "sha256": "27ea418169318ec1972c12c09ad63017faed38299e2ba48541b4307c5141299a"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/usb-wire/usb-host-to-guest.bin",
+        "type": "file",
+        "bytes": 15,
+        "sha256": "8fe066f6a52c3348d210e607313519dde23d1d2fefbd1f5c9ec32c0db1655db3"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-1/validation.json",
+        "type": "file",
+        "bytes": 204817,
+        "sha256": "3797fe72d6febc2c6dd1b5caa1a3086abf1e5b7b89222c1c0cee055b4f8bc831"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/capture-attempts.json",
+        "type": "file",
+        "bytes": 5735,
+        "sha256": "afb5e53cc5f826226e0d07a978e64eb69d702e86ed5a957bac69da664c1edb84"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/frames",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/frames/home-after-reading-save-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "b9fe7aa09436045b07dc135ac0c3b206fbe885a03e85561c4f9042862ba005a5"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/frames/home-attempt01.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "822db1b542684f8f88e495862e53496d8f83013d1fe637b896fe2c2421ddbe97"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/frames/http-home-after-reading-save-attempt01.pgm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "b9fe7aa09436045b07dc135ac0c3b206fbe885a03e85561c4f9042862ba005a5"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/frames/http-home-attempt01.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "822db1b542684f8f88e495862e53496d8f83013d1fe637b896fe2c2421ddbe97"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/frames/http-real-saved-reader-attempt01.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/frames/real-saved-reader-attempt01.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/http-wire.json",
+        "type": "file",
+        "bytes": 5229,
+        "sha256": "3cc27205677e86f6cb44f979cf40b15df61757fe9a3e33795f93f0c7f20ce278"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/packaged-launcher.log",
+        "type": "file",
+        "bytes": 506,
+        "sha256": "7e989922ce50359a5272977b7c2002ae1add0f6ae0fb86d4a7f80ed133d8dbfe"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/backend.log",
+        "type": "file",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/bundle-preflight.json",
+        "type": "file",
+        "bytes": 6532,
+        "sha256": "b69adcdf6a685d0acf9437f84f9243435c1806fb47a94f282c03c64ac571f8e3"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/diagnostics.log",
+        "type": "file",
+        "bytes": 6134,
+        "sha256": "ac7d220b0378dbbcca89b37cb6abb2d1032ec9c52890bc8199407633f38207a6"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/efuse.bin",
+        "type": "file",
+        "bytes": 336,
+        "sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/flash.bin",
+        "type": "file",
+        "bytes": 16777216,
+        "sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/launcher.stdout.log",
+        "type": "file",
+        "bytes": 92289,
+        "sha256": "36924b7da3e562112a190dfe68fd4ecf56c27c87b875abf0dcf29533f4f5c1f4"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/panel.jsonl",
+        "type": "file",
+        "bytes": 20904,
+        "sha256": "22a0693c2e6e1e52a6a7296932b433081c44fcecbbd4a7efcaa99e5ac64ac63c"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/panel.pbm",
+        "type": "file",
+        "bytes": 418310,
+        "sha256": "b9fe7aa09436045b07dc135ac0c3b206fbe885a03e85561c4f9042862ba005a5"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/qmp-control.in",
+        "type": "fifo",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/qmp-control.out",
+        "type": "fifo",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/qmp.sock",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/rom.log",
+        "type": "file",
+        "bytes": 236,
+        "sha256": "8f0476f1665a79e054970e13b193ec91a2f048bf0b0c102414f82d6677583158"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/run.json",
+        "type": "file",
+        "bytes": 92289,
+        "sha256": "36924b7da3e562112a190dfe68fd4ecf56c27c87b875abf0dcf29533f4f5c1f4"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/runtime-recording.json",
+        "type": "file",
+        "bytes": 288,
+        "sha256": "4eb7e731a91f9df8b1a87e2954f67da4d49cacd0b579100019ad7b2754e6e55d"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/sd.img",
+        "type": "file",
+        "bytes": 67108864,
+        "sha256": "958f66c6abb75414b8ad38cd8fab498102a1045103522c806c6555c57d9058bb"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/run/serial.log",
+        "type": "file",
+        "bytes": 1917,
+        "sha256": "59e60ff445278a398822c6e77c064ea558c2b89e496a6832d8ad14031d0ae55a"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/usb-wire",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/usb-wire/usb-guest-to-host.bin",
+        "type": "file",
+        "bytes": 1022,
+        "sha256": "70e22c9a5a252cca8e4ad03d35708b2bdcca7a7fa0e44dfbc874895af863621f"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/usb-wire/usb-host-to-guest.bin",
+        "type": "file",
+        "bytes": 15,
+        "sha256": "8fe066f6a52c3348d210e607313519dde23d1d2fefbd1f5c9ec32c0db1655db3"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/cpu-2/validation.json",
+        "type": "file",
+        "bytes": 120959,
+        "sha256": "8d66d831fd8c508f3a8b7a5285c8db779b6b6ee6648c88051cc2dd49e339f8b2"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/crossink-v161-packaged-reading.gif",
+        "type": "file",
+        "bytes": 164895,
+        "sha256": "92f269c1fd4b576c3d3f0a9abe56b8610f2210924d727ace86923f1c5b1df2f1"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/crossink-v161-saved-page-restored.png",
+        "type": "file",
+        "bytes": 53384,
+        "sha256": "f8bfb3f3ad28b1ca588502a751da801f11fbc893fb323d456be277fe97f3549b"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/host-package-live-proof.py",
+        "type": "file",
+        "bytes": 16947,
+        "sha256": "11064b4c5258c3e35ba70232fc960354e0c568af036139652f8f71b116abe340"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/host-proof-visuals.py",
+        "type": "file",
+        "bytes": 5577,
+        "sha256": "d7978967abbc6afd976b91194e22a3b31d09e9d66c258a5dd6df5edcb18fd3bb"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/preview-provenance.json",
+        "type": "file",
+        "bytes": 6450,
+        "sha256": "366821ad67bf86b7ddb060aad6048a9e5489e00a62e7e156a4abdf681ecb422a"
+      },
+      {
+        "name": "x3-packaged-v161-live-main619-20261005/validation.json",
+        "type": "file",
+        "bytes": 388134,
+        "sha256": "d1abada6e3f5fbcd38ae31f664f57c7b669dd1b4112b568af647cdb478552af0"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/frames",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/frames/actual-default160-home.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/frames/http-default160-home.pgm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/host-default-package-proof.py",
+        "type": "file",
+        "bytes": 5358,
+        "sha256": "dbe61f15a423980edf68756a357fc3f3c951389ccfbf19bf26b95128fdb65213"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/packaged-launcher.log",
+        "type": "file",
+        "bytes": 491,
+        "sha256": "06b65925d397ec7e9810a21c64092f5c36a5b05f35cb3f084c5f067d2db7c386"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/backend.log",
+        "type": "file",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/bundle-preflight.json",
+        "type": "file",
+        "bytes": 6532,
+        "sha256": "a64f06c7634202f94e680cdf139c967ed5c1127060e3deaab3ed4f5da2883155"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/diagnostics.log",
+        "type": "file",
+        "bytes": 6134,
+        "sha256": "ac7d220b0378dbbcca89b37cb6abb2d1032ec9c52890bc8199407633f38207a6"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/efuse.bin",
+        "type": "file",
+        "bytes": 336,
+        "sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/flash.bin",
+        "type": "file",
+        "bytes": 16777216,
+        "sha256": "27c4d327ce02fb35140e5c777ad5b91f5469ebe5038eabe83f795c9e79839388"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/launcher.stdout.log",
+        "type": "file",
+        "bytes": 45776,
+        "sha256": "9577ecfe105fdccb0546c49e0578ad0bc1bc370356e67194d486fe4b8965b59e"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/panel.jsonl",
+        "type": "file",
+        "bytes": 6913,
+        "sha256": "7ac6ea59f68190f9d2ca8d19aaeb8bc269c49445c4426e4e67abdf20d336c1f2"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/panel.pbm",
+        "type": "file",
+        "bytes": 418309,
+        "sha256": "61c287dc08bbf3a7ecd6e410eb063c057ad29de7fb864ea476c73d636a14be8e"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/qmp-control.in",
+        "type": "fifo",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/qmp-control.out",
+        "type": "fifo",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/qmp.sock",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/rom.log",
+        "type": "file",
+        "bytes": 374,
+        "sha256": "72ff0563bec35c45e50a3013fd8c0bb03569d96712780974a7d9019e72f38c1a"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/run.json",
+        "type": "file",
+        "bytes": 45776,
+        "sha256": "9577ecfe105fdccb0546c49e0578ad0bc1bc370356e67194d486fe4b8965b59e"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/runtime-recording.json",
+        "type": "file",
+        "bytes": 285,
+        "sha256": "9a17b9fa06dcb02619ae1fa1e7d20b0919471f1d21228b382a83da1703b34f51"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/sd.img",
+        "type": "file",
+        "bytes": 67108864,
+        "sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/run/serial.log",
+        "type": "file",
+        "bytes": 1510,
+        "sha256": "f90f4560052f38dbba47b684777bad260efd77b71646bd38a8b0bf447a1a17e1"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/usb-wire",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/usb-wire/usb-guest-to-host.bin",
+        "type": "file",
+        "bytes": 1355,
+        "sha256": "304b4fb003519fcc04a9ad7e38b88a4c7242a0e2188d400d94da9b9b65de71a2"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/usb-wire/usb-host-to-guest.bin",
+        "type": "file",
+        "bytes": 20,
+        "sha256": "5456900386acf587e40bdbe8c7dd0510c02cd98b29997a26c2c1f804c926507c"
+      },
+      {
+        "name": "x3-packaged-default160-main619-20261005/validation.json",
+        "type": "file",
+        "bytes": 53920,
+        "sha256": "ba138d8605656d09ac48349d1ebc5d232b090bb3de826e06b50a7274f2fd1142"
+      },
+      {
+        "name": "host-source-main619",
+        "type": "directory",
+        "bytes": 0
+      },
+      {
+        "name": "host-source-main619/archive-validation-receipts.py",
+        "type": "file",
+        "bytes": 4379,
+        "sha256": "af64dfb5734af16c1875ad601a991738dbfb9c37eb4691dfa01c1a282d3b21ed"
+      },
+      {
+        "name": "host-source-main619/build-host-router.py",
+        "type": "file",
+        "bytes": 4374,
+        "sha256": "54fa2002f039b8935895374bad18bdec5509e946c032dc7ff1ccb961d85f8a0a"
+      },
+      {
+        "name": "host-source-main619/esptool-x3-modern.py",
+        "type": "file",
+        "bytes": 856,
+        "sha256": "b297f2372b817149f6874f08eab4d8a18fcff9d7ac1894eb633947027d47a345"
+      },
+      {
+        "name": "host-source-main619/package-runtime.py",
+        "type": "file",
+        "bytes": 28484,
+        "sha256": "ed5639cc1e543d518f1f314a2be527a157acc009ecf7ae40d45c7ab834a6af4c"
+      },
+      {
+        "name": "host-source-main619/smoke-crossink.py",
+        "type": "file",
+        "bytes": 40286,
+        "sha256": "dc522481b4817ea26ed899e66b2c1b6c5f5fe5a4c6b01b43b261945236da8510"
+      },
+      {
+        "name": "host-source-main619/source-snapshot.json",
+        "type": "file",
+        "bytes": 3961,
+        "sha256": "cc5c71de36faf3cf2f083da360c75c24bae37d4fbee78371c3a1d86a6d062aec"
+      },
+      {
+        "name": "host-source-main619/test-crossink-battery-capacity.py",
+        "type": "file",
+        "bytes": 30002,
+        "sha256": "ff128eff9e3c3e239a020d65d342909164be7cb0786c9a0a452606228e0c06cb"
+      },
+      {
+        "name": "host-source-main619/test-crossink-captive-dns.py",
+        "type": "file",
+        "bytes": 23828,
+        "sha256": "41ef4dab045c9ad1baac3b7dc9dca4909ad2bc8e4d0cbe19a8bfd8b357c82430"
+      },
+      {
+        "name": "host-source-main619/test-crossink-controls.py",
+        "type": "file",
+        "bytes": 74348,
+        "sha256": "4c6cb18b4c18ead82362a29c081b4cb75ab0ae2354f4738bc127556e9b6f7fee"
+      },
+      {
+        "name": "host-source-main619/test-crossink-display.py",
+        "type": "file",
+        "bytes": 116209,
+        "sha256": "b84e9d2269e9b20001f036304b8598d8bf1edd5bb6e3dbf331ffa5958e6a4b84"
+      },
+      {
+        "name": "host-source-main619/test-crossink-end-book.py",
+        "type": "file",
+        "bytes": 25798,
+        "sha256": "a9a2312f96e3992fc95794db9057fe5efc1cdf8c39316c04eeb3cf380b141f04"
+      },
+      {
+        "name": "host-source-main619/test-crossink-functions.py",
+        "type": "file",
+        "bytes": 159483,
+        "sha256": "d20da67ff9cd6acbcd18d543af6bcd552de45d5f5a93525a2e10e3cc3669e3d9"
+      },
+      {
+        "name": "host-source-main619/test-crossink-home.py",
+        "type": "file",
+        "bytes": 39447,
+        "sha256": "0b28508d15ee9dcc8203c91d3170399c1c998136722d5980272dd7cda02bcef1"
+      },
+      {
+        "name": "host-source-main619/test-crossink-koreader-binary.py",
+        "type": "file",
+        "bytes": 22247,
+        "sha256": "f425cd54fc75a6636c0aaef275a3301470103b7805f0199f704a08a8432294e4"
+      },
+      {
+        "name": "host-source-main619/test-crossink-library.py",
+        "type": "file",
+        "bytes": 91340,
+        "sha256": "1e5ee51d088c2cc9e6ff75d9957920667be78f6abad1e9de819254120db73478"
+      },
+      {
+        "name": "host-source-main619/test-crossink-nearby.py",
+        "type": "file",
+        "bytes": 102578,
+        "sha256": "c8382c6eb909c89d4c8d89a0b5236fda570b42474b7e5ff770beea52049f5eb5"
+      },
+      {
+        "name": "host-source-main619/test-crossink-network-errors.py",
+        "type": "file",
+        "bytes": 24123,
+        "sha256": "925976de821b133029be51d1eb8bfeda02bc8b4197c56ff290587830046e3342"
+      },
+      {
+        "name": "host-source-main619/test-crossink-network-settings.py",
+        "type": "file",
+        "bytes": 44809,
+        "sha256": "9ba72b6925ab3040cae0d0ad015c690dcefa06f8d0750c62bbeb4f80fb145d01"
+      },
+      {
+        "name": "host-source-main619/test-crossink-network.py",
+        "type": "file",
+        "bytes": 124512,
+        "sha256": "6f31b3e958fb354ac521e9bc0ffb19bf8cba61c45e50780722e42cf6dd156f75"
+      },
+      {
+        "name": "host-source-main619/test-crossink-online-ota.py",
+        "type": "file",
+        "bytes": 52397,
+        "sha256": "4f93320ca5d8198dd0ad04a66e341ac9ce66b2a91b70c783e9816ee5e37475ec"
+      },
+      {
+        "name": "host-source-main619/test-crossink-quick-action-editor.py",
+        "type": "file",
+        "bytes": 63677,
+        "sha256": "aa21c044ae87ff5a241dfa6b006f7eb350c20edcce8f1c352b6a713c48310b41"
+      },
+      {
+        "name": "host-source-main619/test-crossink-secure-wifi-group.py",
+        "type": "file",
+        "bytes": 36243,
+        "sha256": "dafadccd1579444ca0b984a1d41fdc944675855e68dcb35c08c192511f9cc472"
+      },
+      {
+        "name": "host-source-main619/test-crossink-secure-wifi.py",
+        "type": "file",
+        "bytes": 74219,
+        "sha256": "99ce4d1070e825589954dd991decee61ecfc9ba85a5a0b337c9936d0aa61b676"
+      },
+      {
+        "name": "host-source-main619/test-crossink-stats-peer.py",
+        "type": "file",
+        "bytes": 29188,
+        "sha256": "03b70ef9112c90aee3a0cf183d829d5e5e13fc545ec6217ba2bacbb6b918040d"
+      },
+      {
+        "name": "host-source-main619/test-crossink-ui.py",
+        "type": "file",
+        "bytes": 9475,
+        "sha256": "baaeaa790dba716d361a6b8990e0e3361308662b7f1792585af8456801ffa30a"
+      },
+      {
+        "name": "host-source-main619/test-crossink-v161-footnotes.py",
+        "type": "file",
+        "bytes": 24542,
+        "sha256": "1a4d72900303b48d473c7a60f42fc9bc72034470d625b91c28b5f46ec4d64830"
+      },
+      {
+        "name": "host-source-main619/test-crossink-v161-panel.py",
+        "type": "file",
+        "bytes": 24154,
+        "sha256": "fc466654a38944e3f78823df23fd82feee435f4085d362e9aec5f66571f37666"
+      },
+      {
+        "name": "host-source-main619/test-crossink-wifi-config.py",
+        "type": "file",
+        "bytes": 26534,
+        "sha256": "d4efe52d6ceac8a7996685ab843895354033e2499661452d0d8ae6b1b5ed7888"
+      },
+      {
+        "name": "host-source-main619/test-crossink-wifi-settings.py",
+        "type": "file",
+        "bytes": 13269,
+        "sha256": "8531811464423e4ccca0995e2e9b9b900e12202061180146edbd4e8aec4b2413"
+      },
+      {
+        "name": "host-source-main619/test-serial-flash.py",
+        "type": "file",
+        "bytes": 17564,
+        "sha256": "1264d747e332063627bea85ac40bab6115f8df1790d5f24cb69461863248ebfc"
+      },
+      {
+        "name": "host-source-main619/test-sleep-wake.py",
+        "type": "file",
+        "bytes": 10549,
+        "sha256": "5ed554bd051580159659e4cd9458d6ea09009543a65686f11c4426587a355696"
+      },
+      {
+        "name": "host-source-main619/test-usb-transfer.py",
+        "type": "file",
+        "bytes": 24435,
+        "sha256": "8893f479843f975412ac6f275d23575dd61d6c337a5fd9c3ccf49ef0078856ed"
+      },
+      {
+        "name": "host-source-main619/verify-qemu-subprojects.py",
+        "type": "file",
+        "bytes": 5081,
+        "sha256": "a287bc6abf5c21d070860c5a1b9c842dacd6e192560bb12f0995439471c04e9a"
+      },
+      {
+        "name": "host-source-main619/x3-build-public-package-evidence-current.py",
+        "type": "file",
+        "bytes": 20201,
+        "sha256": "f64040b0ce18bbfa0fd577620c3feaf361e2306b710338afd6e6bf223359145c"
+      },
+      {
+        "name": "host-source-main619/x3-default-package-proof-final.py",
+        "type": "file",
+        "bytes": 5358,
+        "sha256": "dbe61f15a423980edf68756a357fc3f3c951389ccfbf19bf26b95128fdb65213"
+      },
+      {
+        "name": "host-source-main619/x3-package-live-proof.py",
+        "type": "file",
+        "bytes": 16947,
+        "sha256": "11064b4c5258c3e35ba70232fc960354e0c568af036139652f8f71b116abe340"
+      },
+      {
+        "name": "host-source-main619/x3-package-proof-visuals-450.py",
+        "type": "file",
+        "bytes": 5577,
+        "sha256": "d7978967abbc6afd976b91194e22a3b31d09e9d66c258a5dd6df5edcb18fd3bb"
+      },
+      {
+        "name": "host-source-main619/x3-reconstruct-final-runtime.py",
+        "type": "file",
+        "bytes": 6944,
+        "sha256": "cc513838b94086b97e1f6937a0bb955694a3f67f7a5ec84edc9dd3291d3dd6cf"
+      },
+      {
+        "name": "runtime-readback/reconstruction.json",
+        "type": "file",
+        "bytes": 4465,
+        "sha256": "ac37d2b8353f0a1eb3dc1b7091ea5128c97fe4b080f2d66507a71881897ee8bd"
+      },
+      {
+        "name": "runtime-readback/package-verify-only.json",
+        "type": "file",
+        "bytes": 6532,
+        "sha256": "5923f81353455a5ea33e68e65e7f5b59e7d4252133b893cd82134b58259add73"
+      },
+      {
+        "name": "runtime-readback/host-reconstruction-source.py",
+        "type": "file",
+        "bytes": 6944,
+        "sha256": "cc513838b94086b97e1f6937a0bb955694a3f67f7a5ec84edc9dd3291d3dd6cf"
+      },
+      {
+        "name": "runtime-readback/bundle.json",
+        "type": "file",
+        "bytes": 12783,
+        "sha256": "150b667625dad23677d747b8230c616cdb25550d19ad5e7679af755bc9ab3f40"
+      },
+      {
+        "name": "original-native-readback/raw-native-artifact-validation.json",
+        "type": "file",
+        "bytes": 4394,
+        "sha256": "c63ab77afadb05ea6a26759cabd96a6f39029c7021f9a80125fdc52198930ba7"
+      },
+      {
+        "name": "original-native-readback/sealed-runtime-binding.json",
+        "type": "file",
+        "bytes": 1488,
+        "sha256": "181e4dae98dd4710785894f6a49c6966517e540d8d21e1b91c96c0bc46cbc1dc"
+      },
+      {
+        "name": "online-OTA-readback/original-archives-reassembly.json",
+        "type": "file",
+        "bytes": 24198,
+        "sha256": "ed999241395f19494d360fec32a335ff1f0525a248c5bad8d746f3d8a96ae817"
+      },
+      {
+        "name": "online-OTA-readback/original-artifact-metadata.json",
+        "type": "file",
+        "bytes": 2152,
+        "sha256": "4d7d7da69b219c1a926150e61d1006b0af1f5caa36d87dbf89084ed8b2634930"
+      },
+      {
+        "name": "workspace-copy-receipt.json",
+        "type": "file",
+        "bytes": 10678,
+        "sha256": "9fd5372586df5382f7735a47878b4f457bf83f08b4db09c7a8414bedf796eef1"
+      },
+      {
+        "name": "host-private-archive-source.py",
+        "type": "file",
+        "bytes": 3844,
+        "sha256": "13dc31c7ff4deba6acd28c03f7fa454e9470a9e0b4c2322c2043c420341d8d6a"
+      }
+    ]
+  }
+}

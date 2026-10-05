@@ -1,0 +1,427 @@
+{
+  "schema_version": 1,
+  "emulator_commit": "61927c41475a5f1ddb5454adf0db79657b30a563",
+  "firmware_source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+  "native_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+  "official_application_sha256": "4d1f2493079c71f7c466080fc13b11f16fa95c9cc6ccbaf158ac2ab0e761d644",
+  "input_review_sha256": "2cefe1a58e361422ed5877e6f978dfc72e5cc14c5294c10c619abd56072318d8",
+  "original_root_receipt_sha256": "98ef0300e2658c044a0e423d566c880292f467de4209a479a331e201a32ce172",
+  "functional_pass": true,
+  "strict_pass": false,
+  "stock_v160_proof_only": true,
+  "v161_or_ota_substitution": false,
+  "all_functions_verified": false,
+  "physical_output_validated": false,
+  "timing_calibrated": false,
+  "speed_selection_allowed": false,
+  "source_edits": false,
+  "audit_helper_sha256": "3ae7da9fab35222fb0e596a6f5786fa2054afcd5170e818f470ba01f61238fa0",
+  "original_command_exit_code": 1,
+  "original_command_exit_reason": "Existing harness requires strict_pass; functional outputs passed while unsupported-model diagnostics remain recorded",
+  "source_files": [
+    {
+      "path": "src/BookmarkStore.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "fb278ab9a58e54c046a90ec3fb733238deb28bf83e2aa523657ed47047326a1f",
+      "git_blob": "f4f47029122bf5b4e2df3dd8111e837c964b9195"
+    },
+    {
+      "path": "src/ClippingStore.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "2007301999508cbdfdb042e2a483c0f6143dcc9115aa5272e9dabd4acb500654",
+      "git_blob": "0b6b0858e6a20c0c12f7a4a089a1701f37e40bec"
+    },
+    {
+      "path": "src/SettingsList.h",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "95f2b99393a1dfb3523e5ba2e07818833eb777fa9f6b7fba856c14effb820dcc",
+      "git_blob": "c5a9d23c73c876d941522ff1e7900004491543f9"
+    },
+    {
+      "path": "src/activities/reader/ClipSelectionActivity.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "d813ecb20c07a09d0690d2f9487bc41e7fe63f2d6191f10bd5064a6531302890",
+      "git_blob": "afa11a74e86de4ff3b459d0dcc6c434aca4c9b88"
+    },
+    {
+      "path": "src/activities/reader/EpubReaderActivity.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "c4b13517aed22a2baf2e2eb1b1919e1515ce0f88f1d0945f05980f4228a05399",
+      "git_blob": "39a0db1d1d25f7fd27ab2b302417244af72bf62f"
+    },
+    {
+      "path": "src/activities/reader/EpubReaderBookmarkListActivity.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "1ad3deb5bf5263a439df42e87d5530ad4ecc4ca098bb5e20e15d07a716684a10",
+      "git_blob": "77b64a29e330af0c7fbf7f9cf66a42b6700da4cc"
+    },
+    {
+      "path": "src/activities/reader/EpubReaderClippingListActivity.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "58fca60fb0b0b796257ad893e52fd3260462e010ed89087663d45b7594f5879a",
+      "git_blob": "4297e7aa7d58b1012139e3fe18e0ccb069dd7330"
+    },
+    {
+      "path": "src/activities/reader/EpubReaderMenuActivity.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "30d351dd55d6e91a3aa2b65c0f21e953b916419635ab2674e994b5a9534a74a7",
+      "git_blob": "35af2e474f95e84504d66ea19d104f3985a9faac"
+    },
+    {
+      "path": "src/activities/reader/ReaderOptionsActivity.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "f41a91f42f73eda7be3d0a115c2f389ca93c27b52ec74674ecff35153a15f7b2",
+      "git_blob": "bfc9d0bd0e3616cd0b9eae143265af1d6315a3c3"
+    },
+    {
+      "path": "src/activities/settings/FontSelectionActivity.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "1488e4cf0c7cc7de0a6e4f5cef29b03452f3991ee9dac27454afdb0bbcf53b7c",
+      "git_blob": "2ccbf3c7edb47f7b88c2429039da1962c14da485"
+    },
+    {
+      "path": "src/clippings/ClippingsManager.cpp",
+      "source_commit": "31ce770487bfa9cb70447a374cdd8aae89d8bfe4",
+      "sha256": "e97530bf7ae012c5125478ad3daa90deefc3a77a26f2848b2c2ad2b518409bb7",
+      "git_blob": "8f087382583fc155f71ba524c00e7589ceac67d3"
+    }
+  ],
+  "harness_sha256": "d20da67ff9cd6acbcd18d543af6bcd552de45d5f5a93525a2e10e3cc3669e3d9",
+  "boot_count": 4,
+  "frame_count_verified": 65,
+  "workflows": {
+    "bookmarks": {
+      "original_receipt_sha256": "e2be72322fb6499058c07ac3e6ace311a19a7ee4d6098db0f38fecb41d95d2f0",
+      "functional_pass": true,
+      "strict_pass": false,
+      "model_diagnostics_clean": false,
+      "completed": true,
+      "original_error": null,
+      "checks": {
+        "pinned_full_flash": true,
+        "original_epub_fixture": true,
+        "guest_opened_original_epub": true,
+        "bookmark_created": true,
+        "bookmark_jump_restored_pixels": true,
+        "bookmark_removed": true,
+        "bookmark_jump_progress_persisted": true,
+        "boot0_rom_cold_boot": true,
+        "boot0_controlled_cold_boot_reset_sequence": true,
+        "boot0_hardware_detect_x3": true,
+        "boot0_post_gpio_x3": true,
+        "boot0_no_sd_error_or_guest_panic": true,
+        "backend_stopped_cleanly": true
+      },
+      "observations": {
+        "bookmark_created": {
+          "version": 5,
+          "count": 1,
+          "title": "CrossInk Emulator Test Book",
+          "author": "X3 Emulator Test Fixtures",
+          "book_path": "/test.epub",
+          "entries": [
+            {
+              "spine_index": 0,
+              "progress": 0.04545454680919647,
+              "timestamp": 0,
+              "chapter": "The workshop",
+              "paragraph_index": 5,
+              "snippet": "gate. The reader pauses to hear a train pass and then returns"
+            }
+          ],
+          "sha256": "82d604bfd4ec9afcbd2096ecab50a2f0513bff924238793a1f4fd5190d511dd3"
+        },
+        "bookmark_removed": {
+          "store_path": "/.crosspoint/bookmarks/epub_4071094927.bin"
+        },
+        "bookmark_jump_progress_persisted": {
+          "spine_index": 0,
+          "page_number": 1,
+          "page_count": 22,
+          "visible_text_offset": 586
+        }
+      },
+      "frame_count_verified": 23,
+      "pixel_deltas_recomputed": {
+        "bookmark_jump_delta": 0
+      },
+      "cpus": [
+        {
+          "run_manifest": "run/run.json",
+          "manifest_sha256": "676bb77034647e6306585120335d107f5e13930b64a7d74177d199e526ab7276",
+          "native_exit_code": 0,
+          "initial_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+          "final_flash_sha256": "27c4d327ce02fb35140e5c777ad5b91f5469ebe5038eabe83f795c9e79839388",
+          "initial_sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+          "final_sd_sha256": "b454f3adc65bf056d42924b35982b7b17b2db23300488526a5660ea226e246ed",
+          "trace_sha256": "15957b7afe37552dff6faca5326542f85f251f78440f0de5b3e2305a36c44488",
+          "trace_records": 1301,
+          "native_refresh_count": 44,
+          "trace_complete": true,
+          "trace_file_linked": true,
+          "output_errors": 0,
+          "diagnostics_clean": false,
+          "unmodelled_soc_reads": 47,
+          "unmodelled_soc_writes": 54,
+          "virtual_time_ns": 139107967600,
+          "diagnostic_nonempty_lines": 165
+        }
+      ]
+    },
+    "clippings": {
+      "original_receipt_sha256": "2ed7b3597a8a1f4ecb2860ede9448f4c13e698d61a1cf45759a3573c2e7d58db",
+      "functional_pass": true,
+      "strict_pass": false,
+      "model_diagnostics_clean": false,
+      "completed": true,
+      "original_error": null,
+      "checks": {
+        "pinned_full_flash": true,
+        "original_epub_fixture": true,
+        "guest_opened_original_epub": true,
+        "selection_highlight_changed": true,
+        "clipping_created": true,
+        "clipping_text_exported": true,
+        "clipping_jump_progress_persisted": true,
+        "boot0_rom_cold_boot": true,
+        "boot0_controlled_cold_boot_reset_sequence": true,
+        "boot0_hardware_detect_x3": true,
+        "boot0_post_gpio_x3": true,
+        "boot0_no_sd_error_or_guest_panic": true,
+        "backend_stopped_cleanly": true
+      },
+      "observations": {
+        "clipping_created": {
+          "version": 4,
+          "count": 1,
+          "title": "CrossInk Emulator Test Book",
+          "author": "X3 Emulator Test Fixtures",
+          "book_path": "/test.epub",
+          "entries": [
+            {
+              "spine_index": 0,
+              "start_page": 0,
+              "end_page": 0,
+              "page_count": 22,
+              "start_word_index": 57,
+              "end_word_index": 58,
+              "word_count": 2,
+              "paragraph_index": 3,
+              "timestamp": 29,
+              "layout_signature": 964129117,
+              "table_selection": 65535,
+              "chapter": "The workshop",
+              "text": "1.\nA"
+            }
+          ],
+          "sha256": "a872d9765783817fabac0ad30f60e706b82b1d3d83b2cf7b9e7c3409c82b2bf2"
+        },
+        "clipping_text_exported": {
+          "sha256": "30ba55a49654aeed012620941974fe21d8fb7d707652b6116de24dc1aaa6711e",
+          "text": "CrossInk Emulator Test Book (X3 Emulator Test Fixtures)\n- Your Highlight on Page 1 | The workshop | Added on Thursday, January 1, 2026, 12:00 AM\n\n1.\nA\n==========\n"
+        },
+        "clipping_jump_progress_persisted": {
+          "spine_index": 0,
+          "page_number": 0,
+          "page_count": 22,
+          "visible_text_offset": 0
+        }
+      },
+      "frame_count_verified": 19,
+      "pixel_deltas_recomputed": {
+        "selection_extend_delta": 300
+      },
+      "cpus": [
+        {
+          "run_manifest": "run/run.json",
+          "manifest_sha256": "c9421622cc02cac5c01a0d5476bfa6ecbd9b30c0cb34c090b634c3378f896acb",
+          "native_exit_code": 0,
+          "initial_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+          "final_flash_sha256": "27c4d327ce02fb35140e5c777ad5b91f5469ebe5038eabe83f795c9e79839388",
+          "initial_sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+          "final_sd_sha256": "bf33e4262ba0ef1d20fb535fe9683902875eb3d3a30fdf2a0907d337fc7fe6cc",
+          "trace_sha256": "99291b622c9453e4ac7632ea4513427349ea5a356ac52240a78d660ab898e5d2",
+          "trace_records": 889,
+          "native_refresh_count": 36,
+          "trace_complete": true,
+          "trace_file_linked": true,
+          "output_errors": 0,
+          "diagnostics_clean": false,
+          "unmodelled_soc_reads": 47,
+          "unmodelled_soc_writes": 54,
+          "virtual_time_ns": 116675001032,
+          "diagnostic_nonempty_lines": 165
+        }
+      ]
+    },
+    "fonts": {
+      "original_receipt_sha256": "8d370c943ef6c061632f47a6d5f350237457e986135f0dea92726804c5c39ca3",
+      "functional_pass": true,
+      "strict_pass": false,
+      "model_diagnostics_clean": false,
+      "completed": true,
+      "original_error": null,
+      "checks": {
+        "pinned_full_flash": true,
+        "original_epub_fixture": true,
+        "guest_opened_original_epub": true,
+        "per_book_font_family_saved": true,
+        "per_book_font_size_saved": true,
+        "font_changed_rendered_pixels": true,
+        "font_settings_survive_exit": true,
+        "first_cpu_stopped_cleanly_for_reboot": true,
+        "font_settings_survive_cold_restart": true,
+        "font_render_restored_after_cold_restart": true,
+        "boot0_rom_cold_boot": true,
+        "boot0_controlled_cold_boot_reset_sequence": true,
+        "boot0_hardware_detect_x3": true,
+        "boot0_post_gpio_x3": true,
+        "boot0_no_sd_error_or_guest_panic": true,
+        "boot1_rom_cold_boot": true,
+        "boot1_controlled_cold_boot_reset_sequence": true,
+        "boot1_hardware_detect_x3": true,
+        "boot1_post_gpio_x3": true,
+        "boot1_no_sd_error_or_guest_panic": true,
+        "backend_stopped_cleanly": true
+      },
+      "observations": {
+        "per_book_font_family_saved": {
+          "font_family": 1,
+          "font_point_size": 14,
+          "line_height_percent": 100,
+          "word_spacing": 0,
+          "orientation": 0,
+          "margin_vertical": 5,
+          "margin_horizontal": 5,
+          "publisher_page_numbers": 0,
+          "paragraph_alignment": 0,
+          "embedded_style": 1,
+          "hyphenation": 0,
+          "text_antialiasing": 1,
+          "image_rendering": 0,
+          "extra_paragraph_spacing": 1,
+          "force_paragraph_indents": 0,
+          "focus_reading": 0,
+          "guide_reading": 0,
+          "render_mode": 0,
+          "indexing_method": 1,
+          "version": 9,
+          "flags": 5,
+          "auto_page_turn_seconds": 30,
+          "render_mode_override": 0,
+          "sd_font_family": "",
+          "dictionary_font_family": "",
+          "dictionary_font_point_size": 0,
+          "sha256": "4aa723940e96566d6ad4bff32187fb4016161e8489370a223b2ac710d4e6f0f1"
+        },
+        "per_book_font_size_saved": {
+          "font_family": 1,
+          "font_point_size": 16,
+          "line_height_percent": 100,
+          "word_spacing": 0,
+          "orientation": 0,
+          "margin_vertical": 5,
+          "margin_horizontal": 5,
+          "publisher_page_numbers": 0,
+          "paragraph_alignment": 0,
+          "embedded_style": 1,
+          "hyphenation": 0,
+          "text_antialiasing": 1,
+          "image_rendering": 0,
+          "extra_paragraph_spacing": 1,
+          "force_paragraph_indents": 0,
+          "focus_reading": 0,
+          "guide_reading": 0,
+          "render_mode": 0,
+          "indexing_method": 1,
+          "version": 9,
+          "flags": 5,
+          "auto_page_turn_seconds": 30,
+          "render_mode_override": 0,
+          "sd_font_family": "",
+          "dictionary_font_family": "",
+          "dictionary_font_point_size": 0,
+          "sha256": "936485afd376b216c430f61efb51dcaeaba0afda770e8fde49646b4adf8fb2bd"
+        },
+        "font_settings_survive_cold_restart": {
+          "font_family": 1,
+          "font_point_size": 16,
+          "line_height_percent": 100,
+          "word_spacing": 0,
+          "orientation": 0,
+          "margin_vertical": 5,
+          "margin_horizontal": 5,
+          "publisher_page_numbers": 0,
+          "paragraph_alignment": 0,
+          "embedded_style": 1,
+          "hyphenation": 0,
+          "text_antialiasing": 1,
+          "image_rendering": 0,
+          "extra_paragraph_spacing": 1,
+          "force_paragraph_indents": 0,
+          "focus_reading": 0,
+          "guide_reading": 0,
+          "render_mode": 0,
+          "indexing_method": 1,
+          "version": 9,
+          "flags": 5,
+          "auto_page_turn_seconds": 30,
+          "render_mode_override": 0,
+          "sd_font_family": "",
+          "dictionary_font_family": "",
+          "dictionary_font_point_size": 0,
+          "sha256": "936485afd376b216c430f61efb51dcaeaba0afda770e8fde49646b4adf8fb2bd"
+        }
+      },
+      "frame_count_verified": 23,
+      "pixel_deltas_recomputed": {
+        "font_change_delta": 116078,
+        "cold_reopen_delta": 0
+      },
+      "cpus": [
+        {
+          "run_manifest": "run/run.json",
+          "manifest_sha256": "b22ff36c19afee814ac125c5f6b16239f76680628cf953e48276bb0fe0f65215",
+          "native_exit_code": 0,
+          "initial_flash_sha256": "fe75703f925f144c81866b47b5bc7c41de84188a7782c775fc8c01dd4a19d095",
+          "final_flash_sha256": "27c4d327ce02fb35140e5c777ad5b91f5469ebe5038eabe83f795c9e79839388",
+          "initial_sd_sha256": "2f094e34365536de62e4b3b5e65c077121e4209807af8a92ccc7c7c61a917427",
+          "final_sd_sha256": "d269ce508a0f7123af54d8b90a7e2dfb39fa821f0736b2927a82e5f05f50fffe",
+          "trace_sha256": "9f1889ca430cf9a5c3b1f6095a4320c222a9c7db34f125f8b14d842dcb1c225a",
+          "trace_records": 780,
+          "native_refresh_count": 38,
+          "trace_complete": true,
+          "trace_file_linked": true,
+          "output_errors": 0,
+          "diagnostics_clean": false,
+          "unmodelled_soc_reads": 47,
+          "unmodelled_soc_writes": 54,
+          "virtual_time_ns": 140930001248,
+          "diagnostic_nonempty_lines": 165
+        },
+        {
+          "run_manifest": "reboot-1/run.json",
+          "manifest_sha256": "90ecf73b2a4759146e9630d54a7fa1d12f4d0083dc5325f5fb7dfccec0ebd2a5",
+          "native_exit_code": 0,
+          "initial_flash_sha256": "27c4d327ce02fb35140e5c777ad5b91f5469ebe5038eabe83f795c9e79839388",
+          "final_flash_sha256": "27c4d327ce02fb35140e5c777ad5b91f5469ebe5038eabe83f795c9e79839388",
+          "initial_sd_sha256": "d269ce508a0f7123af54d8b90a7e2dfb39fa821f0736b2927a82e5f05f50fffe",
+          "final_sd_sha256": "0f678a205dcbd68e743cf65489329faa78a4f44338f2864fba542d403eb871ee",
+          "trace_sha256": "c1f1705b07a57a38aba05964a636c21f0ac9cd301b23458f44111ef4606187c3",
+          "trace_records": 274,
+          "native_refresh_count": 11,
+          "trace_complete": true,
+          "trace_file_linked": true,
+          "output_errors": 0,
+          "diagnostics_clean": false,
+          "unmodelled_soc_reads": 47,
+          "unmodelled_soc_writes": 54,
+          "virtual_time_ns": 78168811336,
+          "diagnostic_nonempty_lines": 165
+        }
+      ]
+    }
+  },
+  "independent_audit_sha256": "bb97a659e8fcbcbfae376468c5d07e3eff0ba61d8199692c5666f63c1fcd679a"
+}

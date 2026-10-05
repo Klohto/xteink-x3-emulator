@@ -99,7 +99,16 @@ that button. Physical side Up changes the category in this menu. The source
 still has four tabs, including Reader; its inverted selected pill can disappear
 from OCR text. The test binds
 one recorded Confirm pulse to the actual ROM software-reset reason, guest route
-`0→2` and subsequent native observation. It waits for the stock WiFi picker scan
+`0→2` and subsequent native observation. Immediately before that input it records
+the actual serial byte prefix length and SHA256. Acceptance requires exactly one
+fresh `Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=2` row
+after that prefix, one new completed source WiFi scan after the row, and exactly
+one actual ROM software reset after `POWERON`. Stale, conflicting or duplicate
+route records and scans cannot establish this action. The optional
+`Minimal network boot ready: target=2` logger row is retained literally with
+observed/missing flags; a present row naming another target or duplicate rows
+fail acceptance. The stopped log is re-read against the recorded byte prefix
+and must reproduce the complete observation. It waits for the stock WiFi picker scan
 and presses Back to cancel, returning Home without a second reset or another
 update installation. A host `system_reset` is not accepted as this guest restart.
 The pre-action panel oracle checks stable original System labels; the selected
@@ -108,6 +117,19 @@ capture. The literal OCR output is retained. The actual Confirm, ROM reset and
 guest target 2 establish the activated action.
 Guest logger timestamps remain separate from QEMU virtual timestamps; the test
 uses the actual QEMU observation time to bracket the reset evidence.
+
+The original `61927c41475a5f1ddb5454adf0db79657b30a563` CI capacity execution
+failed while waiting for that optional minimal-boot logger row. Its original
+receipt remains failing: SHA256
+`793ce508f2d05eabc2d00ed585d7426f5c50b90f662dee87fb8bea2af911cc47`.
+Its preserved artifact is ID `11355301751`, with published ZIP SHA256
+`9f9596ab54e0be4ecb3af0270bfbe24dd5114f69d2903804593e19e8e418f75f`.
+The actual running pre-commit witness was at `20,883,780 ns` with all three
+capacities 3000 and no commits. The unchanged guest then committed 650/650/650,
+sealed the gauge, performed the real stock software reset and completed the
+fresh target-2 scan. The missing logger row blocked subsequent reading checks;
+those checks are not claimed for that failed execution. The observer correction
+changes no guest firmware, native device state, gauge writes or reset mechanism.
 
 The gauge must retain the same capacities, sealed state and counters after this
 restart. The same unchanged guest then indexes the original book, turns forward,
@@ -140,3 +162,60 @@ machine fidelity, all CrossInk functions or hardware-calibrated speed. Timing
 calibration and speed selection remain disabled. Native protocol details and
 source-based timing assumptions are documented in
 [BQ27220 capacity loading](bq27220-capacity.md).
+
+
+## Corrected current-native execution
+
+The corrected host observer completed a fresh local unchanged-v1.6.1 capacity
+workflow on the exact native binary built from main
+`61927c41475a5f1ddb5454adf0db79657b30a563` by Tests `37329050494`.
+The original CI capacity receipt remains failing; this fresh local execution is
+recorded separately. It used the actual flash and eFuse retained by the accepted
+three-CPU OTA execution, with original receipt SHA256
+`2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011`.
+No guest firmware, native model, progress files or gauge values were changed by
+the observer repair. Both synthetic 3000 mAh starting capacities were realized
+before CPU execution; the pre-commit row is the actual running observation,
+not a paused pre-CPU or time-zero claim.
+
+| Actual native observation | Virtual time (ns) | Design / Learned FCC / FCC (mAh) | Operation status | DM commits / reinitializations |
+| --- | --- | --- | --- | --- |
+| Running pre-commit | 1,785,715 | 3000 / 3000 / 3000 | 6 | 0 / 0 |
+| Guest capacity-load completion | 11,740,570,861 | 650 / 650 / 650 | 6 | 2 / 1 |
+| After stock software restart | 39,532,109,417 | 650 / 650 / 650 | 6 | 2 / 1 |
+| After reading and reopening | 69,891,961,024 | 650 / 650 / 650 | 6 | 2 / 1 |
+
+The unchanged stock Settings action received one recorded 400 ms Confirm pulse.
+The ROM reported `POWERON` followed by exactly one `RTC_SW_CPU_RST`. The fresh
+post-input guest record was `device=X3 usb=0 silentReboot=1 silentTarget=2`,
+followed by one complete source WiFi scan. This execution observed the full
+`Minimal network boot ready` row, with target 2 and literal free/maxAlloc fields;
+the original failed CI execution's missing row remains recorded separately.
+
+The gauge stayed sealed with no CFGUPDATE or pending deadline. Capacity
+rejections, gauge injections and gauge unsupported accesses remained zero.
+The guest indexed the untouched original EPUB, turned forward and back, saved
+page 1 of a 22-page chapter, and reopened it. Forward reading changed 111,850
+content pixels; turning back and reopening each restored the expected content
+with zero changed content pixels. The stopped FAT card independently retained
+spine 0, page 1 of 22. All 21 captured PGM files and all 1,092 native trace
+records were re-read against their file/pixel hashes and native CRC events. The
+trace remained linked to its native descriptor, with no output errors. Every
+recorded acceptance check is true and the native process exited with code 0.
+
+The fresh local receipt SHA256 is
+`5c1f7220a8480e11c0408d06e5dc45f3d7966f53376609f6438958365efc3b9a`.
+The executing host script SHA256 is
+`3ac35cca42f506afbe43291f72b619fd1824f5d49d6a54b4e5ec86f50d41405b`.
+The exact native ELF SHA256 is
+`1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e`,
+with paired ESP32-C3 ROM SHA256
+`0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99`.
+The closed readback audit SHA256 is
+`6f1c3f158e66cff7bc319a3ec668c4df63407f29039f3080f5d3460e5b01daf5`.
+The source/evidence summary SHA256 is
+`1fb4dbb5a51db9de3bda4eaa65831182642956d19ea6da3fcbbee379d018403f`.
+This proves digital capacity loading and retention across the guest's software
+restart within one process. Physical gauge behavior, persistence across separate
+emulator processes, complete machine fidelity, all functions and calibrated
+hardware speed remain unverified.

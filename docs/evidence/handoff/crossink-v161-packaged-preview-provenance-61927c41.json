@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "source_root_receipt_sha256": "d1abada6e3f5fbcd38ae31f664f57c7b669dd1b4112b568af647cdb478552af0",
+  "native_elf_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "original_child_receipt_sha256": {
+    "cpu-1": "3797fe72d6febc2c6dd1b5caa1a3086abf1e5b7b89222c1c0cee055b4f8bc831",
+    "cpu-2": "8d66d831fd8c508f3a8b7a5285c8db779b6b6ee6648c88051cc2dd49e339f8b2"
+  },
+  "bundle_manifest_sha256": "150b667625dad23677d747b8230c616cdb25550d19ad5e7679af755bc9ab3f40",
+  "original_OTA_binding": {
+    "original_ota_receipt_sha256": "2e897979d92c9c93b9059a0704779d5f1762887b821f0b776e33a6fbeadb2011",
+    "carried_run_manifest_sha256": "05842d09af0082b0fffbb9448715f8667075aefd7639928b8db1d04497ecec78",
+    "carried_flash_sha256": "ced0e60809036d4de570e1c15e08ad88c9f1cff96e4c986449dc74b880514583",
+    "carried_efuse_sha256": "874c8a5aec9675040f7078278466d6eb1d871a0acd942fbfa6b77a82c1138bdc",
+    "carried_rom_sha256": "0de1e65020e803bea0d7443dca149d61895e01fca3bb9c82d073234eebd73f99",
+    "official_v161_application_sha256": "ac463268560545017a1b4b4a9e294cfbfbe8b0693f5618022ddc7adea06fa1d2",
+    "actual_ota_selection": {
+      "slots": [
+        {
+          "slot": 0,
+          "sequence": 1,
+          "state": 4294967295,
+          "crc32": 1195612314,
+          "valid": true
+        },
+        {
+          "slot": 1,
+          "sequence": 2,
+          "state": 2,
+          "crc32": 1442199412,
+          "valid": true
+        }
+      ],
+      "active_slot": 1,
+      "app_index": 1,
+      "app_offset": 6619136
+    }
+  },
+  "sources": [
+    {
+      "cpu": 1,
+      "capture_label": "real-saved-reader",
+      "title": "Open book at its saved position",
+      "source": "cpu-1/frames/http-real-saved-reader-attempt01.pgm",
+      "source_file_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+      "original_native_capture": "cpu-1/frames/real-saved-reader-attempt01.pgm",
+      "original_native_capture_file_sha256": "9c35990306c4d9919a9ad757903ce3117cfc95634a36ed7606ef6ff47dbff49e",
+      "native_pixel_crc32": 1098605927,
+      "native_pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+      "frame_count": 9,
+      "trace_complete": true
+    },
+    {
+      "cpu": 1,
+      "capture_label": "reader-next-page",
+      "title": "Turn forward",
+      "source": "cpu-1/frames/http-reader-next-page-attempt01.pgm",
+      "source_file_sha256": "fd56a78c3a67ab1df0389f5963eca5fa4da2bedde87c4ad76223b6ab12808c24",
+      "original_native_capture": "cpu-1/frames/reader-next-page-attempt01.pgm",
+      "original_native_capture_file_sha256": "fd56a78c3a67ab1df0389f5963eca5fa4da2bedde87c4ad76223b6ab12808c24",
+      "native_pixel_crc32": 3729598029,
+      "native_pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+      "frame_count": 11,
+      "trace_complete": true
+    },
+    {
+      "cpu": 1,
+      "capture_label": "reader-previous-page",
+      "title": "Turn backward",
+      "source": "cpu-1/frames/http-reader-previous-page-attempt01.pgm",
+      "source_file_sha256": "0e36092c0e7512ce349ec8a82cf19bd05d33f0f82a81b622415ee7a9728d4880",
+      "original_native_capture": "cpu-1/frames/reader-previous-page-attempt01.pgm",
+      "original_native_capture_file_sha256": "0e36092c0e7512ce349ec8a82cf19bd05d33f0f82a81b622415ee7a9728d4880",
+      "native_pixel_crc32": 1098605927,
+      "native_pixel_sha256": "036072052c100031076e773ad777f3a748558e7b52ea17d8617eb6e5cede9d51",
+      "frame_count": 13,
+      "trace_complete": true
+    },
+    {
+      "cpu": 1,
+      "capture_label": "reader-page-to-save",
+      "title": "Turn forward again before saving",
+      "source": "cpu-1/frames/http-reader-page-to-save-attempt01.pgm",
+      "source_file_sha256": "e61aff3609b1ebe2c9a17e3415a5523370fb17a155b506cdd26f592f8c42509f",
+      "original_native_capture": "cpu-1/frames/reader-page-to-save-attempt01.pgm",
+      "original_native_capture_file_sha256": "e61aff3609b1ebe2c9a17e3415a5523370fb17a155b506cdd26f592f8c42509f",
+      "native_pixel_crc32": 3729598029,
+      "native_pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+      "frame_count": 15,
+      "trace_complete": true
+    },
+    {
+      "cpu": 1,
+      "capture_label": "home-after-reading-save",
+      "title": "Exit reading and save",
+      "source": "cpu-1/frames/http-home-after-reading-save-attempt01.pgm",
+      "source_file_sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584",
+      "original_native_capture": "cpu-1/frames/home-after-reading-save-attempt01.pgm",
+      "original_native_capture_file_sha256": "fa38ba6ae272fbe80f3834ae5e815932ac9fc17c365f328a6e1f08ac90b92584",
+      "native_pixel_crc32": 2843903662,
+      "native_pixel_sha256": "ac11d1ffc64e83ec696b565e98191df03e0c0861829e22cfd8d97641944402cc",
+      "frame_count": 17,
+      "trace_complete": true
+    },
+    {
+      "cpu": 2,
+      "capture_label": "real-saved-reader",
+      "title": "Fresh CPU restores the saved page",
+      "source": "cpu-2/frames/http-real-saved-reader-attempt01.pgm",
+      "source_file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+      "original_native_capture": "cpu-2/frames/real-saved-reader-attempt01.pgm",
+      "original_native_capture_file_sha256": "814e9109cd54c3a21a1f03318959d0f806e5e74037625ad39cc80fcdb4371f84",
+      "native_pixel_crc32": 3729598029,
+      "native_pixel_sha256": "92545322e62eb151bb649f9064921017c23849450f2aab8d10d6584e77e1d74f",
+      "frame_count": 9,
+      "trace_complete": true
+    }
+  ],
+  "transform": "90 degrees clockwise, no resizing; labels outside framebuffer.",
+  "all_exported_GIF_and_PNG_framebuffer_pixels_rechecked_equal_source": true,
+  "GIF_playback_duration_ms_per_frame": 2000,
+  "playback_is_measured_hardware_speed": false,
+  "browser_rendering_verified": false,
+  "physical_timing_calibrated": false,
+  "all_functions_verified": false,
+  "visuals": [
+    {
+      "name": "crossink-v161-packaged-reading.gif",
+      "bytes": 164895,
+      "sha256": "92f269c1fd4b576c3d3f0a9abe56b8610f2210924d727ace86923f1c5b1df2f1"
+    },
+    {
+      "name": "crossink-v161-saved-page-restored.png",
+      "bytes": 53384,
+      "sha256": "f8bfb3f3ad28b1ca588502a751da801f11fbc893fb323d456be277fe97f3549b"
+    }
+  ],
+  "host_visual_source_sha256": "d7978967abbc6afd976b91194e22a3b31d09e9d66c258a5dd6df5edcb18fd3bb"
+}

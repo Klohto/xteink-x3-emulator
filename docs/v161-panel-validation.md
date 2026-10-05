@@ -1,5 +1,12 @@
 # CrossInk 1.6.1 front-panel HTTP gate
 
+The current [main619 original HTTP execution](evidence/http-panel-61927-2026-10-05.json)
+passes all 57 checks on native ELF `1cf9ac9b…714e`: eleven HTTP/native frames,
+real page turns, warm reopen and a new CPU restore from actual written media.
+The original root SHA256 is
+`3f2b6df7e2602c4b5d27a8cc4aaedb8719b9f0e4ff4ce95de54043fcc6271194`.
+The earlier cd95 execution below retains its original identity.
+
 `scripts/test-crossink-v161-panel.py` runs a bounded two-CPU execution of
 the real loopback front-panel server on unchanged official CrossInk 1.6.1.
 The strict two-CPU `1→2→1→2` save/reopen/cold-restore execution now passes on

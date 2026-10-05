@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "status": "original_failed_observer_diagnosed",
+  "original_functional_pass": false,
+  "original_root_receipt_sha256": "793ce508f2d05eabc2d00ed585d7426f5c50b90f662dee87fb8bea2af911cc47",
+  "original_cpu_receipt_sha256": "d63dad9011c88de92ea6cb7941b82187cfa49ac2ab57ddbdf385ce53d3fabe5e",
+  "original_manifest_sha256": "a571a24fbf34ce74f8dcc6c72cf324473ce9517b605359d1d47413b6f3744165",
+  "backend_sha256": "1cf9ac9bc004a7794f9bbc8a52a47f374622e2dcfb0975cbd088b876e9cc714e",
+  "original_error": "timed out waiting for actual stock C3 software boot",
+  "earliest_actual_precommit_witness_virtual_ns": 20883780,
+  "earliest_actual_gauge": {
+    "unsupported-accesses": 0,
+    "temperature-mc": 25000,
+    "injection-count": 0,
+    "physical-effects-modelled": false,
+    "soc-percent": 80,
+    "voltage-mv": 3900,
+    "current-ma": -40,
+    "fuel-gauging-modelled": false,
+    "operation-status": 6,
+    "design-capacity-mah": 3000,
+    "learned-fcc-mah": 3000,
+    "full-charge-capacity-mah": 3000,
+    "capacity-data-writes": 0,
+    "capacity-reinitializations": 0,
+    "capacity-rejections": 0,
+    "capacity-config-deadline-ns": 0
+  },
+  "guest_loaded_gauge": {
+    "t_ns": 12827982634,
+    "gauge": {
+      "design-capacity-mah": 650,
+      "learned-fcc-mah": 650,
+      "full-charge-capacity-mah": 650,
+      "operation-status": 6,
+      "capacity-data-writes": 2,
+      "capacity-reinitializations": 1,
+      "capacity-rejections": 0,
+      "capacity-config-deadline-ns": 0,
+      "injection-count": 0,
+      "unsupported-accesses": 0,
+      "fuel-gauging-modelled": false,
+      "physical-effects-modelled": false
+    },
+    "observation_method": "paused read-only native QOM snapshot"
+  },
+  "final_actual_gauge": {
+    "unsupported-accesses": 0,
+    "temperature-mc": 25000,
+    "injection-count": 0,
+    "physical-effects-modelled": false,
+    "soc-percent": 80,
+    "voltage-mv": 3900,
+    "current-ma": -40,
+    "fuel-gauging-modelled": false,
+    "operation-status": 6,
+    "design-capacity-mah": 650,
+    "learned-fcc-mah": 650,
+    "full-charge-capacity-mah": 650,
+    "capacity-data-writes": 2,
+    "capacity-reinitializations": 1,
+    "capacity-rejections": 0,
+    "capacity-config-deadline-ns": 0
+  },
+  "original_rom_resets": [
+    {
+      "code": 1,
+      "name": "POWERON"
+    },
+    {
+      "code": 12,
+      "name": "RTC_SW_CPU_RST"
+    }
+  ],
+  "original_confirm": {
+    "button": "confirm",
+    "mask": 2,
+    "request_t_ns": 34922886952,
+    "press_t_ns": 34973628586,
+    "release_deadline_t_ns": 35373628586,
+    "release_observed_t_ns": 35484876512,
+    "scheduled_hold_ns": 400000000,
+    "neutral_interval_start_t_ns": 34565631182,
+    "minimum_neutral_interval_ns": 250000000,
+    "observed_neutral_interval_ns": 407997404,
+    "preceding_settled_frame_t_ns": 32854772282,
+    "purpose": "Stock Settings Check for Updates calls ESP.restart; no host reset command",
+    "release_transport": "ADC QEMU_CLOCK_VIRTUAL timer"
+  },
+  "fresh_exact_target2_original_rows": [
+    "[36960] [INF] [BOOT] Post-GPIO diagnostic: device=X3 usb=0 silentReboot=1 silentTarget=2"
+  ],
+  "fresh_completed_scan_original_rows": [
+    "[40775] [INF] [WIFI] WiFi scan complete: rawNetworks=0"
+  ],
+  "minimal_target2_summary_observed": false,
+  "minimal_target2_summary_missing": true,
+  "cause_of_missing_optional_line_established": false,
+  "original_closed_trace_complete": true,
+  "native_or_gauge_failure_demonstrated": false,
+  "source": {
+    "native_sensor_file_sha256": "fcc834e0f4262fb7f82a3cf02c8e93736c55167504eb2f0e30f9bb4b10f24eb2",
+    "main_cpp_sha256": "a0c695549ae1fa3a1d64aa8bb6c3952315d245e6f9cab288dc42636d437c9b59",
+    "settings_cpp_sha256": "d24b9bbc98482ea796df7a86275b3faa681c1e01fef700d617dbbcce07d0a0c6",
+    "source_snapshot": "9914146eeae7b46b300f475a16c32426fc02ec1f",
+    "sdk_source": "699370183fa3a0e33c9cb83a36f701bbb6022095",
+    "binary_build_commit_verified": false
+  },
+  "observer_only_change_authorized": true,
+  "native_edited": false,
+  "guest_firmware_modified": false,
+  "original_failure_relabelled_passed": false,
+  "native_or_guest_execution_repeated_for_diagnosis": false,
+  "all_functions_verified": false,
+  "physical_timing_calibrated": false
+}
