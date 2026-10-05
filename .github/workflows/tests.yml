@@ -154,3 +154,23 @@ jobs:
           compression-level: 6
           retention-days: 30
           if-no-files-found: error
+      - name: Actual HTTP panel reading and fresh CPU restoration on OTA-written CrossInk
+        id: panel_v161
+        if: github.ref == 'refs/heads/main'
+        timeout-minutes: 20
+        run: |
+          python scripts/test-crossink-v161-panel.py \
+            --ota-output "$RUNNER_TEMP/x3-online-ota" \
+            --output "$RUNNER_TEMP/x3-v161-panel" \
+            --source local/package-sources/CrossInk-v161 \
+            --backend local/qemu/install/bin/qemu-system-riscv32 \
+            --rom-dir local/qemu/install/share/qemu
+      - name: Preserve actual HTTP panel result and written guest storage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && github.ref == 'refs/heads/main' && (steps.panel_v161.outcome == 'success' || steps.panel_v161.outcome == 'failure')
+        with:
+          name: x3-crossink-v161-panel-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-v161-panel
+          compression-level: 6
+          retention-days: 30
+          if-no-files-found: error

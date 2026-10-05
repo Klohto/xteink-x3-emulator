@@ -10328,12 +10328,13 @@ index 0000000..2e771b1
 +}
 diff --git a/tests/qtest/esp32c3-flash-test.c b/tests/qtest/esp32c3-flash-test.c
 new file mode 100644
-index 0000000..08f6b7e
+index 0000000..e04a31d
 --- /dev/null
 +++ b/tests/qtest/esp32c3-flash-test.c
-@@ -0,0 +1,339 @@
+@@ -0,0 +1,437 @@
 +/* SPDX-License-Identifier: GPL-2.0-or-later */
 +#include "qemu/osdep.h"
++#include "qemu/bswap.h"
 +#include "libqtest.h"
 +#include "qapi/qmp/qdict.h"
 +#include "qapi/qmp/qnum.h"
@@ -10647,6 +10648,101 @@ index 0000000..08f6b7e
 +    finish(q, image);
 +}
 +
++/* Execute one IROM address before and after replacing its ROMD backing.
++ * Reading the new bytes alone cannot catch stale TCG translation blocks. */
++#define REMAP_CODE 0x40380000U
++#define REMAP_DATA 0x3fc81000U
++#define REMAP_IROM 0x42200000U
++#define REMAP_DROM 0x3c200000U
++#define REMAP_MMU (DR_REG_MMU_TABLE + 0x20 * sizeof(uint32_t))
++
++static uint32_t remap_addi(unsigned rd, unsigned rs, int immediate)
++{
++    return ((immediate & 0xfffU) << 20) | (rs << 15) | (rd << 7) | 0x13;
++}
++
++static uint32_t remap_lui(unsigned rd, uint32_t address)
++{
++    return (address & 0xfffff000U) | (rd << 7) | 0x37;
++}
++
++static uint32_t remap_sw(unsigned rs, unsigned base, unsigned offset)
++{
++    return ((offset >> 5) << 25) | (rs << 20) | (base << 15) |
++           (2 << 12) | ((offset & 31) << 7) | 0x23;
++}
++
++static void test_executed_mmu_remap(void)
++{
++    char *image, *code;
++    int flash_fd = g_file_open_tmp("esp32c3-remap-flash-XXXXXX", &image, NULL);
++    int code_fd = g_file_open_tmp("esp32c3-remap-code-XXXXXX", &code, NULL);
++    /* t0 points to a RAM mailbox; t1 holds the reused IROM call address.
++     * The guest waits for a nonzero sequence, calls IROM and reports the
++     * function's return value. Host mailbox writes never modify guest code. */
++    uint32_t program[] = {
++        remap_lui(5, REMAP_DATA), remap_lui(6, REMAP_IROM),
++        (4U << 20) | (5U << 15) | (2U << 12) | (7U << 7) | 3U,
++        0xfe038ee3U, /* beq t2,zero,-4: wait at previous load */
++        remap_sw(0, 5, 4),
++        (6U << 15) | (1U << 7) | 0x67U, /* jalr ra,t1,0 */
++        remap_sw(10, 5, 0), remap_sw(7, 5, 8),
++        0xfe9ff06fU, /* jal zero,-24: return to mailbox load */
++    };
++    uint32_t functions[][2] = {
++        { remap_addi(10, 0, 0x111), 0x00008067U },
++        { remap_addi(10, 0, 0x222), 0x00008067U },
++    };
++    const uint32_t pages[] = { 0x33, 0x97 };
++    QTestState *q;
++    unsigned i, sequence;
++
++    g_assert_cmpint(flash_fd, >=, 0);
++    g_assert_cmpint(code_fd, >=, 0);
++    g_assert_cmpint(ftruncate(flash_fd, FLASH_BYTES), ==, 0);
++    for (i = 0; i < ARRAY_SIZE(program); i++) {
++        program[i] = cpu_to_le32(program[i]);
++    }
++    g_assert_cmpint(write(code_fd, program, sizeof(program)), ==, sizeof(program));
++    for (i = 0; i < ARRAY_SIZE(functions); i++) {
++        uint32_t bytes[] = { cpu_to_le32(functions[i][0]),
++                             cpu_to_le32(functions[i][1]) };
++        /* Physical page numbers deliberately differ from the destination
++         * virtual page index, including the actual app0/app1 flash banks. */
++        g_assert_cmpint(pwrite(flash_fd, bytes, sizeof(bytes), pages[i] << 16),
++                        ==, sizeof(bytes));
++    }
++    close(code_fd);
++    close(flash_fd);
++    q = qtest_initf("-machine esp32c3 -nodefaults -accel tcg -S "
++                    "-drive if=mtd,format=raw,file=%s "
++                    "-device loader,file=%s,addr=0x40380000,cpu-num=0,force-raw=on",
++                    image, code);
++    for (sequence = 1; sequence <= 4; sequence++) {
++        unsigned bank = (sequence - 1) % ARRAY_SIZE(functions);
++        int64_t deadline = g_get_monotonic_time() + 5 * G_USEC_PER_SEC;
++
++        qtest_writel(q, REMAP_MMU, pages[bank]);
++        g_assert_cmphex(qtest_readl(q, REMAP_IROM), ==, functions[bank][0]);
++        g_assert_cmphex(qtest_readl(q, REMAP_DROM), ==, functions[bank][0]);
++        qtest_writel(q, REMAP_DATA + 4, sequence);
++        qtest_qmp_assert_success(q, "{'execute':'cont'}");
++        while (qtest_readl(q, REMAP_DATA + 8) != sequence &&
++               g_get_monotonic_time() < deadline) {
++            g_usleep(1000);
++        }
++        qtest_qmp_assert_success(q, "{'execute':'stop'}");
++        g_assert_cmpuint(qtest_readl(q, REMAP_DATA + 8), ==, sequence);
++        g_assert_cmphex(qtest_readl(q, REMAP_DATA), ==,
++                       bank == 0 ? 0x111 : 0x222);
++    }
++    qtest_quit(q);
++    unlink(code);
++    unlink(image);
++    g_free(code);
++    g_free(image);
++}
++
 +int main(int argc, char **argv)
 +{
 +    g_test_init(&argc, &argv, NULL);
@@ -10669,6 +10765,8 @@ index 0000000..08f6b7e
 +                   test_oversized_transfer);
 +    qtest_add_func("/esp32c3-flash/unsupported-coverage",
 +                   test_unsupported_coverage);
++    qtest_add_func("/esp32c3-flash/executed-mmu-remap",
++                   test_executed_mmu_remap);
 +    return g_test_run();
 +}
 diff --git a/tests/qtest/esp32c3-gpspi-test.c b/tests/qtest/esp32c3-gpspi-test.c
@@ -16779,3 +16877,16 @@ index 0000000..0bde8ec
 +                   test_modelled_accesses_and_read_only_diagnostics);
 +    return g_test_run();
 +}
+diff --git a/hw/misc/esp32c3_cache.c b/hw/misc/esp32c3_cache.c
+--- a/hw/misc/esp32c3_cache.c
++++ b/hw/misc/esp32c3_cache.c
+@@ -86,6 +86,9 @@
+                 xts_aes_class->decrypt(s->xts_aes, physical_address, cache_data, ESP32C3_PAGE_SIZE);
+             }
+         }
++        /* MMU remaps replace executable ROMD backing, including its IROM alias. */
++        memory_region_flush_rom_device(&s->dcache, virtual_address,
++                                       ESP32C3_PAGE_SIZE);
+         s->mmu[index].val = e.val;
+     }
+ }

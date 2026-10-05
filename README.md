@@ -126,6 +126,10 @@ Native CI builds the board patch and tests its device protocols across twelve
 suites, including the [bounded gauge capacity protocol](docs/bq27220-capacity.md).
 The [unchanged guest calibration check](docs/battery-capacity-guest-validation.md)
 requires actual capacity writes, a stock restart and book save/reopen.
+The [HTTP panel gate](docs/v161-panel-validation.md) checks served native pixels,
+real button page turns and cold restoration on the same OTA-written firmware.
+[Executed cache remapping](docs/cache-remap-validation-2026-10-05.md) records the
+actual warm-upgrade fault and its native correction.
 The [footnote regression](docs/v161-footnotes-regression.md) separately requires
 OTA-written v1.6.1 and cold restoration of the original note's reading position.
 The
