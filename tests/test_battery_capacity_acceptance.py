@@ -211,6 +211,38 @@ class BatteryCapacityAcceptanceTests(unittest.TestCase):
         with self.assertRaisesRegex(BATTERY.BatteryError, "successful captured probe"):
             BATTERY.bound_reading_frame(cpu, "v161-reader-page0")
 
+    def test_stock_x3_menu_route_keeps_system_category_and_selects_updates_with_front_left(self):
+        class SourceMenuModel:
+            def __init__(self):
+                self.category = None
+                self.row = None
+                self.buttons = []
+
+            def tap(self, button, name, purpose):
+                self.buttons.append(button)
+                if button == "left":
+                    self.row = 8 if self.row == 0 else self.row - 1
+                elif button == "up":
+                    self.category = (self.category - 1) % 4
+
+            def capture_text(self, name, labels):
+                # The actual first failure reached Reader rather than the
+                # source-defined Check for Updates action at System row7.
+                if (self.category, self.row) != (3, 7):
+                    raise AssertionError("physical menu direction left the stock update action")
+                observed = "Device\nReading Stats\nOPDS Servers\nCheck tor Updates\nSD Card Firmware Update"
+                if any(label not in observed for label in labels):
+                    raise AssertionError("selected label OCR typo blocked otherwise correct source action")
+
+        def enter_system(replay, category):
+            self.assertEqual(category, "system")
+            replay.category, replay.row = 3, 0
+
+        replay = SourceMenuModel()
+        BATTERY.select_stock_capacity_restart(replay, {"settings_tab_ui": enter_system})
+        self.assertEqual(replay.buttons, ["left", "left"])
+        self.assertEqual((replay.category, replay.row), (3, 7))
+
     def test_failed_ota_input_is_refused_before_source_card_or_native_execution(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -56,10 +56,18 @@ capacity, security or the capacity counters through QMP.
 
 The physical buttons select Settings → System → Check for Updates. Pinned stock
 source calls `silentRestartToNetwork(OTA=2)` and `ESP.restart()`. The test binds
+menu row navigation to physical front Left: the X3 maps semantic menu Up to
+that button. Physical side Up changes the category in this menu. The source
+still has four tabs, including Reader; its inverted selected pill can disappear
+from OCR text. The test binds
 one recorded Confirm pulse to the actual ROM software-reset reason, guest route
 `0→2` and subsequent native observation. It waits for the stock WiFi picker scan
 and presses Back to cancel, returning Home without a second reset or another
 update installation. A host `system_reset` is not accepted as this guest restart.
+The pre-action panel oracle checks stable original System labels; the selected
+Check for Updates label was OCR-read as `Check tor Updates` in a preserved real
+capture. The literal OCR output is retained. The actual Confirm, ROM reset and
+guest target 2 establish the activated action.
 Guest logger timestamps remain separate from QEMU virtual timestamps; the test
 uses the actual QEMU observation time to bracket the reset evidence.
 

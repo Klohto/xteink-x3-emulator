@@ -195,7 +195,9 @@ def follow_original_note(replay, *, exercise_boundary):
     replay.capture_text("original-footnotes-row-visible", ["Footnotes"])
     note = replay.tap("confirm", "original-note-anchor", "Single source-collected #note-1 link jumps directly, without a fabricated list dialog")
     section = finalized_section(replay)
-    anchor = replay.capture_text("original-note-anchor-visible", ["Fixture note 1"])
+    # The source's anchor map may land on the preceding prose/table page;
+    # the original next-page action reaches the final note paragraph.
+    anchor = replay.capture_text("original-note-anchor-visible", ["The workshop"])
     current = rendered_progress(replay, "original-note-anchor-visible", anchor, section)
     replay.check("same_file_original_note_jump_rendered_nonzero_page", current["spine_index"] == 0 and current["page_number"] > 0,
         {"rendered_position": current, "capture": anchor, "disk_progress_is_not_a_live_position": True})

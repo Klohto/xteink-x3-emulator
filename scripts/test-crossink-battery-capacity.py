@@ -29,6 +29,7 @@ SDK_SOURCE = "699370183fa3a0e33c9cb83a36f701bbb6022095"
 FIXTURE_SHA256 = "e53ded1c16243acd888c6677c4c372c8bdd2c67279dd1142cb8fc7d260bffd75"
 SOURCE_BLOBS = {
     "src/main.cpp": "d0da1720493f6429961a1bad49d9f8912dbc1fc2",
+    "src/MappedInputManager.cpp": "7bebab0479ceed93bb0edac8db0981100469cd28",
     "lib/hal/HalPowerManager.cpp": "1ad79f071dd73f1f67f0667868801cddce7c057d",
     "lib/hal/HalPowerManager.h": "12e68a76e2aa3faf401c2dea3374120c206fe250",
     "src/SettingsList.h": "c82071e0036747a25a859855a9dfcc333c4cb1c2",
@@ -303,6 +304,19 @@ def bound_reading_frame(cpu: dict, label: str) -> dict:
     return matches[0]
 
 
+def select_stock_capacity_restart(replay, network) -> None:
+    network["settings_tab_ui"](replay, "system")
+    # The stock X3 rotates menu directions: semantic Up is physical Left.
+    # Physical Up changes category instead, even though reader page navigation
+    # uses the physical side Up/Down buttons.
+    replay.tap("left", "battery-sd-update-row", "Physical front Left: wrap System header to last SD Firmware Update row")
+    replay.tap("left", "battery-check-updates-row", "Physical front Left: select preceding stock Check for Updates row")
+    # Tesseract reads the selected/inverted "for" as "tor" on the real X3
+    # capture. Verify stable original System labels here; the actual Confirm,
+    # ROM software reset and guest target2 prove which action was activated.
+    replay.capture_text("battery-stock-check-updates-visible", ["Device", "Reading Stats", "OPDS Servers", "SD Card Firmware Update"])
+
+
 def capacity_workflow(replay, client, network):
     manifest = json.loads((replay.experiment.run_dir / "run.json").read_text())
     initial = validate_initial_manifest(manifest)
@@ -326,10 +340,7 @@ def capacity_workflow(replay, client, network):
     replay.report["battery"]["loaded"] = actual
     replay.check("guest_capacity_loaded_650_and_sealed", True, actual)
     replay.capture("battery-calibrated-v161-home")
-    network["settings_tab_ui"](replay, "system")
-    replay.tap("up", "battery-sd-update-row", "Wrap System header to last SD Firmware Update row")
-    replay.tap("up", "battery-check-updates-row", "Select actual Check for Updates, the source-defined software restart route")
-    replay.capture_text("battery-stock-check-updates-visible", ["Check for updates"])
+    select_stock_capacity_restart(replay, network)
     before_rom = OTA["rom_reset_observations"](replay.experiment.log_text("rom.log"))
     before_network = replay.experiment.log_text("serial.log").count("Minimal network boot ready: target=2")
     before_scan = network["scan_callback_observation"](replay.experiment.log_text("serial.log"))["completed_callbacks"]
