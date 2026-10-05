@@ -187,7 +187,7 @@ def main():
     if args.usb_port is not None:
         command += ["--usb-port", str(args.usb_port)]
     print("Run directory:", output, flush=True)
-    print("Starting CrossInk v1.6.0. The front panel shows the native framebuffer.", flush=True)
+    print("Starting the Xteink X3 emulator. The front panel shows the native framebuffer.", flush=True)
     # The backend rejects a nonempty output directory; keep the wrapper log
     # beside it until the guest has stopped and then preserve it inside.
     external_log = output.with_name(output.name + ".launcher.stdout.log")

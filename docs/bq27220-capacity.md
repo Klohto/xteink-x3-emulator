@@ -83,3 +83,8 @@ and interrupted-load completion. Four Python tests validate typed fixture routin
 normalization, manifest provenance and CLI behavior. Python fake-backend checks
 cover host integration only; actual native and unchanged-firmware execution
 results must be recorded separately after the selected backend is rebuilt.
+
+The unchanged-firmware acceptance workflow is documented in
+[battery capacity guest validation](battery-capacity-guest-validation.md).
+It requires an actual passing online upgrade before exercising the capacity
+load, stock software restart and book reading on that same native backend.

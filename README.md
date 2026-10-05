@@ -124,6 +124,8 @@ are in [run.md](docs/run.md) and [ui.md](docs/ui.md).
 
 Native CI builds the board patch and tests its device protocols across twelve
 suites, including the [bounded gauge capacity protocol](docs/bq27220-capacity.md).
+The [unchanged guest calibration check](docs/battery-capacity-guest-validation.md)
+requires actual capacity writes, a stock restart and book save/reopen.
 The [footnote regression](docs/v161-footnotes-regression.md) separately requires
 OTA-written v1.6.1 and cold restoration of the original note's reading position.
 The

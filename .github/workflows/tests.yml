@@ -66,6 +66,8 @@ jobs:
           git -C local/package-sources/CrossInk-v161 checkout --detach 9914146eeae7b46b300f475a16c32426fc02ec1f
           git clone --filter=blob:none --no-checkout https://github.com/Free-Ink/freeink-sdk.git local/package-sources/freeink-sdk
           git -C local/package-sources/freeink-sdk checkout --detach b784446302c076b4b5a622627867f0c80905cc50
+          git clone --filter=blob:none --no-checkout https://github.com/Free-Ink/freeink-sdk.git local/package-sources/freeink-sdk-v161
+          git -C local/package-sources/freeink-sdk-v161 checkout --detach 699370183fa3a0e33c9cb83a36f701bbb6022095
       - name: Package the working Linux front panel and native backend
         if: github.ref == 'refs/heads/main'
         run: |
@@ -128,6 +130,27 @@ jobs:
         with:
           name: x3-crossink-v161-footnotes-${{ github.sha }}
           path: ${{ runner.temp }}/x3-v161-footnotes
+          compression-level: 6
+          retention-days: 30
+          if-no-files-found: error
+      - name: Unchanged guest gauge capacity load and stock software reset
+        id: battery_capacity
+        if: github.ref == 'refs/heads/main'
+        timeout-minutes: 20
+        run: |
+          python scripts/test-crossink-battery-capacity.py \
+            --ota-output "$RUNNER_TEMP/x3-online-ota" \
+            --output "$RUNNER_TEMP/x3-v161-battery-capacity" \
+            --source local/package-sources/CrossInk-v161 \
+            --sdk-source local/package-sources/freeink-sdk-v161 \
+            --backend local/qemu/install/bin/qemu-system-riscv32 \
+            --rom-dir local/qemu/install/share/qemu
+      - name: Preserve actual guest gauge result and written storage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && github.ref == 'refs/heads/main' && (steps.battery_capacity.outcome == 'success' || steps.battery_capacity.outcome == 'failure')
+        with:
+          name: x3-crossink-v161-battery-capacity-${{ github.sha }}
+          path: ${{ runner.temp }}/x3-v161-battery-capacity
           compression-level: 6
           retention-days: 30
           if-no-files-found: error
