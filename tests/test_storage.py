@@ -19,7 +19,16 @@ class SparseStorageTests(unittest.TestCase):
             self.assertEqual(target.stat().st_size, len(data))
             self.assertEqual(source.stat().st_mtime_ns, initial.st_mtime_ns)
             self.assertEqual(source.read_bytes(), data)
-            if hasattr(target.stat(), "st_blocks") and initial.st_blocks * 512 >= len(data):
+            # Some filesystems allocate seeks as real blocks. Check their support
+            # before asserting physical savings; byte preservation applies on all hosts.
+            probe = Path(directory) / "sparse-probe"
+            with probe.open("wb") as output:
+                output.write(b"head")
+                output.seek(2 * 1024 * 1024)
+                output.write(b"tail")
+            supports_holes = (hasattr(probe.stat(), "st_blocks") and
+                              probe.stat().st_blocks * 512 < probe.stat().st_size // 2)
+            if supports_holes:
                 self.assertLess(target.stat().st_blocks * 512, len(data) // 2)
 
     def test_empty_and_all_zero_images_keep_logical_size(self):

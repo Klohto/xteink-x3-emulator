@@ -15,11 +15,12 @@ programming paths check every written byte. See the [current execution record](d
 
 ## Download and run
 
-Open the [verified main run](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37329050494)
-and download its `xteink-x3-crossink-linux-x86_64-61927c41475a5f1ddb5454adf0db79657b30a563`
-artifact. Unzip the
-artifact, extract the enclosed `.tar.gz`, and run from the extracted directory
-on **Ubuntu 24.04 x86-64**:
+Download the Linux runtime from the [v0.2.0 release](https://github.com/Klohto/xteink-x3-emulator/releases/tag/v0.2.0).
+Its source commit is `61927c41475a5f1ddb5454adf0db79657b30a563`.
+The [verified build run](https://github.com/Klohto/xteink-x3-emulator/actions/runs/37329050494)
+retains the original checks. Extract the `.tar.gz` and run from its directory
+on **Ubuntu 24.04 x86-64**. Mac users can [build the native backend](docs/build.md#macos-prerequisites).
+
 
 ```sh
 sudo apt-get install python3 libglib2.0-0t64 libpixman-1-0 libgcrypt20 zlib1g libslirp0 libzstd1 libncursesw6 libtinfo6
@@ -62,6 +63,11 @@ enables networking. The prebuilt archive requires Python 3.11+ and glibc 2.38+;
 build from source for a different host. See
 [runtime-package.md](docs/runtime-package.md) for integrity checks, custom
 flash, output directories, dependencies and corresponding QEMU source.
+
+The [CrossInk performance fork](https://github.com/Klohto/CrossInk) keeps the
+accepted X3 firmware iterations and their checks. It descends from
+[uxjulia/CrossInk](https://github.com/uxjulia/CrossInk). The emulator can execute
+those firmware builds with the same native panel and storage model.
 
 ## See CrossInk working
 

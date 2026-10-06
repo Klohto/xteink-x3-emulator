@@ -54,6 +54,24 @@ serial ports and device models. A client can retrieve the controller's digital
 framebuffer through the X3 model. Device-tree support uses the pinned internal
 `dtc` subproject, including during offline rebuilds.
 
+## macOS prerequisites
+
+Install Apple's Command Line Tools and the native libraries through Homebrew:
+
+```sh
+xcode-select --install
+brew install python glib pixman ninja pkgconf libgcrypt libslirp zlib flock coreutils
+export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
+```
+
+The build script uses GNU `realpath -m`. Keep the path above in each build
+shell. `flock` protects the build directory from overlapping runs.
+The local Apple Silicon backend was built with these libraries. A binary built
+on Linux requires a Linux host; use a source build on the Mac.
+
+Create the Python environment shown above. Then run the first build below.
+The front panel uses the same commands on macOS and Linux.
+
 ## First build
 
 From the project directory:
